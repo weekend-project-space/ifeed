@@ -13,3 +13,17 @@ spring:
       username: mongo_cTXZaN
       password: mongo_MDNyW6
       database: database
+rss:
+  fetcher:
+    fixed-delay: PT30M
+    initial-delay: PT30S
+    connect-timeout: 5s
+    read-timeout: 10s
+    max-items: 50
+ai:
+  provider:
+    enabled: false
+    endpoint: ''
+    api-key: ''
+    model: gemini-pro
+

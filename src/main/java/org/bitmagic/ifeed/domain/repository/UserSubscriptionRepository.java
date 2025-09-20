@@ -1,0 +1,21 @@
+package org.bitmagic.ifeed.domain.repository;
+
+import org.bitmagic.ifeed.domain.entity.Feed;
+import org.bitmagic.ifeed.domain.entity.User;
+import org.bitmagic.ifeed.domain.entity.UserSubscription;
+import org.bitmagic.ifeed.domain.entity.UserSubscriptionId;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import java.util.List;
+import java.util.Optional;
+
+public interface UserSubscriptionRepository extends JpaRepository<UserSubscription, UserSubscriptionId> {
+
+    List<UserSubscription> findAllByUser(User user);
+
+    List<UserSubscription> findAllByUserAndActiveTrue(User user);
+
+    Optional<UserSubscription> findByUserAndFeed(User user, Feed feed);
+
+    boolean existsByUserAndFeed(User user, Feed feed);
+}
