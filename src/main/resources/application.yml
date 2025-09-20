@@ -1,0 +1,15 @@
+spring:
+  application:
+    name: iFeed
+  datasource:
+    url: jdbc:postgresql://182.160.1.158:5432/i_feed
+    username: i_feed
+    password: MCkmdDzn8yDbSTKb
+    driver-class-name: org.postgresql.Driver
+  data:
+    mongodb:
+      host: 182.160.1.158
+      port: 27017
+      username: mongo_cTXZaN
+      password: mongo_MDNyW6
+      database: database
