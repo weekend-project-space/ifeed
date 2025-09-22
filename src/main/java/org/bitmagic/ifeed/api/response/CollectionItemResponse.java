@@ -1,7 +1,6 @@
 package org.bitmagic.ifeed.api.response;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
+import java.time.Instant;
 
-public record CollectionItemResponse(@JsonProperty("article_id") String articleId,
-                                      String title) {
+public record CollectionItemResponse(String articleId, String title, Instant collectedAt) {
 }

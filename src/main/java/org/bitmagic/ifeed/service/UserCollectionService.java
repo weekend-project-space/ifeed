@@ -8,15 +8,20 @@ import org.bitmagic.ifeed.domain.entity.User;
 import org.bitmagic.ifeed.domain.repository.ArticleRepository;
 import org.bitmagic.ifeed.domain.repository.UserBehaviorRepository;
 import org.bitmagic.ifeed.exception.ApiException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
@@ -66,33 +71,54 @@ public class UserCollectionService {
     }
 
     @Transactional(readOnly = true)
-    public List<CollectionItemResponse> listCollections(User user) {
+    public Page<CollectionItemResponse> listCollections(User user, Pageable pageable) {
         var document = userBehaviorRepository.findById(user.getId().toString()).orElse(null);
         if (document == null) {
-            return List.of();
+            return Page.empty(pageable);
         }
 
         ensureCollectionsInitialized(document);
         if (document.getCollections().isEmpty()) {
-            return List.of();
+            return Page.empty(pageable);
         }
 
-        var articleIds = document.getCollections().stream()
+        var sorted = sortCollections(document, pageable);
+        var total = sorted.size();
+        var fromIndex = Math.min((int) pageable.getOffset(), total);
+        var toIndex = Math.min(fromIndex + pageable.getPageSize(), total);
+        var pageRefs = sorted.subList(fromIndex, toIndex);
+
+        var articleIds = pageRefs.stream()
                 .map(UserBehaviorDocument.ArticleRef::getArticleId)
                 .map(UUID::fromString)
                 .toList();
 
         Map<UUID, Article> articles = articleRepository.findByIdIn(articleIds).stream()
-                .collect(Collectors.toMap(Article::getId, article -> article));
+                .collect(Collectors.toMap(Article::getId, Function.identity()));
 
-        return document.getCollections().stream()
-                .sorted(Comparator.comparing(UserBehaviorDocument.ArticleRef::getTimestamp).reversed())
+        var content = pageRefs.stream()
                 .map(item -> {
                     var id = UUID.fromString(item.getArticleId());
                     var article = articles.get(id);
                     var title = article != null ? article.getTitle() : null;
-                    return new CollectionItemResponse(item.getArticleId(), title);
+                    return new CollectionItemResponse(item.getArticleId(), title, item.getTimestamp());
                 })
+                .toList();
+
+        return new PageImpl<>(content, pageable, total);
+    }
+
+    private List<UserBehaviorDocument.ArticleRef> sortCollections(UserBehaviorDocument document, Pageable pageable) {
+        var comparator = Comparator.comparing(UserBehaviorDocument.ArticleRef::getTimestamp);
+        var order = pageable.getSort().getOrderFor("collectedAt");
+        if (order == null) {
+            order = pageable.getSort().getOrderFor("timestamp");
+        }
+        if (order == null || order.isDescending()) {
+            comparator = comparator.reversed();
+        }
+        return new ArrayList<>(document.getCollections()).stream()
+                .sorted(comparator)
                 .toList();
     }
 
@@ -105,7 +131,7 @@ public class UserCollectionService {
 
     private void ensureCollectionsInitialized(UserBehaviorDocument document) {
         if (document.getCollections() == null) {
-            document.setCollections(new java.util.ArrayList<>());
+            document.setCollections(new ArrayList<>());
         }
     }
 }
