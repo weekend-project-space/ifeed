@@ -27,11 +27,11 @@ public class ArticleController {
 
     @GetMapping
     public ResponseEntity<List<ArticleSummaryResponse>> listArticles(@AuthenticationPrincipal UserPrincipal principal,
-                                                                     @RequestParam(required = false) Integer limit,
-                                                                     @RequestParam(required = false) Integer offset,
+                                                                     @RequestParam(required = false) Integer page,
+                                                                     @RequestParam(required = false) Integer size,
                                                                      @RequestParam(required = false) String sort) {
         ensureAuthenticated(principal);
-        var articles = articleService.listArticles(limit, offset, sort).stream()
+        var articles = articleService.listArticles(page, size, sort).stream()
                 .map(article -> new ArticleSummaryResponse(
                         article.getId().toString(),
                         article.getTitle(),

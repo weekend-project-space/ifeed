@@ -29,14 +29,14 @@ public class SearchController {
     public ResponseEntity<List<SearchResultResponse>> search(@AuthenticationPrincipal UserPrincipal principal,
                                                              @RequestParam String query,
                                                              @RequestParam(required = false, defaultValue = TYPE_KEYWORD) String type,
-                                                             @RequestParam(required = false, defaultValue = "20") Integer limit) {
+                                                             @RequestParam(required = false, defaultValue = "20") Integer size) {
         ensureAuthenticated(principal);
         var normalizedType = type == null ? TYPE_KEYWORD : type.toLowerCase();
         if (!TYPE_KEYWORD.equals(normalizedType) && !TYPE_SEMANTIC.equals(normalizedType)) {
             throw new ApiException(HttpStatus.BAD_REQUEST, "Unsupported search type");
         }
 
-        var articles = articleService.searchArticles(query, limit);
+        var articles = articleService.searchArticles(query, size);
         var results = articles.stream()
                 .map(article -> new SearchResultResponse(
                         article.getId().toString(),

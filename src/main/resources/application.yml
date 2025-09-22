@@ -25,5 +25,5 @@ ai:
     enabled: false
     endpoint: ''
     api-key: ''
-    model: gemini-pro
+    model: gpt-4o-mini
 
