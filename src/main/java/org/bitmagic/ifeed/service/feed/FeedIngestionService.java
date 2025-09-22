@@ -61,6 +61,7 @@ public class FeedIngestionService {
     private void fetchFeedSafely(Feed feed) {
         try {
             var syndFeed = fetchFeed(feed.getUrl());
+            log.info("fetch url:{}", feed.getUrl());
             processEntries(feed, syndFeed.getEntries());
             feed.setLastFetched(Instant.now());
             feedRepository.save(feed);

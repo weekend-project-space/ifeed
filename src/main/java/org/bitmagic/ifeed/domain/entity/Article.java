@@ -69,7 +69,7 @@ public class Article {
     private String category;
 
     @Lob
-    @Column(name = "tags", columnDefinition = "jsonb")
+    @Column(name = "tags", columnDefinition = "text")
     private String tags;
 
     @Lob

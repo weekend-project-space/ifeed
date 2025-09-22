@@ -32,7 +32,7 @@ public class DefaultAiContentService implements AiContentService {
 
     private static final Pattern WORD_PATTERN = Pattern.compile("[a-zA-Z]{4,}");
     private static final int DEFAULT_SUMMARY_LENGTH = 280;
-    private static final String SYSTEM_PROMPT = "You are an assistant that analyzes RSS article content and produces JSON with summary, category, tags and embedding array.";
+    private static final String SYSTEM_PROMPT = "You are an assistant that analyzes RSS article content and produces JSON with summary, category, tags and embedding array. {summary:'',tags:[''],embedding:[0],category:'string'}";
     private static final String USER_PROMPT_TEMPLATE = "Title: %s\n\nContent:\n%s";
 
     private final AiProviderProperties properties;
@@ -186,7 +186,7 @@ public class DefaultAiContentService implements AiContentService {
     }
 
     private List<String> generateTags(String content) {
-        var matcher = WORD_PATTERN.matcher(content.toLowerCase(Locale.ENGLISH));
+        var matcher = WORD_PATTERN.matcher(content.toLowerCase(Locale.CHINESE));
         var frequencies = new java.util.HashMap<String, Integer>();
         while (matcher.find()) {
             var word = matcher.group();

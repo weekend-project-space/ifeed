@@ -5,6 +5,7 @@ import org.bitmagic.ifeed.api.request.SubscriptionRequest;
 import org.bitmagic.ifeed.domain.entity.Feed;
 import org.bitmagic.ifeed.domain.entity.User;
 import org.bitmagic.ifeed.domain.entity.UserSubscription;
+import org.bitmagic.ifeed.domain.entity.UserSubscriptionId;
 import org.bitmagic.ifeed.domain.repository.FeedRepository;
 import org.bitmagic.ifeed.domain.repository.UserSubscriptionRepository;
 import org.bitmagic.ifeed.exception.ApiException;
@@ -34,11 +35,15 @@ public class SubscriptionService {
             if (subscription.isActive()) {
                 throw new ApiException(HttpStatus.CONFLICT, "Feed already subscribed");
             }
+            if (subscription.getId() == null) {
+                subscription.setId(new UserSubscriptionId(user.getId(), feed.getId()));
+            }
             subscription.setActive(true);
             return subscriptionRepository.save(subscription);
         }
 
         var subscription = UserSubscription.builder()
+                .id(new UserSubscriptionId(user.getId(), feed.getId()))
                 .user(user)
                 .feed(feed)
                 .active(true)

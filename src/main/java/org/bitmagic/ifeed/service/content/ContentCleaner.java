@@ -1,5 +1,6 @@
 package org.bitmagic.ifeed.service.content;
 
+import com.vladsch.flexmark.html2md.converter.FlexmarkHtmlConverter;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.safety.Safelist;
@@ -17,6 +18,9 @@ public class ContentCleaner {
         Document document = Jsoup.parse(html);
         document.select("script, style, noscript").remove();
         var sanitized = Jsoup.clean(document.html(), Safelist.relaxed());
-        return Jsoup.parse(sanitized).text().replaceAll("\\s+", " ").trim();
+        var converter = FlexmarkHtmlConverter.builder().build();
+
+        return converter.convert(sanitized);
+//        return Jsoup.parse(sanitized).text().replaceAll("\\s+", " ").trim();
     }
 }
