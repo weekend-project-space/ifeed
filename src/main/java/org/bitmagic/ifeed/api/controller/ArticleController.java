@@ -7,7 +7,7 @@ import org.bitmagic.ifeed.api.response.ArticleDetailResponse;
 import org.bitmagic.ifeed.api.response.ArticleSummaryResponse;
 import org.bitmagic.ifeed.api.util.IdentifierUtils;
 import org.bitmagic.ifeed.domain.entity.Article;
-import org.bitmagic.ifeed.domain.entity.Feed;
+import org.bitmagic.ifeed.domain.projection.ArticleSummaryView;
 import org.bitmagic.ifeed.exception.ApiException;
 import org.bitmagic.ifeed.security.UserPrincipal;
 import org.bitmagic.ifeed.service.ArticleService;
@@ -25,6 +25,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/articles")
@@ -41,9 +42,10 @@ public class ArticleController {
     public ResponseEntity<Page<ArticleSummaryResponse>> listArticles(@AuthenticationPrincipal UserPrincipal principal,
                                                                      @RequestParam(required = false) Integer page,
                                                                      @RequestParam(required = false) Integer size,
-                                                                     @RequestParam(required = false) String sort) {
+                                                                     @RequestParam(required = false) String sort,
+                                                                     @RequestParam(required = false) String feedId) {
         ensureAuthenticated(principal);
-        var articlePage = articleService.listArticles(page, size, sort)
+        var articlePage = articleService.listArticles(page, size, sort, parseFeedId(feedId))
                 .map(this::toSummaryResponse);
         return ResponseEntity.ok(articlePage);
     }
@@ -53,35 +55,34 @@ public class ArticleController {
                                                             @PathVariable String articleId) {
         ensureAuthenticated(principal);
         var article = articleService.getArticle(IdentifierUtils.parseUuid(articleId, "article id"));
-        var tags = extractTags(article);
+        var tags = extractTags(article.getTags());
         var response = new ArticleDetailResponse(
                 article.getId().toString(),
                 article.getTitle(),
                 article.getContent(),
                 article.getSummary(),
                 article.getLink(),
-                resolveFeedTitle(article.getFeed()),
+                resolveFeedTitle(article.getFeed() == null ? null : article.getFeed().getTitle()),
                 formatTimestamp(article.getPublishedAt()),
                 tags);
         return ResponseEntity.ok(response);
     }
 
-    private ArticleSummaryResponse toSummaryResponse(Article article) {
-        var tags = extractTags(article);
-        var publishedAt = article.getPublishedAt();
+    private ArticleSummaryResponse toSummaryResponse(ArticleSummaryView article) {
+        var tags = extractTags(article.tags());
+        var publishedAt = article.publishedAt();
         return new ArticleSummaryResponse(
-                article.getId().toString(),
-                article.getTitle(),
-                article.getLink(),
-                article.getSummary(),
-                resolveFeedTitle(article.getFeed()),
+                article.id().toString(),
+                article.title(),
+                article.link(),
+                article.summary(),
+                resolveFeedTitle(article.feedTitle()),
                 formatTimestamp(publishedAt),
                 tags,
                 formatRelativeTime(publishedAt));
     }
 
-    private List<String> extractTags(Article article) {
-        var raw = article.getTags();
+    private List<String> extractTags(String raw) {
         if (raw == null || raw.isBlank()) {
             return Collections.emptyList();
         }
@@ -92,11 +93,11 @@ public class ArticleController {
         }
     }
 
-    private String resolveFeedTitle(Feed feed) {
-        if (feed == null || feed.getTitle() == null || feed.getTitle().isBlank()) {
+    private String resolveFeedTitle(String feedTitle) {
+        if (feedTitle == null || feedTitle.isBlank()) {
             return "未知来源";
         }
-        return feed.getTitle();
+        return feedTitle;
     }
 
     private String formatTimestamp(Instant instant) {
@@ -131,5 +132,12 @@ public class ArticleController {
         if (principal == null) {
             throw new ApiException(HttpStatus.UNAUTHORIZED, "Unauthorized");
         }
+    }
+
+    private UUID parseFeedId(String feedId) {
+        if (feedId == null || feedId.isBlank()) {
+            return null;
+        }
+        return IdentifierUtils.parseUuid(feedId, "feed id");
     }
 }

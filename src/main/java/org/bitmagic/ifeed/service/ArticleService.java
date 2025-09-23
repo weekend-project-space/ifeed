@@ -2,6 +2,7 @@ package org.bitmagic.ifeed.service;
 
 import lombok.RequiredArgsConstructor;
 import org.bitmagic.ifeed.domain.entity.Article;
+import org.bitmagic.ifeed.domain.projection.ArticleSummaryView;
 import org.bitmagic.ifeed.domain.repository.ArticleRepository;
 import org.bitmagic.ifeed.exception.ApiException;
 import org.springframework.data.domain.Page;
@@ -22,9 +23,9 @@ public class ArticleService {
 
     private final ArticleRepository articleRepository;
 
-    public Page<Article> listArticles(Integer page, Integer size, String sort) {
+    public Page<ArticleSummaryView> listArticles(Integer page, Integer size, String sort, UUID feedId) {
         var pageable = buildPageable(page, size, sort);
-        return articleRepository.findAll(pageable);
+        return articleRepository.findArticleSummaries(feedId, pageable);
     }
 
     public Article getArticle(UUID articleId) {
@@ -32,13 +33,13 @@ public class ArticleService {
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Article not found"));
     }
 
-    public Page<Article> searchArticles(String query, Integer page, Integer size) {
+    public Page<ArticleSummaryView> searchArticles(String query, Integer page, Integer size) {
         if (query == null || query.isBlank()) {
             throw new ApiException(HttpStatus.BAD_REQUEST, "Query must not be blank");
         }
         var pageable = buildPageable(page, size, "publishedAt,desc");
-        return articleRepository
-                .findByTitleContainingIgnoreCaseOrSummaryContainingIgnoreCase(query, query, pageable);
+        var term = "%" + query.trim().toLowerCase() + "%";
+        return articleRepository.searchArticleSummaries(term, pageable);
     }
 
     private Pageable buildPageable(Integer page, Integer size, String sort) {

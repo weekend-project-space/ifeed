@@ -5,7 +5,6 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
-import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
@@ -35,45 +34,37 @@ public class Article {
     @JoinColumn(name = "feed_id", nullable = false)
     private Feed feed;
 
-    @Lob
-    @Column(name = "title", nullable = false)
+    @Column(name = "title", nullable = false, columnDefinition = "text")
     private String title;
 
-    @Lob
-    @Column(name = "link", nullable = false)
+    @Column(name = "link", nullable = false, columnDefinition = "text")
     private String link;
 
     @Column(name = "author", length = 255)
     private String author;
 
-    @Lob
-    @Column(name = "description")
+    @Column(name = "description", columnDefinition = "text")
     private String description;
 
     @Column(name = "pub_date", nullable = false)
     private Instant publishedAt;
 
-    @Lob
-    @Column(name = "enclosure")
+    @Column(name = "enclosure", columnDefinition = "text")
     private String enclosure;
 
-    @Lob
-    @Column(name = "content", nullable = false)
+    @Column(name = "content", nullable = false, columnDefinition = "text")
     private String content;
 
-    @Lob
-    @Column(name = "summary")
+    @Column(name = "summary", columnDefinition = "text")
     private String summary;
 
     @Column(name = "category", length = 50)
     private String category;
 
-    @Lob
     @Column(name = "tags", columnDefinition = "text")
     private String tags;
 
-    @Lob
-    @Column(name = "embedding")
+    @Column(name = "embedding", columnDefinition = "text")
     private String embedding;
 
     @PrePersist
