@@ -38,9 +38,9 @@ public class SearchController {
 
         var articlePage = articleService.searchArticles(query, page, size)
                 .map(article -> new SearchResultResponse(
-                        article.getId().toString(),
-                        article.getTitle(),
-                        article.getSummary(),
+                        article.id().toString(),
+                        article.title(),
+                        article.summary(),
                         null));
         return ResponseEntity.ok(articlePage);
     }

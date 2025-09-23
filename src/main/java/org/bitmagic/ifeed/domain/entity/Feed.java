@@ -39,6 +39,9 @@ public class Feed {
     @Column(name = "last_fetched")
     private Instant lastFetched;
 
+    @Column(name = "last_updated")
+    private Instant lastUpdated;
+
     @PrePersist
     void onCreate() {
         if (id == null) {

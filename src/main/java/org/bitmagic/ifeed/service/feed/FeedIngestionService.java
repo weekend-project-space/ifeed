@@ -7,6 +7,7 @@ import com.rometools.rome.feed.synd.SyndEntry;
 import com.rometools.rome.feed.synd.SyndFeed;
 import com.rometools.rome.io.SyndFeedInput;
 import com.rometools.rome.io.XmlReader;
+import com.rometools.utils.Strings;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.bitmagic.ifeed.config.RssFetcherProperties;
@@ -62,7 +63,16 @@ public class FeedIngestionService {
         try {
             var syndFeed = fetchFeed(feed.getUrl());
             log.info("fetch url:{}", feed.getUrl());
-            processEntries(feed, syndFeed.getEntries());
+            var latestContentUpdate = processEntries(feed, syndFeed.getEntries());
+            if (Strings.isBlank(feed.getTitle())) {
+                feed.setTitle(syndFeed.getTitle());
+            }
+            if (latestContentUpdate != null) {
+                var currentLastUpdated = feed.getLastUpdated();
+                if (currentLastUpdated == null || latestContentUpdate.isAfter(currentLastUpdated)) {
+                    feed.setLastUpdated(latestContentUpdate);
+                }
+            }
             feed.setLastFetched(Instant.now());
             feedRepository.save(feed);
         } catch (Exception ex) {
@@ -88,34 +98,43 @@ public class FeedIngestionService {
         }
     }
 
-    private void processEntries(Feed feed, List<SyndEntry> entries) {
+    private Instant processEntries(Feed feed, List<SyndEntry> entries) {
         if (entries == null || entries.isEmpty()) {
-            return;
+            return null;
         }
 
-        entries.stream()
+        var latestPublished = entries.stream()
                 .sorted(Comparator.comparing(this::resolvePublishedAt).reversed())
                 .limit(Math.max(1, properties.getMaxItems()))
-                .forEach(entry -> processEntry(feed, entry));
+                .map(entry -> processEntry(feed, entry))
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .max(Comparator.naturalOrder())
+                .orElse(null);
+
+        return latestPublished;
     }
 
-    private void processEntry(Feed feed, SyndEntry entry) {
+    private Optional<Instant> processEntry(Feed feed, SyndEntry entry) {
         var link = Optional.ofNullable(entry.getLink()).orElse(entry.getUri());
         if (!StringUtils.hasText(link)) {
-            return;
+            return Optional.empty();
         }
 
+        var publishedAt = resolvePublishedAt(entry);
+
         if (articleRepository.existsByLink(link)) {
-            return;
+            return Optional.ofNullable(publishedAt);
         }
 
         var rawContent = resolveContent(entry);
         var cleanedContent = contentCleaner.clean(rawContent);
-        if (!StringUtils.hasText(cleanedContent)) {
-            cleanedContent = entry.getTitle();
+        var textContent = cleanedContent.textContent();
+        if (!StringUtils.hasText(cleanedContent.textContent())) {
+            textContent = entry.getTitle();
         }
 
-        var aiContent = aiContentService.analyze(entry.getTitle(), cleanedContent);
+        var aiContent = aiContentService.analyze(entry.getTitle(), textContent);
 
         var article = Article.builder()
                 .feed(feed)
@@ -123,9 +142,9 @@ public class FeedIngestionService {
                 .link(link)
                 .author(entry.getAuthor())
                 .description(Optional.ofNullable(entry.getDescription()).map(SyndContent::getValue).orElse(null))
-                .publishedAt(resolvePublishedAt(entry))
+                .publishedAt(publishedAt)
                 .enclosure(resolveEnclosure(entry))
-                .content(cleanedContent)
+                .content(cleanedContent.mdContent())
                 .summary(aiContent.summary())
                 .category(aiContent.category())
                 .tags(writeJson(aiContent.tags()))
@@ -133,6 +152,8 @@ public class FeedIngestionService {
                 .build();
 
         articleRepository.save(article);
+
+        return Optional.ofNullable(publishedAt);
     }
 
     private String resolveContent(SyndEntry entry) {

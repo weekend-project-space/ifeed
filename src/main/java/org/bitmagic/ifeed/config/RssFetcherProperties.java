@@ -11,7 +11,7 @@ public class RssFetcherProperties {
 
     private Duration connectTimeout = Duration.ofSeconds(10);
     private Duration readTimeout = Duration.ofSeconds(10);
-    private int maxItems = 50;
+    private int maxItems = 500;
 
     public Duration getConnectTimeout() {
         return connectTimeout;

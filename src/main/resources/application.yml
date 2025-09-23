@@ -13,6 +13,8 @@ spring:
       username: mongo_cTXZaN
       password: mongo_MDNyW6
       database: database
+  profiles:
+    active: dev
 rss:
   fetcher:
     fixed-delay: PT30M

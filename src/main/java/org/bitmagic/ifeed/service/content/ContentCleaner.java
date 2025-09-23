@@ -10,9 +10,9 @@ import org.springframework.util.StringUtils;
 @Component
 public class ContentCleaner {
 
-    public String clean(String html) {
+    public Content clean(String html) {
         if (!StringUtils.hasText(html)) {
-            return "";
+            return new Content("", "");
         }
 
         Document document = Jsoup.parse(html);
@@ -20,7 +20,10 @@ public class ContentCleaner {
         var sanitized = Jsoup.clean(document.html(), Safelist.relaxed());
         var converter = FlexmarkHtmlConverter.builder().build();
 
-        return converter.convert(sanitized);
-//        return Jsoup.parse(sanitized).text().replaceAll("\\s+", " ").trim();
+        return new Content(converter.convert(sanitized),
+                Jsoup.parse(sanitized).text().replaceAll("\\s+", " ").trim());
+    }
+
+    public record Content(String mdContent, String textContent) {
     }
 }

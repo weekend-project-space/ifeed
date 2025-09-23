@@ -12,9 +12,12 @@ import org.bitmagic.ifeed.exception.ApiException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.util.List;
 import java.util.UUID;
+import java.net.URI;
+import java.net.URISyntaxException;
 
 @Service
 @RequiredArgsConstructor
@@ -28,6 +31,14 @@ public class SubscriptionService {
         var normalizedUrl = request.feedUrl().trim();
         var feed = feedRepository.findByUrl(normalizedUrl)
                 .orElseGet(() -> createFeed(normalizedUrl, request));
+
+        if (!StringUtils.hasText(feed.getTitle())) {
+            var resolvedTitle = resolveFeedTitle(request.title(), feed.getSiteUrl(), feed.getUrl());
+            if (!resolvedTitle.equals(feed.getTitle())) {
+                feed.setTitle(resolvedTitle);
+                feed = feedRepository.save(feed);
+            }
+        }
 
         var existing = subscriptionRepository.findByUserAndFeed(user, feed);
         if (existing.isPresent()) {
@@ -79,10 +90,49 @@ public class SubscriptionService {
             siteUrl = feedUrl;
         }
 
+        var title = resolveFeedTitle(request.title(), siteUrl, feedUrl);
+
         return feedRepository.save(Feed.builder()
                 .url(feedUrl)
                 .siteUrl(siteUrl)
-                .title(request.title())
+                .title(title)
                 .build());
+    }
+
+    private String resolveFeedTitle(String requestedTitle, String siteUrl, String feedUrl) {
+        if (StringUtils.hasText(requestedTitle)) {
+            return requestedTitle.trim();
+        }
+
+        var host = extractHost(siteUrl);
+        if (StringUtils.hasText(host)) {
+            return host;
+        }
+
+        host = extractHost(feedUrl);
+        if (StringUtils.hasText(host)) {
+            return host;
+        }
+
+        return "未命名订阅";
+    }
+
+    private String extractHost(String url) {
+        if (!StringUtils.hasText(url)) {
+            return null;
+        }
+        try {
+            var uri = new URI(url.trim());
+            if (StringUtils.hasText(uri.getHost())) {
+                return uri.getHost();
+            }
+            var path = uri.getPath();
+            if (StringUtils.hasText(path)) {
+                return path;
+            }
+        } catch (URISyntaxException ignored) {
+            // fallback to raw url below
+        }
+        return url;
     }
 }

@@ -1,4 +1,13 @@
 package org.bitmagic.ifeed.api.response;
 
-public record SubscriptionResponse(String feedId, String title, String url) {
+import java.time.Instant;
+
+public record SubscriptionResponse(
+        String feedId,
+        String title,
+        String url,
+        String siteUrl,
+        Instant lastFetched,
+        Instant lastUpdated
+) {
 }

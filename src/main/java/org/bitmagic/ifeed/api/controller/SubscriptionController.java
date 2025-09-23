@@ -6,6 +6,7 @@ import org.bitmagic.ifeed.api.request.SubscriptionRequest;
 import org.bitmagic.ifeed.api.response.MessageResponse;
 import org.bitmagic.ifeed.api.response.SubscriptionResponse;
 import org.bitmagic.ifeed.api.util.IdentifierUtils;
+import org.bitmagic.ifeed.domain.entity.Feed;
 import org.bitmagic.ifeed.domain.entity.User;
 import org.bitmagic.ifeed.exception.ApiException;
 import org.bitmagic.ifeed.security.UserPrincipal;
@@ -22,6 +23,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.List;
 
 @RestController
@@ -44,10 +47,23 @@ public class SubscriptionController {
     public ResponseEntity<List<SubscriptionResponse>> list(@AuthenticationPrincipal UserPrincipal principal) {
         var user = resolveUser(principal);
         var subscriptions = subscriptionService.getActiveSubscriptions(user).stream()
-                .map(subscription -> new SubscriptionResponse(
-                        subscription.getFeed().getId().toString(),
-                        subscription.getFeed().getTitle(),
-                        subscription.getFeed().getUrl()))
+                .map(subscription -> {
+                    var feed = subscription.getFeed();
+                    var title = resolveFeedTitle(feed);
+                    var feedUrl = feed.getUrl();
+                    var siteUrl = feed.getSiteUrl();
+                    if (siteUrl == null || siteUrl.isBlank()) {
+                        siteUrl = feedUrl;
+                    }
+                    return new SubscriptionResponse(
+                            feed.getId().toString(),
+                            title,
+                            feedUrl,
+                            siteUrl,
+                            feed.getLastFetched(),
+                            feed.getLastUpdated()
+                    );
+                })
                 .toList();
         return ResponseEntity.ok(subscriptions);
     }
@@ -66,5 +82,43 @@ public class SubscriptionController {
         }
         return authService.findUserById(principal.getId())
                 .orElseThrow(() -> new ApiException(HttpStatus.UNAUTHORIZED, "User not found"));
+    }
+
+    private String resolveFeedTitle(Feed feed) {
+        if (feed == null) {
+            return "未命名订阅";
+        }
+        var title = feed.getTitle();
+        if (title != null && !title.isBlank()) {
+            return title;
+        }
+        var host = extractHost(feed.getSiteUrl());
+        if (host != null && !host.isBlank()) {
+            return host;
+        }
+        host = extractHost(feed.getUrl());
+        if (host != null && !host.isBlank()) {
+            return host;
+        }
+        return "未命名订阅";
+    }
+
+    private String extractHost(String url) {
+        if (url == null || url.isBlank()) {
+            return null;
+        }
+        try {
+            var uri = new URI(url.trim());
+            if (uri.getHost() != null && !uri.getHost().isBlank()) {
+                return uri.getHost();
+            }
+            var path = uri.getPath();
+            if (path != null && !path.isBlank()) {
+                return path;
+            }
+        } catch (URISyntaxException ignored) {
+            return url;
+        }
+        return url;
     }
 }
