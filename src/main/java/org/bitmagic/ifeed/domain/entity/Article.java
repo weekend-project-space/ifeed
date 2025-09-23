@@ -52,6 +52,9 @@ public class Article {
     @Column(name = "enclosure", columnDefinition = "text")
     private String enclosure;
 
+    @Column(name = "thumbnail", columnDefinition = "text")
+    private String thumbnail;
+
     @Column(name = "content", nullable = false, columnDefinition = "text")
     private String content;
 

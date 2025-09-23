@@ -10,6 +10,8 @@ public record ArticleDetailResponse(
         String content,
         String summary,
         String link,
+        String thumbnail,
+        String enclosure,
         @JsonProperty("feedTitle") String feedTitle,
         @JsonProperty("publishedAt") String publishedAt,
         List<String> tags) {

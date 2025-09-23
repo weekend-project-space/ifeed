@@ -26,7 +26,9 @@ public interface ArticleRepository extends JpaRepository<Article, UUID> {
                 a.summary,
                 f.title,
                 a.publishedAt,
-                a.tags)
+                a.tags,
+                a.thumbnail,
+                a.enclosure)
             from Article a
             left join a.feed f
             where (:feedId is null or f.id = :feedId)
@@ -47,7 +49,9 @@ public interface ArticleRepository extends JpaRepository<Article, UUID> {
                 a.summary,
                 f.title,
                 a.publishedAt,
-                a.tags)
+                a.tags,
+                a.thumbnail,
+                a.enclosure)
             from Article a
             left join a.feed f
             where lower(a.title) like :term

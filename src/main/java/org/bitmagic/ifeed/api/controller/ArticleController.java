@@ -62,6 +62,8 @@ public class ArticleController {
                 article.getContent(),
                 article.getSummary(),
                 article.getLink(),
+                article.getThumbnail(),
+                article.getEnclosure(),
                 resolveFeedTitle(article.getFeed() == null ? null : article.getFeed().getTitle()),
                 formatTimestamp(article.getPublishedAt()),
                 tags);
@@ -76,6 +78,8 @@ public class ArticleController {
                 article.title(),
                 article.link(),
                 article.summary(),
+                article.thumbnail(),
+                article.enclosure(),
                 resolveFeedTitle(article.feedTitle()),
                 formatTimestamp(publishedAt),
                 tags,
