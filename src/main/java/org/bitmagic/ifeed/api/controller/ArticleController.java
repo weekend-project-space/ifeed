@@ -23,9 +23,12 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/articles")
@@ -43,9 +46,11 @@ public class ArticleController {
                                                                      @RequestParam(required = false) Integer page,
                                                                      @RequestParam(required = false) Integer size,
                                                                      @RequestParam(required = false) String sort,
-                                                                     @RequestParam(required = false) String feedId) {
+                                                                     @RequestParam(required = false) String feedId,
+                                                                     @RequestParam(required = false, name = "tags") String tags) {
         ensureAuthenticated(principal);
-        var articlePage = articleService.listArticles(page, size, sort, parseFeedId(feedId))
+        var normalizedTags = parseTags(tags);
+        var articlePage = articleService.listArticles(page, size, sort, parseFeedId(feedId), normalizedTags)
                 .map(this::toSummaryResponse);
         return ResponseEntity.ok(articlePage);
     }
@@ -143,5 +148,17 @@ public class ArticleController {
             return null;
         }
         return IdentifierUtils.parseUuid(feedId, "feed id");
+    }
+
+    private java.util.Set<String> parseTags(String tags) {
+        if (tags == null || tags.isBlank()) {
+            return Collections.emptySet();
+        }
+        var normalized = Arrays.stream(tags.split(","))
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .map(String::toLowerCase)
+                .collect(Collectors.toCollection(LinkedHashSet::new));
+        return normalized.isEmpty() ? Collections.emptySet() : normalized;
     }
 }

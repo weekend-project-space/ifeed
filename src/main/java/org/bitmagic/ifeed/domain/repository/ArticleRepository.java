@@ -32,14 +32,18 @@ public interface ArticleRepository extends JpaRepository<Article, UUID> {
             from Article a
             left join a.feed f
             where (:feedId is null or f.id = :feedId)
+              and (:tagPattern is null or lower(coalesce(a.tags, '')) like :tagPattern)
             """,
             countQuery = """
                     select count(a)
                     from Article a
                     left join a.feed f
                     where (:feedId is null or f.id = :feedId)
+                      and (:tagPattern is null or lower(coalesce(a.tags, '')) like :tagPattern)
                     """)
-    Page<ArticleSummaryView> findArticleSummaries(@Param("feedId") UUID feedId, Pageable pageable);
+    Page<ArticleSummaryView> findArticleSummaries(@Param("feedId") UUID feedId,
+                                                  @Param("tagPattern") String tagPattern,
+                                                  Pageable pageable);
 
     @Query(value = """
             select new org.bitmagic.ifeed.domain.projection.ArticleSummaryView(

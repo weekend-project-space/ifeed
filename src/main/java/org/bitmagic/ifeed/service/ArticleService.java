@@ -12,6 +12,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
+import java.util.Set;
 import java.util.UUID;
 
 @Service
@@ -23,9 +24,10 @@ public class ArticleService {
 
     private final ArticleRepository articleRepository;
 
-    public Page<ArticleSummaryView> listArticles(Integer page, Integer size, String sort, UUID feedId) {
+    public Page<ArticleSummaryView> listArticles(Integer page, Integer size, String sort, UUID feedId, Set<String> tags) {
         var pageable = buildPageable(page, size, sort);
-        return articleRepository.findArticleSummaries(feedId, pageable);
+        var tagPattern = buildTagPattern(tags);
+        return articleRepository.findArticleSummaries(feedId, tagPattern, pageable);
     }
 
     public Article getArticle(UUID articleId) {
@@ -81,5 +83,21 @@ public class ArticleService {
         }
 
         return Sort.by(direction, property);
+    }
+
+    private String buildTagPattern(Set<String> tags) {
+        if (tags == null || tags.isEmpty()) {
+            return null;
+        }
+        var first = tags.stream()
+                .filter(tag -> tag != null && !tag.isBlank())
+                .map(String::trim)
+                .findFirst()
+                .orElse(null);
+        if (first == null) {
+            return null;
+        }
+        var normalized = first.toLowerCase();
+        return "%\"" + normalized.replace("\"", "\"\"") + "\"%";
     }
 }
