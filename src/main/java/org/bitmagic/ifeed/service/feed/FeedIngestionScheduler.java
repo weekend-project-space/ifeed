@@ -13,10 +13,10 @@ public class FeedIngestionScheduler {
     private final FeedIngestionService ingestionService;
 
     @Scheduled(initialDelayString = "${rss.fetcher.initial-delay:PT10S}",
-               fixedDelayString = "${rss.fetcher.fixed-delay:PT30M}")
+            fixedDelayString = "${rss.fetcher.fixed-delay:PT30M}")
     public void refreshFeeds() {
         var feedIds = ingestionService.getFeedIds();
         log.debug("Starting scheduled ingestion for {} feeds", feedIds.size());
-        feedIds.forEach(ingestionService::ingestFeed);
+        feedIds.parallelStream().forEach(ingestionService::ingestFeed);
     }
 }
