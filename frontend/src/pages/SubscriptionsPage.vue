@@ -1,6 +1,6 @@
 <template>
   <div class="space-y-8">
-    <section class="rounded-3xl border border-outline/40 bg-surface-container p-6 shadow-md-elevated">
+    <section class="rounded-3xl border border-outline/40 bg-surface-container p-6">
       <h2 class="text-lg font-semibold text-text">添加新的订阅源</h2>
       <p class="mt-1 text-sm text-text-secondary">粘贴 RSS 地址或网站链接，我们会自动检测支持的内容。</p>
       <form class="mt-4 flex flex-col gap-3 md:flex-row" @submit.prevent="handleAdd">
@@ -9,11 +9,11 @@
           type="url"
           required
           placeholder="https://example.com/feed.xml"
-          class="flex-1 rounded-full border border-outline/50 bg-surface px-4 py-3 text-sm text-text shadow-inner transition focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+          class="flex-1 rounded-full border border-outline/50 bg-surface px-4 py-3 text-sm text-text transition focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
         />
         <button
           type="submit"
-          class="inline-flex items-center justify-center rounded-full bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground shadow-md-elevated transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
+          class="inline-flex items-center justify-center rounded-full bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
           :disabled="subscriptionsStore.submitting"
         >
           {{ subscriptionsStore.submitting ? '添加中...' : '添加订阅' }}
@@ -22,7 +22,7 @@
       <p v-if="subscriptionsStore.error" class="mt-3 text-sm text-danger">{{ subscriptionsStore.error }}</p>
     </section>
 
-    <section class="rounded-3xl border border-outline/40 bg-surface-container shadow-md-elevated">
+    <section class="rounded-3xl border border-outline/40 bg-surface-container">
       <header class="flex items-center justify-between border-b border-outline/30 px-6 py-4">
         <div>
           <h2 class="text-lg font-semibold text-text">我的订阅</h2>

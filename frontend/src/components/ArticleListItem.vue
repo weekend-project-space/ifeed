@@ -1,13 +1,13 @@
 <template>
   <article
-    class="group relative cursor-pointer overflow-hidden rounded-3xl border border-primary/15 bg-surface-container p-6 shadow-md-elevated transition hover:-translate-y-1 hover:border-primary/40 hover:shadow-xl"
+    class="group relative cursor-pointer overflow-hidden rounded-3xl border border-primary/15 bg-surface-container p-6 transition hover:-translate-y-1 hover:border-primary/40"
     @click="handleSelect"
   >
     <div class="pointer-events-none absolute inset-0 bg-gradient-to-br from-primary/0 via-primary/5 to-primary/10 opacity-0 transition duration-300 group-hover:opacity-100"></div>
     <div class="relative flex flex-col gap-4 sm:flex-row">
       <figure
         v-if="article.thumbnail"
-        class="overflow-hidden rounded-2xl border border-primary/15 bg-surface-variant shadow-inner sm:h-28 sm:w-36"
+        class="overflow-hidden rounded-2xl border border-primary/15 bg-surface-variant sm:h-28 sm:w-36"
       >
         <img
           :src="article.thumbnail"
@@ -28,7 +28,7 @@
           </div>
           <button
             class="inline-flex items-center gap-2 rounded-full border border-primary/15 bg-surface px-3 py-1.5 text-xs font-semibold text-text-secondary transition hover:bg-primary/10 hover:text-primary"
-            :class="article.collected ? 'border-transparent bg-primary text-primary-foreground shadow-sm' : ''"
+            :class="article.collected ? 'border-transparent bg-primary text-primary-foreground' : ''"
             aria-label="收藏"
             @click.stop="handleToggleFavorite"
           >

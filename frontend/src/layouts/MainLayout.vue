@@ -20,7 +20,7 @@
             :to="{ name: 'home' }"
             class="flex items-center gap-2 text-lg font-semibold tracking-tight text-text"
           >
-            <span class="inline-flex h-9 w-9 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-md-elevated">
+            <span class="inline-flex h-9 w-9 items-center justify-center rounded-2xl bg-primary text-primary-foreground">
               i
             </span>
             <span class="leading-none">iFeed</span>
@@ -33,7 +33,7 @@
               v-model="search"
               type="search"
               placeholder="搜索文章、标签、订阅..."
-              class="w-full rounded-full border border-outline/40 bg-surface-container pl-12 pr-28 py-3 text-sm text-text shadow-inner focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+              class="w-full rounded-full border border-outline/40 bg-surface-container pl-12 pr-28 py-3 text-sm text-text focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
               @keyup.enter="handleSearch"
             />
             <span class="pointer-events-none absolute left-5 top-1/2 -translate-y-1/2 text-text-muted">
@@ -72,7 +72,7 @@
 
           <RouterLink
             :to="{ name: 'subscriptions' }"
-            class="hidden items-center gap-2 rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-md-elevated transition hover:bg-primary/90 sm:flex"
+            class="hidden items-center gap-2 rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition hover:bg-primary/90 sm:flex"
           >
             <span class="text-lg leading-none">＋</span>
             添加订阅
@@ -111,7 +111,7 @@
             v-model="search"
             type="search"
             placeholder="搜索文章、标签、订阅..."
-            class="w-full rounded-full border border-outline/40 bg-surface-container pl-12 pr-12 py-3 text-sm text-text shadow-inner focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+            class="w-full rounded-full border border-outline/40 bg-surface-container pl-12 pr-12 py-3 text-sm text-text focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
             @keyup.enter="handleSearch"
           />
           <span class="pointer-events-none absolute left-5 top-1/2 -translate-y-1/2 text-text-muted">
@@ -146,7 +146,7 @@
 
     <div class="flex flex-1 overflow-hidden">
       <aside
-        class="fixed inset-y-0 left-0 z-40 flex w-72 flex-col border-r border-outline/40 bg-surface py-6 shadow-xl transition-transform duration-200 ease-out lg:top-[72px] lg:translate-x-0"
+        class="fixed inset-y-0 left-0 z-40 flex w-72 flex-col border-r border-outline/40 bg-surface py-6 transition-transform duration-200 ease-out lg:top-[72px] lg:translate-x-0"
         :class="mobileNavOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'"
       >
         <div class="px-6 pb-4">
@@ -157,9 +157,9 @@
             v-for="item in navItems"
             :key="item.name"
             :to="item.to"
-            class="group relative flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-medium transition"
+            class="group relative flex items-center gap-3 rounded-2xl border border-transparent px-4 py-3 text-sm font-medium transition"
             :class="isActive(item.name)
-              ? 'bg-primary/15 text-primary shadow-md-elevated'
+              ? 'border-primary/30 bg-primary/10 text-primary'
               : 'text-text-secondary hover:bg-surface-variant/70 hover:text-text'"
             @click="mobileNavOpen = false"
           >
@@ -177,7 +177,7 @@
           </RouterLink>
         </nav>
         <div class="mt-auto px-6 pt-6 lg:hidden">
-          <div class="rounded-2xl border border-outline/40 bg-surface-container px-4 py-4 shadow-md-elevated">
+          <div class="rounded-2xl border border-outline/40 bg-surface-container px-4 py-4">
             <div class="flex items-center gap-3">
               <div class="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-primary text-sm font-semibold text-primary-foreground">
                 {{ userInitials }}

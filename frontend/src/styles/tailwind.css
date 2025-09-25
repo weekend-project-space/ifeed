@@ -56,6 +56,6 @@
   input,
   textarea,
   select {
-    @apply bg-surface-container border border-outline/60 text-text shadow-sm focus:border-primary focus:ring-primary/40;
+    @apply bg-surface-container border border-outline/60 text-text focus:border-primary focus:ring-primary/40;
   }
 }

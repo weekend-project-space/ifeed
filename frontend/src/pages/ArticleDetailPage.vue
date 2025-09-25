@@ -10,14 +10,14 @@
     <div class="flex-1">
       <div
         v-if="articlesStore.loading"
-        class="w-full rounded-3xl border border-outline/40 bg-surface-container p-12 text-center text-text-muted shadow-md-elevated"
+        class="w-full rounded-3xl border border-outline/40 bg-surface-container p-12 text-center text-text-muted"
       >
         正在加载文章...
       </div>
 
       <div
         v-else-if="article"
-        class="w-full space-y-8 rounded-3xl border border-outline/40 bg-surface-container p-8 shadow-md-elevated"
+        class="w-full space-y-8 rounded-3xl border border-outline/40 bg-surface-container p-8"
       >
         <header class="space-y-5">
           <div class="flex flex-wrap items-start justify-between gap-4">
@@ -45,7 +45,7 @@
             </button>
           </div>
         </header>
-        <section class="rounded-2xl border border-outline/30 bg-surface-variant/70 p-5 shadow-inner leading-relaxed text-text-secondary">
+        <section class="rounded-2xl border border-outline/30 bg-surface-variant/70 p-5 leading-relaxed text-text-secondary">
           <h2 class="mb-2 text-sm font-semibold uppercase tracking-wide text-text-muted">AI 摘要</h2>
           <p class="text-base text-text">{{ article.summary }}</p>
         </section>
@@ -79,7 +79,7 @@
 
       <div
         v-else
-        class="w-full rounded-3xl border border-outline/40 bg-surface-container p-12 text-center text-text-muted shadow-md-elevated"
+        class="w-full rounded-3xl border border-outline/40 bg-surface-container p-12 text-center text-text-muted"
       >
         未找到文章或加载失败。
       </div>
