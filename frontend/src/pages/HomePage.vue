@@ -3,7 +3,7 @@
     <template v-if="!isSearching">
       <section class="grid gap-6 md:grid-cols-3">
         <div
-          class="relative overflow-hidden rounded-3xl border border-primary/20 bg-surface p-7 shadow-md-elevated transition md:col-span-2">
+          class="relative overflow-hidden rounded-2xl border border-outline/30 bg-surface-container px-8 py-7 transition md:col-span-2">
           <div class="pointer-events-none absolute -left-16 top-4 h-44 w-44 rounded-full bg-primary/10 blur-3xl"></div>
           <div
             class="pointer-events-none absolute -right-24 bottom-[-40px] h-56 w-56 rounded-full bg-primary/10 blur-3xl">
@@ -22,8 +22,7 @@
                 {{ highlight.description }}
               </p>
             </div>
-            <div
-              class="rounded-2xl border border-primary/10 bg-surface-container/90 p-4 text-sm leading-relaxed text-text-secondary shadow-inner">
+            <div class="rounded-xl border border-outline/20 bg-surface p-4 text-sm leading-relaxed text-text-secondary">
               {{ highlight.summary }}
             </div>
             <div class="flex flex-wrap items-center justify-between gap-3">
@@ -35,7 +34,7 @@
                 </button>
               </div>
               <button v-if="highlight.id"
-                class="inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-sm transition hover:-translate-y-0.5 hover:shadow"
+                class="inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary/40"
                 @click="handleSelect(highlight.id)">
                 开始阅读
                 <svg class="h-4 w-4" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6">
@@ -45,30 +44,28 @@
             </div>
           </div>
         </div>
-        <div
-          class="flex flex-col justify-between rounded-3xl border border-primary/30 bg-gradient-to-br from-primary/90 via-primary/70 to-primary/60 p-6 text-primary-foreground shadow-lg">
+        <div class="flex flex-col justify-between rounded-2xl border border-primary/25 bg-primary/10 p-6 text-primary">
           <div class="space-y-2">
-            <h3 class="text-lg font-semibold">今日阅读进度</h3>
-            <p class="text-sm text-primary-foreground/80">你已收藏 {{ stats.savedCount }} 篇文章。</p>
+            <h3 class="text-lg font-semibold text-primary/90">今日阅读进度</h3>
+            <p class="text-sm text-primary/80">你已收藏 {{ stats.savedCount }} 篇文章。</p>
           </div>
           <div class="mt-6 space-y-4">
-            <div class="text-4xl font-bold tracking-tight">{{ stats.readGoalPercent }}%</div>
+            <div class="text-4xl font-bold tracking-tight text-primary/90">{{ stats.readGoalPercent }}%</div>
             <div class="flex items-center gap-3">
-              <div class="h-2 flex-1 overflow-hidden rounded-full bg-primary-foreground/25">
-                <div class="h-full rounded-full bg-primary-foreground" :style="{ width: `${stats.readGoalPercent}%` }">
+              <div class="h-2 flex-1 overflow-hidden rounded-full bg-primary/20">
+                <div class="h-full rounded-full bg-primary" :style="{ width: `${stats.readGoalPercent}%` }">
                 </div>
               </div>
-              <span class="text-xs font-medium text-primary-foreground/80">目标 8 篇</span>
+              <span class="text-xs font-medium text-primary/80">目标 8 篇</span>
             </div>
-            <p v-if="stats.remaining > 0" class="text-xs text-primary-foreground/70">距离完成还差 {{ stats.remaining }}
+            <p v-if="stats.remaining > 0" class="text-xs text-primary/70">距离完成还差 {{ stats.remaining }}
               篇，继续加油！</p>
-            <p v-else class="text-xs text-primary-foreground/70">今日目标已达成，看看 AI 还推荐了什么。</p>
+            <p v-else class="text-xs text-primary/70">今日目标已达成，看看 AI 还推荐了什么。</p>
           </div>
         </div>
       </section>
 
-      <section
-        class="space-y-6 rounded-3xl border border-primary/15 bg-surface p-7 shadow-md-elevated backdrop-blur-xs">
+      <section class="space-y-6 rounded-2xl border border-outline/30 bg-surface-container px-7 py-6 backdrop-blur-xs">
         <div class="flex flex-wrap items-center justify-between gap-4">
           <div class="space-y-1">
             <h2 class="text-2xl font-semibold text-text">最新推荐</h2>
@@ -123,22 +120,21 @@
     </template>
 
     <template v-else>
-      <section class="space-y-6 rounded-3xl border border-primary/15 bg-surface p-7 shadow-md-elevated">
+      <section class="space-y-6 rounded-2xl border border-outline/30 bg-surface-container px-7 py-6">
         <div class="flex flex-wrap items-center justify-between gap-4">
           <div class="space-y-1">
             <h2 class="text-2xl font-semibold text-text">搜索 “{{ searchQuery }}” 的结果</h2>
             <p class="text-sm text-text-secondary">共 {{ searchTotalText }}，当前第 {{ currentPage }} 页。</p>
           </div>
           <div class="flex flex-wrap items-center gap-3 text-sm">
-            <div
-              class="flex rounded-full border border-primary/15 bg-surface-variant px-1 py-1 font-medium text-text-muted">
+            <div class="flex rounded-full border border-outline/20 bg-surface-variant px-1 py-1 text-text-muted">
               <button type="button" class="rounded-full px-4 py-1 transition"
-                :class="searchType === 'keyword' ? 'bg-surface text-text shadow' : ''"
+                :class="searchType === 'keyword' ? 'bg-primary/15 text-primary' : 'text-text-muted'"
                 @click="setSearchType('keyword')">
                 关键词匹配
               </button>
               <button type="button" class="rounded-full px-4 py-1 transition"
-                :class="searchType === 'semantic' ? 'bg-surface text-text shadow' : ''"
+                :class="searchType === 'semantic' ? 'bg-primary/15 text-primary' : 'text-text-muted'"
                 @click="setSearchType('semantic')">
                 语义匹配
               </button>
@@ -155,15 +151,15 @@
             @toggle-favorite="handleToggleFavorite" @select-tag="handleSelectTag" />
           <p v-if="searchError" class="mt-4 text-sm text-danger">{{ searchError }}</p>
         </div>
-        <div class="flex items-center justify-between border-t border-primary/10 pt-4 text-sm text-text-secondary">
+        <div class="flex items-center justify-between border-t border-outline/20 pt-4 text-sm text-text-secondary">
           <button
-            class="rounded-full border border-primary/20 px-3 py-2 font-medium text-primary transition hover:bg-primary/10 disabled:cursor-not-allowed disabled:border-primary/10 disabled:text-text-muted disabled:opacity-70"
+            class="rounded-full border border-outline/40 px-3 py-2 font-medium text-primary transition hover:bg-primary/10 disabled:cursor-not-allowed disabled:border-outline/30 disabled:text-text-muted disabled:opacity-70"
             :disabled="!hasPrevious" @click="prevPage">
             上一页
           </button>
           <span>第 {{ currentPage }} 页</span>
           <button
-            class="rounded-full border border-primary/20 px-3 py-2 font-medium text-primary transition hover:bg-primary/10 disabled:cursor-not-allowed disabled:border-primary/10 disabled:text-text-muted disabled:opacity-70"
+            class="rounded-full border border-outline/40 px-3 py-2 font-medium text-primary transition hover:bg-primary/10 disabled:cursor-not-allowed disabled:border-outline/30 disabled:text-text-muted disabled:opacity-70"
             :disabled="!hasNext" @click="nextPage">
             下一页
           </button>
@@ -376,7 +372,7 @@ const loadData = async () => {
     if (results.value.length) {
       searchStore.clear();
     }
-    tasks.push(articlesStore.fetchArticles({ page: routePage.value, feedId: activeFeedId.value, tags: activeTag.value }));
+    tasks.push(articlesStore.fetchArticles({ size: 20, page: routePage.value, feedId: activeFeedId.value, tags: activeTag.value }));
   }
 
   try {

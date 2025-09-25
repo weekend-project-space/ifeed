@@ -1,16 +1,18 @@
 <template>
   <section class="space-y-4">
-    <ArticleListItem
-      v-for="item in items"
-      :key="item.id"
-      :article="item"
-      @select="emitSelect"
-      @toggle-favorite="emitToggleFavorite"
-      @select-tag="emitSelectTag"
-    />
+    <div v-if="items.length" class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+      <ArticleListItem
+        v-for="item in items"
+        :key="item.id"
+        :article="item"
+        @select="emitSelect"
+        @toggle-favorite="emitToggleFavorite"
+        @select-tag="emitSelectTag"
+      />
+    </div>
     <div
-      v-if="!items.length"
-      class="flex flex-col items-center justify-center gap-3 rounded-3xl border border-primary/15 bg-surface py-16 text-sm text-text-muted"
+      v-else
+      class="flex flex-col items-center justify-center gap-3 rounded-2xl border border-outline/30 bg-surface py-16 text-sm text-text-muted"
     >
       <svg class="h-10 w-10 text-primary/40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
         <path

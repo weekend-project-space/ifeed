@@ -1,6 +1,6 @@
 <template>
   <div class="space-y-6">
-    <section class="rounded-3xl border border-outline/40 bg-surface-container shadow-md-elevated">
+    <section class="rounded-2xl border border-outline/30 bg-surface-container">
       <header class="flex flex-wrap items-center justify-between gap-3 border-b border-outline/30 px-6 py-4">
         <div>
           <h2 class="text-lg font-semibold text-text">我的收藏</h2>
