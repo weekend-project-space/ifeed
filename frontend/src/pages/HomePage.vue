@@ -1,76 +1,110 @@
 <template>
-  <div class="space-y-8">
+  <div class="space-y-10">
     <template v-if="!isSearching">
       <section class="grid gap-6 md:grid-cols-3">
-        <div class="flex flex-col gap-4 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm md:col-span-2">
-          <div>
-            <p class="text-sm font-semibold text-blue-500">今日精选</p>
-            <h2 class="text-2xl font-semibold leading-tight text-slate-900">
-              {{ highlight.title }}
-            </h2>
-            <p class="text-sm text-slate-500">
-              {{ highlight.description }}
-            </p>
-          </div>
-          <div class="min-h-[88px] rounded-2xl bg-slate-50 p-4 text-sm leading-relaxed text-slate-600">
-            {{ highlight.summary }}
-          </div>
-          <div class="flex flex-wrap gap-2 text-xs">
-            <button
-              v-for="tag in highlight.tags"
-              :key="tag"
-              type="button"
-              class="rounded-full bg-blue-50 px-3 py-1 text-blue-600 hover:bg-blue-100 transition"
-              @click="handleSelectTag(tag)"
-            >
-              #{{ tag }}
-            </button>
+        <div class="relative overflow-hidden rounded-3xl border border-primary/20 bg-surface p-7 shadow-md-elevated transition md:col-span-2">
+          <div class="pointer-events-none absolute -left-16 top-4 h-44 w-44 rounded-full bg-primary/10 blur-3xl"></div>
+          <div class="pointer-events-none absolute -right-24 bottom-[-40px] h-56 w-56 rounded-full bg-primary/10 blur-3xl"></div>
+          <div class="relative flex flex-col gap-6">
+            <div class="space-y-3">
+              <span class="inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-primary">
+                <span class="h-1.5 w-1.5 rounded-full bg-primary"></span>
+                今日精选
+              </span>
+              <h2 class="text-3xl font-semibold leading-tight text-text">
+                {{ highlight.title }}
+              </h2>
+              <p class="text-sm text-text-secondary">
+                {{ highlight.description }}
+              </p>
+            </div>
+            <div class="rounded-2xl border border-primary/10 bg-surface-container/90 p-4 text-sm leading-relaxed text-text-secondary shadow-inner">
+              {{ highlight.summary }}
+            </div>
+            <div class="flex flex-wrap items-center justify-between gap-3">
+              <div class="flex flex-wrap gap-2 text-xs text-primary">
+                <button
+                  v-for="tag in highlight.tags"
+                  :key="tag"
+                  type="button"
+                  class="rounded-full bg-primary/10 px-3 py-1 font-medium transition hover:bg-primary/20"
+                  @click="handleSelectTag(tag)"
+                >
+                  #{{ tag }}
+                </button>
+              </div>
+              <button
+                v-if="highlight.id"
+                class="inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-sm transition hover:-translate-y-0.5 hover:shadow"
+                @click="handleSelect(highlight.id)"
+              >
+                开始阅读
+                <svg class="h-4 w-4" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M7 4l6 6-6 6" />
+                </svg>
+              </button>
+            </div>
           </div>
         </div>
-        <div class="flex flex-col justify-between rounded-3xl bg-gradient-to-br from-blue-500 to-indigo-600 p-6 text-white shadow-lg">
-          <div>
+        <div class="flex flex-col justify-between rounded-3xl border border-primary/30 bg-gradient-to-br from-primary/90 via-primary/70 to-primary/60 p-6 text-primary-foreground shadow-lg">
+          <div class="space-y-2">
             <h3 class="text-lg font-semibold">今日阅读进度</h3>
-            <p class="mt-2 text-sm text-blue-100">你已收藏 {{ stats.savedCount }} 篇文章。</p>
+            <p class="text-sm text-primary-foreground/80">你已收藏 {{ stats.savedCount }} 篇文章。</p>
           </div>
-          <div class="mt-6">
-            <div class="text-4xl font-bold">{{ stats.readGoalPercent }}%</div>
-            <p class="mt-1 text-sm text-blue-100">完成今日 AI 推荐阅读目标</p>
+          <div class="mt-6 space-y-4">
+            <div class="text-4xl font-bold tracking-tight">{{ stats.readGoalPercent }}%</div>
+            <div class="flex items-center gap-3">
+              <div class="h-2 flex-1 overflow-hidden rounded-full bg-primary-foreground/25">
+                <div class="h-full rounded-full bg-primary-foreground" :style="{ width: `${stats.readGoalPercent}%` }"></div>
+              </div>
+              <span class="text-xs font-medium text-primary-foreground/80">目标 8 篇</span>
+            </div>
+            <p v-if="stats.remaining > 0" class="text-xs text-primary-foreground/70">距离完成还差 {{ stats.remaining }} 篇，继续加油！</p>
+            <p v-else class="text-xs text-primary-foreground/70">今日目标已达成，看看 AI 还推荐了什么。</p>
           </div>
         </div>
       </section>
 
-      <section class="space-y-4 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-        <div class="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <h2 class="text-xl font-semibold text-slate-900">最新推荐</h2>
-            <p class="text-sm text-slate-500">来自你的订阅源与 AI 推荐的最新文章。</p>
+      <section class="space-y-6 rounded-3xl border border-primary/15 bg-surface p-7 shadow-md-elevated backdrop-blur-xs">
+        <div class="flex flex-wrap items-center justify-between gap-4">
+          <div class="space-y-1">
+            <h2 class="text-2xl font-semibold text-text">最新推荐</h2>
+            <p class="text-sm text-text-secondary">来自你的订阅源与 AI 智能推荐的精选文章。</p>
           </div>
-          <div class="flex gap-2 text-sm text-slate-500">
+          <div class="flex gap-2 text-sm text-primary">
             <button
-              class="rounded-full border border-slate-200 px-3 py-1.5 transition hover:border-blue-400 hover:text-blue-600"
+              class="inline-flex items-center gap-2 rounded-full border border-primary/20 px-4 py-2 font-medium transition hover:bg-primary/10"
               @click="refresh"
             >
+              <svg class="h-4 w-4" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M4.5 8.5A5.5 5.5 0 0 1 10 3a5.5 5.5 0 0 1 4.75 2.75M15.5 11.5A5.5 5.5 0 0 1 10 17a5.5 5.5 0 0 1-4.75-2.75"
+                />
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15.5 5.75V3h-2.75M4.5 14.25V17h2.75" />
+              </svg>
               刷新
             </button>
           </div>
         </div>
-        <div v-if="articlesLoading" class="py-20 text-center text-slate-400">正在加载文章...</div>
+        <div v-if="articlesLoading" class="py-20 text-center text-text-muted">正在加载文章...</div>
         <div v-else>
           <div
             v-if="activeFeedInfo"
-            class="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-blue-50 px-4 py-2 text-sm text-blue-700"
+            class="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-primary/20 bg-primary/10 px-4 py-2 text-sm text-primary"
           >
             <span>
               当前筛选：{{ activeFeedInfo.title || activeFeedInfo.siteUrl || activeFeedInfo.url }}
             </span>
-            <button class="text-blue-600 hover:underline" @click="clearFeedFilter">查看全部文章</button>
+            <button class="font-medium text-primary underline-offset-4 hover:underline" @click="clearFeedFilter">查看全部文章</button>
           </div>
           <div
             v-if="activeTag"
-            class="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-emerald-50 px-4 py-2 text-sm text-emerald-700"
+            class="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-primary/15 bg-surface-variant px-4 py-2 text-sm text-text"
           >
             <span>标签筛选：#{{ activeTag }}</span>
-            <button class="text-emerald-600 hover:underline" @click="clearTagFilter">清除标签</button>
+            <button class="font-medium text-primary hover:underline" @click="clearTagFilter">清除标签</button>
           </div>
           <ArticleList
             :items="recommendedArticles"
@@ -78,11 +112,11 @@
             @toggle-favorite="handleToggleFavorite"
             @select-tag="handleSelectTag"
           />
-          <p v-if="articleError" class="mt-4 text-sm text-red-500">{{ articleError }}</p>
+          <p v-if="articleError" class="mt-4 text-sm text-danger">{{ articleError }}</p>
         </div>
-        <div class="flex items-center justify-between border-t border-slate-100 pt-4 text-sm text-slate-500">
+        <div class="flex items-center justify-between border-t border-primary/10 pt-4 text-sm text-text-secondary">
           <button
-            class="rounded-lg border border-slate-200 px-3 py-2 disabled:cursor-not-allowed disabled:opacity-50"
+            class="rounded-full border border-primary/20 px-3 py-2 font-medium text-primary transition hover:bg-primary/10 disabled:cursor-not-allowed disabled:border-primary/10 disabled:text-text-muted disabled:opacity-70"
             :disabled="!hasPrevious.value"
             @click="prevPage"
           >
@@ -90,7 +124,7 @@
           </button>
           <span>第 {{ currentPage }} 页</span>
           <button
-            class="rounded-lg border border-slate-200 px-3 py-2 disabled:cursor-not-allowed disabled:opacity-50"
+            class="rounded-full border border-primary/20 px-3 py-2 font-medium text-primary transition hover:bg-primary/10 disabled:cursor-not-allowed disabled:border-primary/10 disabled:text-text-muted disabled:opacity-70"
             :disabled="!hasNext.value"
             @click="nextPage"
           >
@@ -101,18 +135,18 @@
     </template>
 
     <template v-else>
-      <section class="space-y-5 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+      <section class="space-y-6 rounded-3xl border border-primary/15 bg-surface p-7 shadow-md-elevated">
         <div class="flex flex-wrap items-center justify-between gap-4">
-          <div>
-            <h2 class="text-xl font-semibold text-slate-900">搜索 “{{ searchQuery }}” 的结果</h2>
-            <p class="text-sm text-slate-500">共 {{ searchTotalText }}，当前第 {{ currentPage }} 页。</p>
+          <div class="space-y-1">
+            <h2 class="text-2xl font-semibold text-text">搜索 “{{ searchQuery }}” 的结果</h2>
+            <p class="text-sm text-text-secondary">共 {{ searchTotalText }}，当前第 {{ currentPage }} 页。</p>
           </div>
-          <div class="flex flex-wrap items-center gap-3">
-            <div class="flex rounded-full border border-slate-200 bg-slate-100 p-1 text-sm font-medium text-slate-600">
+          <div class="flex flex-wrap items-center gap-3 text-sm">
+            <div class="flex rounded-full border border-primary/15 bg-surface-variant px-1 py-1 font-medium text-text-muted">
               <button
                 type="button"
                 class="rounded-full px-4 py-1 transition"
-                :class="searchType === 'keyword' ? 'bg-white text-slate-900 shadow' : ''"
+                :class="searchType === 'keyword' ? 'bg-surface text-text shadow' : ''"
                 @click="setSearchType('keyword')"
               >
                 关键词匹配
@@ -120,19 +154,19 @@
               <button
                 type="button"
                 class="rounded-full px-4 py-1 transition"
-                :class="searchType === 'semantic' ? 'bg-white text-slate-900 shadow' : ''"
+                :class="searchType === 'semantic' ? 'bg-surface text-text shadow' : ''"
                 @click="setSearchType('semantic')"
               >
                 语义匹配
               </button>
             </div>
-            <button class="text-sm text-slate-400 transition hover:text-slate-600" @click="clearSearch">
+            <button class="text-sm font-medium text-primary transition hover:underline" @click="clearSearch">
               返回推荐
             </button>
           </div>
         </div>
 
-        <div v-if="searchLoading" class="py-20 text-center text-slate-400">正在搜索...</div>
+        <div v-if="searchLoading" class="py-20 text-center text-text-muted">正在搜索...</div>
         <div v-else>
           <ArticleList
             :items="searchArticleItems"
@@ -141,11 +175,11 @@
             @toggle-favorite="handleToggleFavorite"
             @select-tag="handleSelectTag"
           />
-          <p v-if="searchError" class="mt-4 text-sm text-red-500">{{ searchError }}</p>
+          <p v-if="searchError" class="mt-4 text-sm text-danger">{{ searchError }}</p>
         </div>
-        <div class="flex items-center justify-between border-t border-slate-100 pt-4 text-sm text-slate-500">
+        <div class="flex items-center justify-between border-t border-primary/10 pt-4 text-sm text-text-secondary">
           <button
-            class="rounded-lg border border-slate-200 px-3 py-2 disabled:cursor-not-allowed disabled:opacity-50"
+            class="rounded-full border border-primary/20 px-3 py-2 font-medium text-primary transition hover:bg-primary/10 disabled:cursor-not-allowed disabled:border-primary/10 disabled:text-text-muted disabled:opacity-70"
             :disabled="!hasPrevious.value"
             @click="prevPage"
           >
@@ -153,7 +187,7 @@
           </button>
           <span>第 {{ currentPage }} 页</span>
           <button
-            class="rounded-lg border border-slate-200 px-3 py-2 disabled:cursor-not-allowed disabled:opacity-50"
+            class="rounded-full border border-primary/20 px-3 py-2 font-medium text-primary transition hover:bg-primary/10 disabled:cursor-not-allowed disabled:border-primary/10 disabled:text-text-muted disabled:opacity-70"
             :disabled="!hasNext.value"
             @click="nextPage"
           >
@@ -280,36 +314,45 @@ const searchArticleItems = computed(() =>
 const displayedArticles = computed(() => (isSearching.value ? searchArticleItems.value : recommendedArticles.value));
 
 const highlight = computed(() => {
-  const first = items.value[0];
-  if (!first) {
+  const featured = items.value[0];
+  if (featured) {
     return {
-      title: 'AI 关注你的兴趣，实时推荐高价值内容',
-      description: 'AI 会根据你的阅读行为为你推送值得关注的主题。',
-      summary: '开始添加订阅源，让系统为你构建专属信息流。',
-      tags: ['AI 摘要', '个性化推荐', '阅读效率']
+      id: featured.id,
+      title: featured.title ?? '今日推荐',
+      description: `${featured.feedTitle ?? '推荐来源'} · ${featured.timeAgo}`,
+      summary: featured.summary ?? 'AI 正在为你准备更精彩的内容。',
+      tags: featured.tags.length ? featured.tags.slice(0, 4) : ['AI 推荐']
     };
   }
+  const subscriptionCount = subscriptionItems.value.length;
   return {
-    title: first.title,
-    description: `${first.feedTitle} · ${first.timeAgo}`,
-    summary: first.summary,
-    tags: first.tags.length ? first.tags : ['AI 推荐']
+    id: null,
+    title: 'AI 智能摘要助力高效阅读',
+    description: subscriptionCount
+      ? `根据你订阅的 ${subscriptionCount} 个源，我们为你总结了今日最值得关注的资讯。`
+      : '添加订阅源后，我们将每日为你推送精选文章与智能摘要。',
+    summary: '立即开始阅读，收藏值得反复品读的内容，让知识顺畅流入你的大脑。',
+    tags: ['AI', '生产力', '行业趋势', '智能推荐']
   };
 });
 
-const stats = computed(() => ({
-  savedCount: collectionItems.value.length,
-  readGoalPercent: Math.min(100, collectionItems.value.length * 10 + (total.value ?? recommendedArticles.value.length) * 2)
-}));
+const stats = computed(() => {
+  const savedCount = collectionItems.value.length;
+  const totalGoal = 8;
+  const readGoalPercent = Math.min(100, Math.round((savedCount / totalGoal) * 100));
+  const remaining = Math.max(totalGoal - savedCount, 0);
+  return {
+    savedCount,
+    readGoalPercent,
+    remaining
+  };
+});
 
 const currentPage = computed(() => (isSearching.value ? searchPage.value : page.value));
 const hasNext = computed(() => (isSearching.value ? searchHasNextPage.value : hasNextPage.value));
 const hasPrevious = computed(() => (isSearching.value ? searchHasPreviousPage.value : hasPreviousPage.value));
 
-const searchTotalText = computed(() => {
-  const count = searchTotal.value ?? 0;
-  return `${count} 条结果`;
-});
+const searchTotalText = computed(() => `${searchTotal.value ?? 0} 条结果`);
 
 const buildQuery = (overrides?: { page?: number; type?: SearchType; feedId?: string | null; tags?: string | null }) => {
   const query: Record<string, string> = {};

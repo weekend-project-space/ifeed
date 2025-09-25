@@ -1,65 +1,86 @@
 <template>
   <div class="flex h-full flex-col gap-6 pb-16 pt-6">
-    <button class="inline-flex items-center text-sm font-medium text-blue-500 transition hover:text-blue-600"
-      @click="goBack">
+    <button
+      class="inline-flex items-center text-sm font-medium text-primary transition hover:opacity-80"
+      @click="goBack"
+    >
       ← 返回列表
     </button>
 
     <div class="flex-1">
-      <div v-if="articlesStore.loading"
-        class="w-full rounded-3xl border border-slate-200 bg-white p-12 text-center text-slate-400 shadow-sm">
+      <div
+        v-if="articlesStore.loading"
+        class="w-full rounded-3xl border border-outline/40 bg-surface-container p-12 text-center text-text-muted shadow-md-elevated"
+      >
         正在加载文章...
       </div>
 
-      <div v-else-if="article" class="w-full space-y-8 rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
+      <div
+        v-else-if="article"
+        class="w-full space-y-8 rounded-3xl border border-outline/40 bg-surface-container p-8 shadow-md-elevated"
+      >
         <header class="space-y-5">
           <div class="flex flex-wrap items-start justify-between gap-4">
             <div class="space-y-2">
-              <p class="text-sm text-slate-400">{{ article.feedTitle }} · {{ article.timeAgo }}</p>
-              <h1 class="text-3xl font-semibold leading-tight text-slate-900">{{ article.title }}</h1>
+              <p class="text-sm text-text-muted">{{ article.feedTitle }} · {{ article.timeAgo }}</p>
+              <h1 class="text-3xl font-semibold leading-tight text-text">{{ article.title }}</h1>
             </div>
             <button
-              class="inline-flex items-center gap-2 rounded-full border border-slate-200 px-5 py-2 text-sm font-medium transition"
-              :class="isCollected ? 'bg-blue-50 border-blue-200 text-blue-600' : 'hover:border-blue-400 hover:text-blue-600'"
-              @click="toggleCollection">
+              class="inline-flex items-center gap-2 rounded-full border border-outline/50 px-5 py-2 text-sm font-medium transition hover:border-primary/60 hover:text-primary"
+              :class="isCollected ? 'border-transparent bg-primary/15 text-primary' : ''"
+              @click="toggleCollection"
+            >
               <span>{{ isCollected ? '已收藏' : '收藏' }}</span>
             </button>
           </div>
-          <div v-if="article.tags.length" class="flex flex-wrap gap-2 text-xs text-blue-600">
+          <div v-if="article.tags.length" class="flex flex-wrap gap-2 text-xs text-primary">
             <button
               v-for="tag in article.tags"
               :key="tag"
               type="button"
-              class="rounded-full bg-blue-50 px-3 py-1 hover:bg-blue-100 transition"
+              class="rounded-full bg-primary/10 px-3 py-1 transition hover:bg-primary/15"
               @click="handleTagClick(tag)"
             >
               #{{ tag }}
             </button>
           </div>
         </header>
-        <section class="rounded-2xl bg-slate-50 p-5 leading-relaxed text-slate-600">
-          <h2 class="mb-2 text-sm font-semibold text-slate-500">AI 摘要</h2>
-          <p class="text-base">{{ article.summary }}</p>
+        <section class="rounded-2xl border border-outline/30 bg-surface-variant/70 p-5 shadow-inner leading-relaxed text-text-secondary">
+          <h2 class="mb-2 text-sm font-semibold uppercase tracking-wide text-text-muted">AI 摘要</h2>
+          <p class="text-base text-text">{{ article.summary }}</p>
         </section>
-        <section class="space-y-4 text-slate-700">
+        <section class="space-y-4 text-text">
           <h2 class="text-lg font-semibold">正文内容</h2>
           <div v-if="article.content" class="article-content" v-html="article.content"></div>
-          <p v-else class="text-slate-400">暂无正文内容。</p>
+          <p v-else class="text-text-muted">暂无正文内容。</p>
         </section>
-        <footer class="flex flex-wrap items-center gap-4 border-t border-slate-100 pt-4 text-sm text-slate-500">
-          <a v-if="article.link" :href="article.link" target="_blank" rel="noopener"
-            class="font-medium text-blue-500 transition hover:text-blue-600">
+        <footer class="flex flex-wrap items-center gap-4 border-t border-outline/30 pt-4 text-sm text-text-secondary">
+          <a
+            v-if="article.link"
+            :href="article.link"
+            target="_blank"
+            rel="noopener"
+            class="font-medium text-primary transition hover:opacity-80"
+          >
             在原文中打开
           </a>
-          <a v-if="article.enclosure" :href="article.enclosure" target="_blank" rel="noopener"
-            class="font-medium text-blue-500 transition hover:text-blue-600">
+          <a
+            v-if="article.enclosure"
+            :href="article.enclosure"
+            target="_blank"
+            rel="noopener"
+            class="font-medium text-primary transition hover:opacity-80"
+          >
             查看附件
           </a>
           <span>最后更新：{{ article.timeAgo }}</span>
         </footer>
       </div>
 
-      <div v-else class="w-full rounded-3xl border border-slate-200 bg-white p-12 text-center text-slate-400 shadow-sm">
+      <div
+        v-else
+        class="w-full rounded-3xl border border-outline/40 bg-surface-container p-12 text-center text-text-muted shadow-md-elevated"
+      >
         未找到文章或加载失败。
       </div>
     </div>
@@ -160,11 +181,12 @@ watch(
 .article-content {
   font-size: 1rem;
   line-height: 1.8;
-  color: #1f2937;
+  color: rgb(var(--md-text));
 }
 
 .article-content :deep(p) {
   margin-bottom: 1.25rem;
+  color: inherit;
 }
 
 .article-content :deep(p:last-child) {
@@ -175,7 +197,7 @@ watch(
 .article-content :deep(h2),
 .article-content :deep(h3) {
   font-weight: 600;
-  color: #0f172a;
+  color: rgb(var(--md-text));
   margin-top: 2.5rem;
   margin-bottom: 1rem;
 }
@@ -193,7 +215,7 @@ watch(
 }
 
 .article-content :deep(a) {
-  color: #2563eb;
+  color: rgb(var(--md-primary));
   text-decoration: underline;
 }
 
@@ -208,16 +230,16 @@ watch(
 }
 
 .article-content :deep(blockquote) {
-  border-left: 3px solid #bfdbfe;
-  background: #eff6ff;
+  border-left: 3px solid rgba(var(--md-primary), 0.35);
+  background: rgba(var(--md-primary), 0.1);
   padding: 1rem 1.25rem;
   margin: 1.5rem 0;
-  color: #1e3a8a;
+  color: rgb(var(--md-primary));
 }
 
 .article-content :deep(pre) {
-  background: #0f172a;
-  color: #f8fafc;
+  background: rgb(var(--md-inverse));
+  color: rgb(var(--md-on-inverse));
   padding: 1rem 1.25rem;
   margin: 1.75rem 0;
   border-radius: 0.75rem;
@@ -225,7 +247,8 @@ watch(
 }
 
 .article-content :deep(code) {
-  background: #e2e8f0;
+  background: rgba(var(--md-outline), 0.25);
+  color: rgb(var(--md-text));
   padding: 0.15rem 0.4rem;
   border-radius: 0.4rem;
   font-size: 0.95rem;
@@ -233,6 +256,7 @@ watch(
 
 .article-content :deep(pre code) {
   background: transparent;
+  color: inherit;
   padding: 0;
   border-radius: 0;
 }
@@ -254,12 +278,12 @@ watch(
 
 .article-content :deep(th),
 .article-content :deep(td) {
-  border: 1px solid #e2e8f0;
+  border: 1px solid rgba(var(--md-outline), 0.4);
   padding: 0.75rem 0.9rem;
   text-align: left;
 }
 
 .article-content :deep(thead th) {
-  background: #f1f5f9;
+  background: rgba(var(--md-outline), 0.15);
 }
 </style>

@@ -1,91 +1,113 @@
 <template>
-  <div class="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-6">
-    <div class="w-full max-w-md bg-white/95 backdrop-blur rounded-3xl shadow-xl overflow-hidden">
-      <div class="px-8 py-6 border-b border-slate-100">
-        <h1 class="text-2xl font-semibold text-slate-900">欢迎使用 iFeed</h1>
-        <p class="text-sm text-slate-500 mt-1">AI 驱动的 RSS 阅读体验</p>
-      </div>
-      <div class="px-8 py-6">
-        <div class="flex bg-slate-100 rounded-full p-1 text-sm font-medium text-slate-600 mb-6">
+  <div class="min-h-screen bg-surface text-text transition-colors duration-300">
+    <div class="mx-auto flex min-h-screen max-w-5xl items-center justify-center px-4 py-12">
+      <div class="w-full max-w-md overflow-hidden rounded-3xl border border-outline/40 bg-surface-container shadow-md-elevated">
+        <div class="flex items-center justify-between border-b border-outline/30 px-8 py-6">
+          <div>
+            <h1 class="text-2xl font-semibold text-text">欢迎使用 iFeed</h1>
+            <p class="mt-1 text-sm text-text-secondary">AI 驱动的 RSS 阅读体验</p>
+          </div>
           <button
             type="button"
-            class="flex-1 py-2 rounded-full transition"
-            :class="mode === 'login' ? 'bg-white shadow text-slate-900' : ''"
-            @click="switchMode('login')"
+            class="inline-flex h-10 w-10 items-center justify-center rounded-full border border-outline/60 text-text transition hover:border-primary/60 hover:text-primary"
+            :aria-label="`切换主题，当前${themeLabel}`"
+            @click="toggleTheme"
           >
-            登录
-          </button>
-          <button
-            type="button"
-            class="flex-1 py-2 rounded-full transition"
-            :class="mode === 'register' ? 'bg-white shadow text-slate-900' : ''"
-            @click="switchMode('register')"
-          >
-            注册
+            <svg v-if="isDark" class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M21 12.79A9 9 0 1 1 11.21 3a7 7 0 0 0 9.79 9.79z" />
+            </svg>
+            <svg v-else class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
+              <path
+                d="M12 18a6 6 0 1 1 0-12 6 6 0 0 1 0 12zm0 4a1 1 0 0 1-1-1v-1.2a.8.8 0 0 1 1.6 0V21a1 1 0 0 1-1 1zm0-18a1 1 0 0 1-1-1V1.2a.8.8 0 0 1 1.6 0V3a1 1 0 0 1-1 1zm9 7h-1.2a.8.8 0 0 1 0-1.6H21a1 1 0 1 1 0 2zm-18 0H1a1 1 0 1 1 0-2h1.2a.8.8 0 1 1 0 1.6zM5.64 19.36a1 1 0 0 1-1.41-1.41l.85-.85a.8.8 0 0 1 1.13 1.13zm13.14-13.14-.85.85a.8.8 0 1 1-1.13-1.13l.85-.85a1 1 0 0 1 1.13 1.13zm0 13.14-1.13-1.13a.8.8 0 1 1 1.13-1.13l.85.85a1 1 0 0 1-1.41 1.41zM5.64 4.64 4.79 3.8A1 1 0 1 1 6.2 2.36l.85.85a.8.8 0 1 1-1.13 1.13z"
+              />
+            </svg>
           </button>
         </div>
-        <form class="space-y-4" @submit.prevent="handleSubmit">
-          <div>
-            <label class="block text-sm font-medium text-slate-500">用户名</label>
-            <input
-              v-model.trim="form.username"
-              type="text"
-              autocomplete="username"
-              required
-              class="mt-1 block w-full rounded-xl border-slate-200 focus:border-primary focus:ring-primary/40"
-              placeholder="输入用户名"
-            />
+        <div class="px-8 py-6">
+          <div class="mb-6 flex rounded-full border border-outline/40 bg-surface-variant/60 p-1 text-sm font-medium text-text-muted">
+            <button
+              type="button"
+              class="flex-1 rounded-full py-2 transition"
+              :class="mode === 'login' ? 'bg-surface text-text shadow-md' : ''"
+              @click="switchMode('login')"
+            >
+              登录
+            </button>
+            <button
+              type="button"
+              class="flex-1 rounded-full py-2 transition"
+              :class="mode === 'register' ? 'bg-surface text-text shadow-md' : ''"
+              @click="switchMode('register')"
+            >
+              注册
+            </button>
           </div>
-          <div>
-            <label class="block text-sm font-medium text-slate-500">密码</label>
-            <input
-              v-model="form.password"
-              type="password"
-              autocomplete="current-password"
-              required
-              class="mt-1 block w-full rounded-xl border-slate-200 focus:border-primary focus:ring-primary/40"
-              placeholder="输入密码"
-            />
-          </div>
-          <transition name="fade">
-            <div v-if="mode === 'register'">
-              <label class="block text-sm font-medium text-slate-500">确认密码</label>
+          <form class="space-y-4" @submit.prevent="handleSubmit">
+            <div>
+              <label class="block text-sm font-medium text-text-muted">用户名</label>
               <input
-                v-model="form.confirmPassword"
-                type="password"
-                autocomplete="new-password"
+                v-model.trim="form.username"
+                type="text"
+                autocomplete="username"
                 required
-                class="mt-1 block w-full rounded-xl border-slate-200 focus:border-primary focus:ring-primary/40"
-                placeholder="再次输入密码"
+                class="mt-1 block w-full rounded-2xl border border-outline/50 bg-surface px-4 py-3 text-sm text-text shadow-inner transition focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                placeholder="输入用户名"
               />
             </div>
-          </transition>
+            <div>
+              <label class="block text-sm font-medium text-text-muted">密码</label>
+              <input
+                v-model="form.password"
+                type="password"
+                autocomplete="current-password"
+                required
+                class="mt-1 block w-full rounded-2xl border border-outline/50 bg-surface px-4 py-3 text-sm text-text shadow-inner transition focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                placeholder="输入密码"
+              />
+            </div>
+            <transition name="fade">
+              <div v-if="mode === 'register'">
+                <label class="block text-sm font-medium text-text-muted">确认密码</label>
+                <input
+                  v-model="form.confirmPassword"
+                  type="password"
+                  autocomplete="new-password"
+                  required
+                  class="mt-1 block w-full rounded-2xl border border-outline/50 bg-surface px-4 py-3 text-sm text-text shadow-inner transition focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                  placeholder="再次输入密码"
+                />
+              </div>
+            </transition>
 
-          <p v-if="errorMessage" class="text-sm text-red-500 bg-red-50 border border-red-100 rounded-xl px-4 py-2">
-            {{ errorMessage }}
+            <p
+              v-if="errorMessage"
+              class="rounded-2xl border border-danger/30 bg-danger/10 px-4 py-2 text-sm text-danger"
+            >
+              {{ errorMessage }}
+            </p>
+
+            <button
+              type="submit"
+              class="w-full rounded-2xl bg-primary py-3 text-sm font-semibold text-primary-foreground shadow-md-elevated transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
+              :disabled="submitting"
+            >
+              <span v-if="submitting" class="inline-flex items-center justify-center gap-2">
+                <svg class="h-5 w-5 animate-spin" viewBox="0 0 24 24" fill="none">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 0 1 8-8v4a4 4 0 0 0-4 4H4z" />
+                </svg>
+                处理中...
+              </span>
+              <span v-else>{{ mode === 'login' ? '登录' : '创建账户' }}</span>
+            </button>
+          </form>
+          <p class="mt-6 text-center text-xs text-text-muted">
+            还没有账号？
+            <button type="button" class="font-semibold text-primary transition hover:opacity-80" @click="toggleMode">
+              {{ mode === 'login' ? '注册新账户' : '返回登录' }}
+            </button>
           </p>
-
-          <button
-            type="submit"
-            class="w-full py-3 rounded-xl bg-primary text-primary-foreground font-semibold shadow hover:bg-blue-600 transition disabled:cursor-not-allowed disabled:opacity-60"
-            :disabled="submitting"
-          >
-            <span v-if="submitting" class="inline-flex items-center justify-center gap-2">
-              <svg class="h-5 w-5 animate-spin" viewBox="0 0 24 24" fill="none">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
-              </svg>
-              处理中...
-            </span>
-            <span v-else>{{ mode === 'login' ? '登录' : '创建账户' }}</span>
-          </button>
-        </form>
-        <p class="text-xs text-center text-slate-400 mt-6">
-          还没有账号？
-          <button type="button" class="text-primary" @click="toggleMode">
-            {{ mode === 'login' ? '注册新账户' : '返回登录' }}
-          </button>
-        </p>
+        </div>
       </div>
     </div>
   </div>
@@ -96,13 +118,16 @@ import { computed, reactive, ref, watch } from 'vue';
 import { storeToRefs } from 'pinia';
 import { useRouter, useRoute } from 'vue-router';
 import { useAuthStore } from '../stores/auth';
+import { useThemeStore } from '../stores/theme';
 
 type Mode = 'login' | 'register';
 
 const router = useRouter();
 const route = useRoute();
 const authStore = useAuthStore();
+const themeStore = useThemeStore();
 const { error, isAuthenticated } = storeToRefs(authStore);
+const { isDark, label: themeLabel } = storeToRefs(themeStore);
 
 const mode = ref<Mode>('login');
 const submitting = ref(false);
@@ -157,6 +182,10 @@ const switchMode = (target: Mode) => {
   error.value = null;
   form.password = '';
   form.confirmPassword = '';
+};
+
+const toggleTheme = () => {
+  themeStore.toggle();
 };
 
 watch(

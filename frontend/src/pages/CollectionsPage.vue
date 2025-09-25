@@ -1,45 +1,45 @@
 <template>
   <div class="space-y-6">
-    <section class="rounded-3xl border border-slate-200 bg-white shadow-sm">
-      <header class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 px-6 py-4">
+    <section class="rounded-3xl border border-outline/40 bg-surface-container shadow-md-elevated">
+      <header class="flex flex-wrap items-center justify-between gap-3 border-b border-outline/30 px-6 py-4">
         <div>
-          <h2 class="text-lg font-semibold text-slate-900">我的收藏</h2>
-          <p class="text-sm text-slate-500">保存你想稍后阅读的文章。</p>
+          <h2 class="text-lg font-semibold text-text">我的收藏</h2>
+          <p class="text-sm text-text-secondary">保存你想稍后阅读的文章。</p>
         </div>
-        <button class="text-sm text-slate-400 transition hover:text-slate-600" @click="refresh">刷新</button>
+        <button class="text-sm font-medium text-text-muted transition hover:text-text" @click="refresh">刷新</button>
       </header>
 
-      <div v-if="loading" class="py-12 text-center text-slate-400">加载中...</div>
+      <div v-if="loading" class="py-12 text-center text-text-muted">加载中...</div>
 
-      <ul v-else class="divide-y divide-slate-100">
+      <ul v-else class="divide-y divide-outline/20">
         <li
           v-for="item in items"
           :key="item.articleId + (item.collectedAt ?? '')"
           class="flex flex-wrap items-center justify-between gap-4 px-6 py-4"
         >
-          <div class="min-w-0">
-            <p class="truncate text-sm font-medium text-slate-800">{{ item.title || '未命名文章' }}</p>
-            <p v-if="item.collectedAt" class="text-xs text-slate-400">收藏于 {{ formatRelativeTime(item.collectedAt) }}</p>
+          <div class="min-w-0 space-y-2">
+            <p class="truncate text-sm font-medium text-text">{{ item.title || '未命名文章' }}</p>
+            <p v-if="item.collectedAt" class="text-xs text-text-muted">收藏于 {{ formatRelativeTime(item.collectedAt) }}</p>
           </div>
           <div class="flex flex-wrap items-center gap-3">
-            <button class="text-sm text-blue-500 hover:text-blue-600" @click="viewArticle(item.articleId)">
+            <button class="text-sm font-medium text-primary transition hover:opacity-80" @click="viewArticle(item.articleId)">
               查看详情
             </button>
-            <button class="text-sm text-red-500 hover:text-red-600" @click="remove(item.articleId)">
+            <button class="text-sm font-medium text-danger transition hover:opacity-80" @click="remove(item.articleId)">
               取消收藏
             </button>
           </div>
         </li>
-        <li v-if="!items.length" class="px-6 py-10 text-center text-slate-400">暂时还没有收藏的文章。</li>
+        <li v-if="!items.length" class="px-6 py-10 text-center text-text-muted">暂时还没有收藏的文章。</li>
       </ul>
 
-      <p v-if="errorMessage" class="border-t border-slate-100 px-6 pb-0 pt-4 text-sm text-red-500">{{ errorMessage }}</p>
+      <p v-if="errorMessage" class="border-t border-outline/30 px-6 pb-0 pt-4 text-sm text-danger">{{ errorMessage }}</p>
 
-      <footer class="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 px-6 py-4 text-sm text-slate-500">
+      <footer class="flex flex-wrap items-center justify-between gap-3 border-t border-outline/30 px-6 py-4 text-sm text-text-secondary">
         <div>共 {{ totalText }}</div>
         <div class="flex items-center gap-3">
           <button
-            class="rounded-lg border border-slate-200 px-3 py-1.5 disabled:cursor-not-allowed disabled:opacity-50"
+            class="rounded-full border border-outline/60 px-3 py-1.5 font-medium transition disabled:cursor-not-allowed disabled:border-outline/30 disabled:text-text-muted disabled:opacity-70"
             :disabled="!hasPreviousPage"
             @click="prevPage"
           >
@@ -47,7 +47,7 @@
           </button>
           <span>第 {{ page }} 页</span>
           <button
-            class="rounded-lg border border-slate-200 px-3 py-1.5 disabled:cursor-not-allowed disabled:opacity-50"
+            class="rounded-full border border-outline/60 px-3 py-1.5 font-medium transition disabled:cursor-not-allowed disabled:border-outline/30 disabled:text-text-muted disabled:opacity-70"
             :disabled="!hasNextPage"
             @click="nextPage"
           >

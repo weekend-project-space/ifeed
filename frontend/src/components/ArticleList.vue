@@ -8,8 +8,18 @@
       @toggle-favorite="emitToggleFavorite"
       @select-tag="emitSelectTag"
     />
-    <div v-if="!items.length" class="text-center text-slate-400 py-20 border-2 border-dashed border-slate-200 rounded-3xl">
-      {{ emptyMessage }}
+    <div
+      v-if="!items.length"
+      class="flex flex-col items-center justify-center gap-3 rounded-3xl border border-primary/15 bg-surface py-16 text-sm text-text-muted"
+    >
+      <svg class="h-10 w-10 text-primary/40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          d="M4.5 6.75h15m-15 4.5h15m-15 4.5h7.5"
+        />
+      </svg>
+      <span class="max-w-xs text-center leading-relaxed">{{ emptyMessage }}</span>
     </div>
   </section>
 </template>

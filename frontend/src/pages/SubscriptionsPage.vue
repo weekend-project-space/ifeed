@@ -1,65 +1,72 @@
 <template>
   <div class="space-y-8">
-    <section class="bg-white rounded-3xl border border-slate-200 shadow-sm p-6">
-      <h2 class="text-lg font-semibold text-slate-900">添加新的订阅源</h2>
-      <p class="text-sm text-slate-500 mt-1">粘贴 RSS 地址或网站链接，我们会自动检测支持的内容。</p>
-      <form class="mt-4 flex flex-col md:flex-row gap-3" @submit.prevent="handleAdd">
-        <input v-model.trim="newFeedUrl" type="url" required placeholder="https://example.com/feed.xml"
-          class="flex-1 rounded-xl border-slate-200 focus:border-primary focus:ring-primary/40" />
-        <button type="submit"
-          class="inline-flex items-center justify-center px-4 py-2 rounded-xl bg-primary text-white font-medium shadow hover:bg-blue-600 transition disabled:opacity-60 disabled:cursor-not-allowed"
-          :disabled="subscriptionsStore.submitting">
+    <section class="rounded-3xl border border-outline/40 bg-surface-container p-6 shadow-md-elevated">
+      <h2 class="text-lg font-semibold text-text">添加新的订阅源</h2>
+      <p class="mt-1 text-sm text-text-secondary">粘贴 RSS 地址或网站链接，我们会自动检测支持的内容。</p>
+      <form class="mt-4 flex flex-col gap-3 md:flex-row" @submit.prevent="handleAdd">
+        <input
+          v-model.trim="newFeedUrl"
+          type="url"
+          required
+          placeholder="https://example.com/feed.xml"
+          class="flex-1 rounded-full border border-outline/50 bg-surface px-4 py-3 text-sm text-text shadow-inner transition focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+        />
+        <button
+          type="submit"
+          class="inline-flex items-center justify-center rounded-full bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground shadow-md-elevated transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
+          :disabled="subscriptionsStore.submitting"
+        >
           {{ subscriptionsStore.submitting ? '添加中...' : '添加订阅' }}
         </button>
       </form>
-      <p v-if="subscriptionsStore.error" class="mt-3 text-sm text-red-500">{{ subscriptionsStore.error }}</p>
+      <p v-if="subscriptionsStore.error" class="mt-3 text-sm text-danger">{{ subscriptionsStore.error }}</p>
     </section>
 
-    <section class="bg-white rounded-3xl border border-slate-200 shadow-sm">
-      <header class="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+    <section class="rounded-3xl border border-outline/40 bg-surface-container shadow-md-elevated">
+      <header class="flex items-center justify-between border-b border-outline/30 px-6 py-4">
         <div>
-          <h2 class="text-lg font-semibold text-slate-900">我的订阅</h2>
-          <p class="text-sm text-slate-500">当前共 {{ items.length }} 个订阅源。</p>
+          <h2 class="text-lg font-semibold text-text">我的订阅</h2>
+          <p class="text-sm text-text-secondary">当前共 {{ items.length }} 个订阅源。</p>
         </div>
-        <button class="text-sm text-slate-400 hover:text-slate-600" @click="refresh">刷新</button>
+        <button class="text-sm font-medium text-text-muted transition hover:text-text" @click="refresh">刷新</button>
       </header>
-      <div v-if="subscriptionsStore.loading" class="py-12 text-center text-slate-400">加载中...</div>
-      <ul v-else class="divide-y divide-slate-100">
+      <div v-if="subscriptionsStore.loading" class="py-12 text-center text-text-muted">加载中...</div>
+      <ul v-else class="divide-y divide-outline/20">
         <li
           v-for="item in items"
           :key="item.feedId"
-          class="px-6 py-4 flex flex-wrap items-center gap-4"
+          class="flex flex-wrap items-center gap-4 px-6 py-4"
         >
           <div class="min-w-0 flex-1 space-y-1">
             <div class="flex flex-wrap items-center gap-3">
-              <p class="font-medium text-slate-800 truncate">
+              <p class="truncate font-medium text-text">
                 {{ displayTitle(item) }}
               </p>
-              <span class="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs text-slate-500 whitespace-nowrap">
+              <span class="whitespace-nowrap rounded-full bg-surface-variant px-2.5 py-0.5 text-xs text-text-muted">
                 最近更新 {{ formatRecentText(item.lastUpdated) }}
               </span>
             </div>
-            <div class="flex flex-wrap items-center gap-3 text-sm text-slate-500">
+            <div class="flex flex-wrap items-center gap-3 text-sm text-text-secondary">
               <a
                 :href="displaySiteUrl(item)"
                 target="_blank"
                 rel="noopener noreferrer"
-                class="text-sm text-blue-500 truncate"
+                class="truncate text-sm text-primary hover:underline"
               >
                 {{ displaySiteUrl(item) }}
               </a>
-              <span class="text-slate-400">上次抓取 {{ formatRecentText(item.lastFetched) }}</span>
+              <span class="text-text-muted">上次抓取 {{ formatRecentText(item.lastFetched) }}</span>
             </div>
           </div>
-          <div class="flex items-center gap-2 shrink-0">
+          <div class="flex shrink-0 items-center gap-2">
             <button
-              class="rounded-xl border border-blue-500 px-3 py-1.5 text-sm text-blue-600 transition hover:bg-blue-50"
+              class="rounded-full border border-primary/40 px-3 py-1.5 text-sm font-medium text-primary transition hover:bg-primary/10"
               @click="viewArticles(item.feedId)"
             >
               查看文章
             </button>
             <button
-              class="text-sm text-red-500 hover:text-red-600"
+              class="text-sm font-medium text-danger transition hover:opacity-80"
               @click="remove(item.feedId)"
               :disabled="subscriptionsStore.submitting"
             >
@@ -67,7 +74,7 @@
             </button>
           </div>
         </li>
-        <li v-if="!items.length" class="px-6 py-10 text-center text-slate-400">暂无订阅，先添加一个试试。</li>
+        <li v-if="!items.length" class="px-6 py-10 text-center text-text-muted">暂无订阅，先添加一个试试。</li>
       </ul>
     </section>
   </div>

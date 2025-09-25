@@ -1,0 +1,32 @@
+spring:
+  application:
+    name: iFeed
+  datasource:
+    url: jdbc:postgresql://182.160.1.158:5432/i_feed
+    username: i_feed
+    password: MCkmdDzn8yDbSTKb
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+  data:
+    mongodb:
+      host: 182.160.1.158
+      port: 27017
+      username: "admin"
+      password: "password123"
+      database: admin
+rss:
+  fetcher:
+    fixed-delay: 900000
+    initial-delay: 5000
+    connect-timeout: 5s
+    read-timeout: 10s
+    max-items: 500
+ai:
+  provider:
+    enabled: false
+    endpoint: 'https://oneapi.jisuai.cn'
+    api-key: 'sk-HGq0GZEFP3xI5lGksbthh71U3p2VE04YcxUmTMbTgkpAl9zp'
+    model: 'deepseek-v3.1'
+
