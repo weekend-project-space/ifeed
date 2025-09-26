@@ -2,17 +2,17 @@ spring:
   application:
     name: iFeed
   datasource:
-    url: jdbc:postgresql://182.160.1.158:5432/i_feed
+    url: jdbc:postgresql://127.0.0.1:5432/i_feed
     username: i_feed
-    password: MCkmdDzn8yDbSTKb
+    password: 0123.
     driver-class-name: org.postgresql.Driver
   data:
     mongodb:
-      host: 182.160.1.158
+      host: 127.0.0.1
       port: 27017
       username: mongo_cTXZaN
       password: mongo_MDNyW6
-      database: database
+      database: i_feed
   profiles:
     active: dev
 rss:
@@ -21,7 +21,7 @@ rss:
     initial-delay: PT30S
     connect-timeout: 5s
     read-timeout: 10s
-    max-items: 50
+    max-items: 500
 ai:
   provider:
     enabled: false
