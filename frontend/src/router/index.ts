@@ -6,6 +6,7 @@ import SubscriptionsPage from '../pages/SubscriptionsPage.vue';
 import CollectionsPage from '../pages/CollectionsPage.vue';
 import HistoryPage from '../pages/HistoryPage.vue';
 import ArticleDetailPage from '../pages/ArticleDetailPage.vue';
+import FeedPage from '../pages/FeedPage.vue';
 import { useAuthStore } from '../stores/auth';
 
 const router = createRouter({
@@ -39,6 +40,12 @@ const router = createRouter({
           path: 'history',
           name: 'history',
           component: HistoryPage
+        },
+        {
+          path: 'feeds/:feedId',
+          name: 'feed',
+          component: FeedPage,
+          props: true
         },
         {
           path: 'articles/:id',

@@ -91,8 +91,13 @@
             <span>
               当前筛选：{{ activeFeedInfo.title || activeFeedInfo.siteUrl || activeFeedInfo.url }}
             </span>
-            <button class="font-medium text-primary underline-offset-4 hover:underline"
-              @click="clearFeedFilter">查看全部文章</button>
+            <div class="flex items-center gap-2">
+              <button class="rounded-full border border-primary/30 px-3 py-1.5 font-medium text-primary transition hover:bg-primary/15"
+                @click="openFeedChannel">
+                查看频道
+              </button>
+              <button class="font-medium underline-offset-4 hover:underline" @click="clearFeedFilter">查看全部文章</button>
+            </div>
           </div>
           <div v-if="activeTag"
             class="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-primary/15 bg-surface-variant px-4 py-2 text-sm text-text">
@@ -445,6 +450,14 @@ const clearFeedFilter = () => {
 
 const clearTagFilter = () => {
   router.push({ name: 'home', query: buildQuery({ tags: null, page: 1 }) });
+};
+
+const openFeedChannel = () => {
+  const feedId = activeFeedInfo.value?.feedId ?? activeFeedId.value;
+  if (!feedId) {
+    return;
+  }
+  router.push({ name: 'feed', params: { feedId } });
 };
 
 const handleSelectTag = (tag: string) => {

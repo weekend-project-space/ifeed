@@ -11,6 +11,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 public interface UserSubscriptionRepository extends JpaRepository<UserSubscription, UserSubscriptionId> {
 
@@ -21,4 +22,8 @@ public interface UserSubscriptionRepository extends JpaRepository<UserSubscripti
     Optional<UserSubscription> findByUserAndFeed(User user, Feed feed);
 
     boolean existsByUserAndFeed(User user, Feed feed);
+
+    long countByFeedAndActiveTrue(Feed feed);
+
+    boolean existsByUser_IdAndFeedAndActiveTrue(UUID userId, Feed feed);
 }

@@ -10,6 +10,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 public interface ArticleRepository extends JpaRepository<Article, UUID> {
@@ -101,4 +102,8 @@ public interface ArticleRepository extends JpaRepository<Article, UUID> {
                                                     Pageable pageable);
 
     List<Article> findByIdIn(Iterable<UUID> ids);
+
+    long countByFeed(Feed feed);
+
+    Optional<Article> findTopByFeedOrderByPublishedAtDesc(Feed feed);
 }

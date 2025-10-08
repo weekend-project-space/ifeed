@@ -63,7 +63,7 @@
               class="rounded-full border border-primary/40 px-3 py-1.5 text-sm font-medium text-primary transition hover:bg-primary/10"
               @click="viewArticles(item.feedId)"
             >
-              查看文章
+              查看频道
             </button>
             <button
               class="text-sm font-medium text-danger transition hover:opacity-80"
@@ -121,7 +121,7 @@ const remove = async (feedId: string) => {
 };
 
 const viewArticles = (feedId: string) => {
-  router.push({ name: 'home', query: { feedId } });
+  router.push({ name: 'feed', params: { feedId } });
 };
 
 const displayTitle = (item: SubscriptionDto) => item.title || item.siteUrl || item.url;
