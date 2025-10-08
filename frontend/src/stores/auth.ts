@@ -120,9 +120,17 @@ export const useAuthStore = defineStore('auth', () => {
     }
   };
 
-  const logout = () => {
-    setToken(null);
-    user.value = null;
+  const logout = async () => {
+    error.value = null;
+    try {
+      await request('/api/auth/logout', {
+        method: 'POST'
+      });
+    } catch {
+    } finally {
+      setToken(null);
+      user.value = null;
+    }
   };
 
   return {

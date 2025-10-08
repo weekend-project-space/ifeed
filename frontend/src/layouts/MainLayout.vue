@@ -256,8 +256,8 @@ const handleSearch = () => {
   router.push({ name: 'home', query });
 };
 
-const handleLogout = () => {
-  authStore.logout();
+const handleLogout = async () => {
+  await authStore.logout();
   router.replace({ name: 'auth' });
 };
 

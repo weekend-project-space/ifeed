@@ -27,15 +27,13 @@ import org.jsoup.nodes.Element;
 
 import java.io.InputStream;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -68,9 +66,7 @@ public class FeedIngestionService {
             var syndFeed = fetchFeed(feed.getUrl());
             log.info("fetch url:{}", feed.getUrl());
             var latestContentUpdate = processEntries(feed, syndFeed.getEntries());
-            if (!feed.getTitle().equals(syndFeed.getTitle())) {
-                feed.setTitle(syndFeed.getTitle());
-            }
+            updateFeedTitle(feed, syndFeed);
             if (latestContentUpdate != null) {
                 var currentLastUpdated = feed.getLastUpdated();
                 if (currentLastUpdated == null || latestContentUpdate.isAfter(currentLastUpdated)) {
@@ -160,6 +156,57 @@ public class FeedIngestionService {
         articleRepository.save(article);
 
         return Optional.ofNullable(publishedAt);
+    }
+
+    private void updateFeedTitle(Feed feed, SyndFeed syndFeed) {
+        var fetchedTitle = syndFeed != null ? syndFeed.getTitle() : null;
+        if (StringUtils.hasText(fetchedTitle)) {
+            var normalizedTitle = fetchedTitle.trim();
+            if (!normalizedTitle.equals(feed.getTitle())) {
+                feed.setTitle(normalizedTitle);
+            }
+            return;
+        }
+
+        if (!StringUtils.hasText(feed.getTitle())) {
+            feed.setTitle(resolveFallbackTitle(feed));
+        }
+    }
+
+    private String resolveFallbackTitle(Feed feed) {
+        var siteTitle = extractHost(feed.getSiteUrl());
+        if (StringUtils.hasText(siteTitle)) {
+            return siteTitle;
+        }
+
+        var feedTitle = extractHost(feed.getUrl());
+        if (StringUtils.hasText(feedTitle)) {
+            return feedTitle;
+        }
+
+        return "未命名订阅";
+    }
+
+    private String extractHost(String url) {
+        if (!StringUtils.hasText(url)) {
+            return null;
+        }
+
+        var trimmed = url.trim();
+        try {
+            var uri = new URI(trimmed);
+            if (StringUtils.hasText(uri.getHost())) {
+                return uri.getHost();
+            }
+            var path = uri.getPath();
+            if (StringUtils.hasText(path)) {
+                return path;
+            }
+        } catch (URISyntaxException ignored) {
+            // fallback to trimmed url
+        }
+
+        return trimmed;
     }
 
     private String resolveContent(SyndEntry entry) {
@@ -252,7 +299,7 @@ public class FeedIngestionService {
             return null;
         }
         try {
-            return objectMapper.writeValueAsString(values);
+            return objectMapper.writeValueAsString(new TreeSet<>(values));
         } catch (JsonProcessingException e) {
             log.warn("Failed to serialize AI payload", e);
             return null;

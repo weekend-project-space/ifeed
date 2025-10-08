@@ -1,5 +1,6 @@
 package org.bitmagic.ifeed.service;
 
+import com.rometools.utils.Strings;
 import lombok.RequiredArgsConstructor;
 import org.bitmagic.ifeed.domain.entity.Article;
 import org.bitmagic.ifeed.domain.projection.ArticleSummaryView;
@@ -14,6 +15,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -89,15 +91,16 @@ public class ArticleService {
         if (tags == null || tags.isEmpty()) {
             return null;
         }
-        var first = tags.stream()
+        var patterns = tags.stream()
                 .filter(tag -> tag != null && !tag.isBlank())
                 .map(String::trim)
-                .findFirst()
-                .orElse(null);
-        if (first == null) {
-            return null;
+                .filter(tag -> !tag.isEmpty())
+                .map(String::toLowerCase)
+                .map(tag -> "%\"" + tag.replace("\"", "\"\"") + "\",").collect(Collectors.joining("%"));
+        if (Strings.isNotEmpty(patterns)) {
+            return patterns.substring(0, patterns.length() - 1) + "%";
+        } else {
+            return patterns;
         }
-        var normalized = first.toLowerCase();
-        return "%\"" + normalized.replace("\"", "\"\"") + "\"%";
     }
 }
