@@ -33,6 +33,13 @@ public interface ArticleRepository extends JpaRepository<Article, UUID> {
             left join a.feed f
             where (:feedId is null or f.id = :feedId)
               and (:tagPattern is null or lower(coalesce(a.tags, '')) like :tagPattern)
+              and (:ownerId is null or exists (
+                    select 1
+                    from UserSubscription us
+                    where us.feed = f
+                      and us.user.id = :ownerId
+                      and us.active = true
+              ))
             """,
             countQuery = """
                     select count(a)
@@ -40,9 +47,17 @@ public interface ArticleRepository extends JpaRepository<Article, UUID> {
                     left join a.feed f
                     where (:feedId is null or f.id = :feedId)
                       and (:tagPattern is null or lower(coalesce(a.tags, '')) like :tagPattern)
+                      and (:ownerId is null or exists (
+                            select 1
+                            from UserSubscription us
+                            where us.feed = f
+                              and us.user.id = :ownerId
+                              and us.active = true
+                      ))
                     """)
     Page<ArticleSummaryView> findArticleSummaries(@Param("feedId") UUID feedId,
                                                   @Param("tagPattern") String tagPattern,
+                                                  @Param("ownerId") UUID ownerId,
                                                   Pageable pageable);
 
     @Query(value = """
@@ -58,16 +73,32 @@ public interface ArticleRepository extends JpaRepository<Article, UUID> {
                 a.enclosure)
             from Article a
             left join a.feed f
-            where lower(a.title) like :term
-               or lower(a.summary) like :term
+            where (lower(a.title) like :term
+               or lower(a.summary) like :term)
+              and (:ownerId is null or exists (
+                    select 1
+                    from UserSubscription us
+                    where us.feed = f
+                      and us.user.id = :ownerId
+                      and us.active = true
+              ))
             """,
             countQuery = """
                     select count(a)
                     from Article a
-                    where lower(a.title) like :term
-                       or lower(a.summary) like :term
+                    where (lower(a.title) like :term
+                       or lower(a.summary) like :term)
+                      and (:ownerId is null or exists (
+                            select 1
+                            from UserSubscription us
+                            where us.feed = a.feed
+                              and us.user.id = :ownerId
+                              and us.active = true
+                      ))
                     """)
-    Page<ArticleSummaryView> searchArticleSummaries(@Param("term") String term, Pageable pageable);
+    Page<ArticleSummaryView> searchArticleSummaries(@Param("term") String term,
+                                                    @Param("ownerId") UUID ownerId,
+                                                    Pageable pageable);
 
     List<Article> findByIdIn(Iterable<UUID> ids);
 }

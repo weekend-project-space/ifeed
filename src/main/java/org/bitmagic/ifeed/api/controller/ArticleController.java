@@ -34,6 +34,8 @@ public class ArticleController {
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
     private static final TypeReference<List<String>> TAGS_TYPE = new TypeReference<>() {
     };
+    private static final String SOURCE_OWNER = "owner";
+    private static final String SOURCE_GLOBAL = "global";
 
     private final ArticleService articleService;
 
@@ -43,10 +45,14 @@ public class ArticleController {
                                                                      @RequestParam(required = false) Integer size,
                                                                      @RequestParam(required = false) String sort,
                                                                      @RequestParam(required = false) String feedId,
-                                                                     @RequestParam(required = false, name = "tags") String tags) {
+                                                                     @RequestParam(required = false, name = "tags") String tags,
+                                                                     @RequestParam(required = false, defaultValue = SOURCE_OWNER) String source) {
         ensureAuthenticated(principal);
         var normalizedTags = parseTags(tags);
-        var articlePage = articleService.listArticles(page, size, sort, parseFeedId(feedId), normalizedTags)
+        var normalizedSource = normalizeSource(source);
+        var includeGlobal = SOURCE_GLOBAL.equals(normalizedSource);
+        var articlePage = articleService.listArticles(principal.getId(),
+                        parseFeedId(feedId), normalizedTags, includeGlobal,page, size, sort)
                 .map(this::toSummaryResponse);
         return ResponseEntity.ok(articlePage);
     }
@@ -156,5 +162,16 @@ public class ArticleController {
                 .map(String::toLowerCase)
                 .collect(Collectors.toCollection(TreeSet::new));
         return normalized.isEmpty() ? Collections.emptySet() : normalized;
+    }
+
+    private String normalizeSource(String source) {
+        if (source == null || source.isBlank()) {
+            return SOURCE_OWNER;
+        }
+        var normalized = source.trim().toLowerCase(Locale.ROOT);
+        if (!SOURCE_OWNER.equals(normalized) && !SOURCE_GLOBAL.equals(normalized)) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "Unsupported source type");
+        }
+        return normalized;
     }
 }

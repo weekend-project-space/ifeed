@@ -13,6 +13,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -26,10 +27,16 @@ public class ArticleService {
 
     private final ArticleRepository articleRepository;
 
-    public Page<ArticleSummaryView> listArticles(Integer page, Integer size, String sort, UUID feedId, Set<String> tags) {
+    public Page<ArticleSummaryView> listArticles(UUID ownerId,
+                                                 UUID feedId,
+                                                 Set<String> tags,
+                                                 boolean includeGlobal, Integer page,
+                                                 Integer size,
+                                                 String sort) {
         var pageable = buildPageable(page, size, sort);
         var tagPattern = buildTagPattern(tags);
-        return articleRepository.findArticleSummaries(feedId, tagPattern, pageable);
+        var scopeOwnerId = Objects.nonNull(feedId) || includeGlobal ? null : ownerId;
+        return articleRepository.findArticleSummaries(feedId, tagPattern, scopeOwnerId, pageable);
     }
 
     public Article getArticle(UUID articleId) {
@@ -37,13 +44,18 @@ public class ArticleService {
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Article not found"));
     }
 
-    public Page<ArticleSummaryView> searchArticles(String query, Integer page, Integer size) {
+    public Page<ArticleSummaryView> searchArticles(UUID ownerId,
+                                                   String query,
+                                                   boolean includeGlobal,
+                                                   Integer page,
+                                                   Integer size) {
         if (query == null || query.isBlank()) {
             throw new ApiException(HttpStatus.BAD_REQUEST, "Query must not be blank");
         }
         var pageable = buildPageable(page, size, "publishedAt,desc");
         var term = "%" + query.trim().toLowerCase() + "%";
-        return articleRepository.searchArticleSummaries(term, pageable);
+        var scopeOwnerId = includeGlobal ? null : ownerId;
+        return articleRepository.searchArticleSummaries(term, scopeOwnerId, pageable);
     }
 
     private Pageable buildPageable(Integer page, Integer size, String sort) {

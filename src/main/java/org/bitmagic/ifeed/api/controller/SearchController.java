@@ -14,6 +14,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.Locale;
+
 @RestController
 @RequestMapping("/api/search")
 @RequiredArgsConstructor
@@ -21,6 +23,8 @@ public class SearchController {
 
     private static final String TYPE_KEYWORD = "keyword";
     private static final String TYPE_SEMANTIC = "semantic";
+    private static final String SOURCE_OWNER = "owner";
+    private static final String SOURCE_GLOBAL = "global";
 
     private final ArticleService articleService;
 
@@ -29,14 +33,21 @@ public class SearchController {
                                                              @RequestParam String query,
                                                              @RequestParam(required = false, defaultValue = TYPE_KEYWORD) String type,
                                                              @RequestParam(required = false) Integer page,
-                                                             @RequestParam(required = false) Integer size) {
+                                                             @RequestParam(required = false) Integer size,
+                                                             @RequestParam(required = false, defaultValue = SOURCE_OWNER) String source) {
         ensureAuthenticated(principal);
-        var normalizedType = type == null ? TYPE_KEYWORD : type.toLowerCase();
+        var normalizedType = type == null ? TYPE_KEYWORD : type.trim().toLowerCase(Locale.ROOT);
         if (!TYPE_KEYWORD.equals(normalizedType) && !TYPE_SEMANTIC.equals(normalizedType)) {
             throw new ApiException(HttpStatus.BAD_REQUEST, "Unsupported search type");
         }
 
-        var articlePage = articleService.searchArticles(query, page, size)
+        var normalizedSource = source == null ? SOURCE_OWNER : source.trim().toLowerCase(Locale.ROOT);
+        if (!SOURCE_OWNER.equals(normalizedSource) && !SOURCE_GLOBAL.equals(normalizedSource)) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "Unsupported source type");
+        }
+        var includeGlobal = SOURCE_GLOBAL.equals(normalizedSource);
+
+        var articlePage = articleService.searchArticles(principal.getId(), query, includeGlobal, page, size)
                 .map(article -> new SearchResultResponse(
                         article.id().toString(),
                         article.title(),
