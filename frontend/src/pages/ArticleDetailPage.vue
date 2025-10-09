@@ -7,7 +7,7 @@
 
     <div class="flex-1">
       <div v-if="articlesStore.loading"
-        class="w-full rounded-3xl border border-outline/40 bg-surface-container p-12 text-center text-text-muted">
+        class="mx-auto w-full max-w-4xl rounded-3xl border border-outline/40 bg-surface-container p-12 text-center text-text-muted">
         正在加载文章...
       </div>
 
