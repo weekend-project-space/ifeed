@@ -12,6 +12,7 @@ public class FeedConfiguration {
     public HttpClient rssHttpClient(RssFetcherProperties properties) {
         return HttpClient.newBuilder()
                 .connectTimeout(properties.getConnectTimeout())
+                .followRedirects(HttpClient.Redirect.NORMAL)
                 .build();
     }
 }
