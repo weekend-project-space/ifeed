@@ -5,14 +5,23 @@
   >
     <figure class="relative aspect-video w-full overflow-hidden bg-surface-variant">
       <img
-        v-if="article.thumbnail"
+        v-if="article.thumbnail && !thumbError"
         :src="article.thumbnail"
         alt="文章缩略图"
         loading="lazy"
         class="h-full w-full object-cover transition duration-300 group-hover:scale-[1.02]"
+        @error="thumbError = true"
       />
-      <div v-else class="flex h-full w-full items-center justify-center bg-gradient-to-br from-primary/10 via-primary/5 to-primary/15 text-sm font-medium text-primary/70">
-        iFeed 推荐
+      <div v-else class="flex h-full w-full items-center justify-center">
+        <div class="flex h-full w-full items-center justify-center rounded-none border-0 bg-gradient-to-br from-outline/10 via-outline/5 to-outline/15">
+          <div class="flex items-center gap-2 rounded-xl border border-outline/30 bg-surface/80 px-3 py-2 text-xs text-text-muted shadow-sm">
+            <svg class="h-4 w-4 text-text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <rect x="3" y="3" width="18" height="14" rx="2" ry="2"></rect>
+              <path d="M3 17l5-5 4 4 3-3 6 6"></path>
+            </svg>
+            缩略图不可用
+          </div>
+        </div>
       </div>
       <span class="pointer-events-none absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-surface to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100"></span>
     </figure>
@@ -77,7 +86,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 
 export interface ArticleListItemProps {
   id: string;
@@ -100,6 +109,7 @@ const emit = defineEmits<{
 }>();
 
 const article = computed(() => props.article);
+const thumbError = ref(false);
 
 const handleSelect = () => {
   emit('select', article.value.id);
