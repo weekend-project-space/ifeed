@@ -38,8 +38,7 @@
 
             <div v-if="tocItems.length"
               class="toc-container rounded-2xl border border-outline/20 bg-surface p-4 text-sm text-text-secondary lg:hidden">
-              <div
-                class="toc-header mb-3 flex items-center justify-between text-xs font-semibold text-text-muted">
+              <div class="toc-header mb-3 flex items-center justify-between text-xs font-semibold text-text-muted">
                 <span class="toc-title">章节导航</span>
                 <span class="toc-hint text-[10px] text-text-disabled">点击跳转</span>
               </div>
@@ -458,7 +457,7 @@ watch(
   margin: 2.5rem 0;
 }
 
-.toc-container {
+/* .toc-container {
   border-color: rgba(var(--md-outline), 0.2);
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
@@ -466,7 +465,7 @@ watch(
 .toc-container:hover {
   border-color: rgba(var(--md-outline), 0.3);
   box-shadow: 0 10px 24px rgba(var(--md-outline), 0.12);
-}
+} */
 
 .toc-list {
   display: flex;
