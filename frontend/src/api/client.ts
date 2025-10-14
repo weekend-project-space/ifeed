@@ -1,6 +1,6 @@
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? '').replace(/\/$/, '');
 
-let authToken: string | null = null;
+let authToken: string | null = localStorage.getItem('auth-token');
 
 export interface HttpError extends Error {
   status: number;
@@ -11,6 +11,9 @@ export type QueryParams = Record<string, string | number | boolean | undefined |
 
 export const setAuthToken = (token: string | null) => {
   authToken = token;
+  if (token){
+    localStorage.setItem('auth-token', token)
+  }
 };
 
 const buildUrl = (path: string, query?: QueryParams) => {

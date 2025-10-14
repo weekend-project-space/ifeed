@@ -73,7 +73,7 @@ public class SubscriptionController {
                             siteUrl,
                             feed.getLastFetched(),
                             feed.getLastUpdated(),
-                            feedReadTimes.getOrDefault(feed.getId().toString(), Instant.EPOCH).isAfter(feed.getLastUpdated())
+                            feedReadTimes.getOrDefault(feed.getId().toString(), Instant.EPOCH).isAfter(Objects.nonNull(feed.getLastUpdated())?feed.getLastUpdated():Instant.EPOCH)
                     );
                 })
                 .toList();
