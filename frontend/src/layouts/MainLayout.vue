@@ -1,7 +1,7 @@
 <template>
   <div class="min-h-screen bg-surface text-text transition-colors duration-300"
     :class="{ 'overflow-hidden': mobileNavOpen }">
-    <header class="sticky top-0 z-40 border-b border-outline/40 bg-surface/90 backdrop-blur">
+    <header class="sticky top-0 z-40  border-outline/40 bg-surface/90 backdrop-blur">
       <div class="flex items-center gap-3 px-4 py-3 sm:px-6">
         <div class="flex items-center gap-3">
           <button type="button"
@@ -203,8 +203,7 @@
 
     <div class="flex flex-1 overflow-hidden lg:pl-64">
       <!-- Make sidebar fixed and full height on desktop so it never scrolls with main content -->
-      <aside
-        class="fixed left-0 top-[75px] bottom-0 z-30 hidden w-64 border-r border-outline/30 bg-surface py-6 lg:block">
+      <aside class="fixed left-0 top-[75px] bottom-0 z-30 hidden w-64  border-outline/30 bg-surface py-6 lg:block">
         <div class="flex h-full flex-col overflow-hidden">
           <div class="px-5 pb-3">
             <p class="text-[11px] font-semibold text-text-muted/80">导航</p>
@@ -236,14 +235,14 @@
                     </svg>
                   </span>
                   <span v-else-if="item.avatarText"
-                    class="flex h-8 w-8 items-center justify-center rounded-full text-xs font-semibold uppercase"
+                    class="flex h-8 w-8 items-center justify-center rounded-lg text-xs font-semibold uppercase"
                     :class="item.accent ?? 'bg-primary'">
                     {{ item.avatarText }}
                   </span>
                   <div class="flex min-w-0 flex-1 items-center justify-between gap-3">
                     <span class="truncate">{{ item.label }}</span>
                     <span v-if="item.badge"
-                      class="inline-flex h-5 min-w-[1.5rem] items-center justify-center rounded-full bg-primary/10 px-2 text-[11px] font-semibold text-primary">
+                      class="inline-flex h-5 min-w-[1.5rem] items-center justify-center rounded-lg bg-primary/10 px-2 text-[11px] font-semibold text-primary">
                       {{ item.badge }}
                     </span>
                   </div>
@@ -511,7 +510,7 @@ const subscriptionNavSection = computed<NavSection>(() => {
       .join('')
       .slice(0, 2) || 'S';
 
-  const accentPalette = [
+    const accentPalette = [
       'bg-slate-200 text-slate-900',
       'bg-zinc-200 text-zinc-900',
       'bg-stone-200 text-stone-900',

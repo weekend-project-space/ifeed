@@ -4,18 +4,11 @@
       <h2 class="text-lg font-semibold text-text">添加新的订阅源</h2>
       <p class="mt-1 text-sm text-text-secondary">粘贴 RSS 地址或网站链接，我们会自动检测支持的内容。</p>
       <form class="mt-4 flex flex-col gap-3 md:flex-row" @submit.prevent="handleAdd">
-        <input
-          v-model.trim="newFeedUrl"
-          type="url"
-          required
-          placeholder="https://example.com/feed.xml"
-          class="flex-1 rounded-full border border-outline/50 bg-surface px-4 py-3 text-sm text-text transition focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
-        />
-        <button
-          type="submit"
+        <input v-model.trim="newFeedUrl" type="url" required placeholder="https://example.com/feed.xml"
+          class="flex-1 rounded-full border border-outline/50 bg-surface px-4 py-3 text-sm text-text transition focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20" />
+        <button type="submit"
           class="inline-flex items-center justify-center rounded-full bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
-          :disabled="subscriptionsStore.submitting"
-        >
+          :disabled="subscriptionsStore.submitting">
           {{ subscriptionsStore.submitting ? '添加中...' : '添加订阅' }}
         </button>
       </form>
@@ -32,11 +25,7 @@
       </header>
       <div v-if="subscriptionsStore.loading" class="py-12 text-center text-text-muted">加载中...</div>
       <ul v-else class="divide-y divide-outline/20">
-        <li
-          v-for="item in items"
-          :key="item.feedId"
-          class="flex flex-wrap items-center gap-4 px-6 py-4"
-        >
+        <li v-for="item in items" :key="item.feedId" class="flex flex-wrap items-center gap-4 px-6 py-4">
           <div class="min-w-0 flex-1 space-y-1">
             <div class="flex flex-wrap items-center gap-3">
               <p class="truncate font-medium text-text">
@@ -47,12 +36,8 @@
               </span>
             </div>
             <div class="flex flex-wrap items-center gap-3 text-sm text-text-secondary">
-              <a
-                :href="displaySiteUrl(item)"
-                target="_blank"
-                rel="noopener noreferrer"
-                class="truncate text-sm text-primary hover:underline"
-              >
+              <a :href="displaySiteUrl(item)" target="_blank" rel="noopener noreferrer"
+                class="truncate text-sm text-primary hover:underline">
                 {{ displaySiteUrl(item) }}
               </a>
               <span class="text-text-muted">上次抓取 {{ formatRecentText(item.lastFetched) }}</span>
@@ -61,16 +46,12 @@
           <div class="flex shrink-0 items-center gap-2">
             <button
               class="rounded-full border border-primary/40 px-3 py-1.5 text-sm font-medium text-primary transition hover:bg-primary/10"
-              @click="viewArticles(item.feedId)"
-            >
+              @click="viewArticles(item.feedId)">
               查看频道
             </button>
-            <button
-              class="text-sm font-medium text-danger transition hover:opacity-80"
-              @click="remove(item.feedId)"
-              :disabled="subscriptionsStore.submitting"
-            >
-              移除
+            <button class="text-sm font-medium text-danger transition hover:opacity-80" @click="remove(item.feedId)"
+              :disabled="subscriptionsStore.submitting">
+              取消订阅
             </button>
           </div>
         </li>
