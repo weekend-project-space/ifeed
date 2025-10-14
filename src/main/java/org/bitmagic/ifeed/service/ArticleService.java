@@ -2,6 +2,7 @@ package org.bitmagic.ifeed.service;
 
 import com.rometools.utils.Strings;
 import lombok.RequiredArgsConstructor;
+import org.bitmagic.ifeed.api.response.UserSubscriptionInsightResponse;
 import org.bitmagic.ifeed.domain.entity.Article;
 import org.bitmagic.ifeed.domain.projection.ArticleSummaryView;
 import org.bitmagic.ifeed.domain.repository.ArticleRepository;
@@ -13,10 +14,12 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
-import java.util.Objects;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
+import java.time.Instant;
+
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Service
 @RequiredArgsConstructor
@@ -26,17 +29,20 @@ public class ArticleService {
     private static final int MAX_PAGE_SIZE = 100;
 
     private final ArticleRepository articleRepository;
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+    private static final TypeReference<List<String>> TAGS_TYPE = new TypeReference<>(){};
 
     public Page<ArticleSummaryView> listArticles(UUID ownerId,
                                                  UUID feedId,
                                                  Set<String> tags,
+                                                 String category,
                                                  boolean includeGlobal, Integer page,
                                                  Integer size,
                                                  String sort) {
         var pageable = buildPageable(page, size, sort);
         var tagPattern = buildTagPattern(tags);
         var scopeOwnerId = Objects.nonNull(feedId) || includeGlobal ? null : ownerId;
-        return articleRepository.findArticleSummaries(feedId, tagPattern, scopeOwnerId, pageable);
+        return articleRepository.findArticleSummaries(feedId, tagPattern, category, scopeOwnerId, pageable);
     }
 
     public Article getArticle(UUID articleId) {
@@ -114,5 +120,47 @@ public class ArticleService {
         } else {
             return patterns;
         }
+    }
+
+    /**
+     * Aggregate categories and tags for user's visible articles within window.
+     */
+    public UserSubscriptionInsightResponse insights(UUID ownerId,
+                                                                                    Instant fromTs,
+                                                                                    Instant toTs,
+                                                                                    Integer topN) {
+        var rows = articleRepository.countCategoriesForOwnerWithin(ownerId, fromTs, toTs);
+        var categories = new ArrayList<org.bitmagic.ifeed.api.response.UserSubscriptionInsightResponse.CategoryCount>();
+        for (var row : rows) {
+            var category = (String) row[0];
+            var cnt = (Long) row[1];
+            categories.add(new UserSubscriptionInsightResponse.CategoryCount(category, cnt));
+        }
+
+        var tagJsonList = articleRepository.findTagJsonForOwnerWithin(ownerId, fromTs, toTs);
+        var tagCounter = new HashMap<String, Long>();
+        for (var raw : tagJsonList) {
+            try {
+                var tags = OBJECT_MAPPER.readValue(raw, TAGS_TYPE);
+                if (tags != null) {
+                    for (var t : tags) {
+                        if (t != null) {
+                            var key = t.trim().toLowerCase();
+                            if (!key.isEmpty()) {
+                                tagCounter.merge(key, 1L, Long::sum);
+                            }
+                        }
+                    }
+                }
+            } catch (Exception ignored) {}
+        }
+
+        var hotTags = tagCounter.entrySet().stream()
+                .sorted((a,b) -> Long.compare(b.getValue(), a.getValue()))
+                .limit(topN == null || topN <= 0 ? 20 : topN)
+                .map(e -> new UserSubscriptionInsightResponse.TagCount(e.getKey(), e.getValue()))
+                .collect(java.util.stream.Collectors.toList());
+
+        return new UserSubscriptionInsightResponse(categories, hotTags);
     }
 }

@@ -74,6 +74,14 @@ export const useArticlesStore = defineStore('articles', () => {
   const feedIdFilter = ref<string | null>(null);
   const tagFilter = ref<string | null>(null);
 
+  // insights state
+  const insightsLoading = ref(false);
+  const insightsError = ref<string | null>(null);
+  const insights = ref<{ categories: { category: string; count: number }[]; hotTags: { tag: string; count: number }[]}>({
+    categories: [],
+    hotTags: []
+  });
+
   const hasNextPage = computed(() => {
     if (totalPages.value === null) {
       return false;
@@ -83,7 +91,7 @@ export const useArticlesStore = defineStore('articles', () => {
 
   const hasPreviousPage = computed(() => page.value > 1);
 
-  const fetchArticles = async (override?: { page?: number; size?: number; sort?: string; feedId?: string | null; tags?: string | null }) => {
+  const fetchArticles = async (override?: { page?: number; size?: number; sort?: string; feedId?: string | null; tags?: string | null; category?: string | null }) => {
     loading.value = true;
     error.value = null;
     const nextPage = override?.page ?? page.value;
@@ -102,7 +110,8 @@ export const useArticlesStore = defineStore('articles', () => {
             size: nextSize,
             sort: override?.sort,
             feedId: nextFeedId ?? undefined,
-            tags: nextTag ?? undefined
+            tags: nextTag ?? undefined,
+            category: override?.category ?? undefined
           }
         }
       );
@@ -121,6 +130,29 @@ export const useArticlesStore = defineStore('articles', () => {
       throw err;
     } finally {
       loading.value = false;
+    }
+  };
+
+  const fetchInsights = async (params?: { top?: number; from?: string; to?: string }) => {
+    insightsLoading.value = true;
+    insightsError.value = null;
+    try {
+      const data = await request<{ categories: { category: string; count: number }[]; hotTags: { tag: string; count: number }[]}>(
+        '/api/articles/insights',
+        { query: { top: params?.top ?? 12, from: params?.from, to: params?.to } }
+      );
+      insights.value = {
+        categories: Array.isArray(data?.categories) ? data.categories : [],
+        hotTags: Array.isArray(data?.hotTags) ? data.hotTags : []
+      };
+      return insights.value;
+    } catch (err) {
+      const message = err instanceof Error ? err.message : '加载概览失败';
+      insightsError.value = message;
+      insights.value = { categories: [], hotTags: [] };
+      throw err;
+    } finally {
+      insightsLoading.value = false;
     }
   };
 
@@ -182,6 +214,11 @@ export const useArticlesStore = defineStore('articles', () => {
     clearCurrentArticle,
     recordHistory,
     feedId: feedIdFilter,
-    tag: tagFilter
+    tag: tagFilter,
+    // insights
+    insights,
+    insightsLoading,
+    insightsError,
+    fetchInsights
   };
 });

@@ -6,7 +6,7 @@
                     <div class="flex flex-wrap items-center justify-between gap-3">
                         <div>
                             <h1 class="text-3xl f-semibold text-text">为你推荐</h1>
-                            <p class="text-sm text-text-secondary">灵感来自订阅与 AI 筛选</p>
+                            <p class="text-sm text-text-secondary">灵感来自订阅与 AI 筛选 · 分类与热门标签来自最近两周</p>
                         </div>
                         <button
                             class="inline-flex items-center gap-2 rounded-full border border-primary/20 px-4 py-2 text-sm font-semibold text-primary transition hover:bg-primary/10"
@@ -22,13 +22,45 @@
                         </button>
                     </div>
 
-                    <div
-                        class="flex items-center gap-2 overflow-x-auto whitespace-nowrap rounded-2xl border border-outline/20 bg-surface p-2 text-sm text-text-secondary">
-                        <button v-for="filter in quickFilters" :key="filter.value ?? 'all'" type="button"
-                            class="rounded-full px-4 py-2 font-medium transition" :class="getFilterClass(filter.value)"
-                            @click="filter.value ? handleSelectTag(filter.value) : clearTagFilter()">
-                            {{ filter.label }}
-                        </button>
+                    <div class="space-y-3">
+                        <!-- 分类：样式参考标签胶囊条 -->
+                        <div class="flex items-center gap-2 overflow-x-auto whitespace-nowrap rounded-2xl border border-outline/20 bg-surface p-2 text-sm text-text-secondary">
+                            <button
+                                class="rounded-full px-4 py-2 font-medium transition bg-surface text-text-secondary cursor-default"
+                                disabled>
+                                分类
+                            </button>
+                            <!-- 全部分类按钮 -->
+                            <button
+                                class="rounded-full px-4 py-2 font-medium transition"
+                                :class="getFilterClassForCategory('')"
+                                @click="clearCategoryFilter()">
+                                全部
+                            </button>
+                            <template v-if="insightsLoading">
+                                <span class="text-text-muted">正在加载分类...</span>
+                            </template>
+                            <template v-else>
+                                <button v-for="c in topCategories" :key="c.category"
+                                    class="rounded-full px-4 py-2 font-medium transition"
+                                    :class="getFilterClassForCategory(c.category)"
+                                    @click="handleSelectCategory(c.category)">
+                                    {{ c.category }}
+                                </button>
+                                <span v-if="!topCategories.length" class="text-text-muted">暂无分类统计</span>
+                            </template>
+                        </div>
+
+                        <!-- 隐藏标签快速筛选：如需还原可取消注释 -->
+                        <!--
+                        <div class="flex items-center gap-2 overflow-x-auto whitespace-nowrap rounded-2xl border border-outline/20 bg-surface p-2 text-sm text-text-secondary">
+                            <button v-for="filter in quickFilters" :key="filter.value ?? 'all'" type="button"
+                                class="rounded-full px-4 py-2 font-medium transition" :class="getFilterClass(filter.value)"
+                                @click="filter.value ? handleSelectTag(filter.value) : clearTagFilter()">
+                                {{ filter.label }}
+                            </button>
+                        </div>
+                        -->
                     </div>
 
                     <div class="flex flex-wrap gap-2 text-xs text-text-secondary">
@@ -143,13 +175,18 @@
                             <h3 class="text-sm font-semibold text-text">热门标签</h3>
                             <p class="mt-2 text-xs text-text-secondary">快速探索近期高频出现的主题。</p>
                             <div class="mt-4 flex flex-wrap gap-2">
-                                <button v-for="filter in quickFilters.slice(1, 7)" :key="filter.value ?? filter.label"
-                                    type="button"
-                                    class="rounded-full bg-surface-variant px-3 py-1 text-xs font-medium text-text-secondary transition hover:bg-primary/10 hover:text-primary"
-                                    @click="handleSelectTag(filter.value ?? filter.label)">
-                                    #{{ filter.label }}
-                                </button>
-                                <div v-if="quickFilters.length <= 1" class="text-xs text-text-muted">等待新的标签更新...</div>
+                                <template v-if="insightsLoading">
+                                    <span class="text-text-muted text-xs">加载中...</span>
+                                </template>
+                                <template v-else>
+                                    <button v-for="t in hotTags" :key="t.tag"
+                                        type="button"
+                                        class="rounded-full bg-surface-variant px-3 py-1 text-xs font-medium text-text-secondary transition hover:bg-primary/10 hover:text-primary"
+                                        @click="handleSelectTag(t.tag)">
+                                        #{{ t.tag }}
+                                    </button>
+                                    <div v-if="!hotTags.length" class="text-xs text-text-muted">等待新的标签更新...</div>
+                                </template>
                             </div>
                         </div>
                     </div>
@@ -262,7 +299,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, watch } from 'vue';
+import { computed, onMounted, watch, ref } from 'vue';
 import { storeToRefs } from 'pinia';
 import { useRouter, useRoute } from 'vue-router';
 import ArticleList from '../components/ArticleList.vue';
@@ -270,6 +307,7 @@ import { useArticlesStore } from '../stores/articles';
 import { useCollectionsStore } from '../stores/collections';
 import { useSearchStore, type SearchType } from '../stores/search';
 import { useSubscriptionsStore } from '../stores/subscriptions';
+// 使用 articles store 提供的 fetchInsights，不引入 axios
 
 const router = useRouter();
 const route = useRoute();
@@ -286,6 +324,11 @@ const {
     loading: articlesLoading,
     error: articleError
 } = storeToRefs(articlesStore);
+
+const { insights, insightsLoading } = storeToRefs(articlesStore);
+const { fetchInsights } = articlesStore;
+const topCategories = computed(() => insights.value.categories ?? []);
+const hotTags = computed(() => insights.value.hotTags ?? []);
 
 const {
     results,
@@ -444,7 +487,7 @@ const hasPrevious = computed(() => (isSearching.value ? searchHasPreviousPage.va
 
 const searchTotalText = computed(() => `${searchTotal.value ?? 0} 条结果`);
 
-const buildQuery = (overrides?: { page?: number; type?: SearchType; feedId?: string | null; tags?: string | null }) => {
+const buildQuery = (overrides?: { page?: number; type?: SearchType; feedId?: string | null; tags?: string | null; category?: string | null }) => {
     const query: Record<string, string> = {};
     if (isSearching.value && searchQuery.value) {
         query.q = searchQuery.value;
@@ -462,6 +505,11 @@ const buildQuery = (overrides?: { page?: number; type?: SearchType; feedId?: str
     const tag = hasTagOverride ? overrides?.tags ?? null : activeTag.value;
     if (tag) {
         query.tags = tag;
+    }
+    const hasCategoryOverride = overrides && Object.prototype.hasOwnProperty.call(overrides, 'category');
+    const category = hasCategoryOverride ? overrides?.category ?? null : route.query.category as string | null;
+    if (category) {
+        query.category = category;
     }
     const nextPage = overrides?.page ?? routePage.value;
     if (nextPage > 1) {
@@ -497,7 +545,9 @@ const loadData = async () => {
                 size: 20,
                 page: routePage.value,
                 feedId: activeFeedId.value,
-                tags: activeTag.value
+                tags: activeTag.value,
+                // 从路由读取 category 传递给 store 请求
+                category: (route.query.category as string | undefined) ?? undefined
             })
         );
     }
@@ -589,6 +639,17 @@ const handleSelectTag = (tag: string) => {
     router.push({ name: 'home', query: buildQuery({ page: 1, tags: tag.toLowerCase() }) });
 };
 
+const handleSelectCategory = (category: string) => {
+    if (!category) {
+        return;
+    }
+    router.push({ name: 'home', query: buildQuery({ page: 1, category: category.toLowerCase(), tags: null }) });
+};
+
+const clearCategoryFilter = () => {
+    router.push({ name: 'home', query: buildQuery({ page: 1, category: null }) });
+};
+
 const getFilterClass = (filterValue: string | null) => {
     if (filterValue) {
         return activeTag.value === filterValue
@@ -600,14 +661,33 @@ const getFilterClass = (filterValue: string | null) => {
         : 'bg-surface text-text-secondary hover:bg-primary/10 hover:text-primary';
 };
 
+// 分类的选中样式与标签一致，但依据当前路由的 category 判断
+const getFilterClassForCategory = (category: string) => {
+    const current = ((route.query.category as string | undefined) ?? '').toLowerCase();
+    const value = (category ?? '').toLowerCase();
+    const isSelected = (!current && !value) || (current && current === value);
+    return isSelected
+        ? 'bg-primary text-primary-foreground shadow-sm'
+        : 'bg-surface text-text-secondary hover:bg-primary/10 hover:text-primary';
+};
+
 onMounted(() => {
     loadData();
+    fetchInsights();
 });
 
 watch(
-    () => [searchQuery.value, searchType.value, routePage.value, activeFeedId.value, activeTag.value],
+    () => [
+        searchQuery.value,
+        searchType.value,
+        routePage.value,
+        activeFeedId.value,
+        activeTag.value,
+        route.query.category // 确保分类变化触发数据刷新
+    ],
     () => {
         loadData();
+        // 点击分类/标签时不再刷新概览，避免重复请求
     }
 );
 

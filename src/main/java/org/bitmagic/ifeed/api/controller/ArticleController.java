@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.bitmagic.ifeed.api.response.ArticleDetailResponse;
 import org.bitmagic.ifeed.api.response.ArticleSummaryResponse;
+import org.bitmagic.ifeed.api.response.UserSubscriptionInsightResponse;
 import org.bitmagic.ifeed.api.util.IdentifierUtils;
 import org.bitmagic.ifeed.domain.entity.Article;
 import org.bitmagic.ifeed.domain.projection.ArticleSummaryView;
@@ -46,15 +47,30 @@ public class ArticleController {
                                                                      @RequestParam(required = false) String sort,
                                                                      @RequestParam(required = false) String feedId,
                                                                      @RequestParam(required = false, name = "tags") String tags,
+                                                                     @RequestParam(required = false, name = "category") String category,
                                                                      @RequestParam(required = false, defaultValue = SOURCE_OWNER) String source) {
         ensureAuthenticated(principal);
         var normalizedTags = parseTags(tags);
+        var normalizedCategory = normalizeCategory(category);
         var normalizedSource = normalizeSource(source);
         var includeGlobal = SOURCE_GLOBAL.equals(normalizedSource);
         var articlePage = articleService.listArticles(principal.getId(),
-                        parseFeedId(feedId), normalizedTags, includeGlobal,page, size, sort)
+                        parseFeedId(feedId), normalizedTags, normalizedCategory, includeGlobal, page, size, sort)
                 .map(this::toSummaryResponse);
         return ResponseEntity.ok(articlePage);
+    }
+
+    @GetMapping("/insights")
+    public ResponseEntity<UserSubscriptionInsightResponse> insights(
+            @AuthenticationPrincipal UserPrincipal principal,
+            @RequestParam(required = false) String from,
+            @RequestParam(required = false) String to,
+            @RequestParam(required = false, defaultValue = "20") Integer top) {
+        ensureAuthenticated(principal);
+        var toTs = (to == null || to.isBlank()) ? Instant.now() : Instant.parse(to.trim());
+        var fromTs = (from == null || from.isBlank()) ? toTs.minus(Duration.ofDays(14)) : Instant.parse(from.trim());
+        var resp = articleService.insights(principal.getId(), fromTs, toTs, top);
+        return ResponseEntity.ok(resp);
     }
 
     @GetMapping("/{articleId}")
@@ -162,6 +178,13 @@ public class ArticleController {
                 .map(String::toLowerCase)
                 .collect(Collectors.toCollection(TreeSet::new));
         return normalized.isEmpty() ? Collections.emptySet() : normalized;
+    }
+
+    private String normalizeCategory(String category) {
+        if (category == null || category.isBlank()) {
+            return null;
+        }
+        return category.trim().toLowerCase(Locale.ROOT);
     }
 
     private String normalizeSource(String source) {
