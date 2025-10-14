@@ -242,8 +242,8 @@
                   <div class="flex min-w-0 flex-1 items-center justify-between gap-3">
                     <span class="truncate">{{ item.label }}</span>
                     <span v-if="item.badge"
-                      class="inline-flex h-5 min-w-[1.5rem] items-center justify-center rounded-lg bg-primary/10 px-2 text-[11px] font-semibold text-primary">
-                      {{ item.badge }}
+                      class="inline-flex h-1 w-1 items-center justify-center rounded-lg bg-primary/90 text-[11px] font-semibold text-primary">
+<!--                      {{ item.badge }}-->
                     </span>
                   </div>
                 </component>
@@ -529,7 +529,8 @@ const subscriptionNavSection = computed<NavSection>(() => {
       activeMatch: (current: RouteLocationNormalizedLoaded) => {
         const paramId = typeof current.params.feedId === 'string' ? current.params.feedId : undefined;
         return current.name === 'feed' && paramId === s.feedId;
-      }
+      },
+      badge: s.isRead?'':'1'
     } satisfies NavItem;
   });
 

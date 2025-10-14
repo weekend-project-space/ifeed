@@ -9,6 +9,8 @@ export interface SubscriptionDto {
   siteUrl?: string;
   lastFetched?: string;
   lastUpdated?: string;
+
+  isRead?: boolean;
 }
 
 export const useSubscriptionsStore = defineStore('subscriptions', () => {

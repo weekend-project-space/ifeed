@@ -161,6 +161,7 @@ import { useArticlesStore } from '../stores/articles';
 import { useCollectionsStore } from '../stores/collections';
 import { useFeedStore } from '../stores/feeds';
 import { useSubscriptionsStore } from '../stores/subscriptions';
+import { useReadFeedStore } from '../stores/readfeed';
 import { formatRelativeTime } from '../utils/datetime';
 
 const route = useRoute();
@@ -169,6 +170,7 @@ const feedStore = useFeedStore();
 const articlesStore = useArticlesStore();
 const collectionsStore = useCollectionsStore();
 const subscriptionsStore = useSubscriptionsStore();
+const readFeedStore = useReadFeedStore();
 
 const { detail, loading: feedLoading, error: feedError } = storeToRefs(feedStore);
 const {
@@ -336,6 +338,10 @@ const loadFeed = async () => {
   } catch (err) {
     return;
   }
+  // Mark this feed as read on entering the page (non-blocking)
+  readFeedStore.recordFeedRead(feedId)
+    .then(() => subscriptionsStore.fetchSubscriptions())
+    .catch((err) => console.warn('记录订阅已读失败', err));
   await ensureCollections();
   await ensureSubscriptions();
 };
