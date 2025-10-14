@@ -1,9 +1,9 @@
 <template>
   <article
-    class="group relative flex h-full cursor-pointer flex-col overflow-hidden rounded-2xl border border-outline/25 bg-surface transition hover:border-primary/40 focus-within:border-primary/40"
+    class="group relative flex h-full cursor-pointer flex-col overflow-hidden rounded-xl border border-outline/20 bg-surface transition hover:border-outline/40"
     @click="handleSelect"
   >
-    <figure class="relative aspect-video w-full overflow-hidden bg-surface-variant">
+    <figure class="relative aspect-video w-full overflow-hidden bg-surface">
       <img
         v-if="article.thumbnail && !thumbError"
         :src="article.thumbnail"
@@ -13,8 +13,8 @@
         @error="thumbError = true"
       />
       <div v-else class="flex h-full w-full items-center justify-center">
-        <div class="flex h-full w-full items-center justify-center rounded-none border-0 bg-gradient-to-br from-outline/10 via-outline/5 to-outline/15">
-          <div class="flex items-center gap-2 rounded-xl border border-outline/30 bg-surface/80 px-3 py-2 text-xs text-text-muted shadow-sm">
+        <div class="flex h-full w-full items-center justify-center">
+          <div class="flex items-center gap-2 rounded-md border border-outline/30 bg-surface px-3 py-2 text-xs text-text-muted">
             <svg class="h-4 w-4 text-text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
               <rect x="3" y="3" width="18" height="14" rx="2" ry="2"></rect>
               <path d="M3 17l5-5 4 4 3-3 6 6"></path>
@@ -23,23 +23,23 @@
           </div>
         </div>
       </div>
-      <span class="pointer-events-none absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-surface to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100"></span>
+      <!-- Remove hover gradient overlay for a flatter look -->
     </figure>
     <div class="flex flex-1 flex-col gap-4 p-5">
       <header class="flex items-start gap-4">
         <div class="min-w-0 flex-1 space-y-1">
           <h3
-            class="text-base font-semibold leading-tight text-text transition group-hover:text-primary"
+            class="text-base font-semibold leading-tight text-text"
             style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;"
           >
             {{ article.title }}
           </h3>
-          <p class="text-xs font-medium uppercase tracking-wide text-text-muted">
+          <p class="text-xs text-text-muted">
             {{ article.feedTitle }} · {{ article.timeAgo }}
           </p>
         </div>
         <button
-          class="inline-flex shrink-0 items-center justify-center gap-2 rounded-full border border-outline/30 bg-surface px-3 py-1.5 text-xs font-semibold text-text-secondary transition hover:border-primary/40 hover:text-primary min-w-[6rem]"
+          class="inline-flex shrink-0 items-center justify-center gap-2 rounded-full border border-outline/30 bg-surface px-3 py-1.5 text-xs font-medium text-text-secondary transition hover:border-outline/50 min-w-[6rem]"
           :class="article.collected ? 'border-primary bg-primary/15 text-primary' : ''"
           aria-label="收藏"
           @click.stop="handleToggleFavorite"
@@ -75,7 +75,7 @@
           v-for="tag in article.tags"
           :key="tag"
           type="button"
-          class="rounded-full bg-primary/10 px-3 py-1 font-medium text-primary transition hover:bg-primary/20"
+          class="rounded-full bg-surface px-3 py-1 font-medium text-text-secondary border border-outline/30 hover:border-outline/50"
           @click.stop="handleTagClick(tag)"
         >
           #{{ tag }}

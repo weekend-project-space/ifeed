@@ -12,7 +12,7 @@
     </div>
     <div
       v-else
-      class="flex flex-col items-center justify-center gap-3 rounded-2xl border border-outline/30 bg-surface py-16 text-sm text-text-muted"
+      class="flex flex-col items-center justify-center gap-3 rounded-xl border border-outline/30 bg-surface py-16 text-sm text-text-muted"
     >
       <svg class="h-10 w-10 text-primary/40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
         <path
