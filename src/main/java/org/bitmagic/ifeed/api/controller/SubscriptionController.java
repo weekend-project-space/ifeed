@@ -6,8 +6,10 @@ import org.bitmagic.ifeed.api.request.SubscriptionRequest;
 import org.bitmagic.ifeed.api.response.MessageResponse;
 import org.bitmagic.ifeed.api.response.SubscriptionResponse;
 import org.bitmagic.ifeed.api.util.IdentifierUtils;
+import org.bitmagic.ifeed.domain.document.UserBehaviorDocument;
 import org.bitmagic.ifeed.domain.entity.Feed;
 import org.bitmagic.ifeed.domain.entity.User;
+import org.bitmagic.ifeed.domain.repository.UserBehaviorRepository;
 import org.bitmagic.ifeed.exception.ApiException;
 import org.bitmagic.ifeed.security.UserPrincipal;
 import org.bitmagic.ifeed.service.AuthService;
@@ -25,7 +27,12 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.time.Instant;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/subscriptions")
@@ -34,6 +41,8 @@ public class SubscriptionController {
 
     private final SubscriptionService subscriptionService;
     private final AuthService authService;
+
+    private final UserBehaviorRepository userBehaviorRepository;
 
     @PostMapping
     public ResponseEntity<MessageResponse> subscribe(@AuthenticationPrincipal UserPrincipal principal,
@@ -46,6 +55,8 @@ public class SubscriptionController {
     @GetMapping
     public ResponseEntity<List<SubscriptionResponse>> list(@AuthenticationPrincipal UserPrincipal principal) {
         var user = resolveUser(principal);
+        UserBehaviorDocument userBehaviorDocument = userBehaviorRepository.findById(user.getId().toString()).orElse(null);
+        Map<String, Instant> feedReadTimes = Objects.nonNull(userBehaviorDocument) ? userBehaviorDocument.getReadFeedHistory().stream().collect(Collectors.toMap(UserBehaviorDocument.FeedRef::getFeedId, UserBehaviorDocument.FeedRef::getTimestamp)) : new HashMap<>();
         var subscriptions = subscriptionService.getActiveSubscriptions(user).stream()
                 .map(subscription -> {
                     var feed = subscription.getFeed();
@@ -61,7 +72,8 @@ public class SubscriptionController {
                             feedUrl,
                             siteUrl,
                             feed.getLastFetched(),
-                            feed.getLastUpdated()
+                            feed.getLastUpdated(),
+                            feedReadTimes.getOrDefault(feed.getId().toString(), Instant.EPOCH).isAfter(feed.getLastUpdated())
                     );
                 })
                 .toList();

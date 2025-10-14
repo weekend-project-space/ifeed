@@ -8,6 +8,7 @@ public record SubscriptionResponse(
         String url,
         String siteUrl,
         Instant lastFetched,
-        Instant lastUpdated
+        Instant lastUpdated,
+        Boolean isRead
 ) {
 }

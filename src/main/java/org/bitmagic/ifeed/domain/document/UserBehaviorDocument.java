@@ -30,6 +30,18 @@ public class UserBehaviorDocument {
     @Builder.Default
     private List<Interaction> interactionHistory = new ArrayList<>();
 
+    @Builder.Default
+    private List<FeedRef> readFeedHistory = new ArrayList<>();
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class FeedRef {
+        private String feedId;
+        private Instant timestamp;
+    }
+
     @Data
     @Builder
     @NoArgsConstructor

@@ -41,7 +41,7 @@ public class UserHistoryService {
 
         var articleIdValue = article.getId().toString();
         var timestamp = readAt != null ? readAt : Instant.now();
-
+//      添加文章阅读记录
         var existing = document.getReadHistory().stream()
                 .filter(item -> articleIdValue.equals(item.getArticleId()))
                 .findFirst()
@@ -52,6 +52,22 @@ public class UserHistoryService {
         } else {
             document.getReadHistory().add(UserBehaviorDocument.ArticleRef.builder()
                     .articleId(articleIdValue)
+                    .timestamp(timestamp)
+                    .build());
+        }
+
+        //      添加feed阅读记录
+        var feedIdValue = article.getFeed().getId().toString();
+        var feedExisting = document.getReadFeedHistory().stream()
+                .filter(item -> feedIdValue.equals(item.getFeedId()))
+                .findFirst()
+                .orElse(null);
+
+        if (feedExisting != null) {
+            feedExisting.setTimestamp(timestamp);
+        } else {
+            document.getReadFeedHistory().add(UserBehaviorDocument.FeedRef.builder()
+                    .feedId(feedIdValue)
                     .timestamp(timestamp)
                     .build());
         }
