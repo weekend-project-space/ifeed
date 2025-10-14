@@ -21,11 +21,10 @@ public class AiProviderProperties {
      * API key or bearer token used for authentication.
      */
     private String apiKey;
-
     /**
      * Model identifier used by the AI provider.
      */
-    private String model = "gemini-pro";
+    private String model = "gpt-4o-mini";
 
     public boolean isEnabled() {
         return enabled;

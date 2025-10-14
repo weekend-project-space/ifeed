@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.logging.log4j.util.Strings;
 import org.bitmagic.ifeed.config.AiProviderProperties;
 import org.bitmagic.ifeed.exception.ApiException;
 import org.springframework.http.HttpStatus;
@@ -45,7 +46,7 @@ public class DefaultAiContentService implements AiContentService {
             throw new ApiException(HttpStatus.BAD_REQUEST, "Article content cannot be empty");
         }
 
-        if (properties.isEnabled() && StringUtils.hasText(properties.getEndpoint())) {
+        if (properties.isEnabled() && StringUtils.hasText(properties.getEndpoint()) && Strings.isNotBlank(content) && content.length() > DEFAULT_SUMMARY_LENGTH * 2) {
             try {
                 return callExternalProvider(title, content);
             } catch (Exception ex) {
