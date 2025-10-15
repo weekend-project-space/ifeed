@@ -18,7 +18,9 @@
             <header class="space-y-5">
               <div class="flex flex-wrap items-start justify-between gap-4">
                 <div class="space-y-2">
-                  <p class="text-sm text-text-muted">{{ article.feedTitle }} · {{ article.timeAgo }}</p>
+                  <p class="text-sm text-text-muted">
+                    <router-link v-if="article.feedId" :to="'/feeds/'+article.feedId"
+                       class="font-medium text-primary transition hover:opacity-80">{{ article.feedTitle }} </router-link> · {{ article.timeAgo }}</p>
                   <h1 class="text-3xl font-semibold leading-tight text-text">{{ article.title }}</h1>
                 </div>
                 <button

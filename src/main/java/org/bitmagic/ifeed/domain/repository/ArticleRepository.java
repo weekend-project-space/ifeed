@@ -80,6 +80,7 @@ public interface ArticleRepository extends JpaRepository<Article, UUID> {
             left join a.feed f
             where (lower(a.title) like :term
                or lower(a.summary) like :term
+               or lower(a.category) like :term
                or lower(a.tags) like :term)
               and (:ownerId is null or exists (
                     select 1
@@ -93,7 +94,9 @@ public interface ArticleRepository extends JpaRepository<Article, UUID> {
                     select count(a)
                     from Article a
                     where (lower(a.title) like :term
-                       or lower(a.summary) like :term)
+                       or lower(a.summary) like :term
+                       or lower(a.category) like :term
+                       or lower(a.tags) like :term)
                       and (:ownerId is null or exists (
                             select 1
                             from UserSubscription us

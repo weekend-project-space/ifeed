@@ -13,6 +13,7 @@ export interface ArticleDto {
   link?: string;
   thumbnail?: string;
   enclosure?: string;
+  feedId?: string;
   feedTitle?: string;
   publishedAt?: string;
   tags?: string[];
@@ -33,6 +34,8 @@ export interface ArticleListItem {
 
 export interface ArticleDetail extends ArticleListItem {
   content: string;
+
+  feedId?: string;
 }
 
 
@@ -166,6 +169,7 @@ export const useArticlesStore = defineStore('articles', () => {
       const hasHtmlTags = /<\/?[a-z][\s\S]*>/i.test(rawContent);
       currentArticle.value = {
         ...normalized,
+        feedId:data.feedId,
         content: hasHtmlTags ? rawContent : markdown.render(rawContent)
       };
       return currentArticle.value;

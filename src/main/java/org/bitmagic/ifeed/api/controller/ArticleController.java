@@ -87,6 +87,7 @@ public class ArticleController {
                 article.getLink(),
                 article.getThumbnail(),
                 article.getEnclosure(),
+                article.getFeed().getId().toString(),
                 resolveFeedTitle(article.getFeed() == null ? null : article.getFeed().getTitle()),
                 formatTimestamp(article.getPublishedAt()),
                 tags);
