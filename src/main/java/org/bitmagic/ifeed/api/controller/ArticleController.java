@@ -68,7 +68,7 @@ public class ArticleController {
             @RequestParam(required = false, defaultValue = "20") Integer top) {
         ensureAuthenticated(principal);
         var toTs = (to == null || to.isBlank()) ? Instant.now() : Instant.parse(to.trim());
-        var fromTs = (from == null || from.isBlank()) ? toTs.minus(Duration.ofDays(14)) : Instant.parse(from.trim());
+        var fromTs = (from == null || from.isBlank()) ? toTs.minus(Duration.ofDays(30)) : Instant.parse(from.trim());
         var resp = articleService.insights(principal.getId(), fromTs, toTs, top);
         return ResponseEntity.ok(resp);
     }
