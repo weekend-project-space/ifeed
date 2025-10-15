@@ -9,6 +9,9 @@ export interface SearchResultDto {
   id: string;
   title?: string;
   summary?: string;
+  thumbnail?: string;
+  feedTitle?: string;
+  timeAgo?: string;
   score?: number;
 }
 

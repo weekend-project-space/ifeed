@@ -14,6 +14,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.Locale;
 
 @RestController
@@ -52,6 +54,9 @@ public class SearchController {
                         article.id().toString(),
                         article.title(),
                         article.summary(),
+                        article.thumbnail(),
+                        article.feedTitle(),
+                        formatRelativeTime(article.publishedAt()),
                         null));
         return ResponseEntity.ok(articlePage);
     }
@@ -60,5 +65,29 @@ public class SearchController {
         if (principal == null) {
             throw new ApiException(HttpStatus.UNAUTHORIZED, "Unauthorized");
         }
+    }
+
+    private String formatRelativeTime(Instant instant) {
+        if (instant == null) {
+            return "刚刚";
+        }
+        var now = Instant.now();
+        if (instant.isAfter(now)) {
+            return "刚刚";
+        }
+        var duration = Duration.between(instant, now);
+        if (duration.toMinutes() < 1) {
+            return "刚刚";
+        }
+        if (duration.toMinutes() < 60) {
+            return duration.toMinutes() + " 分钟前";
+        }
+        if (duration.toHours() < 24) {
+            return duration.toHours() + " 小时前";
+        }
+        if (duration.toDays() < 7) {
+            return duration.toDays() + " 天前";
+        }
+        return instant.toString().substring(0, Math.min(10, instant.toString().length()));
     }
 }

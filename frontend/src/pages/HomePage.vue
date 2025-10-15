@@ -246,7 +246,7 @@
             <section class="space-y-6">
                 <div class="rounded-3xl border border-outline/20 bg-surface-container px-7 py-6">
                     <div class="flex flex-wrap items-center justify-between gap-4">
-                        <div class="space-y-1">
+                        <div class="space-y-1 mb-2">
                             <h2 class="text-2xl font-semibold text-text">搜索 “{{ searchQuery }}” 的结果</h2>
                             <p class="text-sm text-text-secondary">共 {{ searchTotalText }}，当前第 {{ currentPage }} 页。</p>
                         </div>
@@ -431,13 +431,14 @@ const quickFilters = computed(() => {
 
 const searchArticleItems = computed(() =>
     results.value.map((item) => {
-        const scoreText = typeof item.score === 'number' ? `相关度 ${(item.score * 100).toFixed(0)}%` : '相关度未知';
+        // const scoreText = typeof item.score === 'number' ? `相关度 ${(item.score * 100).toFixed(0)}%` : '相关度未知';
         return {
             id: item.id,
             title: item.title ?? '未命名文章',
             summary: item.summary ?? '暂无摘要',
-            feedTitle: '搜索结果',
-            timeAgo: scoreText,
+            thumbnail: item.thumbnail,
+            feedTitle:  item.feedTitle,
+            timeAgo: item.timeAgo,
             tags: [] as string[],
             collected: collectionsStore.isCollected(item.id)
         };

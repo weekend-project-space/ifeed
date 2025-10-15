@@ -79,7 +79,8 @@ public interface ArticleRepository extends JpaRepository<Article, UUID> {
             from Article a
             left join a.feed f
             where (lower(a.title) like :term
-               or lower(a.summary) like :term)
+               or lower(a.summary) like :term
+               or lower(a.tags) like :term)
               and (:ownerId is null or exists (
                     select 1
                     from UserSubscription us
