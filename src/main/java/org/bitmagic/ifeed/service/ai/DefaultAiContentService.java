@@ -33,7 +33,7 @@ public class DefaultAiContentService implements AiContentService {
 
     private static final Pattern WORD_PATTERN = Pattern.compile("[a-zA-Z]{4,}");
     private static final int DEFAULT_SUMMARY_LENGTH = 280;
-    private static final String SYSTEM_PROMPT = "You are an assistant that analyzes RSS article content and produces JSON with summary, category, tags and embedding array. {summary:'',tags:[''],embedding:[0],category:'string'}";
+    private static final String SYSTEM_PROMPT = "You are an RSS article content analysis assistant responsible for generating JSON data containing abstracts (please summarize the main content of this article in concise language, highlighting core points and key information) summary, categories, tags, and embedded arrays. Format example: {summary:'',tags:[''],embedding:[0],category:'string'}";
     private static final String USER_PROMPT_TEMPLATE = "Title: %s\n\nContent:\n%s";
 
     private final AiProviderProperties properties;
@@ -45,6 +45,8 @@ public class DefaultAiContentService implements AiContentService {
         if (!StringUtils.hasText(content)) {
             throw new ApiException(HttpStatus.BAD_REQUEST, "Article content cannot be empty");
         }
+
+        log.debug("Analyze article title='{}', contentLength={}", title, content == null ? 0 : content.length());
 
         if (properties.isEnabled() && StringUtils.hasText(properties.getEndpoint()) && Strings.isNotBlank(content) && content.length() > DEFAULT_SUMMARY_LENGTH * 2) {
             try {
@@ -66,6 +68,7 @@ public class DefaultAiContentService implements AiContentService {
                 .build();
 
         var model = Optional.ofNullable(properties.getModel()).filter(StringUtils::hasText).orElse("gpt-4o-mini");
+        log.info("Calling external AI provider model={} endpoint={}", model, properties.getEndpoint());
         var messages = List.of(
                 Map.of("role", "system", "content", SYSTEM_PROMPT),
                 Map.of("role", "user", "content", USER_PROMPT_TEMPLATE.formatted(title, content))
@@ -113,8 +116,9 @@ public class DefaultAiContentService implements AiContentService {
                 .body(request)
                 .retrieve()
                 .body(String.class);
+    log.debug("AI provider response length={}", responseBody == null ? 0 : responseBody.length());
 
-        if (!StringUtils.hasText(responseBody)) {
+    if (!StringUtils.hasText(responseBody)) {
             throw new ApiException(HttpStatus.BAD_GATEWAY, "Empty response from AI provider");
         }
 
@@ -139,12 +143,18 @@ public class DefaultAiContentService implements AiContentService {
                 aiResponse = objectMapper.readValue(messageContent, ProviderResponse.class);
             }
 
-            return new AiContent(
+            var result = new AiContent(
                     StringUtils.hasText(aiResponse.summary()) ? aiResponse.summary() : generateSummary(content),
                     StringUtils.hasText(aiResponse.category()) ? aiResponse.category() : guessCategory(title, content),
                     aiResponse.tags() != null && !aiResponse.tags().isEmpty() ? aiResponse.tags() : generateTags(content),
                     aiResponse.embedding() != null ? aiResponse.embedding() : List.of()
             );
+
+            log.info("AI provider returned summaryLength={} tagsCount={}",
+                    result.summary() == null ? 0 : result.summary().length(),
+                    result.tags() == null ? 0 : result.tags().size());
+
+            return result;
         } catch (ApiException ex) {
             throw ex;
         } catch (Exception ex) {
@@ -153,6 +163,7 @@ public class DefaultAiContentService implements AiContentService {
     }
 
     private AiContent fallbackContent(String title, String content) {
+        log.info("Using fallback heuristic summary for title='{}'", title);
         return new AiContent(
                 generateSummary(content),
                 guessCategory(title, content),
