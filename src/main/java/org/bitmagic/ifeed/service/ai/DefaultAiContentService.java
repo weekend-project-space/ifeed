@@ -75,7 +75,7 @@ public class DefaultAiContentService implements AiContentService {
         request.put("model", model);
         request.put("messages", messages);
         request.put("temperature", 0.2);
-        request.put("max_tokens", 512);
+        request.put("max_tokens", 4096);
         request.put("response_format", Map.of(
                 "type", "json_schema",
                 "json_schema", Map.of(

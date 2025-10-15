@@ -76,7 +76,7 @@ public class FeedIngestionService {
             var syndFeed = fetchFeed(feed.getUrl());
             log.info("fetch url:{}", feed.getUrl());
             var latestContentUpdate = processEntries(feed, syndFeed.getEntries());
-            updateFeedTitle(feed, syndFeed);
+            updateFeedInfo(feed, syndFeed);
             if (latestContentUpdate != null) {
                 var currentLastUpdated = feed.getLastUpdated();
                 if (currentLastUpdated == null || latestContentUpdate.isAfter(currentLastUpdated)) {
@@ -183,12 +183,13 @@ public class FeedIngestionService {
         return Optional.ofNullable(publishedAt);
     }
 
-    private void updateFeedTitle(Feed feed, SyndFeed syndFeed) {
+    private void updateFeedInfo(Feed feed, SyndFeed syndFeed) {
         var fetchedTitle = syndFeed != null ? syndFeed.getTitle() : null;
         if (StringUtils.hasText(fetchedTitle)) {
             var normalizedTitle = fetchedTitle.trim();
             if (!normalizedTitle.equals(feed.getTitle())) {
                 feed.setTitle(normalizedTitle);
+                feed.setSiteUrl(syndFeed.getLink());
             }
             return;
         }
