@@ -7,6 +7,7 @@ export interface SubscriptionDto {
   title?: string;
   url: string;
   siteUrl?: string;
+  avatar?: string;
   lastFetched?: string;
   lastUpdated?: string;
 

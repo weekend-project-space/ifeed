@@ -15,6 +15,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.net.URI;
+import java.net.URISyntaxException;
+
 @RestController
 @RequestMapping("/api/feeds")
 @RequiredArgsConstructor
@@ -53,6 +56,7 @@ public class FeedController {
                 feed.getTitle(),
                 feed.getUrl(),
                 feed.getSiteUrl(),
+                "https://favicon.im/%s".formatted(extractHost(feed.getSiteUrl())),
                 feed.getLastFetched(),
                 feed.getLastUpdated(),
                 detail.latestPublishedAt(),
@@ -60,5 +64,24 @@ public class FeedController {
                 detail.subscriberCount(),
                 subscribed
         );
+    }
+
+    private String extractHost(String url) {
+        if (url == null || url.isBlank()) {
+            return null;
+        }
+        try {
+            var uri = new URI(url.trim());
+            if (uri.getHost() != null && !uri.getHost().isBlank()) {
+                return uri.getHost();
+            }
+            var path = uri.getPath();
+            if (path != null && !path.isBlank()) {
+                return path;
+            }
+        } catch (URISyntaxException ignored) {
+            return url;
+        }
+        return url;
     }
 }

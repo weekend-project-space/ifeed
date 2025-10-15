@@ -7,6 +7,9 @@ public record FeedDetailResponse(
         String title,
         String url,
         String siteUrl,
+
+        String avatar,
+
         Instant lastFetched,
         Instant lastUpdated,
         Instant latestPublishedAt,

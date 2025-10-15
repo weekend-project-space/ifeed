@@ -11,8 +11,13 @@
             <span v-if="detail?.siteUrl" class="truncate text-primary/80">{{ detail.siteUrl }}</span>
           </div>
           <div class="flex flex-col gap-5 sm:flex-row sm:items-center sm:gap-6">
+            <img v-if="detail.avatar"
+                :src="detail.avatar"
+                class="flex h-20 w-20 items-center justify-center rounded-full bg-primary text-3xl font-bold text-primary-foreground shadow-xl"
+                />
             <div
-              class="flex h-20 w-20 items-center justify-center rounded-3xl bg-primary text-3xl font-bold text-primary-foreground shadow-xl">
+                v-else
+              class="flex h-20 w-20 items-center justify-center rounded-full bg-primary text-3xl font-bold text-primary-foreground shadow-xl">
               {{ channelInitial }}
             </div>
             <div class="space-y-2">
@@ -25,14 +30,14 @@
             </div>
           </div>
           <div class="flex flex-wrap items-center gap-4 text-sm text-text-secondary">
-            <span class="inline-flex items-center gap-2 rounded-full bg-surface px-4 py-2">
+            <span class="inline-flex items-center gap-2 rounded-full bg-surface/60 px-4 py-2">
               <svg class="h-4 w-4 text-primary" viewBox="0 0 20 20" fill="none" stroke="currentColor"
                 stroke-width="1.6">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M5 4h10M5 10h10M5 16h10" />
               </svg>
               文章 {{ detail?.articleCount ?? 0 }} 篇
             </span>
-            <span class="inline-flex items-center gap-2 rounded-full bg-surface px-4 py-2">
+            <span class="inline-flex items-center gap-2 rounded-full bg-surface/60 px-4 py-2">
               <svg class="h-4 w-4 text-primary" viewBox="0 0 20 20" fill="none" stroke="currentColor"
                 stroke-width="1.6">
                 <path stroke-linecap="round" stroke-linejoin="round"
@@ -40,7 +45,7 @@
               </svg>
               订阅者 {{ detail?.subscriberCount ?? 0 }} 名
             </span>
-            <span class="inline-flex items-center gap-2 rounded-full bg-surface px-4 py-2">
+            <span class="inline-flex items-center gap-2 rounded-full bg-surface/60 px-4 py-2">
               <svg class="h-4 w-4 text-primary" viewBox="0 0 20 20" fill="none" stroke="currentColor"
                 stroke-width="1.6">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M10 2v4m0 8v4m8-8h-4M6 10H2" />

@@ -144,11 +144,11 @@
                   v-bind="item.to ? { to: item.to } : { type: 'button' }"
                   class="group flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition-colors"
                   :class="isActiveItem(item)
-                    ? 'bg-surface-variant/80 text-text font-semibold shadow-sm'
+                    ? 'bg-primary/5 text-text font-semibold shadow-sm'
                     : 'text-text-secondary hover:bg-surface-variant/50 hover:text-text'"
                   @click="handleNavItemClick(item)">
                   <span v-if="item.icon"
-                    class="flex h-8 w-8 items-center justify-center rounded-full text-text-muted transition group-hover:text-primary"
+                    class="flex h-6 w-6 items-center justify-center rounded-full text-text-muted transition group-hover:text-primary"
                     :class="isActiveItem(item) ? 'bg-surface text-text' : 'bg-surface-variant/60'">
                     <svg class="h-5 w-5" :viewBox="item.icon.viewBox ?? '0 0 20 20'"
                       :fill="item.icon.stroke ? 'none' : 'currentColor'"
@@ -160,8 +160,12 @@
                         :fill="item.icon.stroke ? 'none' : 'currentColor'" />
                     </svg>
                   </span>
+                  <img v-else-if="item.avatar"
+                       :src="item.avatar "
+                       class="flex h-6 w-6 items-center justify-center rounded-full text-xs font-semibold uppercase"
+                       :class="item.accent ?? 'bg-primary'" />
                   <span v-else-if="item.avatarText"
-                    class="flex h-8 w-8 items-center justify-center rounded-md text-xs font-semibold uppercase"
+                    class="flex h-6 w-6 items-center justify-center rounded-full text-xs font-semibold uppercase"
                     :class="item.accent ?? 'bg-primary'">
                     {{ item.avatarText }}
                   </span>
@@ -218,11 +222,11 @@
                   v-bind="item.to ? { to: item.to } : { type: 'button' }"
                   class="group flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition-colors"
                   :class="isActiveItem(item)
-                    ? 'bg-surface-variant/80 text-text font-semibold shadow-sm'
+                    ? 'bg-primary/5 text-text font-semibold shadow-sm'
                     : 'text-text-secondary hover:bg-surface-variant/50 hover:text-text'"
                   @click="handleNavItemClick(item)">
                   <span v-if="item.icon"
-                    class="flex h-8 w-8 items-center justify-center rounded-full text-text-muted transition group-hover:text-primary"
+                    class="flex h-6 w-6 items-center justify-center rounded-lg text-text-muted transition group-hover:text-primary"
                     :class="isActiveItem(item) ? 'bg-surface text-text' : 'bg-surface-variant/60'">
                     <svg class="h-5 w-5" :viewBox="item.icon.viewBox ?? '0 0 20 20'"
                       :fill="item.icon.stroke ? 'none' : 'currentColor'"
@@ -234,8 +238,12 @@
                         :fill="item.icon.stroke ? 'none' : 'currentColor'" />
                     </svg>
                   </span>
+                  <img v-else-if="item.avatar"
+                       :src="item.avatar "
+                        class="flex h-6 w-6 items-center justify-center rounded-full text-xs font-semibold uppercase"
+                        :class="item.accent ?? 'bg-primary'" />
                   <span v-else-if="item.avatarText"
-                    class="flex h-8 w-8 items-center justify-center rounded-lg text-xs font-semibold uppercase"
+                    class="flex h-8 w-8 items-center justify-center rounded-full text-xs font-semibold uppercase"
                     :class="item.accent ?? 'bg-primary'">
                     {{ item.avatarText }}
                   </span>
@@ -296,6 +304,7 @@ type NavItem = {
   to?: RouteLocationRaw;
   icon?: NavIcon;
   avatarText?: string;
+  avatar?: string;
   accent?: string;
   badge?: string;
   activeMatch?: (current: RouteLocationNormalizedLoaded) => boolean;
@@ -524,6 +533,7 @@ const subscriptionNavSection = computed<NavSection>(() => {
       id: `sub-${s.feedId}`,
       label,
       to: { name: 'feed' as const, params: { feedId: s.feedId } },
+      avatar: s.avatar,
       avatarText: initials,
       accent,
       activeMatch: (current: RouteLocationNormalizedLoaded) => {
@@ -658,5 +668,42 @@ onMounted(async () => {
 .sidebar-enter-from,
 .sidebar-leave-to {
   transform: translateX(-100%);
+}
+
+/* Sidebar scrollbar styling (only affects the nav scroll area) */
+/* Default: almost invisible; On hover: more visible and slightly wider */
+:deep(nav.flex-1.overflow-y-auto) {
+  /* Firefox default (almost hidden) */
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent; /* thumb | track */
+}
+
+/* Firefox hover: show clearer thumb */
+:deep(nav.flex-1.overflow-y-auto:hover) {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(var(--md-outline), 0.45) transparent;
+}
+
+/* WebKit default */
+:deep(nav.flex-1.overflow-y-auto)::-webkit-scrollbar {
+  width: 6px;
+}
+
+:deep(nav.flex-1.overflow-y-auto)::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+:deep(nav.flex-1.overflow-y-auto)::-webkit-scrollbar-thumb {
+  background-color: transparent;     /* hidden by default */
+  border-radius: 9999px;             /* fully rounded */
+}
+
+/* WebKit hover: make thumb visible and slightly wider */
+:deep(nav.flex-1.overflow-y-auto:hover)::-webkit-scrollbar {
+  width: 8px;
+}
+
+:deep(nav.flex-1.overflow-y-auto:hover)::-webkit-scrollbar-thumb {
+  background-color: rgba(var(--md-outline), 0.45);
 }
 </style>

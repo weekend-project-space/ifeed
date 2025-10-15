@@ -7,6 +7,7 @@ public record SubscriptionResponse(
         String title,
         String url,
         String siteUrl,
+        String avatar,
         Instant lastFetched,
         Instant lastUpdated,
         Boolean isRead

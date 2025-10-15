@@ -71,6 +71,7 @@ public class SubscriptionController {
                             title,
                             feedUrl,
                             siteUrl,
+                            "https://favicon.im/%s".formatted(extractHost(feed.getSiteUrl())),
                             feed.getLastFetched(),
                             feed.getLastUpdated(),
                             feedReadTimes.getOrDefault(feed.getId().toString(), Instant.EPOCH).isAfter(Objects.nonNull(feed.getLastUpdated())?feed.getLastUpdated():Instant.EPOCH)
