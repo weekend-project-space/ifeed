@@ -16,7 +16,7 @@ public class FeedIngestionScheduler {
             fixedDelayString = "${rss.fetcher.fixed-delay:PT30M}")
     public void refreshFeeds() {
         var feedIds = ingestionService.getFeedIds();
-        log.debug("Starting scheduled ingestion for {} feeds", feedIds.size());
+        log.info("Starting scheduled ingestion for {} feeds", feedIds.size());
         feedIds.parallelStream().forEach(ingestionService::ingestFeed);
     }
 }
