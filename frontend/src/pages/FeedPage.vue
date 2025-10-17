@@ -11,13 +11,10 @@
             <span v-if="detail?.siteUrl" class="truncate text-primary/80">{{ detail.siteUrl }}</span>
           </div>
           <div class="flex flex-col gap-5 sm:flex-row sm:items-center sm:gap-6">
-            <img v-if="detail.avatar"
-                :src="detail.avatar"
-                class="flex h-20 w-20 items-center justify-center rounded-full bg-primary text-3xl font-bold text-primary-foreground shadow-xl"
-                />
-            <div
-                v-else
-              class="flex h-20 w-20 items-center justify-center rounded-full bg-primary text-3xl font-bold text-primary-foreground shadow-xl">
+            <img v-if="detail.avatar" :src="detail.avatar"
+              class="flex h-20 w-20 items-center justify-center rounded-full bg-surface text-3xl font-bold text-primary-foreground shadow-xl" />
+            <div v-else
+              class="flex h-20 w-20 items-center justify-center rounded-full bg-surface text-3xl font-bold text-primary-foreground shadow-xl">
               {{ channelInitial }}
             </div>
             <div class="space-y-2">

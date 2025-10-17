@@ -35,6 +35,10 @@
   --md-on-inverse: 19 36 51;
 }
 
+html {
+  scrollbar-gutter: stable;
+}
+
 @layer base {
   body {
     /* Flatter base: plain surface, no extra shadows */

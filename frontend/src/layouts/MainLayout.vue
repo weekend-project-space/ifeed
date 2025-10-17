@@ -11,6 +11,17 @@
               <path stroke-linecap="round" d="M4 7h16M4 12h16M4 17h16" />
             </svg>
           </button>
+          <button type="button"
+            class="hidden h-10 w-10 items-center justify-center rounded-full border border-outline/60 text-text transition hover:border-primary/50 hover:text-primary lg:inline-flex"
+            :aria-label="isSidebarCollapsed ? '展开导航' : '收起导航'" @click="toggleSidebar">
+            <svg v-if="isSidebarCollapsed" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="1.8">
+              <path stroke-linecap="round" d="M5 7h14M5 12h9M5 17h14" />
+            </svg>
+            <svg v-else class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <path stroke-linecap="round" d="M4 7h16M4 12h16M4 17h16" />
+            </svg>
+          </button>
           <RouterLink :to="{ name: 'home' }"
             class="flex items-center gap-2 text-lg font-semibold tracking-tight text-text">
             <span
@@ -160,10 +171,9 @@
                         :fill="item.icon.stroke ? 'none' : 'currentColor'" />
                     </svg>
                   </span>
-                  <img v-else-if="item.avatar"
-                       :src="item.avatar "
-                       class="flex h-6 w-6 items-center justify-center rounded-full text-xs font-semibold uppercase"
-                       :class="item.accent ?? 'bg-primary'" />
+                  <img v-else-if="item.avatar" :src="item.avatar"
+                    class="flex h-6 w-6 items-center justify-center rounded-full text-xs font-semibold uppercase"
+                    :class="item.accent ?? 'bg-primary'" />
                   <span v-else-if="item.avatarText"
                     class="flex h-6 w-6 items-center justify-center rounded-full text-xs font-semibold uppercase"
                     :class="item.accent ?? 'bg-primary'">
@@ -183,7 +193,7 @@
               </div>
             </div>
           </nav>
-          <div class="mt-auto px-4 pt-6">
+          <div v-if="!isSidebarCollapsed" class="mt-auto px-4 pt-6">
             <div class="rounded-2xl border border-outline/40 bg-surface-container px-4 py-4">
               <div class="flex items-center gap-3">
                 <div
@@ -205,26 +215,31 @@
       </div>
     </transition>
 
-    <div class="flex flex-1 overflow-hidden lg:pl-64">
+    <div class="flex flex-1 overflow-hidden" :class="isSidebarCollapsed ? 'lg:pl-20' : 'lg:pl-64'">
       <!-- Make sidebar fixed and full height on desktop so it never scrolls with main content -->
-      <aside class="fixed left-0 top-[75px] bottom-0 z-30 hidden w-64  border-outline/30 bg-surface py-6 lg:block">
+      <aside :class="[
+        'fixed left-0 top-[75px] bottom-0 z-30 hidden border-outline/30 bg-surface py-6 lg:block transition-[width] duration-200',
+        isSidebarCollapsed ? 'w-20' : 'w-64'
+      ]">
         <div class="flex h-full flex-col overflow-hidden">
-          <div class="px-5 pb-3">
+          <div v-if="!isSidebarCollapsed" class="px-5 pb-3">
             <p class="text-[11px] font-semibold text-text-muted/80">导航</p>
           </div>
-          <nav class="flex-1 space-y-5 overflow-y-auto px-3">
+          <nav class="flex-1 space-y-5 overflow-y-auto" :class="isSidebarCollapsed ? 'px-2' : 'px-3'">
             <div v-for="(section, index) in navSections" :key="section.id" class="space-y-2">
-              <div v-if="section.title" class="px-3 text-[11px] font-semibold text-text-muted/70">
+              <div v-if="section.title && !isSidebarCollapsed"
+                class="px-3 text-[11px] font-semibold text-text-muted/70">
                 {{ section.title }}
               </div>
               <div class="space-y-1">
                 <component v-for="item in section.items" :is="item.to ? 'RouterLink' : 'button'" :key="item.id"
                   v-bind="item.to ? { to: item.to } : { type: 'button' }"
-                  class="group flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition-colors"
-                  :class="isActiveItem(item)
-                    ? 'bg-primary/5 text-text font-semibold shadow-sm'
-                    : 'text-text-secondary hover:bg-surface-variant/50 hover:text-text'"
-                  @click="handleNavItemClick(item)">
+                  class="group flex w-full items-center rounded-xl py-2 text-sm font-medium transition-colors" :class="[
+                    isSidebarCollapsed ? 'justify-center px-2' : 'gap-3 px-3',
+                    isActiveItem(item)
+                      ? 'bg-primary/5 text-text font-semibold shadow-sm'
+                      : 'text-text-secondary hover:bg-surface-variant/50 hover:text-text'
+                  ]" :title="isSidebarCollapsed ? item.label : undefined" @click="handleNavItemClick(item)">
                   <span v-if="item.icon"
                     class="flex h-6 w-6 items-center justify-center rounded-lg text-text-muted transition group-hover:text-primary"
                     :class="isActiveItem(item) ? 'bg-surface text-text' : 'bg-surface-variant/60'">
@@ -238,25 +253,24 @@
                         :fill="item.icon.stroke ? 'none' : 'currentColor'" />
                     </svg>
                   </span>
-                  <img v-else-if="item.avatar"
-                       :src="item.avatar "
-                        class="flex h-6 w-6 items-center justify-center rounded-full text-xs font-semibold uppercase"
-                        :class="item.accent ?? 'bg-primary'" />
+                  <img v-else-if="item.avatar" :src="item.avatar"
+                    class="flex h-6 w-6 items-center justify-center rounded-full text-xs font-semibold uppercase"
+                    :class="item.accent ?? 'bg-primary'" />
                   <span v-else-if="item.avatarText"
                     class="flex h-8 w-8 items-center justify-center rounded-full text-xs font-semibold uppercase"
                     :class="item.accent ?? 'bg-primary'">
                     {{ item.avatarText }}
                   </span>
-                  <div class="flex min-w-0 flex-1 items-center justify-between gap-3">
+                  <div v-if="!isSidebarCollapsed" class="flex min-w-0 flex-1 items-center justify-between gap-3">
                     <span class="truncate">{{ item.label }}</span>
                     <span v-if="item.badge"
                       class="inline-flex h-1 w-1 items-center justify-center rounded-lg bg-primary/90 text-[11px] font-semibold text-primary">
-<!--                      {{ item.badge }}-->
+                      <!--                      {{ item.badge }}-->
                     </span>
                   </div>
                 </component>
               </div>
-              <div v-if="index < navSections.length - 1" class="px-3 pt-2">
+              <div v-if="index < navSections.length - 1 && !isSidebarCollapsed" class="px-3 pt-2">
                 <div class="h-px bg-outline/20" />
               </div>
             </div>
@@ -290,6 +304,7 @@ const { user } = storeToRefs(authStore);
 const { isDark, label: themeLabel } = storeToRefs(themeStore);
 
 const mobileNavOpen = ref(false);
+const isSidebarCollapsed = ref(localStorage.getItem('sidebar-collapsed') == 'true');
 const search = ref('');
 
 type NavIcon = {
@@ -540,7 +555,7 @@ const subscriptionNavSection = computed<NavSection>(() => {
         const paramId = typeof current.params.feedId === 'string' ? current.params.feedId : undefined;
         return current.name === 'feed' && paramId === s.feedId;
       },
-      badge: s.isRead?'':'1'
+      badge: s.isRead ? '' : '1'
     } satisfies NavItem;
   });
 
@@ -629,6 +644,11 @@ const toggleTheme = () => {
   themeStore.toggle();
 };
 
+const toggleSidebar = () => {
+  isSidebarCollapsed.value = !isSidebarCollapsed.value;
+  localStorage.setItem('sidebar-collapsed', isSidebarCollapsed.value)
+};
+
 watch(
   () => route.query.q,
   (value) => {
@@ -675,7 +695,8 @@ onMounted(async () => {
 :deep(nav.flex-1.overflow-y-auto) {
   /* Firefox default (almost hidden) */
   scrollbar-width: thin;
-  scrollbar-color: transparent transparent; /* thumb | track */
+  scrollbar-color: transparent transparent;
+  /* thumb | track */
 }
 
 /* Firefox hover: show clearer thumb */
@@ -694,8 +715,10 @@ onMounted(async () => {
 }
 
 :deep(nav.flex-1.overflow-y-auto)::-webkit-scrollbar-thumb {
-  background-color: transparent;     /* hidden by default */
-  border-radius: 9999px;             /* fully rounded */
+  background-color: transparent;
+  /* hidden by default */
+  border-radius: 9999px;
+  /* fully rounded */
 }
 
 /* WebKit hover: make thumb visible and slightly wider */
