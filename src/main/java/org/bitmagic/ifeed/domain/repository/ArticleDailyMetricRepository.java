@@ -10,4 +10,6 @@ import java.util.List;
 public interface ArticleDailyMetricRepository extends JpaRepository<ArticleDailyMetric, ArticleDailyMetricId> {
 
     List<ArticleDailyMetric> findByIdMetricDate(LocalDate metricDate);
+
+    List<ArticleDailyMetric> findByIdMetricDateBetween(LocalDate from, LocalDate to);
 }

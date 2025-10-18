@@ -349,6 +349,16 @@ const baseNavSections: NavSection[] = [
           const section = current.query.section as string | undefined;
           return current.name === 'home' && view !== 'shorts' && !section;
         }
+      },
+      {
+        id: 'recommendations',
+        label: '推荐',
+        to: { name: 'recommendations' as const },
+        icon: {
+          stroke: true,
+          paths: ['M5 10.25c0-3.5 2.5-5.5 5-6.5 2.5 1 5 3 5 6.5s-2.5 5.5-5 6.5c-2.5-1-5-3-5-6.5Z', 'M10 8.5v3.5', 'M8.5 10H11']
+        },
+        activeMatch: (current) => current.name === 'recommendations'
       }
       // ,
       //   {

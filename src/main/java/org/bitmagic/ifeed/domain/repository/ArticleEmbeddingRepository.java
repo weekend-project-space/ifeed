@@ -4,8 +4,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.vectorstore.VectorStore;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Repository;
-import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
 import java.time.Instant;
@@ -22,14 +22,17 @@ public class ArticleEmbeddingRepository {
 
     private final VectorStore vectorStore;
 
+    @Async
     public void upsert(UUID articleId,
                        UUID feedId,
+                       String feedTitle,
                        String title,
                        String summary,
                        String content,
                        String link,
                        Instant publishedAt) {
         var textBody = StringUtils.hasText(summary) ? summary : content;
+        textBody = "作者:[%s]\n时间:[%s]\n标题:[%s]\n大纲:[%s]".formatted(feedTitle, title, publishedAt.toString(), summary);
         if (!StringUtils.hasText(textBody)) {
             log.debug("Skip embedding persistence for article {} because there is no textual content", articleId);
             return;
@@ -38,7 +41,7 @@ public class ArticleEmbeddingRepository {
         var document = Document.builder()
                 .id(articleId.toString())
                 .text(textBody)
-                .metadata(buildMetadata(articleId, feedId, title, link, summary, publishedAt))
+                .metadata(buildMetadata(articleId, feedId, feedTitle, title, link, summary, publishedAt))
                 .build();
 
 
@@ -48,6 +51,7 @@ public class ArticleEmbeddingRepository {
 
     private Map<String, Object> buildMetadata(UUID articleId,
                                               UUID feedId,
+                                              String feedTitle,
                                               String title,
                                               String link,
                                               String summary,
@@ -55,6 +59,9 @@ public class ArticleEmbeddingRepository {
         var metadata = new HashMap<String, Object>();
         metadata.put("articleId", articleId.toString());
         metadata.put("feedId", feedId != null ? feedId.toString() : null);
+        f(StringUtils.hasText(feedTitle)) {
+            metadata.put("feedTitle", feedTitle);
+        }
         if (StringUtils.hasText(title)) {
             metadata.put("title", title);
         }

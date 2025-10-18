@@ -17,11 +17,11 @@ public interface UserSubscriptionRepository extends JpaRepository<UserSubscripti
 
     List<UserSubscription> findAllByUser(User user);
 
+    List<UserSubscription> findAllByUserId(UUID userId);
+
     List<UserSubscription> findAllByUserAndActiveTrue(User user);
 
     Optional<UserSubscription> findByUserAndFeed(User user, Feed feed);
-
-    boolean existsByUserAndFeed(User user, Feed feed);
 
     long countByFeedAndActiveTrue(Feed feed);
 

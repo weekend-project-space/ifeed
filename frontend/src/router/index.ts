@@ -7,6 +7,7 @@ import CollectionsPage from '../pages/CollectionsPage.vue';
 import HistoryPage from '../pages/HistoryPage.vue';
 import ArticleDetailPage from '../pages/ArticleDetailPage.vue';
 import FeedPage from '../pages/FeedPage.vue';
+import RecommendationsPage from '../pages/RecommendationsPage.vue';
 import { useAuthStore } from '../stores/auth';
 
 const router = createRouter({
@@ -35,6 +36,11 @@ const router = createRouter({
           path: 'collections',
           name: 'collections',
           component: CollectionsPage
+        },
+        {
+          path: 'recommendations',
+          name: 'recommendations',
+          component: RecommendationsPage
         },
         {
           path: 'history',

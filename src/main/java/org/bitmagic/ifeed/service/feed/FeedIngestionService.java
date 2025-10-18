@@ -181,16 +181,17 @@ public class FeedIngestionService {
                 .build();
 
         articleRepository.save(article);
-        articleEmbeddingRepository.upsert(
-                article.getId(),
-                feed.getId(),
-                article.getTitle(),
-                article.getSummary(),
-                textContent,
-                article.getLink(),
-                article.getPublishedAt()
-        );
-
+        log.debug("save [{}]", article.getTitle());
+//        articleEmbeddingRepository.upsert(
+//                article.getId(),
+//                feed.getId(),
+//                article.getTitle(),
+//                article.getSummary(),
+//                textContent,
+//                article.getLink(),
+//                article.getPublishedAt()
+//        );
+//        log.debug("embedding [{}]", article.getTitle());
         return Optional.ofNullable(publishedAt);
     }
 

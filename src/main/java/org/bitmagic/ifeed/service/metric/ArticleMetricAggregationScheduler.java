@@ -24,4 +24,14 @@ public class ArticleMetricAggregationScheduler {
             log.warn("Failed to aggregate article metrics for {}", targetDate, ex);
         }
     }
+
+    @Scheduled(cron = "0 10 * * * *", zone = "UTC")
+    public void aggregateCurrentDayHourly() {
+        var today = LocalDate.now(ZoneOffset.UTC);
+        try {
+            articleMetricAggregationService.aggregateDailyMetrics(today);
+        } catch (Exception ex) {
+            log.warn("Failed to aggregate hourly article metrics for {}", today, ex);
+        }
+    }
 }
