@@ -12,6 +12,7 @@ import org.bitmagic.ifeed.config.RssFetcherProperties;
 import org.bitmagic.ifeed.domain.entity.Article;
 import org.bitmagic.ifeed.domain.entity.Feed;
 import org.bitmagic.ifeed.domain.repository.ArticleRepository;
+import org.bitmagic.ifeed.domain.repository.ArticleEmbeddingRepository;
 import org.bitmagic.ifeed.domain.repository.FeedRepository;
 import org.bitmagic.ifeed.service.ai.AiContentService;
 import org.bitmagic.ifeed.service.content.ContentCleaner;
@@ -53,6 +54,7 @@ public class FeedIngestionService {
 
     private final FeedRepository feedRepository;
     private final ArticleRepository articleRepository;
+    private final ArticleEmbeddingRepository articleEmbeddingRepository;
     private final ContentCleaner contentCleaner;
     private final AiContentService aiContentService;
     private final ObjectMapper objectMapper;
@@ -175,10 +177,19 @@ public class FeedIngestionService {
                 .summary(aiContent.summary())
                 .category(aiContent.category())
                 .tags(writeJson(aiContent.tags()))
-                .embedding(writeJson(aiContent.embedding()))
+                .embedding(null)
                 .build();
 
         articleRepository.save(article);
+        articleEmbeddingRepository.upsert(
+                article.getId(),
+                feed.getId(),
+                article.getTitle(),
+                article.getSummary(),
+                textContent,
+                article.getLink(),
+                article.getPublishedAt()
+        );
 
         return Optional.ofNullable(publishedAt);
     }

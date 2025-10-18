@@ -6,6 +6,22 @@ spring:
     username: i_feed
     password: 0123.
     driver-class-name: org.postgresql.Driver
+  ai:
+    openai:
+      api-key: ${ai.provider.api-key}
+      base-url: ${ai.provider.endpoint}
+      embedding:
+        options:
+          dimensions: 512
+          model: 'Qwen/Qwen3-Embedding-4B'
+          encoding-format: 'float'
+    vectorstore:
+      pgvector:
+        initialize-schema: true
+        table-name: article_embeddings
+        index-type: hnsw
+        distance-type: COSINE_DISTANCE
+        dimensions: 512
   data:
     mongodb:
       host: 127.0.0.1
@@ -28,4 +44,3 @@ ai:
     endpoint: ''
     api-key: ''
     model: gpt-4o-mini
-
