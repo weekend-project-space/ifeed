@@ -12,16 +12,17 @@ spring:
       base-url: ${ai.provider.endpoint}
       embedding:
         options:
-          dimensions: 512
+          dimensions: 1024
           model: ${ai.provider.embedding-model}
           encoding-format: 'float'
+        base-url: ${ai.provider.embedding-endpoint}
     vectorstore:
       pgvector:
         initialize-schema: true
         table-name: article_embeddings
-        index-type: hnsw
+        index-type: HNSW
         distance-type: COSINE_DISTANCE
-        dimensions: 512
+        dimensions: 1024
   data:
     mongodb:
       host: 127.0.0.1
@@ -35,13 +36,14 @@ rss:
   fetcher:
     fixed-delay: PT30M
     initial-delay: PT30S
-    connect-timeout: 5s
-    read-timeout: 10s
+    connect-timeout: 50s
+    read-timeout: 100s
     max-items: 500
 ai:
   provider:
     enabled: false
     endpoint: ''
+    embedding-endpoint: '${ai.provider.endpoint}'
     api-key: ''
     model: 'gpt-4o-mini'
     embedding-model: 'Qwen/Qwen3-Embedding-4B'

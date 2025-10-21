@@ -71,7 +71,8 @@ public class SearchController {
             List<Document> documents = vectorStore.similaritySearch(SearchRequest.builder()
                     .query(query)
                     .topK((page + 1) * size)
-                                    .similarityThreshold(0.3)
+                                    .similarityThreshold(0.36)
+
                     .filterExpression(b.in("feedId", feedIds.toArray(new String[]{})).build())
                     .build());
             Collection<UUID> articleIds = documents.stream().map(Document::getMetadata).map(meta -> IdentifierUtils.parseUuid(meta.get("articleId").toString(), "articleId")).collect(Collectors.toList());

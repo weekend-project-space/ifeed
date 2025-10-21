@@ -4,7 +4,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.vectorstore.VectorStore;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Repository;
 import org.springframework.util.StringUtils;
 
@@ -22,7 +21,6 @@ public class ArticleEmbeddingRepository {
 
     private final VectorStore vectorStore;
 
-    @Async
     public void upsert(UUID articleId,
                        UUID feedId,
                        String feedTitle,
@@ -32,7 +30,7 @@ public class ArticleEmbeddingRepository {
                        String link,
                        Instant publishedAt) {
         var textBody = StringUtils.hasText(summary) ? summary : content;
-        textBody = "作者:[%s]\n时间:[%s]\n标题:[%s]\n大纲:[%s]".formatted(feedTitle, title, publishedAt.toString(), summary);
+        textBody = "作者:%s\n标题:%s\n时间:%s\n大纲:%s".formatted(feedTitle, title, publishedAt.toString(), summary);
         if (!StringUtils.hasText(textBody)) {
             log.debug("Skip embedding persistence for article {} because there is no textual content", articleId);
             return;
@@ -59,7 +57,7 @@ public class ArticleEmbeddingRepository {
         var metadata = new HashMap<String, Object>();
         metadata.put("articleId", articleId.toString());
         metadata.put("feedId", feedId != null ? feedId.toString() : null);
-        f(StringUtils.hasText(feedTitle)) {
+        if (StringUtils.hasText(feedTitle)) {
             metadata.put("feedTitle", feedTitle);
         }
         if (StringUtils.hasText(title)) {
