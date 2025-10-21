@@ -45,21 +45,3 @@ ai:
     api-key: ''
     model: 'gpt-4o-mini'
     embedding-model: 'Qwen/Qwen3-Embedding-4B'
-recommendation:
-  recent-behavior-limit: 20
-  collaborative-candidate-limit: 40
-  content-candidate-limit: 40
-  popularity-candidate-limit: 40
-  collaborative-metric-window-days: 30
-  popularity-window-days: 14
-  popularity-weight-collected: 0.5
-  popularity-weight-read: 0.3
-  popularity-weight-recency: 0.2
-  popularity-recency-half-life-days: 7
-  final-candidate-limit: 30
-  weight-collaborative: 0.5
-  weight-content: 0.3
-  weight-popularity: 0.2
-  feed-max-per-feed: 3
-  cache-ttl-seconds: 900
-  similarity-top-k: 50

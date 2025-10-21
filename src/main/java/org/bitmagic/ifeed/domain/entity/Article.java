@@ -30,7 +30,7 @@ public class Article {
     @Column(name = "id", nullable = false, updatable = false)
     private UUID id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "feed_id", nullable = false)
     private Feed feed;
 
@@ -67,7 +67,7 @@ public class Article {
     @Column(name = "tags", columnDefinition = "text")
     private String tags;
 
-    @Column(name = "embedding", columnDefinition = "text")
+    @Column(name = "embedding", length = 8)
     private String embedding;
 
     @PrePersist
