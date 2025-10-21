@@ -55,80 +55,63 @@
           重试一次
         </button>
       </div>
-      <div v-else-if="loading" class="grid gap-4 lg:grid-cols-2">
-        <div v-for="i in 6" :key="i" class="animate-pulse rounded-2xl border border-outline/20 bg-surface-container p-5">
-          <div class="flex items-center justify-between">
-            <div class="h-5 w-32 rounded-full bg-outline/20" />
-            <div class="h-5 w-16 rounded-full bg-outline/20" />
+      <div v-else-if="loading" class="space-y-4">
+        <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+          <div
+            v-for="i in 4"
+            :key="`recommend-skeleton-${i}`"
+            class="animate-pulse rounded-xl border border-outline/15 bg-surface-container px-5 py-6 shadow-sm shadow-black/0 transition"
+          >
+            <div class="flex items-center justify-between gap-3">
+              <div class="flex flex-1 items-center gap-2">
+                <div class="h-6 w-20 rounded-full bg-outline/15" />
+                <div class="h-3 w-10 rounded-full bg-outline/10" />
+              </div>
+              <div class="h-6 w-16 rounded-full bg-outline/15" />
+            </div>
+            <div class="mt-4 space-y-3">
+              <div class="h-4 w-3/4 rounded-full bg-outline/15" />
+              <div class="h-4 w-full rounded-full bg-outline/10" />
+              <div class="h-4 w-5/6 rounded-full bg-outline/10" />
+              <div class="h-4 w-1/2 rounded-full bg-outline/10" />
+            </div>
+            <div class="mt-6 flex flex-wrap gap-2">
+              <div class="h-6 w-16 rounded-full bg-outline/10" />
+              <div class="h-6 w-20 rounded-full bg-outline/10" />
+              <div class="h-6 w-12 rounded-full bg-outline/10" />
+            </div>
           </div>
-          <div class="mt-4 h-4 w-3/4 rounded-full bg-outline/20" />
-          <div class="mt-2 h-4 w-2/3 rounded-full bg-outline/10" />
-          <div class="mt-5 flex gap-2">
-            <div class="h-6 w-16 rounded-full bg-outline/15" />
-            <div class="h-6 w-20 rounded-full bg-outline/15" />
-          </div>
+        </div>
+        <div class="flex items-center justify-center gap-2 rounded-xl border border-outline/20 bg-surface py-3 text-xs text-text-muted">
+          <svg class="h-4 w-4 animate-spin text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"></circle>
+            <path class="opacity-75" d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" stroke-linecap="round"></path>
+          </svg>
+          正在加载最新推荐…
         </div>
       </div>
       <div v-else-if="recommendations.length === 0" class="rounded-xl border border-outline/20 bg-surface-container p-8 text-center text-sm text-text-secondary">
         暂无推荐结果，尝试刷新或多收藏一些感兴趣的文章吧。
       </div>
-      <div v-else class="grid gap-4 lg:grid-cols-2">
-        <article
-          v-for="item in recommendations"
-          :key="item.id"
-          class="group flex h-full cursor-pointer flex-col justify-between rounded-2xl border border-outline/20 bg-surface-container p-5 transition hover:border-primary/40 hover:shadow-sm"
-          @click="openArticle(item.id)"
-        >
-          <header class="flex items-start justify-between gap-3">
-            <div class="flex flex-1 flex-col gap-1">
-              <div class="flex items-center gap-2 text-xs text-text-secondary">
-                <span class="rounded-full bg-primary/10 px-2 py-0.5 font-semibold text-primary">
-                  {{ reasonLabel(item.reason) }}
-                </span>
-                <span class="text-text-muted">·</span>
-                <span>{{ item.feedTitle }}</span>
-                <span v-if="item.timeAgo" class="text-text-muted">· {{ item.timeAgo }}</span>
-              </div>
-              <h3 class="text-base font-semibold leading-snug text-text transition group-hover:text-primary">
-                {{ item.title }}
-              </h3>
-            </div>
-            <button
-              type="button"
-              class="inline-flex shrink-0 items-center gap-1 rounded-full border border-outline/30 bg-surface px-2.5 py-1 text-[11px] text-text-secondary transition hover:border-outline/50 hover:text-text"
-              @click.stop="viewOriginal(item.link)"
-            >
-              原文
-              <svg class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 5H15v7.5m-9.5 2L15 5" />
-              </svg>
-            </button>
-          </header>
-          <p
-            class="mt-3 text-sm leading-relaxed text-text-secondary"
-            style="display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden;"
-          >
-            {{ item.summary || '暂无摘要' }}
-          </p>
-          <footer class="mt-5 flex flex-wrap gap-2">
-            <span
-              v-for="tag in item.tags"
-              :key="tag"
-              class="rounded-full border border-outline/20 bg-surface px-3 py-1 text-xs font-medium text-text-secondary transition"
-            >
-              #{{ tag }}
-            </span>
-          </footer>
-        </article>
+      <div v-else>
+        <ArticleList
+          :items="articleItems"
+          empty-message="暂无推荐结果，尝试刷新或多收藏一些文章吧。"
+          @select="handleSelect"
+          @toggle-favorite="handleToggleFavorite"
+          @select-tag="handleSelectTag"
+        />
       </div>
     </section>
   </div>
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref, watch } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { fetchRecommendations, type ArticleRecommendation, type RecommendationSource } from '../api/articles';
+import ArticleList from '../components/ArticleList.vue';
+import { useCollectionsStore } from '../stores/collections';
 
 const SIZE = 20;
 
@@ -143,6 +126,8 @@ const reasonMap: Record<ArticleRecommendation['reason'], string> = {
   content: '语义相似',
   popular: '热门趋势'
 };
+
+const collectionsStore = useCollectionsStore();
 
 const loadRecommendations = async () => {
   loading.value = true;
@@ -167,15 +152,43 @@ const refresh = () => {
   loadRecommendations();
 };
 
-const openArticle = (articleId: string) => {
+const articleItems = computed(() =>
+  recommendations.value.map((item) => {
+    const baseTags = Array.isArray(item.tags) ? [...item.tags] : [];
+    const reason = reasonLabel(item.reason);
+    const tags = reason ? [`推荐·${reason}`, ...baseTags] : baseTags;
+    return {
+      id: item.id,
+      title: item.title,
+      summary: item.summary || '暂无摘要',
+      feedTitle: item.feedTitle || '未知来源',
+      timeAgo: item.timeAgo || '',
+      tags,
+      collected: collectionsStore.isCollected(item.id),
+      thumbnail: item.thumbnail,
+      enclosure: item.enclosure
+    };
+  })
+);
+
+const handleSelect = (articleId: string) => {
   router.push({ name: 'article-detail', params: { id: articleId } });
 };
 
-const viewOriginal = (link?: string) => {
-  if (!link) {
+const handleToggleFavorite = async (articleId: string) => {
+  const target = articleItems.value.find((item) => item.id === articleId);
+  try {
+    await collectionsStore.toggleCollection(articleId, { title: target?.title });
+  } catch (err) {
+    console.warn('收藏操作失败', err);
+  }
+};
+
+const handleSelectTag = (tag: string) => {
+  if (!tag || tag.startsWith('推荐·')) {
     return;
   }
-  window.open(link, '_blank', 'noopener');
+  router.push({ name: 'home', query: { tags: tag.toLowerCase() } });
 };
 
 const reasonLabel = (reason: ArticleRecommendation['reason']) => reasonMap[reason] ?? '推荐';
@@ -184,7 +197,14 @@ watch(source, () => {
   loadRecommendations();
 });
 
-onMounted(() => {
-  loadRecommendations();
+onMounted(async () => {
+  if (!collectionsStore.items.length) {
+    try {
+      await collectionsStore.fetchCollections();
+    } catch (err) {
+      console.warn('收藏列表加载失败', err);
+    }
+  }
+  await loadRecommendations();
 });
 </script>
