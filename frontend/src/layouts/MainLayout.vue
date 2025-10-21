@@ -634,15 +634,42 @@ const userInitials = computed(() => {
 
 const handleSearch = () => {
   const keyword = search.value.trim();
-  const currentType = typeof route.query.type === 'string' ? route.query.type : undefined;
-  const query: Record<string, string> = {};
-  if (keyword) {
-    query.q = keyword;
-    if (currentType === 'semantic') {
-      query.type = currentType;
+  const currentType =
+    route.name === 'search' && typeof route.query.type === 'string' ? route.query.type : undefined;
+
+  const feedId = typeof route.query.feedId === 'string' ? route.query.feedId : undefined;
+  const tag = typeof route.query.tags === 'string' ? route.query.tags : undefined;
+  const category = typeof route.query.category === 'string' ? route.query.category : undefined;
+
+  if (!keyword) {
+    const query: Record<string, string> = {};
+    if (feedId) {
+      query.feedId = feedId;
     }
+    if (tag) {
+      query.tags = tag;
+    }
+    if (category) {
+      query.category = category;
+    }
+    router.push({ name: 'home', query });
+    return;
   }
-  router.push({ name: 'home', query });
+
+  const query: Record<string, string> = { q: keyword };
+  if (currentType === 'semantic') {
+    query.type = currentType;
+  }
+  if (feedId) {
+    query.feedId = feedId;
+  }
+  if (tag) {
+    query.tags = tag;
+  }
+  if (category) {
+    query.category = category;
+  }
+  router.push({ name: 'search', query });
 };
 
 const handleLogout = async () => {

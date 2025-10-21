@@ -1,7 +1,6 @@
 <template>
     <div class="space-y-8">
-        <template v-if="!isSearching">
-            <section class="space-y-6">
+        <section class="space-y-6">
                 <div class="flex flex-col gap-4">
                     <div class="flex flex-wrap items-center justify-between gap-3">
                         <div>
@@ -191,9 +190,9 @@
                         </div>
                     </div>
                 </div>
-            </section>
+        </section>
 
-            <section class="space-y-5">
+        <section class="space-y-5">
                 <div class="flex flex-wrap items-center justify-between gap-4">
                     <div class="space-y-1">
                         <h2 class="text-2xl font-semibold text-text">最新推荐</h2>
@@ -239,73 +238,17 @@
                         下一页
                     </button>
                 </div>
-            </section>
-        </template>
-
-        <template v-else>
-            <section class="space-y-6">
-                <div class="rounded-3xl border border-outline/20 bg-surface-container px-7 py-6">
-                    <div class="flex flex-wrap items-center justify-between gap-4">
-                        <div class="space-y-1 mb-2">
-                            <h2 class="text-2xl font-semibold text-text">搜索 “{{ searchQuery }}” 的结果</h2>
-                            <p class="text-sm text-text-secondary">共 {{ searchTotalText }}，当前第 {{ currentPage }} 页。</p>
-                        </div>
-                        <div class="flex flex-wrap items-center gap-3 text-sm">
-                            <div
-                                class="flex rounded-full border border-outline/20 bg-surface-variant px-1 py-1 text-text-muted">
-                                <button type="button" class="rounded-full px-4 py-1 transition"
-                                    :class="searchType === 'keyword' ? 'bg-primary/15 text-primary' : 'text-text-muted'"
-                                    @click="setSearchType('keyword')">
-                                    关键词匹配
-                                </button>
-                                <button type="button" class="rounded-full px-4 py-1 transition"
-                                    :class="searchType === 'semantic' ? 'bg-primary/15 text-primary' : 'text-text-muted'"
-                                    @click="setSearchType('semantic')">
-                                    语义匹配
-                                </button>
-                            </div>
-                            <button class="text-sm font-medium text-primary transition hover:underline"
-                                @click="clearSearch">
-                                返回推荐
-                            </button>
-                        </div>
-                    </div>
-
-                    <div v-if="searchLoading" class="py-20 text-center text-text-muted">正在搜索...</div>
-                    <div v-else class="space-y-4">
-                        <ArticleList :items="searchArticleItems" empty-message="未找到相关结果，换个关键词试试。" @select="handleSelect"
-                            @toggle-favorite="handleToggleFavorite" @select-tag="handleSelectTag" />
-                        <p v-if="searchError" class="text-sm text-danger">{{ searchError }}</p>
-                    </div>
-
-                    <div
-                        class="mt-6 flex items-center justify-between rounded-2xl border border-outline/20 bg-surface px-4 py-3 text-sm text-text-secondary">
-                        <button
-                            class="rounded-full border border-outline/40 px-3 py-2 font-medium text-primary transition hover:bg-primary/10 disabled:cursor-not-allowed disabled:border-outline/30 disabled:text-text-muted disabled:opacity-70"
-                            :disabled="!hasPrevious" @click="prevPage">
-                            上一页
-                        </button>
-                        <span>第 {{ currentPage }} 页</span>
-                        <button
-                            class="rounded-full border border-outline/40 px-3 py-2 font-medium text-primary transition hover:bg-primary/10 disabled:cursor-not-allowed disabled:border-outline/30 disabled:text-text-muted disabled:opacity-70"
-                            :disabled="!hasNext" @click="nextPage">
-                            下一页
-                        </button>
-                    </div>
-                </div>
-            </section>
-        </template>
+        </section>
     </div>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, watch, ref } from 'vue';
+import { computed, onMounted, watch } from 'vue';
 import { storeToRefs } from 'pinia';
 import { useRouter, useRoute } from 'vue-router';
 import ArticleList from '../components/ArticleList.vue';
 import { useArticlesStore } from '../stores/articles';
 import { useCollectionsStore } from '../stores/collections';
-import { useSearchStore, type SearchType } from '../stores/search';
 import { useSubscriptionsStore } from '../stores/subscriptions';
 // 使用 articles store 提供的 fetchInsights，不引入 axios
 
@@ -313,7 +256,6 @@ const router = useRouter();
 const route = useRoute();
 const articlesStore = useArticlesStore();
 const collectionsStore = useCollectionsStore();
-const searchStore = useSearchStore();
 const subscriptionsStore = useSubscriptionsStore();
 
 const {
@@ -330,31 +272,8 @@ const { fetchInsights } = articlesStore;
 const topCategories = computed(() => insights.value.categories ?? []);
 const hotTags = computed(() => insights.value.hotTags ?? []);
 
-const {
-    results,
-    page: searchPage,
-    hasNextPage: searchHasNextPage,
-    hasPreviousPage: searchHasPreviousPage,
-    total: searchTotal,
-    loading: searchLoading,
-    error: searchError
-} = storeToRefs(searchStore);
-
 const { items: collectionItems } = storeToRefs(collectionsStore);
 const { items: subscriptionItems } = storeToRefs(subscriptionsStore);
-
-const searchQuery = computed(() => {
-    const q = route.query.q;
-    if (typeof q === 'string') {
-        return q.trim();
-    }
-    return '';
-});
-
-const searchType = computed<SearchType>(() => {
-    const type = route.query.type;
-    return type === 'semantic' ? 'semantic' : 'keyword';
-});
 
 const routePage = computed(() => {
     const raw = Array.isArray(route.query.page) ? route.query.page[0] : route.query.page;
@@ -390,8 +309,6 @@ const activeTag = computed(() => {
     }
     return null;
 });
-
-const isSearching = computed(() => Boolean(searchQuery.value));
 
 const recommendedArticles = computed(() =>
     items.value.map((item) => ({
@@ -429,24 +346,6 @@ const quickFilters = computed(() => {
     return filters;
 });
 
-const searchArticleItems = computed(() =>
-    results.value.map((item) => {
-        // const scoreText = typeof item.score === 'number' ? `相关度 ${(item.score * 100).toFixed(0)}%` : '相关度未知';
-        return {
-            id: item.id,
-            title: item.title ?? '未命名文章',
-            summary: item.summary ?? '暂无摘要',
-            thumbnail: item.thumbnail,
-            feedTitle:  item.feedTitle,
-            timeAgo: item.timeAgo,
-            tags: [] as string[],
-            collected: collectionsStore.isCollected(item.id)
-        };
-    })
-);
-
-const displayedArticles = computed(() => (isSearching.value ? searchArticleItems.value : recommendedArticles.value));
-
 const highlight = computed(() => {
     const featured = items.value[0];
     if (featured) {
@@ -482,21 +381,12 @@ const stats = computed(() => {
     };
 });
 
-const currentPage = computed(() => (isSearching.value ? searchPage.value : page.value));
-const hasNext = computed(() => (isSearching.value ? searchHasNextPage.value : hasNextPage.value));
-const hasPrevious = computed(() => (isSearching.value ? searchHasPreviousPage.value : hasPreviousPage.value));
+const currentPage = computed(() => page.value);
+const hasNext = computed(() => hasNextPage.value);
+const hasPrevious = computed(() => hasPreviousPage.value);
 
-const searchTotalText = computed(() => `${searchTotal.value ?? 0} 条结果`);
-
-const buildQuery = (overrides?: { page?: number; type?: SearchType; feedId?: string | null; tags?: string | null; category?: string | null }) => {
+const buildQuery = (overrides?: { page?: number; feedId?: string | null; tags?: string | null; category?: string | null }) => {
     const query: Record<string, string> = {};
-    if (isSearching.value && searchQuery.value) {
-        query.q = searchQuery.value;
-        const type = overrides?.type ?? searchType.value;
-        if (type !== 'keyword') {
-            query.type = type;
-        }
-    }
     const hasFeedOverride = overrides && Object.prototype.hasOwnProperty.call(overrides, 'feedId');
     const feedId = hasFeedOverride ? overrides?.feedId ?? null : activeFeedId.value;
     if (feedId) {
@@ -529,29 +419,16 @@ const loadData = async () => {
         tasks.push(subscriptionsStore.fetchSubscriptions());
     }
 
-    if (isSearching.value) {
-        tasks.push(
-            searchStore.searchArticles({
-                query: searchQuery.value,
-                page: routePage.value,
-                type: searchType.value
-            })
-        );
-    } else {
-        if (results.value.length) {
-            searchStore.clear();
-        }
-        tasks.push(
-            articlesStore.fetchArticles({
-                size: 20,
-                page: routePage.value,
-                feedId: activeFeedId.value,
-                tags: activeTag.value,
-                // 从路由读取 category 传递给 store 请求
-                category: (route.query.category as string | undefined) ?? undefined
-            })
-        );
-    }
+    tasks.push(
+        articlesStore.fetchArticles({
+            size: 20,
+            page: routePage.value,
+            feedId: activeFeedId.value,
+            tags: activeTag.value,
+            // 从路由读取 category 传递给 store 请求
+            category: (route.query.category as string | undefined) ?? undefined
+        })
+    );
 
     try {
         await Promise.all(tasks);
@@ -591,30 +468,12 @@ const handleSelect = (articleId: string) => {
 };
 
 const handleToggleFavorite = async (articleId: string) => {
-    const target = displayedArticles.value.find((item) => item.id === articleId);
+    const target = recommendedArticles.value.find((item) => item.id === articleId);
     try {
         await collectionsStore.toggleCollection(articleId, { title: target?.title });
     } catch (err) {
         console.warn('收藏操作失败', err);
     }
-};
-
-const setSearchType = (type: SearchType) => {
-    if (!isSearching.value || type === searchType.value) {
-        return;
-    }
-    router.push({ name: 'home', query: buildQuery({ page: 1, type }) });
-};
-
-const clearSearch = () => {
-    const nextQuery: Record<string, string> = {};
-    if (activeFeedId.value) {
-        nextQuery.feedId = activeFeedId.value;
-    }
-    if (activeTag.value) {
-        nextQuery.tags = activeTag.value;
-    }
-    router.push({ name: 'home', query: nextQuery });
 };
 
 const clearFeedFilter = () => {
@@ -679,8 +538,6 @@ onMounted(() => {
 
 watch(
     () => [
-        searchQuery.value,
-        searchType.value,
         routePage.value,
         activeFeedId.value,
         activeTag.value,

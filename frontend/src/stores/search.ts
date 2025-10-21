@@ -20,7 +20,7 @@ export const useSearchStore = defineStore('search', () => {
   const loading = ref(false);
   const error = ref<string | null>(null);
   const page = ref(1);
-  const size = ref(12);
+  const size = ref(0);
   const total = ref<number | null>(null);
   const totalPages = ref<number | null>(null);
   const currentQuery = ref('');
@@ -54,7 +54,7 @@ export const useSearchStore = defineStore('search', () => {
           query,
           type: nextType,
           page: Math.max(0, nextPage - 1),
-          size: nextSize
+          size: 12
         }
       });
 
