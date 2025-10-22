@@ -61,10 +61,11 @@ public class ArticleController {
 
     @GetMapping("/recommendations")
     public ResponseEntity<Page<ArticleSummaryResponse>> searchArticles(@AuthenticationPrincipal UserPrincipal principal,
+                                                                       @RequestParam(defaultValue = "0") Integer page,
                                                                        @RequestParam(required = false) Integer size) {
         ensureAuthenticated(principal);
 
-        return ResponseEntity.ok(recommendationService.rank(principal.getId(), 0, size).map(this::toSummaryResponse));
+        return ResponseEntity.ok(recommendationService.rank(principal.getId(), page, size).map(this::toSummaryResponse));
     }
 
     @GetMapping("/insights")

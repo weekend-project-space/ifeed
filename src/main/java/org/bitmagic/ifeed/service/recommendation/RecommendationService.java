@@ -35,14 +35,14 @@ public class RecommendationService {
     public List<Document> recall(UUID userId) {
         return userEmbeddingRepository.findById(userId).map(userEmbedding -> {
             float[] embed = embeddingModel.embed(userEmbedding.getContent());
-            float[] accumulator = minix(embed, userEmbedding.getEmbedding(), 0.2f, 0.8f);
+            float[] accumulator = minix(embed, userEmbedding.getEmbedding(), 0.8f, 0.2f);
             return vectorStoreTurbo.similaritySearch(SearchRequestTurbo.builder().embedding(accumulator).topK(100).build());
         }).orElse(Collections.emptyList());
     }
 
 
     public Page<ArticleSummaryView> rank(UUID userId, int page, int size) {
-        List<UUID> aIds = recall(userId).stream().skip(page * size).limit(size).map(Document::getId).map(UUID::fromString).toList();
+        List<UUID> aIds = recall(userId).stream().limit(60).map(Document::getId).map(UUID::fromString).toList();
         return articleRepository.findArticleSummariesByIds(aIds, PageRequest.of(page, size));
     }
 

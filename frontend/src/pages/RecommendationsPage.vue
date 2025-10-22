@@ -10,26 +10,26 @@
       <div class="flex flex-wrap items-center gap-2">
         <button type="button"
           class="inline-flex items-center gap-1 rounded-full border border-outline/40 bg-surface-container px-3 py-1.5 text-xs text-text-secondary transition hover:border-primary/50 hover:text-primary"
-          @click="refresh" :disabled="loading">
+          @click="refresh" :disabled="articlesLoading">
           <svg class="h-4 w-4" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6">
             <path stroke-linecap="round" stroke-linejoin="round"
               d="M4 10a6 6 0 0 1 10-4.24M16 10a6 6 0 0 1-10 4.24M4 6V3.5M4 3.5h2.5M4 3.5 6.5 6M16 14v2.5M16 16.5h-2.5M16 16.5 13.5 14" />
           </svg>
-          <span>{{ loading ? '刷新中…' : '刷新' }}</span>
+          <span>{{ articlesLoading ? '刷新中…' : '刷新' }}</span>
         </button>
       </div>
     </header>
 
     <section class="flex-1">
-      <div v-if="error" class="rounded-xl border border-outline/30 bg-error/5 p-6 text-sm text-error">
-        <p class="font-medium">推荐请求出错：{{ error }}</p>
+      <div v-if="articleError" class="rounded-xl border border-outline/30 bg-error/5 p-6 text-sm text-error">
+        <p class="font-medium">推荐请求出错：{{ articleError }}</p>
         <button type="button"
           class="mt-3 inline-flex items-center gap-2 rounded-full bg-error text-error-foreground px-4 py-1.5 text-xs font-semibold transition hover:bg-error/90"
           @click="refresh">
           重试一次
         </button>
       </div>
-      <div v-else-if="loading" class="space-y-4">
+      <div v-else-if="articlesLoading" class="space-y-4">
         <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
           <div v-for="i in 4" :key="`recommend-skeleton-${i}`"
             class="animate-pulse rounded-xl border border-outline/15 bg-surface-container px-5 py-6 shadow-sm shadow-black/0 transition">
@@ -71,56 +71,73 @@
         <ArticleList :items="articleItems" empty-message="暂无推荐结果，尝试刷新或多收藏一些文章吧。" @select="handleSelect"
           @toggle-favorite="handleToggleFavorite" @select-tag="handleSelectTag" />
         <!-- 分页控件 -->
-        <div class="mt-4 flex justify-center gap-2">
+        <div class="mt-6 flex items-center justify-between border-t border-outline/20 pt-4 text-sm text-text-secondary">
           <button type="button"
-            class="inline-flex items-center justify-center rounded-full border border-outline/40 bg-surface-container px-4 py-2 text-sm font-medium text-text-secondary transition hover:border-primary/50 hover:text-primary"
-            @click="prevPage" :disabled="!articlesStore.hasPreviousPage">
+            class="rounded-full border border-outline/30 px-3 py-2 font-medium text-primary transition hover:bg-primary/10 disabled:cursor-not-allowed disabled:border-outline/20 disabled:text-text-muted disabled:opacity-70"
+            :disabled="!hasPrevious" @click="prevPage">
             上一页
           </button>
+          <span>第 {{ currentPage }} 页</span>
           <button type="button"
-            class="inline-flex items-center justify-center rounded-full border border-outline/40 bg-surface-container px-4 py-2 text-sm font-medium text-text-secondary transition hover:border-primary/50 hover:text-primary"
-            @click="nextPage" :disabled="!articlesStore.hasNextPage">
+            class="rounded-full border border-outline/30 px-3 py-2 font-medium text-primary transition hover:bg-primary/10 disabled:cursor-not-allowed disabled:border-outline/20 disabled:text-text-muted disabled:opacity-70"
+            :disabled="!hasNext" @click="nextPage">
             下一页
           </button>
         </div>
       </div>
     </section>
+
+    <!-- debug panel removed -->
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue';
-import { useRouter } from 'vue-router';
+import { computed, onMounted, ref, watch } from 'vue';
+import { useRouter, useRoute } from 'vue-router';
+import { storeToRefs } from 'pinia';
 import ArticleList from '../components/ArticleList.vue';
 import { useCollectionsStore } from '../stores/collections';
 import { useArticlesStore } from '../stores/articles';
-import type { ArticleListItem } from '../stores/articles';
 
 const SIZE = 20;
 
+const route = useRoute();
 const router = useRouter();
-const recommendations = ref<ArticleListItem[]>([]);
-const loading = ref(false);
-const error = ref<string | null>(null);
-
 const collectionsStore = useCollectionsStore();
 const articlesStore = useArticlesStore();
 
-const loadRecommendations = async () => {
-  loading.value = true;
-  error.value = null;
+const { items, loading: articlesLoading, error: articleError, hasNextPage, hasPreviousPage, page } = storeToRefs(articlesStore);
+
+const routePage = computed(() => {
+  const raw = Array.isArray(route.query.page) ? route.query.page[0] : route.query.page;
+  const parsed = Number(raw);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : 1;
+});
+
+const recommendations = computed(() => items.value);
+const currentPage = computed(() => page.value);
+const hasNext = computed(() => hasNextPage.value);
+const hasPrevious = computed(() => hasPreviousPage.value);
+
+const loadRecommendations = async (targetPage = 1) => {
+  if (!targetPage || targetPage < 1) {
+    targetPage = 1;
+  }
   try {
-    await articlesStore.fetchRecommendArticles({ page: 1, size: SIZE });
-    recommendations.value = articlesStore.items;
-  } catch (err: any) {
-    error.value = err?.message ?? '未知错误';
-  } finally {
-    loading.value = false;
+    const res = await articlesStore.fetchRecommendArticles({
+      page: targetPage,
+      size: SIZE
+    });
+    // fetched
+    return res;
+  } catch (err) {
+    console.error('加载推荐文章失败:', err);
+    throw err;
   }
 };
 
 const refresh = () => {
-  loadRecommendations();
+  loadRecommendations(routePage.value);
 };
 
 const articleItems = computed(() =>
@@ -150,6 +167,15 @@ const handleSelectTag = (tag: string) => {
   router.push({ name: 'home', query: { tags: tag.toLowerCase() } });
 };
 
+// 监听路由参数变化
+watch(
+  () => routePage.value,
+  (page) => {
+    loadRecommendations(page);
+  },
+  { immediate: true }
+);
+
 onMounted(async () => {
   if (!collectionsStore.items.length) {
     try {
@@ -158,22 +184,29 @@ onMounted(async () => {
       console.warn('收藏列表加载失败', err);
     }
   }
-  await loadRecommendations();
-  // 使用分页接口加载推荐文章，初始页设为 1
-  articlesStore.fetchRecommendArticles({ page: 1 });
 });
 
 function nextPage() {
-  if (articlesStore.hasNextPage) {
-    // 请求下一页数据
-    articlesStore.fetchRecommendArticles({ page: articlesStore.page + 1 });
+  if (hasNextPage.value) {
+    const nextPageNum = routePage.value + 1;
+    router.push({
+      query: {
+        ...route.query,
+        page: String(nextPageNum)
+      }
+    });
   }
 }
 
 function prevPage() {
-  if (articlesStore.hasPreviousPage) {
-    // 请求上一页数据
-    articlesStore.fetchRecommendArticles({ page: articlesStore.page - 1 });
+  if (hasPreviousPage.value) {
+    const prevPageNum = Math.max(1, routePage.value - 1);
+    router.push({
+      query: {
+        ...route.query,
+        page: String(prevPageNum)
+      }
+    });
   }
 }
 </script>
