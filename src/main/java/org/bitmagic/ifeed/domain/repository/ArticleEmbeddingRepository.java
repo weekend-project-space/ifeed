@@ -1,17 +1,25 @@
 package org.bitmagic.ifeed.domain.repository;
 
+import com.pgvector.PGvector;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.bitmagic.ifeed.domain.model.ArticleEmbeddingRecord;
 import org.springframework.ai.document.Document;
+import org.springframework.ai.vectorstore.SearchRequest;
 import org.springframework.ai.vectorstore.VectorStore;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 import org.springframework.util.StringUtils;
 
+import java.sql.Array;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.time.Instant;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+
+import static org.codehaus.groovy.ast.ClassHelper.MAP_TYPE;
 
 @Slf4j
 @Repository
@@ -20,6 +28,9 @@ public class ArticleEmbeddingRepository {
 
 
     private final VectorStore vectorStore;
+
+    private final JdbcTemplate jdbcTemplate;
+
 
     public void upsert(UUID articleId,
                        UUID feedId,
@@ -42,10 +53,27 @@ public class ArticleEmbeddingRepository {
                 .metadata(buildMetadata(articleId, feedId, feedTitle, title, link, summary, publishedAt))
                 .build();
 
-
-        vectorStore.delete(List.of(articleId.toString()));
         vectorStore.add(List.of(document));
     }
+
+    public List<ArticleEmbeddingRecord> findAllByIds(Collection<UUID> articleIds) {
+        if (articleIds == null || articleIds.isEmpty()) {
+            return Collections.emptyList();
+        }
+        var params = articleIds.stream().distinct().toList();
+        var placeholders = params.stream().map(id -> "?").toList();
+        var sql = """
+                SELECT id, embedding
+                FROM article_embeddings
+                WHERE id IN (%s)
+                """.formatted(String.join(",", placeholders));
+        return jdbcTemplate.query(sql, (rs, rowNum) -> {
+            String value = rs.getString("embedding");
+            float[] vector = parseVector(value);
+            return new ArticleEmbeddingRecord(UUID.fromString(rs.getString("id")), vector);
+        }, articleIds.toArray(new UUID[]{}));
+    }
+
 
     private Map<String, Object> buildMetadata(UUID articleId,
                                               UUID feedId,
@@ -75,5 +103,20 @@ public class ArticleEmbeddingRepository {
         metadata.values().removeIf(value -> value == null || (value instanceof String str && !StringUtils.hasText(str)));
         return metadata;
     }
+
+    private float[] parseVector(String vectorStr) {
+        if (vectorStr == null || vectorStr.isEmpty()) {
+            return new float[1024]; // 默认1024维，填充0
+        }
+        // 去掉大括号，分割逗号
+        String cleaned = vectorStr.replace("[", "").replace("]", "");
+        String[] values = cleaned.split(",");
+        float[] embedding = new float[values.length];
+        for (int i = 0; i < values.length; i++) {
+            embedding[i] = Float.parseFloat(values[i].trim());
+        }
+        return embedding;
+    }
+
 
 }
