@@ -2,6 +2,7 @@ package org.bitmagic.ifeed.domain.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.bitmagic.ifeed.domain.converter.FloatArrayConverter;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -22,7 +23,7 @@ public class UserEmbedding {
     @Id
     @Column(name = "user_id", nullable = false, updatable = false)
     private UUID userId;
-
+    @Convert(converter = FloatArrayConverter.class)
     @Column(name = "embedding", columnDefinition = "vector(1024)", nullable = false)
     private float[] embedding;
 

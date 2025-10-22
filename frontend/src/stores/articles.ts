@@ -80,7 +80,7 @@ export const useArticlesStore = defineStore('articles', () => {
   // insights state
   const insightsLoading = ref(false);
   const insightsError = ref<string | null>(null);
-  const insights = ref<{ categories: { category: string; count: number }[]; hotTags: { tag: string; count: number }[]}>({
+  const insights = ref<{ categories: { category: string; count: number }[]; hotTags: { tag: string; count: number }[] }>({
     categories: [],
     hotTags: []
   });
@@ -136,11 +136,44 @@ export const useArticlesStore = defineStore('articles', () => {
     }
   };
 
+  const fetchRecommendArticles = async (override?: { page?: number; size?: number; }) => {
+    loading.value = true;
+    error.value = null;
+    const nextPage = override?.page ?? page.value;
+    const nextSize = override?.size ?? size.value;
+
+
+    try {
+      const response = await request<PageResponse<ArticleDto>>(
+        '/api/articles/recommendations',
+        {
+          query: {
+            page: Math.max(0, nextPage - 1),
+            size: nextSize,
+          }
+        }
+      );
+
+      const list = Array.isArray(response?.content) ? response.content : [];
+      items.value = list.map(normalizeArticle);
+      page.value = (response?.number ?? 0) + 1;
+      size.value = response?.size ?? nextSize;
+      total.value = response?.totalElements ?? list.length;
+      totalPages.value = response?.totalPages ?? (list.length ? 1 : 0);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : '文章加载失败';
+      error.value = message;
+      throw err;
+    } finally {
+      loading.value = false;
+    }
+  };
+
   const fetchInsights = async (params?: { top?: number; from?: string; to?: string }) => {
     insightsLoading.value = true;
     insightsError.value = null;
     try {
-      const data = await request<{ categories: { category: string; count: number }[]; hotTags: { tag: string; count: number }[]}>(
+      const data = await request<{ categories: { category: string; count: number }[]; hotTags: { tag: string; count: number }[] }>(
         '/api/articles/insights',
         { query: { top: params?.top ?? 12, from: params?.from, to: params?.to } }
       );
@@ -169,7 +202,7 @@ export const useArticlesStore = defineStore('articles', () => {
       const hasHtmlTags = /<\/?[a-z][\s\S]*>/i.test(rawContent);
       currentArticle.value = {
         ...normalized,
-        feedId:data.feedId,
+        feedId: data.feedId,
         content: hasHtmlTags ? rawContent : markdown.render(rawContent)
       };
       return currentArticle.value;
@@ -214,6 +247,7 @@ export const useArticlesStore = defineStore('articles', () => {
     hasNextPage,
     hasPreviousPage,
     fetchArticles,
+    fetchRecommendArticles,
     fetchArticleById,
     clearCurrentArticle,
     recordHistory,

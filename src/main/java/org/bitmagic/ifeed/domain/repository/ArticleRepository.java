@@ -10,6 +10,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.Instant;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -150,4 +151,27 @@ public interface ArticleRepository extends JpaRepository<Article, UUID> {
     List<String> findTagJsonForOwnerWithin(@Param("ownerId") UUID ownerId,
                                            @Param("fromTs") Instant fromTs,
                                            @Param("toTs") Instant toTs);
+
+
+    @Query(value = """
+            select new org.bitmagic.ifeed.domain.projection.ArticleSummaryView(
+                a.id,
+                a.title,
+                a.link,
+                a.summary,
+                f.title,
+                a.publishedAt,
+                a.tags,
+                a.thumbnail,
+                a.enclosure)
+            from Article a
+            left join a.feed f
+            where a.id in (:ids)
+            """,
+            countQuery = """
+                    select count(a)
+                    from Article a
+                    where a.id in (:ids)
+                    """)
+    Page<ArticleSummaryView> findArticleSummariesByIds(@Param("ids") Collection<UUID> ids, Pageable pageable);
 }
