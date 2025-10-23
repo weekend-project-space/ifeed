@@ -22,6 +22,11 @@ import java.time.Instant;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.Objects;
+import java.util.HashMap;
+import java.util.ArrayList;
+import java.util.Locale;
+import java.util.List;
 
 /**
  * 用户Embedding构建服务，结合行为、文章向量与标签信息生成用户画像。
@@ -73,7 +78,8 @@ public class UserEmbeddingService {
 
         // 批量加载文章向量和标签信息，后续用于聚合偏好
         var articleIds = limitedEvents.stream().map(BehaviorEvent::articleId).collect(Collectors.toSet());
-        var articleEmbeddings = articleEmbeddingRepository.findAllByIds(articleIds).stream().collect(Collectors.toMap(ArticleEmbeddingRecord::id, Function.identity()));
+        var articleEmbeddings = articleEmbeddingRepository.findAllByIds(articleIds).stream()
+                .collect(Collectors.toMap(ArticleEmbeddingRecord::id, Function.identity()));
         var articleInterests = buildArticleInterests(articleRepository.findByIdIn(articleIds));
         if (articleEmbeddings.isEmpty()) {
             log.debug("No article embeddings found for user {}", userId);
@@ -105,7 +111,8 @@ public class UserEmbeddingService {
             if (weight > 0.0) {
                 var interest = articleInterests.get(event.articleId());
                 if (interest != null) {
-                    if (event.timestamp() != null && (earliestPositiveEvent == null || event.timestamp().isBefore(earliestPositiveEvent))) {
+                    if (event.timestamp() != null
+                            && (earliestPositiveEvent == null || event.timestamp().isBefore(earliestPositiveEvent))) {
                         earliestPositiveEvent = event.timestamp();
                     }
                     for (var tag : interest.tags()) {
@@ -125,7 +132,80 @@ public class UserEmbeddingService {
 
         normalize(accumulator);
         userEmbeddingRepository.deleteAllByIdInBatch(List.of(userId));
-        var persona = buildUserPersona(tagStats, categoryStats, earliestPositiveEvent, now);
+        // 计算作者统计与收藏详情，用于丰富用户画像提示词
+        var articlesList = articleRepository.findByIdIn(articleIds);
+        var articleById = articlesList.stream().filter(Objects::nonNull)
+                .collect(Collectors.toMap(Article::getId, Function.identity()));
+
+        long windowDays = earliestPositiveEvent == null ? 1
+                : Math.max(Duration.between(earliestPositiveEvent, now).toDays(), 1);
+        Instant fromTs = earliestPositiveEvent == null ? now.minus(Duration.ofDays(windowDays)) : earliestPositiveEvent;
+
+        // 作者统计: author -> AuthorStat(totalArticles, readCount, collectedCount)
+        var authorCountMap = new HashMap<String, Integer>();
+        for (var art : articlesList) {
+            if (art == null)
+                continue;
+            if (art.getPublishedAt() == null)
+                continue;
+            if (art.getPublishedAt().isBefore(fromTs) || art.getPublishedAt().isAfter(now))
+                continue;
+            var author = art.getAuthor() == null ? "未知作者" : art.getAuthor().trim();
+            if (author.isEmpty())
+                author = "未知作者";
+            authorCountMap.put(author, authorCountMap.getOrDefault(author, 0) + 1);
+        }
+
+        var authorReadCount = new HashMap<String, Integer>();
+        if (!CollectionUtils.isEmpty(document.getReadHistory())) {
+            for (var item : document.getReadHistory()) {
+                if (item == null || item.getTimestamp() == null)
+                    continue;
+                if (item.getTimestamp().isBefore(fromTs) || item.getTimestamp().isAfter(now))
+                    continue;
+                toUuid(item.getArticleId()).ifPresent(aid -> {
+                    var art = articleById.get(aid);
+                    if (art != null) {
+                        var author = art.getAuthor() == null ? "未知作者" : art.getAuthor().trim();
+                        if (author.isEmpty())
+                            author = "未知作者";
+                        authorReadCount.put(author, authorReadCount.getOrDefault(author, 0) + 1);
+                    }
+                });
+            }
+        }
+
+        var authorCollectedCount = new HashMap<String, Integer>();
+        var collectedDetails = new ArrayList<CollectedArticleDetail>();
+        if (!CollectionUtils.isEmpty(document.getCollections())) {
+            for (var col : document.getCollections()) {
+                if (col == null || col.getTimestamp() == null)
+                    continue;
+                if (col.getTimestamp().isBefore(fromTs) || col.getTimestamp().isAfter(now))
+                    continue;
+                toUuid(col.getArticleId()).ifPresent(aid -> {
+                    var art = articleById.get(aid);
+                    if (art != null) {
+                        var author = art.getAuthor() == null ? "未知作者" : art.getAuthor().trim();
+                        if (author.isEmpty())
+                            author = "未知作者";
+                        authorCollectedCount.put(author, authorCollectedCount.getOrDefault(author, 0) + 1);
+                        var tags = parseTags(art.getTags());
+                        collectedDetails.add(new CollectedArticleDetail(art.getTitle(), author, tags,
+                                normalizeCategory(art.getCategory())));
+                    }
+                });
+            }
+        }
+
+        // 将统计结果转换为可展示的结构
+        var authorStats = authorCountMap.entrySet().stream()
+                .map(e -> new AuthorStat(e.getKey(), e.getValue(), authorReadCount.getOrDefault(e.getKey(), 0),
+                        authorCollectedCount.getOrDefault(e.getKey(), 0)))
+                .sorted((a, b) -> Integer.compare(b.totalArticles(), a.totalArticles()))
+                .collect(Collectors.toList());
+
+        var persona = buildUserPersona(tagStats, categoryStats, windowDays, authorStats, collectedDetails);
         var embeddingBuilder = UserEmbedding.builder()
                 .userId(userId)
                 .embedding(accumulator)
@@ -145,26 +225,27 @@ public class UserEmbeddingService {
         List<BehaviorEvent> events = new ArrayList<>();
         if (!CollectionUtils.isEmpty(document.getReadHistory())) {
             for (var item : document.getReadHistory()) {
-                toUuid(item.getArticleId()).ifPresent(articleId ->
-                        events.add(new BehaviorEvent(articleId, DEFAULT_READ_WEIGHT, item.getTimestamp())));
+                toUuid(item.getArticleId()).ifPresent(articleId -> events
+                        .add(new BehaviorEvent(articleId, DEFAULT_READ_WEIGHT, item.getTimestamp())));
             }
         }
         if (!CollectionUtils.isEmpty(document.getCollections())) {
             for (var item : document.getCollections()) {
-                toUuid(item.getArticleId()).ifPresent(articleId ->
-                        events.add(new BehaviorEvent(articleId, DEFAULT_COLLECT_WEIGHT, item.getTimestamp())));
+                toUuid(item.getArticleId()).ifPresent(articleId -> events
+                        .add(new BehaviorEvent(articleId, DEFAULT_COLLECT_WEIGHT, item.getTimestamp())));
             }
         }
         if (!CollectionUtils.isEmpty(document.getInteractionHistory())) {
             for (var interaction : document.getInteractionHistory()) {
-                var normalized = interaction.getActionType() == null ? "" : interaction.getActionType().trim().toLowerCase(Locale.ROOT);
+                var normalized = interaction.getActionType() == null ? ""
+                        : interaction.getActionType().trim().toLowerCase(Locale.ROOT);
                 double weight = switch (normalized) {
                     case "skip", "dislike" -> DEFAULT_SKIP_WEIGHT;
                     case "like", "star" -> DEFAULT_COLLECT_WEIGHT;
                     default -> DEFAULT_READ_WEIGHT;
                 };
-                toUuid(interaction.getArticleId()).ifPresent(articleId ->
-                        events.add(new BehaviorEvent(articleId, weight, interaction.getTimestamp())));
+                toUuid(interaction.getArticleId()).ifPresent(
+                        articleId -> events.add(new BehaviorEvent(articleId, weight, interaction.getTimestamp())));
             }
         }
         return events;
@@ -233,7 +314,8 @@ public class UserEmbeddingService {
             if (article == null || article.getId() == null) {
                 continue;
             }
-            interests.put(article.getId(), new ArticleInterest(parseTags(article.getTags()), normalizeCategory(article.getCategory())));
+            interests.put(article.getId(),
+                    new ArticleInterest(parseTags(article.getTags()), normalizeCategory(article.getCategory())));
         }
         return interests;
     }
@@ -278,21 +360,21 @@ public class UserEmbeddingService {
     }
 
     private Optional<UserPersona> buildUserPersona(Map<String, Stat> tagStats,
-                                                   Map<String, Stat> categoryStats,
-                                                   Instant earliestPositiveEvent,
-                                                   Instant now) {
-        if ((tagStats.isEmpty() && categoryStats.isEmpty()) || earliestPositiveEvent == null) {
+            Map<String, Stat> categoryStats,
+            long windowDays,
+            List<AuthorStat> authorStats,
+            List<CollectedArticleDetail> collectedDetails) {
+        if ((tagStats.isEmpty() && categoryStats.isEmpty() && authorStats.isEmpty())) {
             return Optional.empty();
         }
 
-        long windowDays = Math.max(Duration.between(earliestPositiveEvent, now).toDays(), 1);
         var topTags = rankTopics(tagStats, windowDays, PERSONA_TAG_LIMIT);
         var topCategories = rankTopics(categoryStats, windowDays, PERSONA_CATEGORY_LIMIT);
-        if (topTags.isEmpty() && topCategories.isEmpty()) {
+        if (topTags.isEmpty() && topCategories.isEmpty() && authorStats.isEmpty()) {
             return Optional.empty();
         }
 
-        var prompt = buildPersonaPrompt(topTags, topCategories, windowDays);
+        var prompt = buildPersonaPrompt(topTags, topCategories, windowDays, authorStats, collectedDetails);
         return Optional.of(new UserPersona(topTags, topCategories, prompt));
     }
 
@@ -309,8 +391,10 @@ public class UserEmbeddingService {
     }
 
     private String buildPersonaPrompt(List<PersonaTopic> tags,
-                                      List<PersonaTopic> categories,
-                                      long windowDays) {
+            List<PersonaTopic> categories,
+            long windowDays,
+            List<AuthorStat> authorStats,
+            List<CollectedArticleDetail> collectedDetails) {
         var builder = new StringBuilder();
         builder.append("用户近约").append(windowDays).append("天的兴趣画像：");
         if (!tags.isEmpty()) {
@@ -325,8 +409,51 @@ public class UserEmbeddingService {
                             .map(this::formatTopic)
                             .collect(Collectors.joining("；")));
         }
-        builder.append("\n请推荐与上述偏好高度相关的内容。");
+
+        if (!authorStats.isEmpty()) {
+            builder.append("\n作者统计：");
+            for (var a : authorStats) {
+                builder.append(String.format(Locale.ROOT, "\n- %s：共 %d 篇，已读 %d 篇，收藏 %d 篇", a.author(),
+                        a.totalArticles(), a.readCount(), a.collectedCount()));
+            }
+        }
+
+        if (!collectedDetails.isEmpty()) {
+            builder.append("\n我收藏的文章（示例）：");
+            // 汇总收藏中的标签和分类数量
+            var tagCount = new HashMap<String, Integer>();
+            var categoryCount = new HashMap<String, Integer>();
+            for (var d : collectedDetails) {
+                for (var t : d.tags()) {
+                    tagCount.put(t, tagCount.getOrDefault(t, 0) + 1);
+                }
+                if (d.category() != null) {
+                    categoryCount.put(d.category(), categoryCount.getOrDefault(d.category(), 0) + 1);
+                }
+                builder.append(String.format(Locale.ROOT, "\n- %s（作者：%s，分类：%s，标签：%s）", d.title(), d.author(),
+                        d.category() == null ? "-" : d.category(),
+                        d.tags().isEmpty() ? "-" : String.join(",", d.tags())));
+            }
+            if (!tagCount.isEmpty()) {
+                builder.append("\n收藏标签分布：");
+                builder.append(tagCount.entrySet().stream().map(e -> e.getKey() + "×" + e.getValue())
+                        .collect(Collectors.joining("；")));
+            }
+            if (!categoryCount.isEmpty()) {
+                builder.append("\n收藏分类分布：");
+                builder.append(categoryCount.entrySet().stream().map(e -> e.getKey() + "×" + e.getValue())
+                        .collect(Collectors.joining("；")));
+            }
+        }
+
+        builder.append("\n请推荐与上述偏好高度相关的内容。优先推荐最近几天的内容。");
         return builder.toString();
+    }
+
+    private record AuthorStat(String author, int totalArticles, int readCount, int collectedCount) {
+    }
+
+    private record CollectedArticleDetail(String title, String author, List<String> tags, String category) {
     }
 
     private String formatTopic(PersonaTopic topic) {
@@ -348,7 +475,7 @@ public class UserEmbeddingService {
     }
 
     private record UserPersona(List<PersonaTopic> tags,
-                               List<PersonaTopic> categories,
-                               String prompt) {
+            List<PersonaTopic> categories,
+            String prompt) {
     }
 }

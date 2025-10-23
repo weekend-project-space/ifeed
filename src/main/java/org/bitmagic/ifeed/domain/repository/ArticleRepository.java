@@ -6,6 +6,7 @@ import org.bitmagic.ifeed.domain.projection.ArticleSummaryView;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -15,9 +16,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-public interface ArticleRepository extends JpaRepository<Article, UUID> {
-
-    List<Article> findByFeed(Feed feed);
+public interface ArticleRepository extends JpaRepository<Article, UUID>, JpaSpecificationExecutor<Article> {
 
     boolean existsByLink(String link);
 

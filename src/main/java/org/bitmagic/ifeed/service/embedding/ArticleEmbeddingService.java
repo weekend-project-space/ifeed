@@ -21,10 +21,12 @@ public class ArticleEmbeddingService {
     @Transactional
     public void buildArticleEmbedding(Article article) {
         repository.upsert(
-                article.getId(),
                 article.getFeed().getId(),
                 article.getFeed().getTitle(),
+                article.getId(),
                 article.getTitle(),
+                article.getCategory(),
+                article.getTags(),
                 article.getSummary(),
                 article.getContent(),
                 article.getLink(),

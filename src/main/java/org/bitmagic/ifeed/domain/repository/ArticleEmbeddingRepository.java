@@ -32,16 +32,19 @@ public class ArticleEmbeddingRepository {
     private final JdbcTemplate jdbcTemplate;
 
 
-    public void upsert(UUID articleId,
-                       UUID feedId,
-                       String feedTitle,
-                       String title,
-                       String summary,
-                       String content,
-                       String link,
-                       Instant publishedAt) {
+    public void upsert(
+            UUID feedId,
+            String feedTitle,
+            UUID articleId,
+            String title,
+            String category,
+            String tags,
+            String summary,
+            String content,
+            String link,
+            Instant publishedAt) {
         var textBody = StringUtils.hasText(summary) ? summary : content;
-        textBody = "作者:%s\n标题:%s\n时间:%s\n大纲:%s".formatted(feedTitle, title, publishedAt.toString(), summary);
+        textBody = "#标题:%s\n作者:%s\n 时间:%s\n分类:%s\n标签:%s\n大纲:%s".formatted(title, feedTitle, publishedAt.toString(), category, tags, summary);
         if (!StringUtils.hasText(textBody)) {
             log.debug("Skip embedding persistence for article {} because there is no textual content", articleId);
             return;
@@ -50,7 +53,7 @@ public class ArticleEmbeddingRepository {
         var document = Document.builder()
                 .id(articleId.toString())
                 .text(textBody)
-                .metadata(buildMetadata(articleId, feedId, feedTitle, title, link, summary, publishedAt))
+                .metadata(buildMetadata(feedId, feedTitle, articleId, title, link, summary, publishedAt))
                 .build();
 
         vectorStore.add(List.of(document));
@@ -75,9 +78,9 @@ public class ArticleEmbeddingRepository {
     }
 
 
-    private Map<String, Object> buildMetadata(UUID articleId,
-                                              UUID feedId,
+    private Map<String, Object> buildMetadata(UUID feedId,
                                               String feedTitle,
+                                              UUID articleId,
                                               String title,
                                               String link,
                                               String summary,
@@ -98,7 +101,7 @@ public class ArticleEmbeddingRepository {
             metadata.put("summary", summary);
         }
         if (publishedAt != null) {
-            metadata.put("publishedAt", publishedAt.toString());
+            metadata.put("publishedAt", publishedAt.getEpochSecond());
         }
         metadata.values().removeIf(value -> value == null || (value instanceof String str && !StringUtils.hasText(str)));
         return metadata;

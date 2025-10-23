@@ -14,6 +14,7 @@ import org.bitmagic.ifeed.service.ArticleService;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.vectorstore.SearchRequest;
 import org.springframework.ai.vectorstore.VectorStore;
+import org.springframework.ai.vectorstore.filter.Filter;
 import org.springframework.ai.vectorstore.filter.FilterExpressionBuilder;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -27,6 +28,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.time.temporal.TemporalUnit;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -68,12 +70,14 @@ public class SearchController {
         if (type.equals(TYPE_SEMANTIC)) {
             Collection<String> feedIds = userSubscriptionRepository.findAllByUserId(principal.getId()).stream().map(UserSubscription::getFeed).map(Feed::getId).map(UUID::toString).collect(Collectors.toList());
             FilterExpressionBuilder b = new FilterExpressionBuilder();
+            if (source.equals(SOURCE_OWNER)) {
+                b.in("feedId", feedIds.toArray(new String[]{}));
+            }
             List<Document> documents = vectorStore.similaritySearch(SearchRequest.builder()
                     .query(query)
                     .topK((page + 1) * size)
-                                    .similarityThreshold(0.36)
-
-                    .filterExpression(b.in("feedId", feedIds.toArray(new String[]{})).build())
+                    .similarityThreshold(0.36)
+                    .filterExpression(b.gte("publishedAt", Instant.now().minusSeconds(60 * 24 * 3600).getEpochSecond()).build())
                     .build());
             Collection<UUID> articleIds = documents.stream().map(Document::getMetadata).map(meta -> IdentifierUtils.parseUuid(meta.get("articleId").toString(), "articleId")).collect(Collectors.toList());
             List<SearchResultResponse> content = repository.findAllById(articleIds).stream().map(article -> new SearchResultResponse(
