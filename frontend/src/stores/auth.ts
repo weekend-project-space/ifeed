@@ -95,6 +95,7 @@ export const useAuthStore = defineStore('auth', () => {
     } catch (err) {
       const message = extractMessage(err, '注册失败');
       error.value = message;
+      console.log(err)
       throw err;
     } finally {
       loading.value = false;

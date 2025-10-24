@@ -19,6 +19,7 @@ import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.chat.prompt.SystemPromptTemplate;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.embedding.EmbeddingModel;
+import org.springframework.ai.vectorstore.SearchRequest;
 import org.springframework.ai.vectorstore.filter.FilterExpressionBuilder;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -26,6 +27,8 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -62,20 +65,22 @@ public class RecommendationService {
             - **信息筛选**：聚焦5-8条重大事件，按地域或主题分组（如美国、亚洲、国际、社交媒体）。提供事实、数据、背景，避免主观评论；每条资讯需引用来源，使用inline citation。
             - **输出格式**：纯Markdown，模拟广播脚本。结构包括：开场白（提及iFeed、日期、问候）、主体（分段播报，每段1-2事件，用粗体标题）、结束语（引导互动）。总长度800-1200字，节奏明快。
             - **风格要求**：第一人称播报，语言专业且引人入胜（e.g., “直击新闻前沿！”、“全球风云激荡”）。使用过渡词（如“转向欧洲”）连接段落，适度加入emoji（如🌎、📰）增强视觉效果。鼓励用户通过iFeed评论或分享。
-            - **时效性**：基于当前日期（如2025-10-23）”。
+                     
                          
             ## 输出示例
             ```markdown
-            ### iFeed 每日头条：2025年10月23日
+            ## iFeed 头条
                          
-            **各位iFeed用户，晚上好！我是您的新闻播报员，为您献上2025年10月23日的全球热点汇总。** 🌎 从北美的政坛动荡到亚洲的经济热潮，iFeed带您直击新闻前沿！让我们开启今日播报！
+            **各位iFeed用户，早上好！我是您的新闻播报员，为您献上今日的您关注的热点汇总。** 
+                        
+            🌎 从北美的政坛动荡到亚洲的经济热潮，iFeed带您最新动态！让我们开启今日播报！
                          
-            **美国动态：政府关门僵局，移民政策引热议** \s
-            特朗普宣布提高关税。 ... [详细](文章id)
-            美国联邦政府关门进入第23天，75万雇员受影响，创历史第二长纪录。 [详细](文章id)
+            **美国动态：政府关门僵局，移民政策引热议** 
+            特朗普宣布提高关税。 ...  [详细...](/articles/:文章id)
+            美国联邦政府关门进入第23天，75万雇员受影响，创历史第二长纪录。 [详细...](/articles/:文章id)
                          
-            **亚洲焦点：印度经济火热，泰国娱乐热潮** \s
-            印度迪瓦利节销售额达6.05万亿卢比，同比增长25%。 [详细](文章id)
+            **亚洲焦点：印度经济火热，泰国娱乐热潮**
+            印度迪瓦利节销售额达6.05万亿卢比，同比增长25%。  [详细...](/articles/:文章id)
                          
             **结束语**：今日iFeed头条到此结束，世界瞬息万变，资讯尽在掌握！感谢您的收听，明天同一时间再会！📰
                          
@@ -83,7 +88,7 @@ public class RecommendationService {
             ```
                          
             ## 注意事项
-            - **长度控制**：每段控制在150-200字，保持节奏紧凑。优先选择高影响力、新鲜事件，避免过时内容。
+            - **长度控制**：每段控制在80字，保持节奏紧凑。优先选择高影响力、新鲜事件，避免过时内容。
             """;
 
 
@@ -99,12 +104,15 @@ public class RecommendationService {
     public Flux<String> recommendations(UUID uuid, RecommendationScope scope) {
         switch (scope) {
             case RECENT:
-                throw new RuntimeException("");
+                return Flux.fromIterable(List.of("hello world"));
             case PERSONAL:
             default:
                 // 默认返回个性化推荐
                 log.info("list info");
-                List<RecommendationArticle> list = top(uuid, 10, Instant.now().minusSeconds(24 * 3600));
+                List<RecommendationArticle> list = top(uuid, 10, Instant.now().minusSeconds(48 * 3600));
+                if (list.isEmpty()) {
+                    return Flux.fromIterable(List.of("立即开始阅读，收藏值得反复品读的内容，让信息顺畅的在这会合。"));
+                }
 //        SystemPromptTemplate systemPromptTemplate = new SystemPromptTemplate(SYSTEM_TEXT);
 //        Message systemMessage = systemPromptTemplate.createMessage();
                 String userText = "这是今天的热门文章的数据```" + list.stream().map(item -> "文章id:%s\n 正文：%s".formatted(item.id(), item.summary())).collect(Collectors.joining("\n\n")) + "```\n请输出markdown 格式内容";

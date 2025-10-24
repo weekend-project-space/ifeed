@@ -4,7 +4,8 @@
       <div>
         <h1 class="text-xl font-semibold text-text">智能推荐</h1>
         <p class="text-sm text-text-secondary">
-          聚合协同过滤、语义向量与流行度信号的候选集，实时为你刷新阅读灵感。
+<!--          聚合协同过滤、语义向量与流行度信号的候选集，-->
+          实时为你刷新阅读灵感。
         </p>
       </div>
       <div class="flex flex-wrap items-center gap-2">

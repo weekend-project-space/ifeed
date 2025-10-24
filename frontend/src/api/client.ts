@@ -68,7 +68,7 @@ export async function request<T = unknown>(path: string, options: RequestOptions
   const data = isJsonResponse ? await response.json().catch(() => null) : await response.text();
 
   if (!response.ok) {
-    const error: HttpError = Object.assign(new Error('Request failed'), {
+    const error: Error & { payload: any; status: number } = Object.assign(new Error(response.json().message), {
       status: response.status,
       payload: data
     });

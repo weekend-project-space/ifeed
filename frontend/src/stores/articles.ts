@@ -1,9 +1,9 @@
 import { computed, ref } from 'vue';
 import { defineStore } from 'pinia';
-import MarkdownIt from 'markdown-it';
 import { request } from '../api/client';
 import { formatRelativeTime } from '../utils/datetime';
 import type { PageResponse } from '../types/api';
+import { md2html } from '../utils/markdown';
 
 export interface ArticleDto {
   id: string;
@@ -58,11 +58,6 @@ const normalizeArticle = (article: ArticleDto): ArticleListItem => {
 };
 
 export const useArticlesStore = defineStore('articles', () => {
-  const markdown = new MarkdownIt({
-    html: false,
-    linkify: true,
-    breaks: true
-  });
 
   const items = ref<ArticleListItem[]>([]);
   const currentArticle = ref<ArticleDetail | null>(null);
@@ -203,7 +198,7 @@ export const useArticlesStore = defineStore('articles', () => {
       currentArticle.value = {
         ...normalized,
         feedId: data.feedId,
-        content: hasHtmlTags ? rawContent : markdown.render(rawContent)
+        content: hasHtmlTags ? rawContent : md2html(rawContent)
       };
       return currentArticle.value;
     } catch (err) {
