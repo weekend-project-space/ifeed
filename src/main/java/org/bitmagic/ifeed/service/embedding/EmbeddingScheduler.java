@@ -34,11 +34,11 @@ public class EmbeddingScheduler {
             article.setEmbedding("1");
             articleRepository.save(article);
         });
-//        log.info("init user embedding");
-//        userRepository.findAll().forEach(user -> {
-//            log.info("init user embedding :{}", user.getUsername());
-//            userEmbeddingService.rebuildUserEmbedding(user.getId());
-//        });
+        log.info("init user embedding");
+        userRepository.findAll().forEach(user -> {
+            log.info("init user embedding :{}", user.getUsername());
+            userEmbeddingService.rebuildUserEmbedding(user.getId());
+        });
 
     }
 }

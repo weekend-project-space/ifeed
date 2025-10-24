@@ -2,7 +2,6 @@ package org.bitmagic.ifeed.domain.spec;
 
 import org.bitmagic.ifeed.domain.entity.Article;
 import org.springframework.data.jpa.domain.Specification;
-import space.bitmagic.data.jpa.Specifications;
 
 /**
  * @author yangrd
@@ -11,9 +10,12 @@ import space.bitmagic.data.jpa.Specifications;
 public interface ArticleSpec {
 
     static Specification<Article> noEmbeddingSpec() {
-        return Specifications.<Article>and()
-                .predicate((root, query, criteriaBuilder) -> {
-                    return criteriaBuilder.isNull(root.get("embedding"));
-                }).build();
+//        return Specifications.<Article>and()
+//                .predicate((root, query, criteriaBuilder) -> {
+//                    return criteriaBuilder.isNull(root.get("embedding"));
+//                }).build();
+        return ((root, query, criteriaBuilder) -> {
+            return criteriaBuilder.isNull(root.get("embedding"));
+        });
     }
 }

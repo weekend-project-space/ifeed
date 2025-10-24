@@ -24,10 +24,8 @@
           </button>
           <RouterLink :to="{ name: 'home' }"
             class="flex items-center gap-2 text-lg font-semibold tracking-tight text-text">
-            <span
-              class="inline-flex h-9 w-9 items-center justify-center rounded-2xl bg-primary text-primary-foreground">
-              i
-            </span>
+            <img
+              class="inline-flex h-9 w-9 items-center justify-center rounded-2xl bg-primary text-primary-foreground" src="https://ifeed.cc/logo.svg"/>
             <span class="leading-none">iFeed</span>
           </RouterLink>
         </div>
@@ -696,13 +694,13 @@ watch(
 
 // Ensure subscriptions are loaded once when layout mounts
 onMounted(async () => {
-  if (!subscriptionsStore.items.length && !subscriptionsStore.loading) {
-    try {
-      await subscriptionsStore.fetchSubscriptions();
-    } catch {
-      // ignore here; page components already show error details where needed
-    }
-  }
+  // if (!subscriptionsStore.items.length && !subscriptionsStore.loading) {
+  //   try {
+  await subscriptionsStore.fetchSubscriptions();
+  // } catch {
+  //   // ignore here; page components already show error details where needed
+  // }
+  // }
 });
 </script>
 

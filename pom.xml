@@ -94,11 +94,11 @@
             <artifactId>hibernate-vector</artifactId>
             <version>6.6.29.Final</version>
         </dependency>
-        <dependency>
-            <groupId>space.bitmagic.data</groupId>
-            <artifactId>jpa-spec</artifactId>
-            <version>1.0.0</version>
-        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>space.bitmagic.data</groupId>-->
+<!--            <artifactId>jpa-spec</artifactId>-->
+<!--            <version>1.0.0</version>-->
+<!--        </dependency>-->
     </dependencies>
 
     <dependencyManagement>
