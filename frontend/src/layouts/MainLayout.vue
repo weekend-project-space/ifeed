@@ -152,13 +152,24 @@
                 <component v-for="item in section.items" :is="item.to ? 'RouterLink' : 'button'" :key="item.id"
                   v-bind="item.to ? { to: item.to } : { type: 'button' }"
                   class="group flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition-colors"
-                  :class="isActiveItem(item)
-                    ? 'bg-primary/5 text-text font-semibold shadow-sm'
-                    : 'text-text-secondary hover:bg-surface-variant/50 hover:text-text'"
+                  :class="[
+                    isActiveItem(item)
+                      ? item.danger
+                        ? 'bg-danger/10 text-danger font-semibold shadow-sm'
+                        : 'bg-primary/5 text-text font-semibold shadow-sm'
+                      : item.danger
+                        ? 'text-danger hover:bg-danger/10 hover:text-danger'
+                        : 'text-text-secondary hover:bg-surface-variant/50 hover:text-text'
+                  ]"
                   @click="handleNavItemClick(item)">
                   <span v-if="item.icon"
-                    class="flex h-6 w-6 items-center justify-center rounded-full text-text-muted transition group-hover:text-primary"
-                    :class="isActiveItem(item) ? 'bg-surface text-text' : 'bg-surface-variant/60'">
+                    class="flex h-6 w-6 items-center justify-center rounded-full transition group-hover:text-primary"
+                    :class="[
+                      item.danger ? 'text-danger' : 'text-text-muted',
+                      isActiveItem(item)
+                        ? item.danger ? 'bg-danger/10 text-danger' : 'bg-surface text-text'
+                        : 'bg-surface-variant/60'
+                    ]">
                     <svg class="h-5 w-5" :viewBox="item.icon.viewBox ?? '0 0 20 20'"
                       :fill="item.icon.stroke ? 'none' : 'currentColor'"
                       :stroke="item.icon.stroke ? 'currentColor' : 'none'"
@@ -178,7 +189,7 @@
                     {{ item.avatarText }}
                   </span>
                   <div class="flex min-w-0 flex-1 items-center justify-between gap-3">
-                    <span class="truncate">{{ item.label }}</span>
+                    <span class="truncate" :class="item.danger ? 'text-danger' : undefined">{{ item.label }}</span>
                     <span v-if="item.badge"
                       class="inline-flex h-5 min-w-[1.5rem] items-center justify-center rounded-full bg-primary/10 px-2 text-[11px] font-semibold text-primary">
                       {{ item.badge }}
@@ -235,12 +246,21 @@
                   class="group flex w-full items-center rounded-xl py-2 text-sm font-medium transition-colors" :class="[
                     isSidebarCollapsed ? 'justify-center px-2' : 'gap-3 px-3',
                     isActiveItem(item)
-                      ? 'bg-primary/5 text-text font-semibold shadow-sm'
-                      : 'text-text-secondary hover:bg-surface-variant/50 hover:text-text'
+                      ? item.danger
+                        ? 'bg-danger/10 text-danger font-semibold shadow-sm'
+                        : 'bg-primary/5 text-text font-semibold shadow-sm'
+                      : item.danger
+                        ? 'text-danger hover:bg-danger/10 hover:text-danger'
+                        : 'text-text-secondary hover:bg-surface-variant/50 hover:text-text'
                   ]" :title="isSidebarCollapsed ? item.label : undefined" @click="handleNavItemClick(item)">
                   <span v-if="item.icon"
-                    class="flex h-6 w-6 items-center justify-center rounded-lg text-text-muted transition group-hover:text-primary"
-                    :class="isActiveItem(item) ? 'bg-surface text-text' : 'bg-surface-variant/60'">
+                    class="flex h-6 w-6 items-center justify-center rounded-lg transition group-hover:text-primary"
+                    :class="[
+                      item.danger ? 'text-danger' : 'text-text-muted',
+                      isActiveItem(item)
+                        ? item.danger ? 'bg-danger/10 text-danger' : 'bg-surface text-text'
+                        : 'bg-surface-variant/60'
+                    ]">
                     <svg class="h-5 w-5" :viewBox="item.icon.viewBox ?? '0 0 20 20'"
                       :fill="item.icon.stroke ? 'none' : 'currentColor'"
                       :stroke="item.icon.stroke ? 'currentColor' : 'none'"
@@ -260,7 +280,7 @@
                     {{ item.avatarText }}
                   </span>
                   <div v-if="!isSidebarCollapsed" class="flex min-w-0 flex-1 items-center justify-between gap-3">
-                    <span class="truncate">{{ item.label }}</span>
+                    <span class="truncate" :class="item.danger ? 'text-danger' : undefined">{{ item.label }}</span>
                     <span v-if="item.badge"
                       class="inline-flex h-1 w-1 items-center justify-center rounded-lg bg-primary/90 text-[11px] font-semibold text-primary">
                       <!--                      {{ item.badge }}-->
@@ -320,6 +340,7 @@ type NavItem = {
   avatar?: string;
   accent?: string;
   badge?: string;
+  danger?: boolean;
   activeMatch?: (current: RouteLocationNormalizedLoaded) => boolean;
   action?: () => void;
 };
@@ -534,40 +555,75 @@ const baseNavSections: NavSection[] = [
 
 // Generate dynamic subscriptions section from store items
 const subscriptionNavSection = computed<NavSection>(() => {
-  const items = subscriptionsStore.items.map((s, idx) => {
-    const label = s.title?.trim() || (new URL(s.siteUrl || s.url).hostname);
-    const initials = label
-      .split(/\s+/)
-      .map((p) => p.charAt(0).toUpperCase())
-      .join('')
-      .slice(0, 2) || 'S';
+  const accentPalette = [
+    'bg-slate-200 text-slate-900',
+    'bg-zinc-200 text-zinc-900',
+    'bg-stone-200 text-stone-900',
+    'bg-gray-200 text-gray-900',
+    'bg-neutral-200 text-neutral-900'
+  ];
 
-    const accentPalette = [
-      'bg-slate-200 text-slate-900',
-      'bg-zinc-200 text-zinc-900',
-      'bg-stone-200 text-stone-900',
-      'bg-gray-200 text-gray-900',
-      'bg-neutral-200 text-neutral-900'
-    ];
+  const entries = subscriptionsStore.items.map((s) => {
+    const label =
+      s.title?.trim() ||
+      (() => {
+        const candidate = s.siteUrl || s.url;
+        if (!candidate) {
+          return '订阅源';
+        }
+        try {
+          return new URL(candidate).hostname || candidate;
+        } catch {
+          return candidate;
+        }
+      })();
 
-    const accent = accentPalette[idx % accentPalette.length];
+    const initials =
+      label
+        .split(/\s+/)
+        .map((part) => part.charAt(0).toUpperCase())
+        .join('')
+        .slice(0, 2) || 'S';
+
+    const danger = Boolean((s.failureCount ?? 0) > 0 || s.fetchError?.trim());
+
+    return {
+      subscription: s,
+      label,
+      initials,
+      danger
+    };
+  });
+
+  entries.sort((a, b) => {
+    if (a.danger === b.danger) {
+      return 0;
+    }
+    return a.danger ? 1 : -1;
+  });
+
+  const items = entries.map((meta, idx) => {
+    const s = meta.subscription;
+    const accent = meta.danger
+      ? 'bg-danger/15 text-danger border border-danger/40'
+      : accentPalette[idx % accentPalette.length];
 
     return {
       id: `sub-${s.feedId}`,
-      label,
+      label: meta.label,
       to: { name: 'feed' as const, params: { feedId: s.feedId } },
       avatar: s.avatar,
-      avatarText: initials,
+      avatarText: meta.initials,
       accent,
       activeMatch: (current: RouteLocationNormalizedLoaded) => {
         const paramId = typeof current.params.feedId === 'string' ? current.params.feedId : undefined;
         return current.name === 'feed' && paramId === s.feedId;
       },
-      badge: s.isRead ? '' : '1'
+      badge: s.isRead ? '' : '1',
+      danger: meta.danger
     } satisfies NavItem;
   });
 
-  // Always include a manage entry at the end
   items.push({
     id: 'manage-subscriptions',
     label: '管理订阅',

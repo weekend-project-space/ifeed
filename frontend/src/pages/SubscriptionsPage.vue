@@ -99,6 +99,15 @@
               class="block truncate text-xs text-primary hover:underline">
               {{ displaySiteUrl(item) }}
             </a>
+            <div v-if="subscriptionIssues[item.feedId]"
+              class="mt-1 inline-flex min-w-0 max-w-full items-center gap-2 rounded-full border border-danger/30 bg-danger/10 px-3 py-1 text-xs text-danger"
+              :title="subscriptionIssues[item.feedId]?.tooltip">
+              <svg class="h-3.5 w-3.5 flex-shrink-0" viewBox="0 0 20 20" fill="none" stroke="currentColor"
+                stroke-width="1.6">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M10 3.5 2.5 16.5h15L10 3.5Zm0 5v3.5m0 2v.5" />
+              </svg>
+              <span class="truncate max-w-[60vw] sm:max-w-[16rem]">{{ subscriptionIssues[item.feedId]?.label }}</span>
+            </div>
           </div>
           <div class="flex flex-wrap items-center gap-3">
             <button class="text-sm font-medium text-primary transition hover:opacity-80"
@@ -303,6 +312,31 @@ const displayTitle = (item: SubscriptionDto) => item.title || item.siteUrl || it
 const displaySiteUrl = (item: SubscriptionDto) => item.siteUrl || item.url;
 
 const formatRecentText = (value?: string | null) => (value ? formatRelativeTime(value) : '暂无记录');
+
+const subscriptionIssues = computed(() => {
+  const issues: Record<string, { label: string; tooltip: string }> = {};
+  items.value.forEach((item) => {
+    const failures = item.failureCount ?? 0;
+    const error = item.fetchError?.trim();
+    if (!failures && !error) {
+      return;
+    }
+    const parts: string[] = [];
+    if (failures > 0) {
+      parts.push(`连续失败 ${failures} 次`);
+    }
+    if (error) {
+      parts.push(`最近错误：${error}`);
+    }
+    issues[item.feedId] = {
+      label: parts.length ? `抓取异常 · ${parts.join(' · ')}` : '抓取异常 · 请稍后再试',
+      tooltip: ['抓取异常', failures > 0 ? `连续失败 ${failures} 次` : null, error ? `最近错误：${error}` : null]
+        .filter(Boolean)
+        .join('\n')
+    };
+  });
+  return issues;
+});
 
 const handleOpmlFileChange = (event: Event) => {
   const target = event.target as HTMLInputElement;

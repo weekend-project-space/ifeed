@@ -50,6 +50,7 @@
               最近抓取 {{ lastFetchedText }}
             </span>
           </div>
+
           <div class="flex flex-wrap items-center gap-3">
             <a v-if="detail?.siteUrl" :href="detail.siteUrl" target="_blank" rel="noopener noreferrer"
               class="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-surface px-4 py-2 text-sm font-medium text-primary transition hover:bg-primary/10">
@@ -79,6 +80,14 @@
               </svg>
               刷新频道
             </button>
+          </div>
+          <div v-if="hasFetchIssue"
+            class="inline-flex max-w-full items-center gap-2 rounded-full border border-danger/30 bg-danger/10 px-4 py-2 text-sm text-danger min-w-0"
+            :title="fetchIssueTooltip">
+            <svg class="h-4 w-4 flex-shrink-0" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M10 3.5 2.5 16.5h15L10 3.5Zm0 5v3.5m0 2v.5" />
+            </svg>
+            <span class="truncate max-w-[70vw] sm:max-w-[20rem]">{{ fetchIssueLabel }}</span>
           </div>
           <p v-if="feedError" class="text-sm text-danger">{{ feedError }}</p>
         </div>
@@ -261,6 +270,45 @@ const lastFetchedText = computed(() => {
     return '暂无记录';
   }
   return formatRelativeTime(target.lastFetched);
+});
+
+const failureCount = computed(() => detail.value?.failureCount ?? 0);
+
+const fetchErrorMessage = computed(() => {
+  const message = detail.value?.fetchError;
+  if (!message) {
+    return null;
+  }
+  const trimmed = message.trim();
+  return trimmed.length ? trimmed : null;
+});
+
+const hasFetchIssue = computed(() => failureCount.value > 0 || !!fetchErrorMessage.value);
+
+const fetchIssueLabel = computed(() => {
+  const parts: string[] = [];
+  if (failureCount.value > 0) {
+    parts.push(`连续失败 ${failureCount.value} 次`);
+  }
+  if (fetchErrorMessage.value) {
+    parts.push(`最近错误：${fetchErrorMessage.value}`);
+  }
+  const summary = parts.join(' · ');
+  return summary ? `抓取异常 · ${summary}` : '抓取异常 · 请稍后再试';
+});
+
+const fetchIssueTooltip = computed(() => {
+  if (!hasFetchIssue.value) {
+    return '';
+  }
+  const lines: string[] = ['抓取异常'];
+  if (failureCount.value > 0) {
+    lines.push(`连续失败 ${failureCount.value} 次`);
+  }
+  if (fetchErrorMessage.value) {
+    lines.push(`最近错误：${fetchErrorMessage.value}`);
+  }
+  return lines.join('\n');
 });
 
 const channelArticles = computed(() =>
