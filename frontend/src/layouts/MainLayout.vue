@@ -24,8 +24,8 @@
           </button>
           <RouterLink :to="{ name: 'home' }"
             class="flex items-center gap-2 text-lg font-semibold tracking-tight text-text">
-            <img
-              class="inline-flex h-9 w-9 items-center justify-center rounded-2xl bg-primary text-primary-foreground" src="https://ifeed.cc/logo.svg"/>
+            <img class="inline-flex h-9 w-9 items-center justify-center rounded-2xl bg-primary text-primary-foreground"
+              src="https://ifeed.cc/logo.svg" />
             <span class="leading-none">iFeed</span>
           </RouterLink>
         </div>
@@ -160,8 +160,7 @@
                       : item.danger
                         ? 'text-danger hover:bg-danger/10 hover:text-danger'
                         : 'text-text-secondary hover:bg-surface-variant/50 hover:text-text'
-                  ]"
-                  @click="handleNavItemClick(item)">
+                  ]" @click="handleNavItemClick(item)">
                   <span v-if="item.icon"
                     class="flex h-6 w-6 items-center justify-center rounded-full transition group-hover:text-primary"
                     :class="[
@@ -553,7 +552,8 @@ const baseNavSections: NavSection[] = [
   // }
 ];
 
-// Generate dynamic subscriptions section from store items
+const showAllSubscriptions = ref(false); // 控制展开/折叠状态
+
 const subscriptionNavSection = computed<NavSection>(() => {
   const accentPalette = [
     'bg-slate-200 text-slate-900',
@@ -595,14 +595,16 @@ const subscriptionNavSection = computed<NavSection>(() => {
     };
   });
 
+  // danger优先显示
   entries.sort((a, b) => {
-    if (a.danger === b.danger) {
-      return 0;
-    }
+    if (a.danger === b.danger) return 0;
     return a.danger ? 1 : -1;
   });
 
-  const items = entries.map((meta, idx) => {
+  // ⚙️ 控制展示数量
+  const visibleEntries = showAllSubscriptions.value ? entries : entries.slice(0, 9);
+
+  const items: NavItem[] = visibleEntries.map((meta, idx) => {
     const s = meta.subscription;
     const accent = meta.danger
       ? 'bg-danger/15 text-danger border border-danger/40'
@@ -615,22 +617,27 @@ const subscriptionNavSection = computed<NavSection>(() => {
       avatar: s.avatar,
       avatarText: meta.initials,
       accent,
-      activeMatch: (current: RouteLocationNormalizedLoaded) => {
+      activeMatch: (current) => {
         const paramId = typeof current.params.feedId === 'string' ? current.params.feedId : undefined;
         return current.name === 'feed' && paramId === s.feedId;
       },
       badge: s.isRead ? '' : '1',
       danger: meta.danger
-    } satisfies NavItem;
+    };
   });
-
+  // --- 管理订阅按钮 ---
   items.push({
     id: 'manage-subscriptions',
     label: '管理订阅',
-    to: { name: 'subscriptions' as const, query: { manage: 'true' } },
+    to: { name: 'subscriptions' as const },
     icon: {
       stroke: true,
-      paths: ['M5 5.5h10a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-7a1 1 0 0 1 1-1Z', 'M5 7.5h10', 'M7 9.5h6', 'M7 11.5h4'],
+      paths: [
+        'M5 5.5h10a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-7a1 1 0 0 1 1-1Z',
+        'M5 7.5h10',
+        'M7 9.5h6',
+        'M7 11.5h4'
+      ],
       viewBox: '0 0 20 20'
     },
     activeMatch: (current) => {
@@ -638,12 +645,29 @@ const subscriptionNavSection = computed<NavSection>(() => {
       return current.name === 'subscriptions' && manage === 'true';
     }
   });
+  // 展开 / 折叠按钮
+  if (entries.length > 9) {
+    items.push({
+      id: 'toggle-subscriptions',
+      label: showAllSubscriptions.value ? '折叠' : `展开全部（${entries.length}）`,
+      action: () => {
+        showAllSubscriptions.value = !showAllSubscriptions.value;
+      },
+      icon: {
+        stroke: true,
+        paths: showAllSubscriptions.value
+          ? ['M5 13 L10 8 L15 13'] // “∧”图标
+          : ['M5 8 L10 13 L15 8'], // “∨”图标
+        viewBox: '0 0 20 20'
+      }
+    } as unknown as NavItem);
+  }
 
   return {
     id: 'subscriptions',
     title: '订阅',
     items
-  } satisfies NavSection;
+  };
 });
 
 // Combine base + dynamic sections for rendering
