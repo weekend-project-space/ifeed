@@ -11,6 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.bitmagic.ifeed.config.RssFetcherProperties;
 import org.bitmagic.ifeed.domain.entity.Article;
 import org.bitmagic.ifeed.domain.entity.Feed;
+import org.bitmagic.ifeed.domain.entity.FeedFetchStatus;
 import org.bitmagic.ifeed.domain.repository.ArticleRepository;
 import org.bitmagic.ifeed.domain.repository.ArticleEmbeddingRepository;
 import org.bitmagic.ifeed.domain.repository.FeedRepository;
@@ -51,6 +52,7 @@ public class FeedIngestionService {
             DateTimeFormatter.ISO_OFFSET_DATE_TIME,
             DateTimeFormatter.ISO_ZONED_DATE_TIME
     );
+    private static final int MAX_ERROR_MESSAGE_LENGTH = 2048;
 
     private final FeedRepository feedRepository;
     private final ArticleRepository articleRepository;
@@ -86,9 +88,19 @@ public class FeedIngestionService {
                 }
             }
             feed.setLastFetched(Instant.now());
+            feed.setLastFetchStatus(FeedFetchStatus.SUCCEEDED);
+            feed.setFetchErrorAt(null);
+            feed.setFetchError(null);
+            feed.setFailureCount(0);
             feedRepository.save(feed);
         } catch (Exception ex) {
             log.warn("Failed to fetch feed {}", feed.getUrl(), ex);
+            feed.setLastFetchStatus(FeedFetchStatus.FAILED);
+            feed.setFetchErrorAt(Instant.now());
+            feed.setFetchError(resolveErrorMessage(ex));
+            var currentFailures = Optional.ofNullable(feed.getFailureCount()).orElse(0);
+            feed.setFailureCount(currentFailures + 1);
+            feedRepository.save(feed);
         }
     }
 
@@ -332,6 +344,19 @@ public class FeedIngestionService {
             log.warn("Failed to serialize AI payload", e);
             return null;
         }
+    }
+
+    private String resolveErrorMessage(Throwable throwable) {
+        if (!StringUtils.hasText(throwable.getMessage()) && throwable.getCause() != null) {
+            return resolveErrorMessage(throwable.getCause());
+        }
+        var message = StringUtils.hasText(throwable.getMessage())
+                ? throwable.getMessage()
+                : throwable.getClass().getSimpleName();
+        if (message.length() > MAX_ERROR_MESSAGE_LENGTH) {
+            return message.substring(0, MAX_ERROR_MESSAGE_LENGTH);
+        }
+        return message;
     }
 
     private SyndFeed buildFeed(SyndFeedInput feedInput, byte[] bytes) throws Exception {

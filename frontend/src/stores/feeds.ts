@@ -14,6 +14,8 @@ export interface FeedDetail {
     articleCount: number;
     subscriberCount: number;
     subscribed: boolean;
+    failureCount?: number;
+    fetchError?: string | null;
 }
 
 export const useFeedStore = defineStore('feed', () => {

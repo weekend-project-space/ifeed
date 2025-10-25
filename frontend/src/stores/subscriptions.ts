@@ -12,6 +12,8 @@ export interface SubscriptionDto {
   lastUpdated?: string;
 
   isRead?: boolean;
+  failureCount?: number;
+  fetchError?: string | null;
 }
 
 export interface OpmlPreviewFeedDto {

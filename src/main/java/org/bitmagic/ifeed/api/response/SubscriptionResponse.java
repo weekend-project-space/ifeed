@@ -10,6 +10,8 @@ public record SubscriptionResponse(
         String avatar,
         Instant lastFetched,
         Instant lastUpdated,
-        Boolean isRead
+        Boolean isRead,
+        Integer failureCount,
+        String fetchError
 ) {
 }

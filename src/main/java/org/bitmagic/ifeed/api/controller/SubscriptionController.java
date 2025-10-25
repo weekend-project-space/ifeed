@@ -40,6 +40,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/subscriptions")
@@ -74,6 +75,7 @@ public class SubscriptionController {
                     if (siteUrl == null || siteUrl.isBlank()) {
                         siteUrl = feedUrl;
                     }
+                    var failureCount = Optional.ofNullable(feed.getFailureCount()).orElse(0);
                     return new SubscriptionResponse(
                             feed.getId().toString(),
                             title,
@@ -82,7 +84,9 @@ public class SubscriptionController {
                             "https://favicon.im/%s".formatted(extractHost(feed.getSiteUrl())),
                             feed.getLastFetched(),
                             feed.getLastUpdated(),
-                            feedReadTimes.getOrDefault(feed.getId().toString(), Instant.EPOCH).isAfter(Objects.nonNull(feed.getLastUpdated())?feed.getLastUpdated():Instant.EPOCH)
+                            feedReadTimes.getOrDefault(feed.getId().toString(), Instant.EPOCH).isAfter(Objects.nonNull(feed.getLastUpdated())?feed.getLastUpdated():Instant.EPOCH),
+                            failureCount,
+                            feed.getFetchError()
                     );
                 })
                 .toList();
