@@ -70,7 +70,7 @@
       </div>
       <div v-else>
         <ArticleList :items="articleItems" empty-message="暂无推荐结果，尝试刷新或多收藏一些文章吧。" @select="handleSelect"
-          @toggle-favorite="handleToggleFavorite" @select-tag="handleSelectTag" />
+          @select-tag="handleSelectTag" />
         <!-- 分页控件 -->
         <div class="mt-6 flex items-center justify-between border-t border-outline/20 pt-4 text-sm text-text-secondary">
           <button type="button"
@@ -97,14 +97,12 @@ import { computed, onMounted, ref, watch } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { storeToRefs } from 'pinia';
 import ArticleList from '../components/ArticleList.vue';
-import { useCollectionsStore } from '../stores/collections';
 import { useArticlesStore } from '../stores/articles';
 
 const SIZE = 20;
 
 const route = useRoute();
 const router = useRouter();
-const collectionsStore = useCollectionsStore();
 const articlesStore = useArticlesStore();
 
 const { items, loading: articlesLoading, error: articleError, hasNextPage, hasPreviousPage, page } = storeToRefs(articlesStore);
@@ -141,24 +139,10 @@ const refresh = () => {
   loadRecommendations(routePage.value);
 };
 
-const articleItems = computed(() =>
-  recommendations.value.map((item) => ({
-    ...item,
-    collected: collectionsStore.isCollected(item.id)
-  }))
-);
+const articleItems = computed(() => recommendations.value);
 
 const handleSelect = (articleId: string) => {
   router.push({ name: 'article-detail', params: { id: articleId } });
-};
-
-const handleToggleFavorite = async (articleId: string) => {
-  const target = articleItems.value.find((item) => item.id === articleId);
-  try {
-    await collectionsStore.toggleCollection(articleId, { title: target?.title });
-  } catch (err) {
-    console.warn('收藏操作失败', err);
-  }
 };
 
 const handleSelectTag = (tag: string) => {
@@ -176,16 +160,6 @@ watch(
   },
   { immediate: true }
 );
-
-onMounted(async () => {
-  if (!collectionsStore.items.length) {
-    try {
-      await collectionsStore.fetchCollections();
-    } catch (err) {
-      console.warn('收藏列表加载失败', err);
-    }
-  }
-});
 
 function nextPage() {
   if (hasNextPage.value) {

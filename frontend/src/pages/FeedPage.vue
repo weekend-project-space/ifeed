@@ -142,7 +142,7 @@
           <button class="text-sm font-medium text-primary hover:underline" @click="clearTag">清除标签</button>
         </div>
         <ArticleList :items="channelArticles" empty-message="该频道暂时没有文章，稍后再来看看。" @select="handleSelect"
-          @toggle-favorite="handleToggleFavorite" @select-tag="handleSelectTag" />
+          @select-tag="handleSelectTag" />
         <p v-if="articleError" class="mt-4 text-sm text-danger">{{ articleError }}</p>
       </div>
 
@@ -169,7 +169,6 @@ import { useRoute, useRouter } from 'vue-router';
 import { storeToRefs } from 'pinia';
 import ArticleList from '../components/ArticleList.vue';
 import { useArticlesStore } from '../stores/articles';
-import { useCollectionsStore } from '../stores/collections';
 import { useFeedStore } from '../stores/feeds';
 import { useSubscriptionsStore } from '../stores/subscriptions';
 import { useReadFeedStore } from '../stores/readfeed';
@@ -179,7 +178,6 @@ const route = useRoute();
 const router = useRouter();
 const feedStore = useFeedStore();
 const articlesStore = useArticlesStore();
-const collectionsStore = useCollectionsStore();
 const subscriptionsStore = useSubscriptionsStore();
 const readFeedStore = useReadFeedStore();
 
@@ -192,7 +190,6 @@ const {
   hasPreviousPage,
   page
 } = storeToRefs(articlesStore);
-const { items: collectionItems } = storeToRefs(collectionsStore);
 const { items: subscriptionItems, submitting: subscriptionSubmitting } = storeToRefs(subscriptionsStore);
 
 const lookupUrl = ref('');
@@ -311,12 +308,7 @@ const fetchIssueTooltip = computed(() => {
   return lines.join('\n');
 });
 
-const channelArticles = computed(() =>
-  items.value.map((item) => ({
-    ...item,
-    collected: collectionsStore.isCollected(item.id)
-  }))
-);
+const channelArticles = computed(() => items.value);
 
 const currentPage = computed(() => page.value);
 const hasNext = computed(() => hasNextPage.value);
@@ -354,17 +346,6 @@ const fetchArticles = async (targetPage = 1) => {
   }
 };
 
-const ensureCollections = async () => {
-  if (collectionItems.value.length) {
-    return;
-  }
-  try {
-    await collectionsStore.fetchCollections();
-  } catch (err) {
-    console.warn('收藏列表加载失败', err);
-  }
-};
-
 const ensureSubscriptions = async () => {
   if (subscriptionItems.value.length) {
     return;
@@ -392,7 +373,6 @@ const loadFeed = async () => {
   readFeedStore.recordFeedRead(feedId)
     .then(() => subscriptionsStore.fetchSubscriptions())
     .catch((err) => console.warn('记录订阅已读失败', err));
-  await ensureCollections();
   await ensureSubscriptions();
 };
 
@@ -455,15 +435,6 @@ const refreshArticles = async () => {
 const handleSelect = (articleId: string) => {
   articlesStore.recordHistory(articleId);
   router.push({ name: 'article-detail', params: { id: articleId } });
-};
-
-const handleToggleFavorite = async (articleId: string) => {
-  const target = channelArticles.value.find((item) => item.id === articleId);
-  try {
-    await collectionsStore.toggleCollection(articleId, { title: target?.title });
-  } catch (err) {
-    console.warn('收藏操作失败', err);
-  }
 };
 
 const handleSelectTag = (tag: string) => {

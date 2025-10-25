@@ -13,17 +13,14 @@
                     </p>
                 </div>
                 <div class="flex flex-wrap items-center gap-3 text-sm">
-                    <div class="flex rounded-full border border-outline/20 bg-surface-variant px-1 py-1 text-text-muted">
-                        <button
-                            type="button"
-                            class="rounded-full px-4 py-1 transition"
+                    <div
+                        class="flex rounded-full border border-outline/20 bg-surface-variant px-1 py-1 text-text-muted">
+                        <button type="button" class="rounded-full px-4 py-1 transition"
                             :class="searchType === 'keyword' ? 'bg-primary/15 text-primary' : 'text-text-muted'"
                             @click="setSearchType('keyword')">
                             关键词匹配
                         </button>
-                        <button
-                            type="button"
-                            class="rounded-full px-4 py-1 transition"
+                        <button type="button" class="rounded-full px-4 py-1 transition"
                             :class="searchType === 'semantic' ? 'bg-primary/15 text-primary' : 'text-text-muted'"
                             @click="setSearchType('semantic')">
                             语义匹配
@@ -38,13 +35,8 @@
             <div v-if="!hasQuery" class="py-20 text-center text-text-muted">输入关键词开始搜索。</div>
             <div v-else-if="searchLoading" class="py-20 text-center text-text-muted">正在搜索...</div>
             <div v-else class="space-y-4">
-                <ArticleList
-                    :items="searchArticleItems"
-                    empty-message="未找到相关结果，换个关键词试试。"
-                    @select="handleSelect"
-                    @toggle-favorite="handleToggleFavorite"
-                    @select-tag="handleSelectTag"
-                />
+                <ArticleList :items="searchArticleItems" empty-message="未找到相关结果，换个关键词试试。" @select="handleSelect"
+                    @select-tag="handleSelectTag" />
                 <p v-if="searchError" class="text-sm text-danger">{{ searchError }}</p>
             </div>
 
@@ -52,15 +44,13 @@
                 class="mt-6 flex items-center justify-between rounded-2xl border border-outline/20 bg-surface px-4 py-3 text-sm text-text-secondary">
                 <button
                     class="rounded-full border border-outline/40 px-3 py-2 font-medium text-primary transition hover:bg-primary/10 disabled:cursor-not-allowed disabled:border-outline/30 disabled:text-text-muted disabled:opacity-70"
-                    :disabled="!hasQuery || !hasPrevious"
-                    @click="prevPage">
+                    :disabled="!hasQuery || !hasPrevious" @click="prevPage">
                     上一页
                 </button>
                 <span>第 {{ currentPage }} 页</span>
                 <button
                     class="rounded-full border border-outline/40 px-3 py-2 font-medium text-primary transition hover:bg-primary/10 disabled:cursor-not-allowed disabled:border-outline/30 disabled:text-text-muted disabled:opacity-70"
-                    :disabled="!hasQuery || !hasNext"
-                    @click="nextPage">
+                    :disabled="!hasQuery || !hasNext" @click="nextPage">
                     下一页
                 </button>
             </div>
@@ -74,13 +64,11 @@ import { storeToRefs } from 'pinia';
 import { useRoute, useRouter } from 'vue-router';
 import ArticleList from '../components/ArticleList.vue';
 import { useArticlesStore } from '../stores/articles';
-import { useCollectionsStore } from '../stores/collections';
 import { useSearchStore, type SearchType } from '../stores/search';
 
 const router = useRouter();
 const route = useRoute();
 const articlesStore = useArticlesStore();
-const collectionsStore = useCollectionsStore();
 const searchStore = useSearchStore();
 
 const {
@@ -93,7 +81,6 @@ const {
     error: searchError
 } = storeToRefs(searchStore);
 
-const { items: collectionItems } = storeToRefs(collectionsStore);
 
 const searchQuery = computed(() => {
     const q = route.query.q;
@@ -122,7 +109,6 @@ const searchArticleItems = computed(() =>
         feedTitle: item.feedTitle,
         timeAgo: item.timeAgo,
         tags: [] as string[],
-        collected: collectionsStore.isCollected(item.id)
     }))
 );
 
@@ -167,10 +153,6 @@ const loadData = async () => {
     }
 
     const tasks: Promise<unknown>[] = [];
-
-    if (!collectionItems.value.length) {
-        tasks.push(collectionsStore.fetchCollections());
-    }
 
     tasks.push(
         searchStore.searchArticles({
@@ -235,15 +217,6 @@ const goBackToHome = () => {
 const handleSelect = (articleId: string) => {
     articlesStore.recordHistory(articleId);
     router.push({ name: 'article-detail', params: { id: articleId } });
-};
-
-const handleToggleFavorite = async (articleId: string) => {
-    const target = searchArticleItems.value.find((item) => item.id === articleId);
-    try {
-        await collectionsStore.toggleCollection(articleId, { title: target?.title });
-    } catch (err) {
-        console.warn('收藏操作失败', err);
-    }
 };
 
 const handleSelectTag = (tag: string) => {

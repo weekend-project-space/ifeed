@@ -17,6 +17,7 @@ export interface ArticleDto {
   feedTitle?: string;
   publishedAt?: string;
   tags?: string[];
+  collected?: boolean;
 }
 
 export interface ArticleListItem {
@@ -30,6 +31,7 @@ export interface ArticleListItem {
   publishedAt?: string;
   timeAgo: string;
   tags: string[];
+  collected?: boolean;
 }
 
 export interface ArticleDetail extends ArticleListItem {
@@ -53,7 +55,8 @@ const normalizeArticle = (article: ArticleDto): ArticleListItem => {
     feedTitle,
     publishedAt,
     timeAgo: formatRelativeTime(publishedAt ?? Date.now()),
-    tags: Array.from(new Set(tags)).slice(0, 6)
+    tags: Array.from(new Set(tags)).slice(0, 6),
+    collected: article.collected ?? false
   };
 };
 
@@ -198,7 +201,8 @@ export const useArticlesStore = defineStore('articles', () => {
       currentArticle.value = {
         ...normalized,
         feedId: data.feedId,
-        content: hasHtmlTags ? rawContent : md2html(rawContent)
+        content: hasHtmlTags ? rawContent : md2html(rawContent),
+        collected: data.collected ?? normalized.collected ?? false
       };
       return currentArticle.value;
     } catch (err) {

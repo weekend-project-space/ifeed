@@ -217,7 +217,7 @@
             </div>
 
             <div v-else class="space-y-4">
-                <ArticleList :items="recommendedArticles" @select="handleSelect" @toggle-favorite="handleToggleFavorite"
+                <ArticleList :items="recommendedArticles" @select="handleSelect"
                     @select-tag="handleSelectTag" />
                 <p v-if="articleError" class="text-sm text-danger">{{ articleError }}</p>
             </div>
@@ -309,12 +309,7 @@ const activeTag = computed(() => {
     return null;
 });
 
-const recommendedArticles = computed(() =>
-    items.value.map((item) => ({
-        ...item,
-        collected: collectionsStore.isCollected(item.id)
-    }))
-);
+const recommendedArticles = computed(() => items.value);
 
 const quickFilters = computed(() => {
     const filters: Array<{ label: string; value: string | null }> = [{ label: '全部', value: null }];
@@ -530,15 +525,6 @@ const prevPage = () => {
 const handleSelect = (articleId: string) => {
     articlesStore.recordHistory(articleId);
     router.push({ name: 'article-detail', params: { id: articleId } });
-};
-
-const handleToggleFavorite = async (articleId: string) => {
-    const target = recommendedArticles.value.find((item) => item.id === articleId);
-    try {
-        await collectionsStore.toggleCollection(articleId, { title: target?.title });
-    } catch (err) {
-        console.warn('收藏操作失败', err);
-    }
 };
 
 const clearFeedFilter = () => {

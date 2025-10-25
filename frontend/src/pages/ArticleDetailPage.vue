@@ -135,7 +135,18 @@ const { currentArticle } = storeToRefs(articlesStore);
 const { items: collectionItems } = storeToRefs(collectionsStore);
 
 const article = computed(() => currentArticle.value);
-const isCollected = computed(() => collectionsStore.isCollected(props.id));
+const collectionState = computed(() => collectionsStore.isCollected(props.id));
+const isCollected = computed(() => {
+  if (article.value && typeof article.value.collected === 'boolean') {
+    return article.value.collected;
+  }
+  return collectionState.value;
+});
+watch(collectionState, (value) => {
+  if (article.value) {
+    article.value.collected = value;
+  }
+});
 const scrollTracked = ref(false);
 const articleContentRef = ref<HTMLElement | null>(null);
 const tocItems = ref<TocItem[]>([]);
@@ -153,7 +164,7 @@ const loadArticle = async (articleId: string) => {
   try {
     await articlesStore.fetchArticleById(articleId);
     articlesStore.recordHistory(articleId);
-    if (!collectionItems.value.length) {
+    if (!collectionItems.value.length && typeof article.value?.collected !== 'boolean') {
       await collectionsStore.fetchCollections();
     }
   } catch (err) {
@@ -164,6 +175,9 @@ const loadArticle = async (articleId: string) => {
 const toggleCollection = async () => {
   try {
     await collectionsStore.toggleCollection(props.id, { title: article.value?.title });
+    if (article.value) {
+      article.value.collected = !article.value.collected;
+    }
   } catch (err) {
     console.warn('收藏操作失败', err);
   }
