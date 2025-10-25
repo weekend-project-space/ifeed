@@ -21,6 +21,8 @@ public interface UserSubscriptionRepository extends JpaRepository<UserSubscripti
 
     List<UserSubscription> findAllByUserAndActiveTrue(User user);
 
+    long countByUserAndActiveTrue(User user);
+
     Optional<UserSubscription> findByUserAndFeed(User user, Feed feed);
 
     long countByFeedAndActiveTrue(Feed feed);

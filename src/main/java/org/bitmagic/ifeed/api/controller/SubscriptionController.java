@@ -2,8 +2,11 @@ package org.bitmagic.ifeed.api.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.bitmagic.ifeed.api.request.OpmlImportConfirmRequest;
 import org.bitmagic.ifeed.api.request.SubscriptionRequest;
 import org.bitmagic.ifeed.api.response.MessageResponse;
+import org.bitmagic.ifeed.api.response.OpmlImportConfirmResponse;
+import org.bitmagic.ifeed.api.response.OpmlPreviewResponse;
 import org.bitmagic.ifeed.api.response.SubscriptionResponse;
 import org.bitmagic.ifeed.api.util.IdentifierUtils;
 import org.bitmagic.ifeed.domain.document.UserBehaviorDocument;
@@ -13,8 +16,10 @@ import org.bitmagic.ifeed.domain.repository.UserBehaviorRepository;
 import org.bitmagic.ifeed.exception.ApiException;
 import org.bitmagic.ifeed.security.UserPrincipal;
 import org.bitmagic.ifeed.service.AuthService;
+import org.bitmagic.ifeed.service.OpmlImportService;
 import org.bitmagic.ifeed.service.SubscriptionService;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -23,7 +28,9 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -43,6 +50,7 @@ public class SubscriptionController {
     private final AuthService authService;
 
     private final UserBehaviorRepository userBehaviorRepository;
+    private final OpmlImportService opmlImportService;
 
     @PostMapping
     public ResponseEntity<MessageResponse> subscribe(@AuthenticationPrincipal UserPrincipal principal,
@@ -87,6 +95,22 @@ public class SubscriptionController {
         var user = resolveUser(principal);
         subscriptionService.unsubscribe(user, IdentifierUtils.parseUuid(feedId, "feed id"));
         return ResponseEntity.ok(new MessageResponse("Subscription removed."));
+    }
+
+    @PostMapping(value = "/opml/preview", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<OpmlPreviewResponse> previewOpml(@AuthenticationPrincipal UserPrincipal principal,
+                                                           @RequestParam("file") MultipartFile file) {
+        var user = resolveUser(principal);
+        var response = opmlImportService.generatePreview(user, file);
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping(value = "/opml/confirm", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<OpmlImportConfirmResponse> confirmOpml(@AuthenticationPrincipal UserPrincipal principal,
+                                                                 @Valid @RequestBody OpmlImportConfirmRequest request) {
+        var user = resolveUser(principal);
+        var response = opmlImportService.confirm(user, request);
+        return ResponseEntity.ok(response);
     }
 
     private User resolveUser(UserPrincipal principal) {

@@ -14,6 +14,32 @@ export interface SubscriptionDto {
   isRead?: boolean;
 }
 
+export interface OpmlPreviewFeedDto {
+  feedUrl: string;
+  title: string;
+  siteUrl: string;
+  avatar?: string | null;
+  alreadySubscribed: boolean;
+  errors: string[];
+}
+
+export interface OpmlPreviewResultDto {
+  feeds: OpmlPreviewFeedDto[];
+  warnings: string[];
+  remainingQuota: number;
+}
+
+export interface OpmlImportSkippedDto {
+  feedUrl: string | null;
+  reason: string;
+}
+
+export interface OpmlImportResultDto {
+  importedCount: number;
+  skipped: OpmlImportSkippedDto[];
+  message: string;
+}
+
 export const useSubscriptionsStore = defineStore('subscriptions', () => {
   const items = ref<SubscriptionDto[]>([]);
   const loading = ref(false);
@@ -77,6 +103,30 @@ export const useSubscriptionsStore = defineStore('subscriptions', () => {
     }
   };
 
+  const previewOpmlImport = async (file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return await request<OpmlPreviewResultDto>('/api/subscriptions/opml/preview', {
+      method: 'POST',
+      body: formData
+    });
+  };
+
+  const confirmOpmlImport = async (feeds: {
+    feedUrl: string;
+    title: string;
+    siteUrl: string;
+    avatar?: string | null;
+    selected: boolean;
+  }[]) => {
+    return await request<OpmlImportResultDto>('/api/subscriptions/opml/confirm', {
+      method: 'POST',
+      json: {
+        feeds
+      }
+    });
+  };
+
   return {
     items,
     loading,
@@ -84,6 +134,8 @@ export const useSubscriptionsStore = defineStore('subscriptions', () => {
     error,
     fetchSubscriptions,
     addSubscription,
-    removeSubscription
+    removeSubscription,
+    previewOpmlImport,
+    confirmOpmlImport
   };
 });
