@@ -11,6 +11,7 @@ import org.bitmagic.ifeed.domain.projection.ArticleSummaryView;
 import org.bitmagic.ifeed.exception.ApiException;
 import org.bitmagic.ifeed.security.UserPrincipal;
 import org.bitmagic.ifeed.service.ArticleService;
+import org.bitmagic.ifeed.service.UserCollectionService;
 import org.bitmagic.ifeed.service.recommendation.RecommendationService;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
@@ -35,6 +36,8 @@ public class ArticleController {
     private static final String SOURCE_GLOBAL = "global";
 
     private final ArticleService articleService;
+
+    private final UserCollectionService userCollectionService;
 
     private final RecommendationService recommendationService;
 
@@ -87,6 +90,7 @@ public class ArticleController {
         ensureAuthenticated(principal);
         var article = articleService.getArticle(IdentifierUtils.parseUuid(articleId, "article id"));
         var tags = extractTags(article.getTags());
+        var collected = userCollectionService.isCollected(principal.getId(), article.getId());
         var response = new ArticleDetailResponse(
                 article.getId().toString(),
                 article.getTitle(),
@@ -98,7 +102,8 @@ public class ArticleController {
                 article.getFeed().getId().toString(),
                 resolveFeedTitle(article.getFeed() == null ? null : article.getFeed().getTitle()),
                 formatTimestamp(article.getPublishedAt()),
-                tags);
+                tags,
+                collected);
         return ResponseEntity.ok(response);
     }
 
