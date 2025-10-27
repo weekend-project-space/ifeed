@@ -10,7 +10,7 @@
     "lint": "eslint ."
   },
   "dependencies": {
-    "markdown-it": "^14.1.0",
+    "marked": "^16.4.1",
     "pinia": "^2.1.7",
     "vue": "^3.4.21",
     "vue-router": "^4.5.1"

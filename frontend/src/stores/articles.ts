@@ -197,11 +197,10 @@ export const useArticlesStore = defineStore('articles', () => {
       const data = await request<ArticleDto & { content?: string }>(`/api/articles/${articleId}`);
       const normalized = normalizeArticle(data);
       const rawContent = data.content ?? data.summary ?? '';
-      const hasHtmlTags = /<\/?[a-z][\s\S]*>/i.test(rawContent);
       currentArticle.value = {
         ...normalized,
         feedId: data.feedId,
-        content: hasHtmlTags ? rawContent : md2html(rawContent),
+        content: md2html(rawContent),
         collected: data.collected ?? normalized.collected ?? false
       };
       return currentArticle.value;
