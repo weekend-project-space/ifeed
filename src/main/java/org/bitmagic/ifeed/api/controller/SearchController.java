@@ -18,6 +18,7 @@ import org.springframework.ai.vectorstore.filter.Filter;
 import org.springframework.ai.vectorstore.filter.FilterExpressionBuilder;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -77,9 +78,8 @@ public class SearchController {
                     .query(query)
                     .topK((page + 1) * size)
                     .similarityThreshold(0.3)
-                    .filterExpression(b.gte("publishedAt", Instant.now().minusSeconds(20 * 24 * 3600).getEpochSecond()).build())
                     .build());
-            Collection<UUID> articleIds = documents.stream().map(Document::getMetadata).map(meta -> IdentifierUtils.parseUuid(meta.get("articleId").toString(), "articleId")).collect(Collectors.toList());
+            Collection<UUID> articleIds = documents.stream().map(Document::getMetadata).map(meta -> IdentifierUtils.parseUuid(meta.get("articleId").toString(), "articleId")).skip(page * size).collect(Collectors.toList());
             List<SearchResultResponse> content = repository.findAllById(articleIds).stream().map(article -> new SearchResultResponse(
                     article.getId().toString(),
                     article.getTitle(),
@@ -88,7 +88,7 @@ public class SearchController {
                     article.getFeed().getTitle(),
                     formatRelativeTime(article.getPublishedAt()),
                     null)).collect(Collectors.toList());
-            return ResponseEntity.ok(new PageImpl<>(content));
+            return ResponseEntity.ok(new PageImpl<>(content, PageRequest.of(page, size), 99));
         }
         var includeGlobal = SOURCE_GLOBAL.equals(normalizedSource);
 

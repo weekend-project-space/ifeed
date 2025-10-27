@@ -7,10 +7,10 @@
                         <template v-if="hasQuery">搜索 “{{ searchQuery }}” 的结果</template>
                         <template v-else>搜索</template>
                     </h2>
-                    <p class="text-sm text-text-secondary">
+<!--                    <p class="text-sm text-text-secondary">
                         <template v-if="hasQuery">共 {{ searchTotalText }}，当前第 {{ currentPage }} 页。</template>
                         <template v-else>输入关键词开始搜索。</template>
-                    </p>
+                    </p>-->
                 </div>
                 <div class="flex flex-wrap items-center gap-3 text-sm">
                     <div
@@ -115,7 +115,7 @@ const searchArticleItems = computed(() =>
 const currentPage = computed(() => page.value);
 const hasNext = computed(() => hasNextPage.value);
 const hasPrevious = computed(() => hasPreviousPage.value);
-const searchTotalText = computed(() => `${total.value ?? 0} 条结果`);
+const searchTotalText = computed(() => `${total.value ?? 0}+条结果`);
 
 const buildSearchQuery = (overrides?: { page?: number; type?: SearchType }) => {
     const query: Record<string, string> = {};
@@ -142,7 +142,7 @@ const buildSearchQuery = (overrides?: { page?: number; type?: SearchType }) => {
     if (category) {
         query.category = category;
     }
-    console.log(query)
+    // console.log(query)
     return query;
 };
 

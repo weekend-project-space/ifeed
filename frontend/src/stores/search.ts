@@ -54,7 +54,7 @@ export const useSearchStore = defineStore('search', () => {
           query,
           type: nextType,
           page: Math.max(0, nextPage - 1),
-          size: 12
+          size: 20
         }
       });
 
