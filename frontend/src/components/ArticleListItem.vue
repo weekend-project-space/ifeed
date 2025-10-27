@@ -62,7 +62,7 @@
         style="display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;">
         {{ article.summary }}
       </p>
-      <footer class="mt-auto flex flex-wrap gap-2 text-xs text-text-muted">
+      <footer v-if="article.tags && article.tags.length" class="mt-auto flex flex-wrap gap-2 text-xs text-text-muted">
         <button v-for="tag in article.tags" :key="tag" type="button"
           class="rounded-full bg-surface px-3 py-1 font-medium text-text-secondary border border-outline/30 hover:border-outline/50"
           @click.stop="handleTagClick(tag)">

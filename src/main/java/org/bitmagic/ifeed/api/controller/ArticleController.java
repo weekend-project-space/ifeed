@@ -68,7 +68,7 @@ public class ArticleController {
                                                                        @RequestParam(required = false) Integer size) {
         ensureAuthenticated(principal);
 
-        return ResponseEntity.ok(recommendationService.rank(principal.getId(), page, size).map(this::toSummaryResponse));
+        return ResponseEntity.ok(recommendationService.rank(principal.getId(), page, size).map(this::toSummaryResponse2));
     }
 
     @GetMapping("/insights")
@@ -120,6 +120,21 @@ public class ArticleController {
                 resolveFeedTitle(article.feedTitle()),
                 formatTimestamp(publishedAt),
                 tags,
+                formatRelativeTime(publishedAt));
+    }
+
+    private ArticleSummaryResponse toSummaryResponse2(ArticleSummaryView article) {
+        var publishedAt = article.publishedAt();
+        return new ArticleSummaryResponse(
+                article.id().toString(),
+                article.title(),
+                article.link(),
+                article.summary(),
+                article.thumbnail(),
+                article.enclosure(),
+                resolveFeedTitle(article.feedTitle()),
+                formatTimestamp(publishedAt),
+                null,
                 formatRelativeTime(publishedAt));
     }
 

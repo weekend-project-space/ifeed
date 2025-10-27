@@ -368,16 +368,16 @@ const baseNavSections: NavSection[] = [
           return current.name === 'home' && view !== 'shorts' && !section;
         }
       },
-      {
-        id: 'recommendations',
-        label: '推荐',
-        to: { name: 'recommendations' as const },
-        icon: {
-          stroke: true,
-          paths: ['M5 10.25c0-3.5 2.5-5.5 5-6.5 2.5 1 5 3 5 6.5s-2.5 5.5-5 6.5c-2.5-1-5-3-5-6.5Z', 'M10 8.5v3.5', 'M8.5 10H11']
-        },
-        activeMatch: (current) => current.name === 'recommendations'
-      }
+      // {
+      //   id: 'recommendations',
+      //   label: '推荐',
+      //   to: { name: 'recommendations' as const },
+      //   icon: {
+      //     stroke: true,
+      //     paths: ['M5 10.25c0-3.5 2.5-5.5 5-6.5 2.5 1 5 3 5 6.5s-2.5 5.5-5 6.5c-2.5-1-5-3-5-6.5Z', 'M10 8.5v3.5', 'M8.5 10H11']
+      //   },
+      //   activeMatch: (current) => current.name === 'recommendations'
+      // },
       // ,
       //   {
       //     id: 'shorts',
@@ -394,18 +394,19 @@ const baseNavSections: NavSection[] = [
       //       return current.name === 'home' && view === 'shorts';
       //     }
       //   },
-      //   {
-      //     id: 'subscriptions',
-      //     label: '订阅',
-      //     to: { name: 'subscriptions' as const },
-      //     icon: {
-      //       paths: [
-      //         'M4 5.5A1.5 1.5 0 0 1 5.5 4h9A1.5 1.5 0 0 1 16 5.5v9A1.5 1.5 0 0 1 14.5 16h-9A1.5 1.5 0 0 1 4 14.5v-9Z',
-      //         'M9.2 7.25a.6.6 0 0 0-.6.6v4.3a.6.6 0 0 0 .92.52l3.16-2.15a.6.6 0 0 0 0-1.04L9.52 7.33a.6.6 0 0 0-.32-.08Z'
-      //       ]
-      //     },
-      //     activeMatch: (current) => current.name === 'subscriptions'
-      //   }
+      {
+        id: 'feedsSubscriptions',
+        label: '订阅',
+        to: { name: 'feedsSubscriptions' as const },
+        icon: {
+          stroke: true,
+          paths: [
+            'M4 6h12M4 10h12M4 14h12' // 三条横线 ≈ 列表图标
+          ],
+          viewBox: '0 0 20 20'
+        },
+        activeMatch: (current) => current.name === 'subscriptions'
+      }
     ]
   },
   {

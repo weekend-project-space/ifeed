@@ -30,7 +30,8 @@ public class ArticleService {
 
     private final ArticleRepository articleRepository;
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
-    private static final TypeReference<List<String>> TAGS_TYPE = new TypeReference<>(){};
+    private static final TypeReference<List<String>> TAGS_TYPE = new TypeReference<>() {
+    };
 
     public Page<ArticleSummaryView> listArticles(UUID ownerId,
                                                  UUID feedId,
@@ -126,9 +127,9 @@ public class ArticleService {
      * Aggregate categories and tags for user's visible articles within window.
      */
     public UserSubscriptionInsightResponse insights(UUID ownerId,
-                                                                                    Instant fromTs,
-                                                                                    Instant toTs,
-                                                                                    Integer topN) {
+                                                    Instant fromTs,
+                                                    Instant toTs,
+                                                    Integer topN) {
         var rows = articleRepository.countCategoriesForOwnerWithin(ownerId, fromTs, toTs);
         var categories = new ArrayList<org.bitmagic.ifeed.api.response.UserSubscriptionInsightResponse.CategoryCount>();
         for (var row : rows) {
@@ -152,15 +153,16 @@ public class ArticleService {
                         }
                     }
                 }
-            } catch (Exception ignored) {}
+            } catch (Exception ignored) {
+            }
         }
 
         var hotTags = tagCounter.entrySet().stream()
-                .sorted((a,b) -> Long.compare(b.getValue(), a.getValue()))
+                .sorted((a, b) -> Long.compare(b.getValue(), a.getValue()))
                 .limit(topN == null || topN <= 0 ? 20 : topN)
                 .map(e -> new UserSubscriptionInsightResponse.TagCount(e.getKey(), e.getValue()))
                 .collect(java.util.stream.Collectors.toList());
 
-        return new UserSubscriptionInsightResponse(categories, hotTags);
+        return new UserSubscriptionInsightResponse(categories.subList(0, Math.min(categories.size(), topN == null || topN <= 0 ? 20 : topN)), hotTags);
     }
 }

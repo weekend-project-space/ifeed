@@ -1,6 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import AuthPage from '../pages/AuthPage.vue';
-import HomePage from '../pages/HomePage.vue';
+// import HomePage from '../pages/HomePage.vue';
 import SearchPage from '../pages/SearchPage.vue';
 import MainLayout from '../layouts/MainLayout.vue';
 import SubscriptionsPage from '../pages/SubscriptionsPage.vue';
@@ -9,6 +9,7 @@ import HistoryPage from '../pages/HistoryPage.vue';
 import ArticleDetailPage from '../pages/ArticleDetailPage.vue';
 import FeedPage from '../pages/FeedPage.vue';
 import RecommendationsPage from '../pages/RecommendationsPage.vue';
+import FeedSubscriptionsPage from '../pages/FeedSubscriptionsPage.vue';
 import { useAuthStore } from '../stores/auth';
 
 const router = createRouter({
@@ -26,7 +27,7 @@ const router = createRouter({
         {
           path: '',
           name: 'home',
-          component: HomePage
+          component: RecommendationsPage
         },
         {
           path: 'search',
@@ -52,6 +53,11 @@ const router = createRouter({
           path: 'history',
           name: 'history',
           component: HistoryPage
+        },
+        {
+          path: 'feeds/subscriptions',
+          name: 'feedsSubscriptions',
+          component: FeedSubscriptionsPage
         },
         {
           path: 'feeds/:feedId',

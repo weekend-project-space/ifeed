@@ -95,99 +95,96 @@
                 </div>
             </div>
 
-<!--            <div class="grid gap-6 xl:grid-cols-[2.1fr,1fr]">-->
+            <!--            <div class="grid gap-6 xl:grid-cols-[2.1fr,1fr]">-->
+            <div class="relative overflow-hidden rounded-3xl border border-outline/30 bg-surface-container px-8 py-8">
+                <div class="pointer-events-none absolute -left-20 top-10 h-48 w-48 rounded-full bg-primary/15 blur-3xl">
+                </div>
                 <div
-                    class="relative overflow-hidden rounded-3xl border border-outline/30 bg-surface-container px-8 py-8">
-                    <div
-                        class="pointer-events-none absolute -left-20 top-10 h-48 w-48 rounded-full bg-primary/15 blur-3xl">
+                    class="pointer-events-none absolute -right-32 bottom-0 h-56 w-56 rounded-full bg-primary/10 blur-3xl">
+                </div>
+                <div class="relative flex h-full flex-col gap-6">
+                    <div class="flex items-center gap-3 text-xs font-semibold uppercase tracking-[0.28em] text-primary">
+                        <span class="inline-flex h-1.5 w-1.5 rounded-full bg-primary"></span>
+                        今日精选
                     </div>
-                    <div
-                        class="pointer-events-none absolute -right-32 bottom-0 h-56 w-56 rounded-full bg-primary/10 blur-3xl">
+                    <div class="space-y-3">
+                        <h2 class="text-3xl font-semibold leading-tight text-text">
+                            {{ highlight.title }}
+                        </h2>
+                        <p class="text-sm text-text-secondary">
+                            {{ highlight.description }}
+                        </p>
                     </div>
-                    <div class="relative flex h-full flex-col gap-6">
-                        <div
-                            class="flex items-center gap-3 text-xs font-semibold uppercase tracking-[0.28em] text-primary">
-                            <span class="inline-flex h-1.5 w-1.5 rounded-full bg-primary"></span>
-                            今日精选
-                        </div>
-                        <div class="space-y-3">
-                            <h2 class="text-3xl font-semibold leading-tight text-text">
-                                {{ highlight.title }}
-                            </h2>
-                            <p class="text-sm text-text-secondary">
-                                {{ highlight.description }}
-                            </p>
-                        </div>
-                        <div class="rounded-2xl border border-outline/20 bg-surface p-4 text-sm leading-relaxed text-text-secondary"
-                            v-html="highlight.summary">
+                    <div class="rounded-2xl border border-outline/20 bg-surface p-4 text-sm leading-relaxed text-text-secondary"
+                        v-html="highlight.summary">
 
-                        </div>
-                        <div class="mt-auto flex flex-wrap items-center justify-between gap-3">
-                            <div class="flex flex-wrap gap-2 text-xs text-primary">
-                                <button v-for="tag in highlight.tags" :key="tag" type="button"
-                                    class="rounded-full bg-primary/10 px-3 py-1 font-medium transition hover:bg-primary/20"
-                                    @click="handleSelectTag(tag)">
-                                    #{{ tag }}
-                                </button>
-                            </div>
-                            <button v-if="highlight.id"
-                                class="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary/40"
-                                @click="handleSelect(highlight.id)">
-                                开始阅读
-                                <svg class="h-4 w-4" viewBox="0 0 20 20" fill="none" stroke="currentColor"
-                                    stroke-width="1.6">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M7 4l6 6-6 6" />
-                                </svg>
+                    </div>
+                    <div class="mt-auto flex flex-wrap items-center justify-between gap-3">
+                        <div class="flex flex-wrap gap-2 text-xs text-primary">
+                            <button v-for="tag in highlight.tags" :key="tag" type="button"
+                                class="rounded-full bg-primary/10 px-3 py-1 font-medium transition hover:bg-primary/20"
+                                @click="handleSelectTag(tag)">
+                                #{{ tag }}
                             </button>
                         </div>
+                        <button v-if="highlight.id"
+                            class="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary/40"
+                            @click="handleSelect(highlight.id)">
+                            开始阅读
+                            <svg class="h-4 w-4" viewBox="0 0 20 20" fill="none" stroke="currentColor"
+                                stroke-width="1.6">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M7 4l6 6-6 6" />
+                            </svg>
+                        </button>
                     </div>
                 </div>
+            </div>
 
-<!--                <div class="flex flex-col gap-4">-->
-<!--                    <div class="rounded-3xl border border-primary/25 bg-primary/10 p-6 text-primary">-->
-<!--                        <div class="space-y-2">-->
-<!--                            <h3 class="text-lg font-semibold text-primary/90">今日阅读进度</h3>-->
-<!--                            <p class="text-sm text-primary/80">你已收藏 {{ stats.savedCount }} 篇文章。</p>-->
-<!--                        </div>-->
-<!--                        <div class="mt-6 space-y-4">-->
-<!--                            <div class="text-4xl font-bold tracking-tight text-primary/90">{{ stats.readGoalPercent-->
-<!--                                }}%</div>-->
-<!--                            <div class="flex items-center gap-3">-->
-<!--                                <div class="h-2 flex-1 overflow-hidden rounded-full bg-primary/20">-->
-<!--                                    <div class="h-full rounded-full bg-primary"-->
-<!--                                        :style="{ width: `${stats.readGoalPercent}%` }">-->
-<!--                                    </div>-->
-<!--                                </div>-->
-<!--                                <span class="text-xs font-medium text-primary/80">目标 8 篇</span>-->
-<!--                            </div>-->
-<!--                            <p v-if="stats.remaining > 0" class="text-xs text-primary/70">-->
-<!--                                距离完成还差 {{ stats.remaining }} 篇，继续加油！-->
-<!--                            </p>-->
-<!--                            <p v-else class="text-xs text-primary/70">-->
-<!--                                今日目标已达成，看看 AI 还推荐了什么。-->
-<!--                            </p>-->
-<!--                        </div>-->
-<!--                    </div>-->
+            <!--                <div class="flex flex-col gap-4">-->
+            <!--                    <div class="rounded-3xl border border-primary/25 bg-primary/10 p-6 text-primary">-->
+            <!--                        <div class="space-y-2">-->
+            <!--                            <h3 class="text-lg font-semibold text-primary/90">今日阅读进度</h3>-->
+            <!--                            <p class="text-sm text-primary/80">你已收藏 {{ stats.savedCount }} 篇文章。</p>-->
+            <!--                        </div>-->
+            <!--                        <div class="mt-6 space-y-4">-->
+            <!--                            <div class="text-4xl font-bold tracking-tight text-primary/90">{{ stats.readGoalPercent-->
+            <!--                                }}%</div>-->
+            <!--                            <div class="flex items-center gap-3">-->
+            <!--                                <div class="h-2 flex-1 overflow-hidden rounded-full bg-primary/20">-->
+            <!--                                    <div class="h-full rounded-full bg-primary"-->
+            <!--                                        :style="{ width: `${stats.readGoalPercent}%` }">-->
+            <!--                                    </div>-->
+            <!--                                </div>-->
+            <!--                                <span class="text-xs font-medium text-primary/80">目标 8 篇</span>-->
+            <!--                            </div>-->
+            <!--                            <p v-if="stats.remaining > 0" class="text-xs text-primary/70">-->
+            <!--                                距离完成还差 {{ stats.remaining }} 篇，继续加油！-->
+            <!--                            </p>-->
+            <!--                            <p v-else class="text-xs text-primary/70">-->
+            <!--                                今日目标已达成，看看 AI 还推荐了什么。-->
+            <!--                            </p>-->
+            <!--                        </div>-->
+            <!--                    </div>-->
 
-<!--                    <div class="rounded-3xl border border-outline/20 bg-surface p-6">-->
-<!--                        <h3 class="text-sm font-semibold text-text">热门标签</h3>-->
-<!--                        <p class="mt-2 text-xs text-text-secondary">快速探索近期高频出现的主题。</p>-->
-<!--                        <div class="mt-4 flex flex-wrap gap-2">-->
-<!--                            <template v-if="insightsLoading">-->
-<!--                                <span class="text-text-muted text-xs">加载中...</span>-->
-<!--                            </template>-->
-<!--                            <template v-else>-->
-<!--                                <button v-for="t in hotTags" :key="t.tag" type="button"-->
-<!--                                    class="rounded-full bg-surface-variant px-3 py-1 text-xs font-medium text-text-secondary transition hover:bg-primary/10 hover:text-primary"-->
-<!--                                    @click="handleSelectTag(t.tag)">-->
-<!--                                    #{{ t.tag }}-->
-<!--                                </button>-->
-<!--                                <div v-if="!hotTags.length" class="text-xs text-text-muted">等待新的标签更新...</div>-->
-<!--                            </template>-->
-<!--                        </div>-->
-<!--                    </div>-->
-<!--                </div>-->
-<!--            </div>-->
+            <!--                    <div class="rounded-3xl border border-outline/20 bg-surface p-6">-->
+            <!--                        <h3 class="text-sm font-semibold text-text">热门标签</h3>-->
+            <!--                        <p class="mt-2 text-xs text-text-secondary">快速探索近期高频出现的主题。</p>-->
+            <!--                        <div class="mt-4 flex flex-wrap gap-2">-->
+            <!--                            <template v-if="insightsLoading">-->
+            <!--                                <span class="text-text-muted text-xs">加载中...</span>-->
+            <!--                            </template>-->
+            <!--                            <template v-else>-->
+            <!--                                <button v-for="t in hotTags" :key="t.tag" type="button"-->
+            <!--                                    class="rounded-full bg-surface-variant px-3 py-1 text-xs font-medium text-text-secondary transition hover:bg-primary/10 hover:text-primary"-->
+            <!--                                    @click="handleSelectTag(t.tag)">-->
+            <!--                                    #{{ t.tag }}-->
+            <!--                                </button>-->
+            <!--                                <div v-if="!hotTags.length" class="text-xs text-text-muted">等待新的标签更新...</div>-->
+            <!--                            </template>-->
+            <!--                        </div>-->
+            <!--                    </div>-->
+            <!--                </div>-->
+            <!--            </div>-->
         </section>
 
         <section class="space-y-5">
@@ -196,7 +193,7 @@
                     <h2 class="text-2xl font-semibold text-text">最新</h2>
                     <p class="text-sm text-text-secondary">
                         来自你的订阅源
-<!--                      与 AI 智能推荐的精选文章。-->
+                        <!--                      与 AI 智能推荐的精选文章。-->
                     </p>
                 </div>
                 <button
@@ -217,8 +214,7 @@
             </div>
 
             <div v-else class="space-y-4">
-                <ArticleList :items="recommendedArticles" @select="handleSelect"
-                    @select-tag="handleSelectTag" />
+                <ArticleList :items="recommendedArticles" @select="handleSelect" @select-tag="handleSelectTag" />
                 <p v-if="articleError" class="text-sm text-danger">{{ articleError }}</p>
             </div>
 
@@ -585,7 +581,7 @@ const getFilterClassForCategory = (category: string) => {
 onMounted(() => {
     loadData();
     fetchInsights();
-    connectSSE();
+    // connectSSE();
 });
 
 watch(
