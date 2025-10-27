@@ -34,7 +34,7 @@
 
             <div v-if="!hasQuery" class="py-20 text-center text-text-muted">输入关键词开始搜索。</div>
             <div v-else-if="searchLoading" class="py-20 text-center text-text-muted">正在搜索...</div>
-            <div v-else class="space-y-4">
+            <div v-else class="space-y-4 mt-3">
                 <ArticleList :items="searchArticleItems" empty-message="未找到相关结果，换个关键词试试。" @select="handleSelect"
                     @select-tag="handleSelectTag" />
                 <p v-if="searchError" class="text-sm text-danger">{{ searchError }}</p>
