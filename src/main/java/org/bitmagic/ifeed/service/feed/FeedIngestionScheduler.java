@@ -16,7 +16,7 @@ public class FeedIngestionScheduler {
 
     private final FeedIngestionService ingestionService;
 
-        @Scheduled(initialDelayString = "${rss.fetcher.initial-delay:PT10S}",
+    @Scheduled(initialDelayString = "${rss.fetcher.initial-delay:PT10S}",
             fixedDelayString = "${rss.fetcher.fixed-delay:PT30M}")
     public void refreshFeeds() {
         var feedIds = ingestionService.getFeedIds();

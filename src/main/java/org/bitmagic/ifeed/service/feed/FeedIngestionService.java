@@ -13,17 +13,15 @@ import org.bitmagic.ifeed.domain.entity.Article;
 import org.bitmagic.ifeed.domain.entity.Feed;
 import org.bitmagic.ifeed.domain.entity.FeedFetchStatus;
 import org.bitmagic.ifeed.domain.repository.ArticleRepository;
-import org.bitmagic.ifeed.domain.repository.ArticleEmbeddingRepository;
 import org.bitmagic.ifeed.domain.repository.FeedRepository;
 import org.bitmagic.ifeed.service.ai.AiContentService;
 import org.bitmagic.ifeed.service.content.ContentCleaner;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.StringUtils;
-
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
@@ -56,7 +54,6 @@ public class FeedIngestionService {
 
     private final FeedRepository feedRepository;
     private final ArticleRepository articleRepository;
-    private final ArticleEmbeddingRepository articleEmbeddingRepository;
     private final ContentCleaner contentCleaner;
     private final AiContentService aiContentService;
     private final ObjectMapper objectMapper;
@@ -66,6 +63,7 @@ public class FeedIngestionService {
     @Transactional(readOnly = true)
     public List<UUID> getFeedIds() {
         return feedRepository.findAll().stream()
+                .filter(feed -> feed.getFailureCount() < 7)
                 .map(Feed::getId)
                 .collect(Collectors.toList());
     }
