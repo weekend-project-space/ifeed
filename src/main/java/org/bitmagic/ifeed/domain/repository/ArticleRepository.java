@@ -166,11 +166,6 @@ public interface ArticleRepository extends JpaRepository<Article, UUID>, JpaSpec
             from Article a
             left join a.feed f
             where a.id in (:ids)
-            """,
-            countQuery = """
-                    select count(a)
-                    from Article a
-                    where a.id in (:ids)
-                    """)
-    Page<ArticleSummaryView> findArticleSummariesByIds(@Param("ids") Collection<UUID> ids, Pageable pageable);
+            """)
+    List<ArticleSummaryView> findArticleSummariesByIds(@Param("ids") Collection<UUID> ids);
 }

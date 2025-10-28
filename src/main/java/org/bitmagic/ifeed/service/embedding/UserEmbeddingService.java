@@ -13,6 +13,7 @@ import org.bitmagic.ifeed.domain.repository.ArticleEmbeddingRepository;
 import org.bitmagic.ifeed.domain.repository.ArticleRepository;
 import org.bitmagic.ifeed.domain.repository.UserBehaviorRepository;
 import org.bitmagic.ifeed.domain.repository.UserEmbeddingRepository;
+import org.springframework.ai.embedding.EmbeddingModel;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
@@ -22,11 +23,6 @@ import java.time.Instant;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.Objects;
-import java.util.HashMap;
-import java.util.ArrayList;
-import java.util.Locale;
-import java.util.List;
 
 /**
  * 用户Embedding构建服务，结合行为、文章向量与标签信息生成用户画像。
@@ -53,6 +49,7 @@ public class UserEmbeddingService {
     private final ArticleRepository articleRepository;
     private final UserEmbeddingRepository userEmbeddingRepository;
     private final RecommendationProperties recommendationProperties;
+    private final EmbeddingModel embeddingModel;
 
     /**
      * 读取用户行为并重新生成Embedding与人设信息。
@@ -205,12 +202,21 @@ public class UserEmbeddingService {
                 .sorted((a, b) -> Integer.compare(b.totalArticles(), a.totalArticles()))
                 .collect(Collectors.toList());
 
+
         var persona = buildUserPersona(tagStats, categoryStats, windowDays, authorStats, collectedDetails);
+
+        String prompt = persona.map(UserPersona::prompt).orElse(null);
+        if (Objects.nonNull(prompt)) {
+            float[] embed = embeddingModel.embed(prompt);
+            accumulator = minix(embed, accumulator, 0.7f, 0.3f);
+        }
+
         var embeddingBuilder = UserEmbedding.builder()
                 .userId(userId)
                 .embedding(accumulator)
+                .content(prompt)
                 .updatedAt(now);
-        persona.map(UserPersona::prompt).ifPresent(embeddingBuilder::content);
+
         var embedding = embeddingBuilder.build();
         userEmbeddingRepository.save(embedding);
         return Optional.of(embedding);
@@ -219,6 +225,17 @@ public class UserEmbeddingService {
     @Transactional(readOnly = true)
     public Optional<UserEmbedding> getUserEmbedding(UUID userId) {
         return userEmbeddingRepository.findById(userId);
+    }
+
+    private float[] minix(float[] embed1, float[] embed2, float weight1, float weight2) {
+        float[] accumulator = new float[embed1.length];
+        for (int i = 0; i < accumulator.length; i++) {
+            accumulator[i] = embed1[i] * weight1;
+        }
+        for (int i = 0; i < accumulator.length; i++) {
+            accumulator[i] += embed2[i] * weight2;
+        }
+        return accumulator;
     }
 
     private List<BehaviorEvent> collectEvents(UserBehaviorDocument document) {
@@ -360,10 +377,10 @@ public class UserEmbeddingService {
     }
 
     private Optional<UserPersona> buildUserPersona(Map<String, Stat> tagStats,
-            Map<String, Stat> categoryStats,
-            long windowDays,
-            List<AuthorStat> authorStats,
-            List<CollectedArticleDetail> collectedDetails) {
+                                                   Map<String, Stat> categoryStats,
+                                                   long windowDays,
+                                                   List<AuthorStat> authorStats,
+                                                   List<CollectedArticleDetail> collectedDetails) {
         if ((tagStats.isEmpty() && categoryStats.isEmpty() && authorStats.isEmpty())) {
             return Optional.empty();
         }
@@ -391,10 +408,10 @@ public class UserEmbeddingService {
     }
 
     private String buildPersonaPrompt(List<PersonaTopic> tags,
-            List<PersonaTopic> categories,
-            long windowDays,
-            List<AuthorStat> authorStats,
-            List<CollectedArticleDetail> collectedDetails) {
+                                      List<PersonaTopic> categories,
+                                      long windowDays,
+                                      List<AuthorStat> authorStats,
+                                      List<CollectedArticleDetail> collectedDetails) {
         var builder = new StringBuilder();
         builder.append("用户近约").append(windowDays).append("天的兴趣画像：");
         if (!tags.isEmpty()) {
@@ -475,7 +492,7 @@ public class UserEmbeddingService {
     }
 
     private record UserPersona(List<PersonaTopic> tags,
-            List<PersonaTopic> categories,
-            String prompt) {
+                               List<PersonaTopic> categories,
+                               String prompt) {
     }
 }
