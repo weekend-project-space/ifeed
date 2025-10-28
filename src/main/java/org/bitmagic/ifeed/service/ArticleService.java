@@ -1,26 +1,24 @@
 package org.bitmagic.ifeed.service;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rometools.utils.Strings;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.bitmagic.ifeed.api.response.UserSubscriptionInsightResponse;
 import org.bitmagic.ifeed.domain.entity.Article;
 import org.bitmagic.ifeed.domain.projection.ArticleSummaryView;
 import org.bitmagic.ifeed.domain.repository.ArticleRepository;
 import org.bitmagic.ifeed.exception.ApiException;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
-import java.time.Instant;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ArticleService {
@@ -44,6 +42,38 @@ public class ArticleService {
         var tagPattern = buildTagPattern(tags);
         var scopeOwnerId = Objects.nonNull(feedId) || includeGlobal ? null : ownerId;
         return articleRepository.findArticleSummaries(feedId, tagPattern, category, scopeOwnerId, pageable);
+    }
+
+
+    /**
+     * 对查询执行混合检索：BM25 + 向量召回，并融合得分返回分页结果。
+     */
+    public Page<ArticleSummaryView> findIds2Article(List<UUID> artIds,
+                                                int page,
+                                                int size) {
+
+        int safePage = Math.max(page, 0);
+        int safeSize = size <= 0 ? 10 : size;
+        if (artIds.isEmpty()) {
+            return new PageImpl<>(Collections.emptyList(), PageRequest.of(safePage, safeSize), 0);
+        }
+
+        int fromIndex = Math.min(safePage * safeSize, artIds.size());
+        int toIndex = Math.min(fromIndex + safeSize, artIds.size());
+        if (fromIndex >= artIds.size()) {
+            return new PageImpl<>(Collections.emptyList(), PageRequest.of(safePage, safeSize), artIds.size());
+        }
+
+        List<UUID> pageIds = artIds.subList(fromIndex, toIndex);
+
+        Map<UUID, ArticleSummaryView> summaries = articleRepository.findArticleSummariesByIds(pageIds).stream()
+                .collect(Collectors.toMap(ArticleSummaryView::id, summary -> summary));
+
+        List<ArticleSummaryView> ordered = pageIds.stream()
+                .map(summaries::get)
+                .filter(Objects::nonNull)
+                .toList();
+        return new PageImpl<>(ordered, PageRequest.of(safePage, safeSize), artIds.size());
     }
 
     public Article getArticle(UUID articleId) {
