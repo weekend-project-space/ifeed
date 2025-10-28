@@ -32,6 +32,8 @@ spring:
       database: i_feed
   profiles:
     active: dev
+
+# 定时任务
 rss:
   fetcher:
     fixed-delay: PT30M
@@ -39,6 +41,15 @@ rss:
     connect-timeout: 50s
     read-timeout: 100s
     max-items: 500
+embedding:
+  document:
+    fixed-delay: ${rss.fetcher.fixed-delay}
+    initial-delay: ${rss.fetcher.initial-delay}
+  user:
+    fixed-delay: PT12H
+    initial-delay: PT30S
+
+# ai 集成
 ai:
   provider:
     enabled: false
@@ -47,3 +58,12 @@ ai:
     api-key: ''
     model: 'gpt-4o-mini'
     embedding-model: 'Qwen/Qwen3-Embedding-4B'
+# 检索
+search:
+  retrieval:
+    bm25-top-k: 120
+    vector-top-k: 120
+    fusion-top-k: 200
+    bm25-weight: 0.6
+    vector-weight: 0.4
+    similarity-threshold: 0.3
