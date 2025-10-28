@@ -49,8 +49,8 @@ public class ArticleService {
      * 对查询执行混合检索：BM25 + 向量召回，并融合得分返回分页结果。
      */
     public Page<ArticleSummaryView> findIds2Article(List<UUID> artIds,
-                                                int page,
-                                                int size) {
+                                                    int page,
+                                                    int size) {
 
         int safePage = Math.max(page, 0);
         int safeSize = size <= 0 ? 10 : size;
@@ -161,7 +161,7 @@ public class ArticleService {
                                                     Instant toTs,
                                                     Integer topN) {
         var rows = articleRepository.countCategoriesForOwnerWithin(ownerId, fromTs, toTs);
-        var categories = new ArrayList<org.bitmagic.ifeed.api.response.UserSubscriptionInsightResponse.CategoryCount>();
+        var categories = new ArrayList<UserSubscriptionInsightResponse.CategoryCount>();
         for (var row : rows) {
             var category = (String) row[0];
             var cnt = (Long) row[1];

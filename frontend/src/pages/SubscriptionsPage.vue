@@ -8,21 +8,13 @@
         </div>
         <nav
           class="relative flex gap-2 rounded-full border border-outline/20 bg-surface/70 p-1 text-sm font-medium text-text-muted">
-          <div
-            class="absolute inset-y-1 w-1/2 rounded-full bg-primary/10 shadow-sm transition-all duration-300 ease-out"
-            :style="{
-              transform: activeTab === 'manual' ? 'translateX(0%)' : 'translateX(100%)'
-            }"></div>
-          <button type="button"
+          <div class="absolute inset-y-1 rounded-full bg-primary/10 shadow-sm transition-all duration-300 ease-out"
+            :style="tabIndicatorStyle"></div>
+          <button v-for="tab in tabs" :key="tab.key" type="button"
             class="relative z-[1] flex-1 rounded-full px-4 py-2 transition focus:outline-none focus:ring-2 focus:ring-primary/20"
-            :class="activeTab === 'manual' ? 'text-text' : 'text-text-muted hover:text-text'"
-            @click="activeTab = 'manual'">
-            手动添加
-          </button>
-          <button type="button"
-            class="relative z-[1] flex-1 rounded-full px-4 py-2 transition focus:outline-none focus:ring-2 focus:ring-primary/20"
-            :class="activeTab === 'opml' ? 'text-text' : 'text-text-muted hover:text-text'" @click="activeTab = 'opml'">
-            导入 OPML
+            :class="activeTab === tab.key ? 'text-text' : 'text-text-muted hover:text-text'"
+            @click="setActiveTab(tab.key)">
+            {{ tab.label }}
           </button>
         </nav>
       </div>
@@ -41,6 +33,68 @@
             </button>
           </form>
           <p v-if="subscriptionsStore.error" class="text-sm text-danger">{{ subscriptionsStore.error }}</p>
+        </div>
+
+        <div v-else-if="activeTab === 'search'"
+          class="space-y-5 rounded-xl border border-outline/10 bg-surface-container p-5">
+          <p class="text-sm text-text-secondary">
+            输入关键词、站点或订阅标题，快速查找系统内已存在的订阅源。
+          </p>
+          <form class="flex flex-col gap-3 md:flex-row" @submit.prevent="handleSearch">
+            <input v-model.trim="searchQuery" type="search" placeholder="例如：36kr、https://example.com 或科技"
+              class="flex-1 rounded-full border border-outline/40 bg-surface px-4 py-3 text-sm text-text transition placeholder:text-text-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20" />
+            <button type="submit"
+              class="inline-flex items-center justify-center rounded-full border border-outline/40 bg-surface px-5 py-3 text-sm font-semibold text-text transition hover:border-primary hover:text-primary disabled:cursor-not-allowed disabled:opacity-60"
+              :disabled="searchLoading">
+              {{ searchLoading ? '搜索中...' : '搜索订阅' }}
+            </button>
+          </form>
+          <p v-if="searchError" class="text-sm text-danger">{{ searchError }}</p>
+          <div v-if="searchLoading" class="py-10 text-center text-sm text-text-muted">正在搜索订阅源...</div>
+          <ul v-else class="space-y-4">
+            <li v-for="feed in searchResults" :key="feed.feedId"
+              class="rounded-xl border border-outline/20 bg-surface p-4 transition hover:border-outline/40">
+              <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                <div class="min-w-0 space-y-1.5">
+                  <p class="truncate text-sm font-medium text-text">
+                    {{ displayTitle(feed) }}
+                  </p>
+                  <div class="flex flex-wrap items-center gap-3 text-xs text-text-muted">
+                    <span>最近更新 {{ formatRecentText(feed.lastUpdated) }}</span>
+                    <span>上次抓取 {{ formatRecentText(feed.lastFetched) }}</span>
+                    <span>订阅用户 {{ feed.subscriberCount ?? 0 }}</span>
+                  </div>
+                  <a :href="displaySiteUrl(feed)" target="_blank" rel="noopener noreferrer"
+                    class="block truncate text-xs text-primary hover:underline">
+                    {{ displaySiteUrl(feed) }}
+                  </a>
+                  <p v-if="feed.fetchError" class="text-xs text-danger">
+                    最近错误：{{ feed.fetchError }}
+                  </p>
+                </div>
+                <div class="flex flex-col items-stretch gap-2 text-xs sm:flex-row sm:items-center sm:gap-3">
+                  <button v-if="isSubscribed(feed)" type="button"
+                    class="rounded-full border border-outline/40 px-4 py-2 font-medium text-primary transition hover:border-primary hover:text-primary"
+                    @click="viewArticles(feed.feedId)">
+                    查看频道
+                  </button>
+                  <button v-else type="button"
+                    class="rounded-full bg-gradient-to-r from-primary to-primary/80 px-4 py-2 font-semibold text-primary-foreground transition hover:from-primary/90 hover:to-primary/70 disabled:cursor-not-allowed disabled:opacity-60"
+                    :disabled="subscriptionsStore.submitting" @click="subscribeFromSearch(feed)">
+                    {{ subscriptionsStore.submitting ? '处理中...' : '添加订阅' }}
+                  </button>
+                  <a :href="feed.url" target="_blank" rel="noopener noreferrer"
+                    class="rounded-full border border-outline/30 px-4 py-2 text-center font-medium text-text-muted transition hover:border-outline/50 hover:text-text">
+                    访问 RSS
+                  </a>
+                </div>
+              </div>
+            </li>
+            <li v-if="hasSearched && !searchResults.length && !searchError"
+              class="py-10 text-center text-sm text-text-muted">
+              未找到匹配的订阅源，换个关键词试试。
+            </li>
+          </ul>
         </div>
 
         <div v-else class="space-y-5 rounded-xl border border-outline/10 bg-surface-container p-5">
@@ -211,7 +265,8 @@
               </div>
               <button type="button"
                 class="inline-flex items-center justify-center rounded-full bg-gradient-to-r from-primary to-primary/80 px-5 py-3 text-sm font-semibold text-primary-foreground transition hover:from-primary/90 hover:to-primary/70 disabled:cursor-not-allowed disabled:opacity-60 md:ml-auto"
-                :disabled="opmlConfirmLoading || !hasSelectedFeeds || selectedCount > remainingQuota" @click="handleConfirmOpml">
+                :disabled="opmlConfirmLoading || !hasSelectedFeeds || selectedCount > remainingQuota"
+                @click="handleConfirmOpml">
                 {{ opmlConfirmLoading ? '导入中...' : '确认导入' }}
               </button>
             </div>
@@ -223,7 +278,8 @@
                     <p class="text-sm font-semibold text-text">导入完成</p>
                     <p class="text-xs text-text-muted">成功导入 {{ opmlConfirmResult.importedCount }} 个订阅。</p>
                   </div>
-                  <button class="rounded-full border border-outline/40 px-4 py-2 text-xs font-medium text-text-muted transition hover:border-outline/60 hover:text-text"
+                  <button
+                    class="rounded-full border border-outline/40 px-4 py-2 text-xs font-medium text-text-muted transition hover:border-outline/60 hover:text-text"
                     @click="handleSuccessClose">
                     关闭
                   </button>
@@ -243,27 +299,110 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { storeToRefs } from 'pinia';
 import {
   useSubscriptionsStore,
-  type SubscriptionDto,
+  type SubscriptionListItemDto,
+  type SubscriptionSearchResultDto,
   type OpmlImportResultDto,
   type OpmlPreviewFeedDto
 } from '../stores/subscriptions';
 import { formatRelativeTime } from '../utils/datetime';
 
 const subscriptionsStore = useSubscriptionsStore();
-const { items } = storeToRefs(subscriptionsStore);
+const { items, searchResults, searchLoading, searchError } = storeToRefs(subscriptionsStore);
 const newFeedUrl = ref('');
 const router = useRouter();
+
+const tabs = [
+  { key: 'search', label: '查找订阅' },
+  { key: 'manual', label: '手动添加' },
+  { key: 'opml', label: '导入 OPML' }
+] as const;
+
+type TabKey = (typeof tabs)[number]['key'];
 
 interface OpmlPreviewFeedView extends OpmlPreviewFeedDto {
   selected: boolean;
 }
 
-const activeTab = ref<'manual' | 'opml'>('manual');
+const activeTab = ref<TabKey>('search');
+const tabIndicatorStyle = computed(() => {
+  const index = tabs.findIndex((tab) => tab.key === activeTab.value);
+  const gapRem = 0.5;
+  const totalGaps = Math.max(tabs.length - 1, 0);
+  return {
+    width: `calc((100% - ${totalGaps * gapRem}rem) / ${tabs.length})`,
+    transform: `translateX(calc(${index * 100}% + ${index * gapRem}rem))`
+  };
+});
+
+const setActiveTab = (tabKey: TabKey) => {
+  activeTab.value = tabKey;
+};
+
+const searchQuery = ref('');
+const hasSearched = ref(false);
+const subscribedFeedIds = computed(() => new Set(items.value.map((item) => item.feedId)));
+const isSubscribed = (feed: SubscriptionSearchResultDto | SubscriptionListItemDto) => {
+  if ('subscribed' in feed) {
+    return feed.subscribed;
+  }
+  return subscribedFeedIds.value.has(feed.feedId);
+};
+
+const resetSearchState = () => {
+  searchQuery.value = '';
+  hasSearched.value = false;
+  subscriptionsStore.clearSearchResults();
+};
+
+watch(activeTab, (tab) => {
+  if (tab !== 'search') {
+    resetSearchState();
+  }
+});
+
+watch(searchQuery, (value) => {
+  if (!value || !value.trim()) {
+    hasSearched.value = false;
+    subscriptionsStore.clearSearchResults();
+  } else if (searchError.value) {
+    searchError.value = null;
+  }
+});
+
+resetSearchState();
+
+const handleSearch = async () => {
+  try {
+    if (!searchQuery.value.trim()) {
+      hasSearched.value = false;
+      await subscriptionsStore.searchSubscriptions(searchQuery.value);
+      return;
+    }
+    await subscriptionsStore.searchSubscriptions(searchQuery.value);
+    hasSearched.value = true;
+  } catch (err) {
+    // 错误信息由 store 维护
+  }
+};
+
+const subscribeFromSearch = async (feed: SubscriptionSearchResultDto) => {
+  try {
+    if (isSubscribed(feed)) {
+      return;
+    }
+    await subscriptionsStore.addSubscription(feed.url);
+    feed.subscribed = true;
+    feed.subscriberCount = (feed.subscriberCount ?? 0) + 1;
+  } catch (err) {
+    // 错误信息由 store 维护
+  }
+};
+
 const opmlFile = ref<File | null>(null);
 const opmlFileInput = ref<HTMLInputElement | null>(null);
 const opmlPreviewFeeds = ref<OpmlPreviewFeedView[]>([]);
@@ -307,9 +446,10 @@ const viewArticles = (feedId: string) => {
   router.push({ name: 'feed', params: { feedId } });
 };
 
-const displayTitle = (item: SubscriptionDto) => item.title || item.siteUrl || item.url;
+const displayTitle = (item: SubscriptionListItemDto | SubscriptionSearchResultDto) =>
+  item.title || item.siteUrl || item.url;
 
-const displaySiteUrl = (item: SubscriptionDto) => item.siteUrl || item.url;
+const displaySiteUrl = (item: SubscriptionListItemDto | SubscriptionSearchResultDto) => item.siteUrl || item.url;
 
 const formatRecentText = (value?: string | null) => (value ? formatRelativeTime(value) : '暂无记录');
 
