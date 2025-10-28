@@ -18,7 +18,7 @@ import java.util.UUID;
 
 public interface ArticleRepository extends JpaRepository<Article, UUID>, JpaSpecificationExecutor<Article> {
 
-    boolean existsByLink(String link);
+    boolean existsByFeedIdAndLink(UUID feedId, String link);
 
     @Query(value = """
             select new org.bitmagic.ifeed.domain.projection.ArticleSummaryView(
