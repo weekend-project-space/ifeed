@@ -79,6 +79,7 @@ public interface ArticleRepository extends JpaRepository<Article, UUID>, JpaSpec
             from Article a
             left join a.feed f
             where (lower(a.title) like :term
+               or lower(a.author) like :term
                or lower(a.summary) like :term
                or lower(a.category) like :term
                or lower(a.tags) like :term)
