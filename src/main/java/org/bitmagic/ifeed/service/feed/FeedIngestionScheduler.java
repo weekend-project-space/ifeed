@@ -19,9 +19,14 @@ public class FeedIngestionScheduler {
     @Scheduled(initialDelayString = "${rss.fetcher.initial-delay:PT10S}",
             fixedDelayString = "${rss.fetcher.fixed-delay:PT30M}")
     public void refreshFeeds() {
-        var feedIds = ingestionService.getFeedIds();
-        log.info("Starting scheduled ingestion for {} feeds", feedIds.size());
-        feedIds.parallelStream().forEach(ingestionService::ingestFeed);
+        try {
+            var feedIds = ingestionService.getFeedIds();
+            log.info("Starting scheduled ingestion for {} feeds", feedIds.size());
+            feedIds.parallelStream().forEach(ingestionService::ingestFeed);
+        } catch (RuntimeException e) {
+            log.warn("refreshFeeds", e);
+        }
+
     }
 
 }

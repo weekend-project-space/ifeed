@@ -84,9 +84,9 @@ public class SubscriptionController {
                             "https://favicon.im/%s".formatted(extractHost(feed.getSiteUrl())),
                             feed.getLastFetched(),
                             feed.getLastUpdated(),
-                            feedReadTimes.getOrDefault(feed.getId().toString(), Instant.EPOCH).isAfter(Objects.nonNull(feed.getLastUpdated())?feed.getLastUpdated():Instant.EPOCH),
-                            failureCount,
-                            feed.getFetchError()
+                            feedReadTimes.getOrDefault(feed.getId().toString(), Instant.EPOCH).isAfter(Objects.nonNull(feed.getLastUpdated()) ? feed.getLastUpdated() : Instant.EPOCH),
+                            failureCount < 3 ? 0 : failureCount,
+                            failureCount < 3 ? null :feed.getFetchError()
                     );
                 })
                 .toList();
