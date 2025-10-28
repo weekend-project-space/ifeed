@@ -5,9 +5,8 @@ import org.bitmagic.ifeed.domain.entity.User;
 import org.bitmagic.ifeed.domain.entity.UserSubscription;
 import org.bitmagic.ifeed.domain.entity.UserSubscriptionId;
 import org.springframework.data.jpa.repository.JpaRepository;
-// import org.springframework.data.jpa.repository.Modifying;
-// import org.springframework.data.jpa.repository.Query;
-// import org.springframework.data.repository.query.Param;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 import java.util.Optional;
@@ -28,4 +27,7 @@ public interface UserSubscriptionRepository extends JpaRepository<UserSubscripti
     long countByFeedAndActiveTrue(Feed feed);
 
     boolean existsByUser_IdAndFeedAndActiveTrue(UUID userId, Feed feed);
+
+    @Query("select us.feed.id from UserSubscription us where us.user.id = :userId and us.active = true")
+    List<UUID> findActiveFeedIdsByUserId(@Param("userId") UUID userId);
 }

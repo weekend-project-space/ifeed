@@ -52,7 +52,7 @@ public class UserEmbeddingService {
     private final RecommendationProperties recommendationProperties;
     private final EmbeddingModel embeddingModel;
     private final ChatClient chatClient;
-    private final static String SYS_PROMPT = "%s\n构建用户查询文章的提示词";
+    private final static String SYS_PROMPT = "%s\n构建用户查询文章的提示词，纯文本即可";
 
     /**
      * 读取用户行为并重新生成Embedding与人设信息。
