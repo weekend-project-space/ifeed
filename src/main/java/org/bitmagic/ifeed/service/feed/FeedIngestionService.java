@@ -38,6 +38,7 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.*;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -61,9 +62,9 @@ public class FeedIngestionService {
     private final RssFetcherProperties properties;
 
     @Transactional(readOnly = true)
-    public List<UUID> getFeedIds() {
+    public List<UUID> getFeedIds(Predicate<Feed> predicate) {
         return feedRepository.findAll().stream()
-                .filter(feed -> feed.getFailureCount() < 7)
+                .filter(predicate)
                 .map(Feed::getId)
                 .collect(Collectors.toList());
     }
@@ -160,7 +161,7 @@ public class FeedIngestionService {
 
         var publishedAt = resolvePublishedAt(entry);
 
-        if (articleRepository.existsByLink(link)) {
+        if (articleRepository.existsByFeedIdAndLink(feed.getId(), link)) {
             return Optional.ofNullable(publishedAt);
         }
 

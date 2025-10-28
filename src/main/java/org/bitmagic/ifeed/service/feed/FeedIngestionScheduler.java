@@ -9,6 +9,8 @@ import org.bitmagic.ifeed.service.embedding.UserEmbeddingService;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDate;
+
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -20,7 +22,7 @@ public class FeedIngestionScheduler {
             fixedDelayString = "${rss.fetcher.fixed-delay:PT30M}")
     public void refreshFeeds() {
         try {
-            var feedIds = ingestionService.getFeedIds();
+            var feedIds = ingestionService.getFeedIds(feed -> LocalDate.now().getDayOfWeek().getValue() == 6 || feed.getFailureCount() < 7);
             log.info("Starting scheduled ingestion for {} feeds", feedIds.size());
             feedIds.parallelStream().forEach(ingestionService::ingestFeed);
         } catch (RuntimeException e) {
