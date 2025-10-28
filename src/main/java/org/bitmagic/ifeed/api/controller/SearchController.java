@@ -68,31 +68,69 @@ public class SearchController {
         if (!SOURCE_OWNER.equals(normalizedSource) && !SOURCE_GLOBAL.equals(normalizedSource)) {
             throw new ApiException(HttpStatus.BAD_REQUEST, "Unsupported source type");
         }
-        if (type.equals(TYPE_SEMANTIC)) {
-            Collection<String> feedIds = userSubscriptionRepository.findAllByUserId(principal.getId()).stream().map(UserSubscription::getFeed).map(Feed::getId).map(UUID::toString).collect(Collectors.toList());
-            FilterExpressionBuilder b = new FilterExpressionBuilder();
-            if (source.equals(SOURCE_OWNER)) {
-                b.in("feedId", feedIds.toArray(new String[]{}));
+        var pageNumber = page == null || page < 0 ? 0 : page;
+        var pageSize = size == null || size <= 0 ? 10 : Math.min(size, 100);
+
+        if (TYPE_SEMANTIC.equals(normalizedType)) {
+            Collection<String> feedIds = userSubscriptionRepository.findAllByUserId(principal.getId()).stream()
+                    .map(UserSubscription::getFeed)
+                    .map(Feed::getId)
+                    .map(UUID::toString)
+                    .toList();
+            Filter.Expression filterExpression = null;
+            if (SOURCE_OWNER.equals(normalizedSource)) {
+                if (feedIds.isEmpty()) {
+                    return ResponseEntity.ok(new PageImpl<>(List.of(), PageRequest.of(pageNumber, pageSize), 0));
+                }
+                FilterExpressionBuilder builder = new FilterExpressionBuilder();
+                filterExpression = builder.in("feedId", feedIds.toArray(String[]::new)).build();
             }
-            List<Document> documents = vectorStore.similaritySearch(SearchRequest.builder()
+
+            var requestBuilder = SearchRequest.builder()
                     .query(query)
-                    .topK((page + 1) * size)
-                    .similarityThreshold(0.3)
-                    .build());
-            Collection<UUID> articleIds = documents.stream().map(Document::getMetadata).map(meta -> IdentifierUtils.parseUuid(meta.get("articleId").toString(), "articleId")).skip(page * size).collect(Collectors.toList());
-            List<SearchResultResponse> content = repository.findAllById(articleIds).stream().map(article -> new SearchResultResponse(
-                    article.getId().toString(),
-                    article.getTitle(),
-                    article.getSummary(),
-                    article.getThumbnail(),
-                    article.getFeed().getTitle(),
-                    formatRelativeTime(article.getPublishedAt()),
-                    null)).collect(Collectors.toList());
-            return ResponseEntity.ok(new PageImpl<>(content, PageRequest.of(page, size), 99));
+                    .topK((pageNumber + 1) * pageSize)
+                    .similarityThreshold(0.3);
+            if (filterExpression != null) {
+                requestBuilder.filterExpression(filterExpression);
+            }
+
+            List<Document> documents = vectorStore.similaritySearch(requestBuilder.build());
+            if (documents == null || documents.isEmpty()) {
+                return ResponseEntity.ok(new PageImpl<>(List.of(), PageRequest.of(pageNumber, pageSize), 0));
+            }
+
+            List<UUID> pageArticleIds = documents.stream()
+                    .map(Document::getMetadata)
+                    .map(meta -> IdentifierUtils.parseUuid(meta.get("articleId").toString(), "articleId"))
+                    .skip((long) pageNumber * pageSize)
+                    .limit(pageSize)
+                    .toList();
+
+            if (pageArticleIds.isEmpty()) {
+                return ResponseEntity.ok(new PageImpl<>(List.of(), PageRequest.of(pageNumber, pageSize), documents.size()));
+            }
+
+            Map<UUID, Article> articlesById = repository.findAllById(pageArticleIds).stream()
+                    .collect(Collectors.toMap(Article::getId, article -> article));
+
+            List<SearchResultResponse> content = pageArticleIds.stream()
+                    .map(articlesById::get)
+                    .filter(Objects::nonNull)
+                    .map(article -> new SearchResultResponse(
+                            article.getId().toString(),
+                            article.getTitle(),
+                            article.getSummary(),
+                            article.getThumbnail(),
+                            article.getFeed().getTitle(),
+                            formatRelativeTime(article.getPublishedAt()),
+                            null))
+                    .toList();
+
+            return ResponseEntity.ok(new PageImpl<>(content, PageRequest.of(pageNumber, pageSize), documents.size()));
         }
         var includeGlobal = SOURCE_GLOBAL.equals(normalizedSource);
 
-        var articlePage = articleService.searchArticles(principal.getId(), query, includeGlobal, page, size)
+        var articlePage = articleService.searchArticles(principal.getId(), query, includeGlobal, pageNumber, pageSize)
                 .map(article -> new SearchResultResponse(
                         article.id().toString(),
                         article.title(),

@@ -19,8 +19,10 @@ import org.springframework.stereotype.Service;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 /**
  * @author yangrd
@@ -39,14 +41,42 @@ public class RecommendationService {
     private final Map<UUID, List<UUID>> user2Items = new ConcurrentHashMap<>();
 
     public Page<ArticleSummaryView> rank(UUID userId, int page, int size) {
-        Long start = System.currentTimeMillis();
-        List<UUID> aIds = user2Items.getOrDefault(userId, Collections.emptyList());
-        if (page == 0) {
-            aIds = recall(userId).stream().limit(100).map(Document::getId).map(UUID::fromString).toList();
-            user2Items.put(userId, aIds);
+        int safePage = Math.max(page, 0);
+        int safeSize = size <= 0 ? 10 : size;
+
+        List<UUID> cachedIds = user2Items.get(userId);
+        if (safePage == 0 || cachedIds == null) {
+            long start = System.currentTimeMillis();
+            cachedIds = recall(userId).stream()
+                    .limit(100)
+                    .map(Document::getId)
+                    .map(UUID::fromString)
+                    .toList();
+            user2Items.put(userId, cachedIds);
             log.info("recall:{}ms", System.currentTimeMillis() - start);
         }
-        return new PageImpl<>(articleRepository.findArticleSummariesByIds(aIds.subList(page * size, Math.min((page + 1) * size, aIds.size()))), PageRequest.of(page, size), aIds.size());
+
+        if (cachedIds.isEmpty()) {
+            return new PageImpl<>(List.of(), PageRequest.of(safePage, safeSize), 0);
+        }
+
+        int fromIndex = safePage * safeSize;
+        if (fromIndex >= cachedIds.size()) {
+            return new PageImpl<>(List.of(), PageRequest.of(safePage, safeSize), cachedIds.size());
+        }
+
+        int toIndex = Math.min(fromIndex + safeSize, cachedIds.size());
+        List<UUID> pageIds = cachedIds.subList(fromIndex, toIndex);
+
+        Map<UUID, ArticleSummaryView> summariesById = articleRepository.findArticleSummariesByIds(pageIds).stream()
+                .collect(Collectors.toMap(ArticleSummaryView::id, summary -> summary));
+
+        List<ArticleSummaryView> ordered = pageIds.stream()
+                .map(summariesById::get)
+                .filter(Objects::nonNull)
+                .toList();
+
+        return new PageImpl<>(ordered, PageRequest.of(safePage, safeSize), cachedIds.size());
     }
 
     private List<Document> recall(UUID userId) {

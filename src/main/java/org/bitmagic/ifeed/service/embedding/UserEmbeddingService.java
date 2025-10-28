@@ -13,6 +13,7 @@ import org.bitmagic.ifeed.domain.repository.ArticleEmbeddingRepository;
 import org.bitmagic.ifeed.domain.repository.ArticleRepository;
 import org.bitmagic.ifeed.domain.repository.UserBehaviorRepository;
 import org.bitmagic.ifeed.domain.repository.UserEmbeddingRepository;
+import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.embedding.EmbeddingModel;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -50,6 +51,8 @@ public class UserEmbeddingService {
     private final UserEmbeddingRepository userEmbeddingRepository;
     private final RecommendationProperties recommendationProperties;
     private final EmbeddingModel embeddingModel;
+    private final ChatClient chatClient;
+    private final static String SYS_PROMPT = "%s\n构建用户查询文章的提示词";
 
     /**
      * 读取用户行为并重新生成Embedding与人设信息。
@@ -207,6 +210,7 @@ public class UserEmbeddingService {
 
         String prompt = persona.map(UserPersona::prompt).orElse(null);
         if (Objects.nonNull(prompt)) {
+            prompt = chatClient.prompt(SYS_PROMPT.formatted(prompt)).call().entity(String.class);
             float[] embed = embeddingModel.embed(prompt);
             accumulator = minix(embed, accumulator, 0.7f, 0.3f);
         }
