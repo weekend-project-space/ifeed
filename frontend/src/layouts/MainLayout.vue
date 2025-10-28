@@ -405,7 +405,7 @@ const baseNavSections: NavSection[] = [
           ],
           viewBox: '0 0 20 20'
         },
-        activeMatch: (current) => current.name === 'subscriptions'
+        activeMatch: (current) => current.name === 'feedsSubscriptions'
       }
     ]
   },
@@ -643,7 +643,7 @@ const subscriptionNavSection = computed<NavSection>(() => {
     },
     activeMatch: (current) => {
       const manage = current.query.manage as string | undefined;
-      return current.name === 'subscriptions' && manage === 'true';
+      return current.name === 'subscriptions';
     }
   });
   // 展开 / 折叠按钮
