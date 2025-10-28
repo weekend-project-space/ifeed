@@ -58,8 +58,7 @@ public class SearchController {
         var includeGlobal = SOURCE_GLOBAL.equals(normalizedSource);
 
         if (TYPE_SEMANTIC.equals(normalizedType)) {
-            Page<ArticleSummaryView> hybridPage = searchRetrievalService.hybridSearch(principal.getId(), query, includeGlobal, pageNumber, pageSize);
-            var content = hybridPage.map(article -> new SearchResultResponse(
+            return ResponseEntity.ok(searchRetrievalService.hybridSearch(principal.getId(), query, includeGlobal, pageNumber, pageSize).map(article -> new SearchResultResponse(
                     article.id().toString(),
                     article.title(),
                     article.summary(),
@@ -67,8 +66,7 @@ public class SearchController {
                     article.feedTitle(),
                     formatRelativeTime(article.publishedAt()),
                     null
-            ));
-            return ResponseEntity.ok(content);
+            )));
         }
 
         var articlePage = articleService.searchArticles(principal.getId(), query, includeGlobal, pageNumber, pageSize)

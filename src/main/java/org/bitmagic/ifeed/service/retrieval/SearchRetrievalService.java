@@ -1,5 +1,6 @@
 package org.bitmagic.ifeed.service.retrieval;
 
+import com.rometools.utils.Strings;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.bitmagic.ifeed.config.SearchRetrievalProperties;
@@ -8,9 +9,9 @@ import org.bitmagic.ifeed.config.vectore.VectorStoreTurbo;
 import org.bitmagic.ifeed.domain.projection.ArticleSummaryView;
 import org.bitmagic.ifeed.domain.repository.ArticleRepository;
 import org.bitmagic.ifeed.domain.repository.UserSubscriptionRepository;
+import org.bitmagic.ifeed.service.ArticleService;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.vectorstore.SearchRequest;
-import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.ai.vectorstore.filter.FilterExpressionBuilder;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -74,7 +75,7 @@ public class SearchRetrievalService {
 
     private final VectorStoreTurbo vectorStore;
     private final UserSubscriptionRepository userSubscriptionRepository;
-    private final ArticleRepository articleRepository;
+    private final ArticleService articleService;
     private final JdbcTemplate jdbcTemplate;
     private final SearchRetrievalProperties properties;
 
@@ -84,88 +85,52 @@ public class SearchRetrievalService {
                                                  boolean includeGlobal,
                                                  int page,
                                                  int size) {
-        return hybridSearch(userId, null, query, includeGlobal, page, size);
-    }
 
-    /**
-     * 对查询执行混合检索：BM25 + 向量召回，并融合得分返回分页结果。
-     */
-    public Page<ArticleSummaryView> hybridSearch(UUID userId,
-                                                 float[] queryEmbedding,
-                                                 String query,
-                                                 boolean includeGlobal,
-                                                 int page,
-                                                 int size) {
         if (!StringUtils.hasText(query)) {
             return Page.empty(PageRequest.of(Math.max(page, 0), Math.max(size, 1)));
         }
+        List<UUID> artIds = hybridSearch(userId, null, query, includeGlobal, properties.getFusionTopK());
+        Page<ArticleSummaryView> data = articleService.findIds2Article(artIds, page, size);
 
-        int safePage = Math.max(page, 0);
-        int safeSize = size <= 0 ? 10 : size;
-        String normalizedQuery = query.trim();
+        log.debug("Hybrid search complete: user={}, query='{}', totalCandidates={}, pageIsLast={}",
+                userId, query, artIds.size(), data.isLast());
+        return data;
+    }
 
-        int desired = Math.max(properties.getFusionTopK(), (safePage + 1) * safeSize);
-        int bm25Limit = Math.max(properties.getBm25TopK(), desired);
-        int vectorLimit = Math.max(properties.getVectorTopK(), desired);
+
+    /**
+     * 对查询执行混合检索：BM25 + 向量召回，并融合得分返回分页结果
+     * 返回融合后的文章 ID 列表。
+     */
+    public List<UUID> hybridSearch(UUID userId,
+                                   float[] queryEmbedding,
+                                   String query,
+                                   boolean includeGlobal,
+                                   int maxSize) {
+        int safeSize = maxSize <= 0 ? properties.getFusionTopK() : maxSize;
+        String normalizedQuery = StringUtils.hasText(query) ? query.trim() : null;
+        int desired = Math.max(properties.getFusionTopK(), safeSize);
+        if (Objects.isNull(query) && Strings.isBlank(normalizedQuery)) {
+            return Collections.emptyList();
+        }
 
         List<UUID> feedIds = includeGlobal ? Collections.emptyList() : userSubscriptionRepository.findActiveFeedIdsByUserId(userId);
-        log.debug("Hybrid search start: user={}, includeGlobal={}, page={}, size={}, query='{}'", userId, includeGlobal, safePage, safeSize, normalizedQuery);
+        log.debug("Hybrid search(IDs) start: user={}, includeGlobal={}, maxSize={}, query='{}'", userId, includeGlobal, safeSize, normalizedQuery);
         if (!includeGlobal && CollectionUtils.isEmpty(feedIds)) {
-            return new PageImpl<>(Collections.emptyList(), PageRequest.of(safePage, safeSize), 0);
+            return Collections.emptyList();
         }
 
-        Map<UUID, Double> bm25Scores = fetchBm25Scores(normalizedQuery, userId, includeGlobal, bm25Limit);
-        Map<UUID, Double> vectorScores = fetchVectorScores(queryEmbedding, normalizedQuery, includeGlobal, vectorLimit, feedIds);
-
-        Map<UUID, Double> normalizedBm25 = normalizeScores(bm25Scores);
-        Map<UUID, Double> normalizedVector = normalizeScores(vectorScores);
-
-        Set<UUID> allIds = new HashSet<>();
-        allIds.addAll(normalizedBm25.keySet());
-        allIds.addAll(normalizedVector.keySet());
-
-        if (allIds.isEmpty()) {
-            log.debug("Hybrid search exit: no candidates found for user={}, query='{}'", userId, normalizedQuery);
-            return new PageImpl<>(Collections.emptyList(), PageRequest.of(safePage, safeSize), 0);
+        List<CombinedScore> combined = combineScores(normalizedQuery, queryEmbedding, userId, includeGlobal, desired, feedIds);
+        if (combined.isEmpty()) {
+            return Collections.emptyList();
         }
 
-        double bm25Weight = properties.getBm25Weight();
-        double vectorWeight = properties.getVectorWeight();
-
-        List<CombinedScore> combined = allIds.stream()
-                .map(id -> new CombinedScore(id,
-                        normalizedBm25.getOrDefault(id, 0.0),
-                        normalizedVector.getOrDefault(id, 0.0),
-                        bm25Weight, vectorWeight))
-                .sorted((a, b) -> Double.compare(b.totalScore(), a.totalScore()))
-                .collect(Collectors.toCollection(ArrayList::new));
-
-        int fusionLimit = Math.max(properties.getFusionTopK(), desired);
-        if (combined.size() > fusionLimit) {
-            combined = combined.subList(0, fusionLimit);
-        }
-
-        int fromIndex = Math.min(safePage * safeSize, combined.size());
-        int toIndex = Math.min(fromIndex + safeSize, combined.size());
-        if (fromIndex >= combined.size()) {
-            return new PageImpl<>(Collections.emptyList(), PageRequest.of(safePage, safeSize), combined.size());
-        }
-
-        List<UUID> pageIds = combined.subList(fromIndex, toIndex).stream()
+        List<UUID> ids = combined.stream()
+                .limit(safeSize)
                 .map(CombinedScore::id)
                 .toList();
-
-        Map<UUID, ArticleSummaryView> summaries = articleRepository.findArticleSummariesByIds(pageIds).stream()
-                .collect(Collectors.toMap(ArticleSummaryView::id, summary -> summary));
-
-        List<ArticleSummaryView> ordered = pageIds.stream()
-                .map(summaries::get)
-                .filter(Objects::nonNull)
-                .toList();
-
-        log.debug("Hybrid search complete: user={}, query='{}', totalCandidates={}, pageContent={}",
-                userId, normalizedQuery, combined.size(), ordered.size());
-        return new PageImpl<>(ordered, PageRequest.of(safePage, safeSize), combined.size());
+        log.debug("Hybrid search(IDs) complete: user={}, query='{}', returnCount={}", userId, normalizedQuery, ids.size());
+        return ids;
     }
 
     private Map<UUID, Double> fetchBm25Scores(String query,
@@ -194,8 +159,12 @@ public class SearchRetrievalService {
                                                 int limit,
                                                 List<UUID> feedIds) {
         log.trace("Vector fetch: includeGlobal={}, limit={}, feedIds={}", includeGlobal, limit, feedIds.size());
-        List<Document> documents = Collections.emptyList();
-        if (Objects.nonNull(queryEmbedding)) {
+        if (queryEmbedding == null && !StringUtils.hasText(query)) {
+            return Collections.emptyMap();
+        }
+
+        List<Document> documents;
+        if (queryEmbedding != null) {
             var builder = SearchRequestTurbo.builder()
                     .embedding(queryEmbedding)
                     .topK(limit)
@@ -210,7 +179,7 @@ public class SearchRetrievalService {
             }
             documents = vectorStore.similaritySearch(builder.build());
         } else {
-            SearchRequest.Builder builder = SearchRequest.builder()
+            var builder = SearchRequest.builder()
                     .query(query)
                     .topK(limit)
                     .similarityThreshold(properties.getSimilarityThreshold());
@@ -262,6 +231,51 @@ public class SearchRetrievalService {
         Map<UUID, Double> normalized = new HashMap<>();
         scores.forEach((id, score) -> normalized.put(id, (score - min) / range));
         return normalized;
+    }
+
+    private List<CombinedScore> combineScores(String normalizedQuery,
+                                              float[] queryEmbedding,
+                                              UUID userId,
+                                              boolean includeGlobal,
+                                              int desired,
+                                              List<UUID> feedIds) {
+        int bm25Limit = Math.max(properties.getBm25TopK(), desired);
+        int vectorLimit = Math.max(properties.getVectorTopK(), desired);
+
+        Map<UUID, Double> bm25Scores = StringUtils.hasText(normalizedQuery)
+                ? fetchBm25Scores(normalizedQuery, userId, includeGlobal, bm25Limit)
+                : Collections.emptyMap();
+        Map<UUID, Double> vectorScores = fetchVectorScores(queryEmbedding, normalizedQuery, includeGlobal, vectorLimit, feedIds);
+
+        Map<UUID, Double> normalizedBm25 = normalizeScores(bm25Scores);
+        Map<UUID, Double> normalizedVector = normalizeScores(vectorScores);
+
+        Set<UUID> allIds = new HashSet<>();
+        allIds.addAll(normalizedBm25.keySet());
+        allIds.addAll(normalizedVector.keySet());
+
+        if (allIds.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        double bm25Weight = properties.getBm25Weight();
+        double vectorWeight = properties.getVectorWeight();
+
+        List<CombinedScore> combined = allIds.stream()
+                .map(id -> new CombinedScore(id,
+                        normalizedBm25.getOrDefault(id, 0.0),
+                        normalizedVector.getOrDefault(id, 0.0),
+                        bm25Weight,
+                        vectorWeight))
+                .sorted((a, b) -> Double.compare(b.totalScore(), a.totalScore()))
+                .collect(Collectors.toCollection(ArrayList::new));
+
+        int fusionLimit = Math.max(properties.getFusionTopK(), desired);
+        if (combined.size() > fusionLimit) {
+            combined = new ArrayList<>(combined.subList(0, fusionLimit));
+        }
+
+        return combined;
     }
 
     private UUID readUuid(ResultSet rs, String column) throws SQLException {
