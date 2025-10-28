@@ -2,7 +2,6 @@ package org.bitmagic.ifeed.api.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.bitmagic.ifeed.security.UserPrincipal;
-import org.bitmagic.ifeed.service.recommendation.RecommendationScope;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -20,7 +19,7 @@ import reactor.core.publisher.Flux;
 public class HomeAIController {
 
     @GetMapping(value = "/recommendations", produces = "text/event-stream")
-    public Flux<String> getRecommendations(@AuthenticationPrincipal UserPrincipal principal, @RequestParam(defaultValue = "PERSONAL") RecommendationScope scope) {
+    public Flux<String> getRecommendations(@AuthenticationPrincipal UserPrincipal principal, @RequestParam(defaultValue = "PERSONAL") String scope) {
 //        return service.recommendations(principal.getId(), scope);
         return Flux.just("TODO");
     }

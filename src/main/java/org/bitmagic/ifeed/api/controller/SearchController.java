@@ -2,23 +2,12 @@ package org.bitmagic.ifeed.api.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.bitmagic.ifeed.api.response.SearchResultResponse;
-import org.bitmagic.ifeed.api.util.IdentifierUtils;
-import org.bitmagic.ifeed.domain.entity.Article;
-import org.bitmagic.ifeed.domain.entity.Feed;
-import org.bitmagic.ifeed.domain.entity.UserSubscription;
-import org.bitmagic.ifeed.domain.repository.ArticleRepository;
-import org.bitmagic.ifeed.domain.repository.UserSubscriptionRepository;
+import org.bitmagic.ifeed.domain.projection.ArticleSummaryView;
 import org.bitmagic.ifeed.exception.ApiException;
 import org.bitmagic.ifeed.security.UserPrincipal;
 import org.bitmagic.ifeed.service.ArticleService;
-import org.springframework.ai.document.Document;
-import org.springframework.ai.vectorstore.SearchRequest;
-import org.springframework.ai.vectorstore.VectorStore;
-import org.springframework.ai.vectorstore.filter.Filter;
-import org.springframework.ai.vectorstore.filter.FilterExpressionBuilder;
+import org.bitmagic.ifeed.service.retrieval.SearchRetrievalService;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -29,9 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.time.temporal.TemporalUnit;
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.Locale;
 
 @RestController
 @RequestMapping("/api/search")
@@ -44,12 +31,7 @@ public class SearchController {
     private static final String SOURCE_GLOBAL = "global";
 
     private final ArticleService articleService;
-
-    private final VectorStore vectorStore;
-
-    private final UserSubscriptionRepository userSubscriptionRepository;
-
-    private final ArticleRepository repository;
+    private final SearchRetrievalService searchRetrievalService;
 
     @GetMapping
     public ResponseEntity<Page<SearchResultResponse>> search(@AuthenticationPrincipal UserPrincipal principal,
@@ -59,6 +41,9 @@ public class SearchController {
                                                              @RequestParam(required = false) Integer size,
                                                              @RequestParam(required = false, defaultValue = SOURCE_OWNER) String source) {
         ensureAuthenticated(principal);
+        if (query == null || query.isBlank()) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "Query must not be blank");
+        }
         var normalizedType = type == null ? TYPE_KEYWORD : type.trim().toLowerCase(Locale.ROOT);
         if (!TYPE_KEYWORD.equals(normalizedType) && !TYPE_SEMANTIC.equals(normalizedType)) {
             throw new ApiException(HttpStatus.BAD_REQUEST, "Unsupported search type");
@@ -70,65 +55,21 @@ public class SearchController {
         }
         var pageNumber = page == null || page < 0 ? 0 : page;
         var pageSize = size == null || size <= 0 ? 10 : Math.min(size, 100);
+        var includeGlobal = SOURCE_GLOBAL.equals(normalizedSource);
 
         if (TYPE_SEMANTIC.equals(normalizedType)) {
-            Collection<String> feedIds = userSubscriptionRepository.findAllByUserId(principal.getId()).stream()
-                    .map(UserSubscription::getFeed)
-                    .map(Feed::getId)
-                    .map(UUID::toString)
-                    .toList();
-            Filter.Expression filterExpression = null;
-            if (SOURCE_OWNER.equals(normalizedSource)) {
-                if (feedIds.isEmpty()) {
-                    return ResponseEntity.ok(new PageImpl<>(List.of(), PageRequest.of(pageNumber, pageSize), 0));
-                }
-                FilterExpressionBuilder builder = new FilterExpressionBuilder();
-                filterExpression = builder.in("feedId", feedIds.toArray(String[]::new)).build();
-            }
-
-            var requestBuilder = SearchRequest.builder()
-                    .query(query)
-                    .topK((pageNumber + 1) * pageSize)
-                    .similarityThreshold(0.3);
-            if (filterExpression != null) {
-                requestBuilder.filterExpression(filterExpression);
-            }
-
-            List<Document> documents = vectorStore.similaritySearch(requestBuilder.build());
-            if (documents == null || documents.isEmpty()) {
-                return ResponseEntity.ok(new PageImpl<>(List.of(), PageRequest.of(pageNumber, pageSize), 0));
-            }
-
-            List<UUID> pageArticleIds = documents.stream()
-                    .map(Document::getMetadata)
-                    .map(meta -> IdentifierUtils.parseUuid(meta.get("articleId").toString(), "articleId"))
-                    .skip((long) pageNumber * pageSize)
-                    .limit(pageSize)
-                    .toList();
-
-            if (pageArticleIds.isEmpty()) {
-                return ResponseEntity.ok(new PageImpl<>(List.of(), PageRequest.of(pageNumber, pageSize), documents.size()));
-            }
-
-            Map<UUID, Article> articlesById = repository.findAllById(pageArticleIds).stream()
-                    .collect(Collectors.toMap(Article::getId, article -> article));
-
-            List<SearchResultResponse> content = pageArticleIds.stream()
-                    .map(articlesById::get)
-                    .filter(Objects::nonNull)
-                    .map(article -> new SearchResultResponse(
-                            article.getId().toString(),
-                            article.getTitle(),
-                            article.getSummary(),
-                            article.getThumbnail(),
-                            article.getFeed().getTitle(),
-                            formatRelativeTime(article.getPublishedAt()),
-                            null))
-                    .toList();
-
-            return ResponseEntity.ok(new PageImpl<>(content, PageRequest.of(pageNumber, pageSize), documents.size()));
+            Page<ArticleSummaryView> hybridPage = searchRetrievalService.hybridSearch(principal.getId(), query, includeGlobal, pageNumber, pageSize);
+            var content = hybridPage.map(article -> new SearchResultResponse(
+                    article.id().toString(),
+                    article.title(),
+                    article.summary(),
+                    article.thumbnail(),
+                    article.feedTitle(),
+                    formatRelativeTime(article.publishedAt()),
+                    null
+            ));
+            return ResponseEntity.ok(content);
         }
-        var includeGlobal = SOURCE_GLOBAL.equals(normalizedSource);
 
         var articlePage = articleService.searchArticles(principal.getId(), query, includeGlobal, pageNumber, pageSize)
                 .map(article -> new SearchResultResponse(

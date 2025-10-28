@@ -1,8 +1,10 @@
-package org.bitmagic.ifeed.service;
+package org.bitmagic.ifeed.service.retrieval;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.bitmagic.ifeed.config.SearchRetrievalProperties;
+import org.bitmagic.ifeed.config.vectore.SearchRequestTurbo;
+import org.bitmagic.ifeed.config.vectore.VectorStoreTurbo;
 import org.bitmagic.ifeed.domain.projection.ArticleSummaryView;
 import org.bitmagic.ifeed.domain.repository.ArticleRepository;
 import org.bitmagic.ifeed.domain.repository.UserSubscriptionRepository;
@@ -47,6 +49,8 @@ public class SearchRetrievalService {
             documents AS (
                 SELECT a.id,
                        setweight(to_tsvector('simple', coalesce(a.title, '')), 'A') ||
+                       setweight(to_tsvector('simple', coalesce(a.category, '')), 'A') ||
+                       setweight(to_tsvector('simple', coalesce(a.tags, '')), 'B') ||
                        setweight(to_tsvector('simple', coalesce(a.summary, '')), 'B') ||
                        setweight(to_tsvector('simple', coalesce(a.author, '')), 'B') ||
                        setweight(to_tsvector('simple', coalesce(a.content, '')), 'C') AS document
@@ -68,16 +72,26 @@ public class SearchRetrievalService {
             LIMIT ?
             """;
 
-    private final VectorStore vectorStore;
+    private final VectorStoreTurbo vectorStore;
     private final UserSubscriptionRepository userSubscriptionRepository;
     private final ArticleRepository articleRepository;
     private final JdbcTemplate jdbcTemplate;
     private final SearchRetrievalProperties properties;
 
+
+    public Page<ArticleSummaryView> hybridSearch(UUID userId,
+                                                 String query,
+                                                 boolean includeGlobal,
+                                                 int page,
+                                                 int size) {
+        return hybridSearch(userId, null, query, includeGlobal, page, size);
+    }
+
     /**
      * 对查询执行混合检索：BM25 + 向量召回，并融合得分返回分页结果。
      */
     public Page<ArticleSummaryView> hybridSearch(UUID userId,
+                                                 float[] queryEmbedding,
                                                  String query,
                                                  boolean includeGlobal,
                                                  int page,
@@ -101,7 +115,7 @@ public class SearchRetrievalService {
         }
 
         Map<UUID, Double> bm25Scores = fetchBm25Scores(normalizedQuery, userId, includeGlobal, bm25Limit);
-        Map<UUID, Double> vectorScores = fetchVectorScores(normalizedQuery, includeGlobal, vectorLimit, feedIds);
+        Map<UUID, Double> vectorScores = fetchVectorScores(queryEmbedding, normalizedQuery, includeGlobal, vectorLimit, feedIds);
 
         Map<UUID, Double> normalizedBm25 = normalizeScores(bm25Scores);
         Map<UUID, Double> normalizedVector = normalizeScores(vectorScores);
@@ -175,25 +189,42 @@ public class SearchRetrievalService {
         return scores;
     }
 
-    private Map<UUID, Double> fetchVectorScores(String query,
+    private Map<UUID, Double> fetchVectorScores(float[] queryEmbedding, String query,
                                                 boolean includeGlobal,
                                                 int limit,
                                                 List<UUID> feedIds) {
         log.trace("Vector fetch: includeGlobal={}, limit={}, feedIds={}", includeGlobal, limit, feedIds.size());
-        SearchRequest.Builder builder = SearchRequest.builder()
-                .query(query)
-                .topK(limit)
-                .similarityThreshold(properties.getSimilarityThreshold());
+        List<Document> documents = Collections.emptyList();
+        if (Objects.nonNull(queryEmbedding)) {
+            var builder = SearchRequestTurbo.builder()
+                    .embedding(queryEmbedding)
+                    .topK(limit)
+                    .similarityThreshold(properties.getSimilarityThreshold());
 
-        if (!includeGlobal) {
-            if (CollectionUtils.isEmpty(feedIds)) {
-                return Collections.emptyMap();
+            if (!includeGlobal) {
+                if (CollectionUtils.isEmpty(feedIds)) {
+                    return Collections.emptyMap();
+                }
+                FilterExpressionBuilder filterBuilder = new FilterExpressionBuilder();
+                builder.filterExpression(filterBuilder.in("feedId", feedIds.stream().map(UUID::toString).toArray(String[]::new)).build());
             }
-            FilterExpressionBuilder filterBuilder = new FilterExpressionBuilder();
-            builder.filterExpression(filterBuilder.in("feedId", feedIds.stream().map(UUID::toString).toArray(String[]::new)).build());
+            documents = vectorStore.similaritySearch(builder.build());
+        } else {
+            SearchRequest.Builder builder = SearchRequest.builder()
+                    .query(query)
+                    .topK(limit)
+                    .similarityThreshold(properties.getSimilarityThreshold());
+
+            if (!includeGlobal) {
+                if (CollectionUtils.isEmpty(feedIds)) {
+                    return Collections.emptyMap();
+                }
+                FilterExpressionBuilder filterBuilder = new FilterExpressionBuilder();
+                builder.filterExpression(filterBuilder.in("feedId", feedIds.stream().map(UUID::toString).toArray(String[]::new)).build());
+            }
+            documents = vectorStore.similaritySearch(builder.build());
         }
 
-        List<Document> documents = vectorStore.similaritySearch(builder.build());
         if (documents == null || documents.isEmpty()) {
             return Collections.emptyMap();
         }
@@ -248,7 +279,8 @@ public class SearchRetrievalService {
         return null;
     }
 
-    private record CombinedScore(UUID id, double bm25Score, double vectorScore, double bm25Weight, double vectorWeight) {
+    private record CombinedScore(UUID id, double bm25Score, double vectorScore, double bm25Weight,
+                                 double vectorWeight) {
         double totalScore() {
             return bm25Score * bm25Weight + vectorScore * vectorWeight;
         }

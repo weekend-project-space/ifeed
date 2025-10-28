@@ -27,6 +27,11 @@ public class EmbeddingScheduler {
     @Scheduled(initialDelayString = "${rss.fetcher.initial-delay:PT10S}",
             fixedDelayString = "${rss.fetcher.fixed-delay:PT30M}")
     public void embedding() {
+        log.info("init user embedding");
+        userRepository.findAll().forEach(user -> {
+            log.info("init user embedding :{}", user.getUsername());
+            userEmbeddingService.rebuildUserEmbedding(user.getId());
+        });
         log.info("init embedding");
         articleRepository.findAll(ArticleSpec.noEmbeddingSpec(), Pageable.ofSize(100)).forEach(article -> {
             log.info("init embedding :{}", article.getTitle());
@@ -34,11 +39,7 @@ public class EmbeddingScheduler {
             article.setEmbedding("1");
             articleRepository.save(article);
         });
-        log.info("init user embedding");
-        userRepository.findAll().forEach(user -> {
-            log.info("init user embedding :{}", user.getUsername());
-            userEmbeddingService.rebuildUserEmbedding(user.getId());
-        });
+
 
     }
 }

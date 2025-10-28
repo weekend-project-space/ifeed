@@ -12,6 +12,7 @@ import org.bitmagic.ifeed.exception.ApiException;
 import org.bitmagic.ifeed.security.UserPrincipal;
 import org.bitmagic.ifeed.service.ArticleService;
 import org.bitmagic.ifeed.service.UserCollectionService;
+import org.bitmagic.ifeed.service.recommendation.DefaultRecommendationService;
 import org.bitmagic.ifeed.service.recommendation.RecommendationService;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
@@ -68,7 +69,7 @@ public class ArticleController {
                                                                        @RequestParam(required = false) Integer size) {
         ensureAuthenticated(principal);
 
-        return ResponseEntity.ok(recommendationService.rank(principal.getId(), page, size).map(this::toSummaryResponse2));
+        return ResponseEntity.ok(recommendationService.recommend(principal.getId(), page, size).map(this::toSummaryResponse2));
     }
 
     @GetMapping("/insights")

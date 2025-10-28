@@ -52,7 +52,17 @@ public class UserEmbeddingService {
     private final RecommendationProperties recommendationProperties;
     private final EmbeddingModel embeddingModel;
     private final ChatClient chatClient;
-    private final static String SYS_PROMPT = "%s\n构建用户查询文章的提示词，纯文本即可";
+    private final static String SYS_PROMPT = """
+            你是一个智能检索助手。你的任务是根据用户兴趣画像，生成一个 BM25检索用的文本关键词查询语句。要求如下：
+                        
+            输入是用户画像，包括：
+            标签偏好（带次数或频率）
+            分类偏好（带次数或频率）
+            用户收藏的文章（包含标题、标签、分类）
+            输出是一个 纯文本关键词串，可以直接用于 BM25 检索接口。
+            关键词串要求：
+            每个关键词用空格分隔，全部作为查询输入。
+            """;
 
     /**
      * 读取用户行为并重新生成Embedding与人设信息。
