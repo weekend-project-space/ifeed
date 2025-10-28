@@ -74,27 +74,27 @@
             </div>
 
 
-<!--            <div class="rounded-3xl border border-outline/20 bg-surface p-6">-->
-<!--                <h3 class="text-sm font-semibold text-text">热门标签</h3>-->
-<!--                <p class="mt-2 text-xs text-text-secondary">快速探索近期高频出现的主题。</p>-->
-<!--                <div class="mt-4 flex flex-wrap gap-2">-->
-<!--                    <template v-if="insightsLoading">-->
-<!--                        <span class="text-text-muted text-xs">加载中...</span>-->
-<!--                    </template>-->
-<!--                    <template v-else>-->
-<!--                        <button v-for="t in hotTags" :key="t.tag" type="button"-->
-<!--                            class="rounded-full bg-surface-variant px-3 py-1 text-xs font-medium text-text-secondary transition hover:bg-primary/10 hover:text-primary"-->
-<!--                            @click="handleSelectTag(t.tag)">-->
-<!--                            #{{ t.tag }}-->
-<!--                        </button>-->
-<!--                        <div v-if="!hotTags.length" class="text-xs text-text-muted">等待新的标签更新...</div>-->
-<!--                    </template>-->
-<!--                </div>-->
-<!--            </div>-->
+            <!--            <div class="rounded-3xl border border-outline/20 bg-surface p-6">-->
+            <!--                <h3 class="text-sm font-semibold text-text">热门标签</h3>-->
+            <!--                <p class="mt-2 text-xs text-text-secondary">快速探索近期高频出现的主题。</p>-->
+            <!--                <div class="mt-4 flex flex-wrap gap-2">-->
+            <!--                    <template v-if="insightsLoading">-->
+            <!--                        <span class="text-text-muted text-xs">加载中...</span>-->
+            <!--                    </template>-->
+            <!--                    <template v-else>-->
+            <!--                        <button v-for="t in hotTags" :key="t.tag" type="button"-->
+            <!--                            class="rounded-full bg-surface-variant px-3 py-1 text-xs font-medium text-text-secondary transition hover:bg-primary/10 hover:text-primary"-->
+            <!--                            @click="handleSelectTag(t.tag)">-->
+            <!--                            #{{ t.tag }}-->
+            <!--                        </button>-->
+            <!--                        <div v-if="!hotTags.length" class="text-xs text-text-muted">等待新的标签更新...</div>-->
+            <!--                    </template>-->
+            <!--                </div>-->
+            <!--            </div>-->
         </section>
 
         <section class="space-y-5">
-<!--            <div class="flex flex-wrap items-center justify-between gap-4">
+            <!--            <div class="flex flex-wrap items-center justify-between gap-4">
                 <div class="space-y-1">
                     <h2 class="text-2xl font-semibold text-text">最新</h2>
                     <p class="text-sm text-text-secondary">
@@ -253,6 +253,7 @@ const loadData = async () => {
             size: 20,
             page: routePage.value,
             tags: activeTag.value,
+            feedId: null,
             // 从路由读取 category 传递给 store 请求
             category: (route.query.category as string | undefined) ?? undefined
         })
