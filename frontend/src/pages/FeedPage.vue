@@ -166,7 +166,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { storeToRefs } from 'pinia';
 import ArticleList from '../components/ArticleList.vue';
@@ -371,18 +371,23 @@ const loadFeed = async () => {
   } catch (err) {
     return;
   }
-  await ensureSubscriptions();
-  if (!(subscriptionItems.value.find((sub) => sub.feedId === feedId)?.isRead)) {
-    // Mark this feed as read on entering the page (non-blocking)
-    readFeedStore.recordFeedRead(feedId)
-      .then(() => subscriptionsStore.fetchSubscriptions())
-      .catch((err) => console.warn('记录订阅已读失败', err));
-  }
+  setTimeout(async () => {
+    await ensureSubscriptions();
+    if (!(subscriptionItems.value.find((sub) => sub.feedId === feedId)?.isRead)) {
+      readFeedStore.recordFeedRead(feedId)
+        .then(() => subscriptionsStore.fetchSubscriptions())
+        .catch((err) => console.warn('记录订阅已读失败', err));
+    }
+  }, 1000);
+
 };
 
-watch(currentFeedId, async () => {
-  await loadFeed();
-}, { immediate: true });
+onMounted(() => {
+  watch(currentFeedId, async () => {
+    await loadFeed();
+  }, { immediate: true });
+})
+
 
 watch([currentFeedId, routePage, normalizedTag], async ([feedId, page]) => {
   if (!feedId) {
