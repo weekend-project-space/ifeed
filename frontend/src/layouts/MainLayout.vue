@@ -303,7 +303,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, onBeforeMount, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import type { RouteLocationNormalizedLoaded, RouteLocationRaw } from 'vue-router';
 import { storeToRefs } from 'pinia';
@@ -774,7 +774,7 @@ watch(
 );
 
 // Ensure subscriptions are loaded once when layout mounts
-onMounted(async () => {
+onBeforeMount(async () => {
   // if (!subscriptionsStore.items.length && !subscriptionsStore.loading) {
   //   try {
   await subscriptionsStore.fetchSubscriptions();

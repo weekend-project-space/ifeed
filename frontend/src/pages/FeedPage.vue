@@ -12,7 +12,7 @@
             <span v-if="detail?.siteUrl" class="truncate text-primary/80">{{ detail.siteUrl }}</span>
           </div>
           <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-5 lg:gap-6">
-            <img v-if="detail.avatar" :src="detail.avatar"
+            <img v-if="detail?.avatar" :src="detail.avatar"
               class="flex h-20 w-20 items-center justify-center rounded-full bg-surface text-3xl font-bold text-primary-foreground shadow-xl" />
             <div v-else
               class="flex h-20 w-20 items-center justify-center rounded-full bg-surface text-3xl font-bold text-primary-foreground shadow-xl">
@@ -371,11 +371,13 @@ const loadFeed = async () => {
   } catch (err) {
     return;
   }
-  // Mark this feed as read on entering the page (non-blocking)
-  readFeedStore.recordFeedRead(feedId)
-    .then(() => subscriptionsStore.fetchSubscriptions())
-    .catch((err) => console.warn('记录订阅已读失败', err));
   await ensureSubscriptions();
+  if (!(subscriptionItems.value.find((sub) => sub.feedId === feedId)?.isRead)) {
+    // Mark this feed as read on entering the page (non-blocking)
+    readFeedStore.recordFeedRead(feedId)
+      .then(() => subscriptionsStore.fetchSubscriptions())
+      .catch((err) => console.warn('记录订阅已读失败', err));
+  }
 };
 
 watch(currentFeedId, async () => {
