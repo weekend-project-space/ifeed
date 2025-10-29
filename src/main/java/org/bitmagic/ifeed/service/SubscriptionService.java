@@ -9,10 +9,12 @@ import org.bitmagic.ifeed.domain.entity.UserSubscriptionId;
 import org.bitmagic.ifeed.domain.repository.FeedRepository;
 import org.bitmagic.ifeed.domain.repository.UserSubscriptionRepository;
 import org.bitmagic.ifeed.exception.ApiException;
+import org.bitmagic.ifeed.util.UrlChecker;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
 import java.util.HashSet;
@@ -32,6 +34,7 @@ public class SubscriptionService {
     @Transactional
     public UserSubscription subscribe(User user, SubscriptionRequest request) {
         var normalizedUrl = request.feedUrl().trim();
+        Assert.isTrue(UrlChecker.isValidUrl(normalizedUrl), "check url" + normalizedUrl);
         var feed = feedRepository.findByUrl(normalizedUrl)
                 .orElseGet(() -> createFeed(normalizedUrl, request));
 

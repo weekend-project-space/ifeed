@@ -2,6 +2,7 @@ package org.bitmagic.ifeed.service;
 
 import lombok.RequiredArgsConstructor;
 import org.bitmagic.ifeed.api.request.OpmlImportConfirmRequest;
+import org.bitmagic.ifeed.api.request.SubscriptionRequest;
 import org.bitmagic.ifeed.api.response.OpmlImportConfirmResponse;
 import org.bitmagic.ifeed.api.response.OpmlImportSkippedResponse;
 import org.bitmagic.ifeed.api.response.OpmlPreviewFeedResponse;
@@ -174,7 +175,7 @@ public class OpmlImportService {
             }
 
             try {
-                subscriptionService.subscribe(user, new org.bitmagic.ifeed.api.request.SubscriptionRequest(feedUrl, siteUrl, title));
+                subscriptionService.subscribe(user, new SubscriptionRequest(feedUrl, siteUrl, title));
                 importedCount++;
                 remainingQuota--;
             } catch (ApiException apiException) {

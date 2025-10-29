@@ -94,11 +94,15 @@
             <artifactId>hibernate-vector</artifactId>
             <version>6.6.29.Final</version>
         </dependency>
-<!--        <dependency>-->
-<!--            <groupId>space.bitmagic.data</groupId>-->
-<!--            <artifactId>jpa-spec</artifactId>-->
-<!--            <version>1.0.0</version>-->
-<!--        </dependency>-->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+        <!--        <dependency>-->
+        <!--            <groupId>space.bitmagic.data</groupId>-->
+        <!--            <artifactId>jpa-spec</artifactId>-->
+        <!--            <version>1.0.0</version>-->
+        <!--        </dependency>-->
     </dependencies>
 
     <dependencyManagement>
@@ -147,6 +151,10 @@
                             <artifactId>lombok</artifactId>
                         </path>
                     </annotationProcessorPaths>
+                    <release>21</release>
+                    <compilerArgs>
+                        <arg>--enable-preview</arg>
+                    </compilerArgs>
                 </configuration>
             </plugin>
             <plugin>

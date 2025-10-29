@@ -16,6 +16,7 @@ import org.bitmagic.ifeed.domain.repository.ArticleRepository;
 import org.bitmagic.ifeed.domain.repository.FeedRepository;
 import org.bitmagic.ifeed.service.ai.AiContentService;
 import org.bitmagic.ifeed.service.content.ContentCleaner;
+import org.bitmagic.ifeed.util.UrlChecker;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -76,6 +77,7 @@ public class FeedIngestionService {
 
     private void fetchFeedSafely(Feed feed) {
         try {
+
             var syndFeed = fetchFeed(feed.getUrl());
             log.info("fetch url:{}", feed.getUrl());
             var latestContentUpdate = processEntries(feed, syndFeed.getEntries());
@@ -594,4 +596,6 @@ public class FeedIngestionService {
 
         return null;
     }
+
+
 }

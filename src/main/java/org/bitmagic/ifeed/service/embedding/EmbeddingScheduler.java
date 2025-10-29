@@ -27,31 +27,33 @@ public class EmbeddingScheduler {
     @Scheduled(initialDelayString = "${rss.user.initial-delay:PT10S}",
             fixedDelayString = "${rss.user.fixed-delay:PT30M}")
     public void userEmbedding() {
-        try {
-            log.info("init user embedding");
-            userRepository.findAll().forEach(user -> {
-                log.info("init user embedding :{}", user.getUsername());
+        log.info("init user embedding");
+        userRepository.findAll().forEach(user -> {
+            log.info("init user embedding :{}", user.getUsername());
+            try {
                 userEmbeddingService.rebuildUserEmbedding(user.getId());
-            });
-        } catch (RuntimeException e) {
-            log.warn("init user embedding", e);
-        }
+            } catch (RuntimeException e) {
+                log.warn("init user embedding", e);
+            }
+        });
+
     }
 
 
     @Scheduled(initialDelayString = "${rss.document.initial-delay:PT10S}",
             fixedDelayString = "${rss.document.fixed-delay:PT30M}")
     public void docEmbedding() {
-        try {
-            log.info("init article embedding");
-            articleRepository.findAll(ArticleSpec.noEmbeddingSpec(), Pageable.ofSize(100)).forEach(article -> {
+        log.info("init article embedding");
+        articleRepository.findAll(ArticleSpec.noEmbeddingSpec(), Pageable.ofSize(100)).stream().parallel().forEach(article -> {
+            try {
                 log.info("init embedding :{}", article.getTitle());
                 articleEmbeddingService.buildArticleEmbedding(article);
                 article.setEmbedding("1");
                 articleRepository.save(article);
-            });
-        } catch (RuntimeException e) {
-            log.warn("init article embedding", e);
-        }
+            } catch (RuntimeException e) {
+                log.warn("init article embedding", e);
+            }
+        });
+
     }
 }

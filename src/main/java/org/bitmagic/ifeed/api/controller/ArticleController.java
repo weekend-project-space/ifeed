@@ -12,7 +12,6 @@ import org.bitmagic.ifeed.exception.ApiException;
 import org.bitmagic.ifeed.security.UserPrincipal;
 import org.bitmagic.ifeed.service.ArticleService;
 import org.bitmagic.ifeed.service.UserCollectionService;
-import org.bitmagic.ifeed.service.recommendation.DefaultRecommendationService;
 import org.bitmagic.ifeed.service.recommendation.RecommendationService;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
