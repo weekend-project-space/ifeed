@@ -21,8 +21,8 @@
       </div>
       <!-- Remove hover gradient overlay for a flatter look -->
     </figure>
-    <div class="flex flex-1 flex-col gap-4 p-5">
-      <header class="flex items-start gap-4">
+    <div class="flex flex-1 flex-col gap-3 p-4 sm:gap-4 sm:p-5">
+      <header class="flex items-start gap-3 sm:gap-4">
         <div class="min-w-0 flex-1 space-y-1">
           <h3 class="text-base font-semibold leading-tight text-text"
             style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">

@@ -2,7 +2,7 @@ import { ref } from 'vue';
 import { defineStore } from 'pinia';
 import { request } from '../api/client';
 
-interface SubscriptionBaseDto {
+export interface SubscriptionBaseDto {
   feedId: string;
   title?: string;
   url: string;
@@ -67,12 +67,12 @@ export const useSubscriptionsStore = defineStore('subscriptions', () => {
       const response = await request<SubscriptionListItemDto[]>('/api/subscriptions');
       items.value = Array.isArray(response)
         ? response.map((item) => ({
-            ...item,
-            siteUrl: item.siteUrl ?? item.url,
-            isRead: item.isRead ?? false,
-            failureCount: item.failureCount ?? 0,
-            fetchError: item.fetchError ?? null
-          }))
+          ...item,
+          siteUrl: item.siteUrl ?? item.url,
+          isRead: item.isRead ?? false,
+          failureCount: item.failureCount ?? 0,
+          fetchError: item.fetchError ?? null
+        }))
         : [];
     } catch (err) {
       const message = err instanceof Error ? err.message : '订阅列表加载失败';
@@ -141,13 +141,13 @@ export const useSubscriptionsStore = defineStore('subscriptions', () => {
       }
       searchResults.value = Array.isArray(response)
         ? response.map((item) => ({
-            ...item,
-            siteUrl: item.siteUrl ?? item.url,
-            subscriberCount: item.subscriberCount ?? 0,
-            subscribed: item.subscribed ?? false,
-            failureCount: item.failureCount ?? 0,
-            fetchError: item.fetchError ?? null
-          }))
+          ...item,
+          siteUrl: item.siteUrl ?? item.url,
+          subscriberCount: item.subscriberCount ?? 0,
+          subscribed: item.subscribed ?? false,
+          failureCount: item.failureCount ?? 0,
+          fetchError: item.fetchError ?? null
+        }))
         : [];
     } catch (err) {
       if (activeSearchQuery.value !== trimmed) {

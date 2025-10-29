@@ -1,7 +1,7 @@
 <template>
-    <div class="space-y-6">
-        <div class="rounded-3xl border border-outline/20 bg-surface-container px-7 py-6">
-            <div class="flex flex-wrap items-center justify-between gap-4">
+    <div class="space-y-5 sm:space-y-6">
+        <div class="rounded-3xl border border-outline/20 bg-surface-container px-4 py-5 sm:px-6 sm:py-6 lg:px-7">
+            <div class="flex flex-wrap items-center justify-between gap-3 sm:gap-4">
                 <div class="mb-2 space-y-1">
                     <h2 class="text-2xl font-semibold text-text">
                         <template v-if="hasQuery">搜索 “{{ searchQuery }}” 的结果</template>
@@ -15,12 +15,12 @@
                 <div class="flex flex-wrap items-center gap-3 text-sm">
                     <div
                         class="flex rounded-full border border-outline/20 bg-surface-variant px-1 py-1 text-text-muted">
-                        <button type="button" class="rounded-full px-4 py-1 transition"
+                        <button type="button" class="rounded-full px-3 py-1 transition sm:px-4"
                             :class="searchType === 'keyword' ? 'bg-primary/15 text-primary' : 'text-text-muted'"
                             @click="setSearchType('keyword')">
                             关键词匹配
                         </button>
-                        <button type="button" class="rounded-full px-4 py-1 transition"
+                        <button type="button" class="rounded-full px-3 py-1 transition sm:px-4"
                             :class="searchType === 'semantic' ? 'bg-primary/15 text-primary' : 'text-text-muted'"
                             @click="setSearchType('semantic')">
                             语义匹配
@@ -32,24 +32,24 @@
                 </div>
             </div>
 
-            <div v-if="!hasQuery" class="py-20 text-center text-text-muted">输入关键词开始搜索。</div>
-            <div v-else-if="searchLoading" class="py-20 text-center text-text-muted">正在搜索...</div>
-            <div v-else class="space-y-4 mt-3">
+            <div v-if="!hasQuery" class="py-14 text-center text-text-muted sm:py-20">输入关键词开始搜索。</div>
+            <div v-else-if="searchLoading" class="py-14 text-center text-text-muted sm:py-20">正在搜索...</div>
+            <div v-else class="mt-3 space-y-3 sm:space-y-4">
                 <ArticleList :items="searchArticleItems" empty-message="未找到相关结果，换个关键词试试。" @select="handleSelect"
                     @select-tag="handleSelectTag" />
                 <p v-if="searchError" class="text-sm text-danger">{{ searchError }}</p>
             </div>
 
             <div
-                class="mt-6 flex items-center justify-between rounded-2xl border border-outline/20 bg-surface px-4 py-3 text-sm text-text-secondary">
+                class="mt-5 flex items-center justify-between rounded-2xl border border-outline/20 bg-surface px-3 py-2 text-sm text-text-secondary sm:mt-6 sm:px-4 sm:py-3">
                 <button
-                    class="rounded-full border border-outline/40 px-3 py-2 font-medium text-primary transition hover:bg-primary/10 disabled:cursor-not-allowed disabled:border-outline/30 disabled:text-text-muted disabled:opacity-70"
+                    class="rounded-full border border-outline/40 px-2.5 py-1.5 font-medium text-primary transition hover:bg-primary/10 disabled:cursor-not-allowed disabled:border-outline/30 disabled:text-text-muted disabled:opacity-70 sm:px-3 sm:py-2"
                     :disabled="!hasQuery || !hasPrevious" @click="prevPage">
                     上一页
                 </button>
                 <span>第 {{ currentPage }} 页</span>
                 <button
-                    class="rounded-full border border-outline/40 px-3 py-2 font-medium text-primary transition hover:bg-primary/10 disabled:cursor-not-allowed disabled:border-outline/30 disabled:text-text-muted disabled:opacity-70"
+                    class="rounded-full border border-outline/40 px-2.5 py-1.5 font-medium text-primary transition hover:bg-primary/10 disabled:cursor-not-allowed disabled:border-outline/30 disabled:text-text-muted disabled:opacity-70 sm:px-3 sm:py-2"
                     :disabled="!hasQuery || !hasNext" @click="nextPage">
                     下一页
                 </button>

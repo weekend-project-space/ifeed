@@ -1,23 +1,24 @@
 <template>
-    <div class="space-y-8">
-        <section class="space-y-6">
-            <div class="flex flex-col gap-4">
+    <div class="space-y-6 sm:space-y-8">
+        <section class="space-y-5 sm:space-y-6">
+            <div class="flex flex-col gap-3 sm:gap-4">
                 <div class="flex flex-wrap items-center justify-between gap-3">
                     <div>
                         <h1 class="text-lg font-semibold text-text">最新</h1>
                         <p class="text-sm text-text-secondary">来自你的订阅源</p>
                     </div>
-                    <button
-                        class="inline-flex items-center gap-2 rounded-full border border-primary/20 px-4 py-2 text-sm font-semibold text-primary transition hover:bg-primary/10"
-                        @click="refresh">
-                        <svg class="h-4 w-4" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6">
-                            <path stroke-linecap="round" stroke-linejoin="round"
-                                d="M4.5 8.5A5.5 5.5 0 0 1 10 3a5.5 5.5 0 0 1 4.75 2.75M15.5 11.5A5.5 5.5 0 0 1 10 17a5.5 5.5 0 0 1-4.75-2.75" />
-                            <path stroke-linecap="round" stroke-linejoin="round"
-                                d="M15.5 5.75V3h-2.75M4.5 14.25V17h2.75" />
-                        </svg>
-                        刷新推荐
-                    </button>
+                    <div class="flex flex-wrap items-center gap-2">
+                        <button type="button"
+                            class="inline-flex items-center gap-1 rounded-full border border-outline/40 bg-surface-container px-3 py-1.5 text-xs text-text-secondary transition hover:border-primary/50 hover:text-primary"
+                            @click="refresh" :disabled="articlesLoading">
+                            <svg class="h-4 w-4" viewBox="0 0 20 20" fill="none" stroke="currentColor"
+                                stroke-width="1.6">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M4 10a6 6 0 0 1 10-4.24M16 10a6 6 0 0 1-10 4.24M4 6V3.5M4 3.5h2.5M4 3.5 6.5 6M16 14v2.5M16 16.5h-2.5M16 16.5 13.5 14" />
+                            </svg>
+                            <span>{{ articlesLoading ? '刷新中…' : '刷新' }}</span>
+                        </button>
+                    </div>
                 </div>
 
                 <div class="space-y-3">
@@ -25,12 +26,12 @@
                     <div
                         class="flex items-center gap-2 overflow-x-auto whitespace-nowrap rounded-2xl border border-outline/20 bg-surface p-2 text-sm text-text-secondary">
                         <button
-                            class="rounded-full px-4 py-2 font-medium transition bg-surface text-text-secondary cursor-default"
+                            class="rounded-full px-3 py-1.5 font-medium transition bg-surface text-text-secondary cursor-default sm:px-4 sm:py-2"
                             disabled>
                             分类
                         </button>
                         <!-- 全部分类按钮 -->
-                        <button class="rounded-full px-4 py-2 font-medium transition"
+                        <button class="rounded-full px-3 py-1.5 font-medium transition sm:px-4 sm:py-2"
                             :class="getFilterClassForCategory('')" @click="clearCategoryFilter()">
                             全部
                         </button>
@@ -39,7 +40,7 @@
                         </template>
                         <template v-else>
                             <button v-for="c in topCategories" :key="c.category"
-                                class="rounded-full px-4 py-2 font-medium transition"
+                                class="rounded-full px-3 py-1.5 font-medium transition sm:px-4 sm:py-2"
                                 :class="getFilterClassForCategory(c.category)"
                                 @click="handleSelectCategory(c.category)">
                                 {{ c.category }}
@@ -118,21 +119,21 @@
                 正在加载文章...
             </div>
 
-            <div v-else class="space-y-4">
+            <div v-else class="space-y-3 sm:space-y-4">
                 <ArticleList :items="items" @select="handleSelect" @select-tag="handleSelectTag" />
                 <p v-if="articleError" class="text-sm text-danger">{{ articleError }}</p>
             </div>
 
             <div
-                class="flex items-center justify-between rounded-2xl border border-outline/20 bg-surface px-4 py-3 text-sm text-text-secondary">
+                class="flex items-center justify-between rounded-2xl border border-outline/20 bg-surface px-3 py-2 text-sm text-text-secondary sm:px-4 sm:py-3">
                 <button
-                    class="rounded-full border border-outline/40 px-3 py-2 font-medium text-primary transition hover:bg-primary/10 disabled:cursor-not-allowed disabled:border-outline/30 disabled:text-text-muted disabled:opacity-70"
+                    class="rounded-full border border-outline/40 px-2.5 py-1.5 font-medium text-primary transition hover:bg-primary/10 disabled:cursor-not-allowed disabled:border-outline/30 disabled:text-text-muted disabled:opacity-70 sm:px-3 sm:py-2"
                     :disabled="!hasPrevious" @click="prevPage">
                     上一页
                 </button>
                 <span>第 {{ currentPage }} 页</span>
                 <button
-                    class="rounded-full border border-outline/40 px-3 py-2 font-medium text-primary transition hover:bg-primary/10 disabled:cursor-not-allowed disabled:border-outline/30 disabled:text-text-muted disabled:opacity-70"
+                    class="rounded-full border border-outline/40 px-2.5 py-1.5 font-medium text-primary transition hover:bg-primary/10 disabled:cursor-not-allowed disabled:border-outline/30 disabled:text-text-muted disabled:opacity-70 sm:px-3 sm:py-2"
                     :disabled="!hasNext" @click="nextPage">
                     下一页
                 </button>

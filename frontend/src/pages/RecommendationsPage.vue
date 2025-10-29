@@ -1,6 +1,6 @@
 <template>
-  <div class="flex h-full flex-col gap-6 ">
-    <header class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+  <div class="flex h-full flex-col gap-4 sm:gap-6">
+    <header class="flex flex-wrap items-center justify-between gap-3">
       <div>
         <h1 class="text-xl font-semibold text-text">智能推荐</h1>
         <p class="text-sm text-text-secondary">
@@ -22,18 +22,18 @@
     </header>
 
     <section class="flex-1">
-      <div v-if="articleError" class="rounded-xl border border-outline/30 bg-error/5 p-6 text-sm text-error">
+      <div v-if="articleError" class="rounded-xl border border-outline/30 bg-error/5 p-4 text-sm text-error sm:p-6">
         <p class="font-medium">推荐请求出错：{{ articleError }}</p>
         <button type="button"
-          class="mt-3 inline-flex items-center gap-2 rounded-full bg-error text-error-foreground px-4 py-1.5 text-xs font-semibold transition hover:bg-error/90"
+          class="mt-3 inline-flex items-center gap-2 rounded-full bg-error text-error-foreground px-3 py-1.5 text-xs font-semibold transition hover:bg-error/90 sm:px-4"
           @click="refresh">
           重试一次
         </button>
       </div>
-      <div v-else-if="articlesLoading" class="space-y-4">
-        <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+      <div v-else-if="articlesLoading" class="space-y-3 sm:space-y-4">
+        <div class="grid gap-3 sm:grid-cols-2 sm:gap-4 xl:grid-cols-3 2xl:grid-cols-4">
           <div v-for="i in 4" :key="`recommend-skeleton-${i}`"
-            class="animate-pulse rounded-xl border border-outline/15 bg-surface-container px-5 py-6 shadow-sm shadow-black/0 transition">
+            class="animate-pulse rounded-xl border border-outline/15 bg-surface-container px-4 py-5 shadow-sm shadow-black/0 transition sm:px-5 sm:py-6">
             <div class="flex items-center justify-between gap-3">
               <div class="flex flex-1 items-center gap-2">
                 <div class="h-6 w-20 rounded-full bg-outline/15" />
@@ -55,7 +55,7 @@
           </div>
         </div>
         <div
-          class="flex items-center justify-center gap-2 rounded-xl border border-outline/20 bg-surface py-3 text-xs text-text-muted">
+          class="flex items-center justify-center gap-2 rounded-xl border border-outline/20 bg-surface py-2.5 text-xs text-text-muted sm:py-3">
           <svg class="h-4 w-4 animate-spin text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor"
             stroke-width="1.5">
             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"></circle>
@@ -65,22 +65,23 @@
         </div>
       </div>
       <div v-else-if="recommendations.length === 0"
-        class="rounded-xl border border-outline/20 bg-surface-container p-8 text-center text-sm text-text-secondary">
+        class="rounded-xl border border-outline/20 bg-surface-container p-6 text-center text-sm text-text-secondary sm:p-8">
         暂无推荐结果，尝试刷新或多收藏一些感兴趣的文章吧。
       </div>
       <div v-else>
         <ArticleList :items="articleItems" empty-message="暂无推荐结果，尝试刷新或多收藏一些文章吧。" @select="handleSelect"
           @select-tag="handleSelectTag" />
         <!-- 分页控件 -->
-        <div class="mt-6 flex items-center justify-between border-t border-outline/20 pt-4 text-sm text-text-secondary">
+        <div
+          class="mt-5 flex items-center justify-between border-t border-outline/20 pt-3 text-sm text-text-secondary sm:mt-6 sm:pt-4">
           <button type="button"
-            class="rounded-full border border-outline/30 px-3 py-2 font-medium text-primary transition hover:bg-primary/10 disabled:cursor-not-allowed disabled:border-outline/20 disabled:text-text-muted disabled:opacity-70"
+            class="rounded-full border border-outline/30 px-2.5 py-1.5 font-medium text-primary transition hover:bg-primary/10 disabled:cursor-not-allowed disabled:border-outline/20 disabled:text-text-muted disabled:opacity-70 sm:px-3 sm:py-2"
             :disabled="!hasPrevious" @click="prevPage">
             上一页
           </button>
           <span>第 {{ currentPage }} 页</span>
           <button type="button"
-            class="rounded-full border border-outline/30 px-3 py-2 font-medium text-primary transition hover:bg-primary/10 disabled:cursor-not-allowed disabled:border-outline/20 disabled:text-text-muted disabled:opacity-70"
+            class="rounded-full border border-outline/30 px-2.5 py-1.5 font-medium text-primary transition hover:bg-primary/10 disabled:cursor-not-allowed disabled:border-outline/20 disabled:text-text-muted disabled:opacity-70 sm:px-3 sm:py-2"
             :disabled="!hasNext" @click="nextPage">
             下一页
           </button>

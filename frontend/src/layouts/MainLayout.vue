@@ -2,7 +2,7 @@
   <div class="min-h-screen bg-surface text-text transition-colors duration-300"
     :class="{ 'overflow-hidden': mobileNavOpen }">
     <header class="sticky top-0 z-40  border-outline/40 bg-surface/90 backdrop-blur">
-      <div class="flex items-center gap-3 px-4 py-3 sm:px-6">
+      <div class="flex items-center gap-3 px-3 py-2 sm:px-6 sm:py-3">
         <div class="flex items-center gap-3">
           <button type="button"
             class="inline-flex h-10 w-10 items-center justify-center rounded-full border border-outline/60 text-text transition hover:border-primary/50 hover:text-primary lg:hidden"
@@ -92,7 +92,7 @@
         </div>
       </div>
 
-      <div class="px-4 pb-3 lg:hidden">
+      <div class="px-3 pb-3 lg:hidden sm:px-4">
         <div class="relative">
           <input v-model="search" type="search" placeholder="搜索文章、标签、订阅..."
             class="w-full rounded-full border border-outline/40 bg-surface-container pl-12 pr-12 py-3 text-sm text-text focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
@@ -125,7 +125,7 @@
       <div v-if="mobileNavOpen"
         class="fixed inset-y-0 left-0 z-40 flex w-64 flex-col border-r border-outline/30 bg-surface py-6 shadow-xl lg:hidden">
         <div class="flex h-full flex-col overflow-hidden">
-          <div class="flex items-center justify-between px-4 pb-4">
+          <div class="flex items-center justify-between px-3 pb-4 sm:px-4">
             <RouterLink :to="{ name: 'home' }" class="flex items-center gap-2 text-base font-semibold text-text"
               @click="mobileNavOpen = false">
               <span
@@ -140,7 +140,7 @@
               </svg>
             </button>
           </div>
-          <div class="px-4 pb-3">
+          <div class="px-3 pb-3 sm:px-4">
             <p class="text-[11px] font-semibold text-text-muted/80">导航</p>
           </div>
           <nav class="flex-1 space-y-5 overflow-y-auto px-2">
@@ -201,8 +201,8 @@
               </div>
             </div>
           </nav>
-          <div v-if="!isSidebarCollapsed" class="mt-auto px-4 pt-6">
-            <div class="rounded-2xl border border-outline/40 bg-surface-container px-4 py-4">
+          <div v-if="!isSidebarCollapsed" class="mt-auto px-3 pt-5 sm:px-4 sm:pt-6">
+            <div class="rounded-2xl border border-outline/40 bg-surface-container px-3 py-3 sm:px-4 sm:py-4">
               <div class="flex items-center gap-3">
                 <div
                   class="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-primary text-sm font-semibold text-primary-foreground">
@@ -295,7 +295,7 @@
         </div>
       </aside>
 
-      <main class="flex-1 overflow-y-auto bg-surface-variant/30 px-4 pb-12 pt-6 sm:px-6">
+      <main class="flex-1 overflow-y-auto bg-surface-variant/30 px-3 pb-10 pt-5 sm:px-6 sm:pb-12 sm:pt-6">
         <router-view />
       </main>
     </div>

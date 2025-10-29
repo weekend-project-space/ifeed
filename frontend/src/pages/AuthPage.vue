@@ -1,8 +1,8 @@
 <template>
   <div class="min-h-screen bg-surface text-text transition-colors duration-300">
-    <div class="mx-auto flex min-h-screen max-w-5xl items-center justify-center px-4 py-12">
+    <div class="mx-auto flex min-h-screen max-w-5xl items-center justify-center px-3 py-8 sm:px-4 sm:py-12">
       <div class="w-full max-w-md overflow-hidden rounded-3xl border border-outline/40 bg-surface-container">
-        <div class="flex items-center justify-between border-b border-outline/30 px-8 py-6">
+        <div class="flex items-center justify-between border-b border-outline/30 px-5 py-5 sm:px-8 sm:py-6">
           <div>
             <h1 class="text-2xl font-semibold text-text">欢迎使用 iFeed</h1>
             <p class="mt-1 text-sm text-text-secondary">AI 驱动的 RSS 阅读体验</p>
@@ -19,9 +19,9 @@
             </svg>
           </button>
         </div>
-        <div class="px-8 py-6">
+        <div class="px-5 py-5 sm:px-8 sm:py-6">
           <div
-            class="mb-6 flex rounded-full border border-outline/40 bg-surface-variant/60 p-1 text-sm font-medium text-text-muted">
+            class="mb-5 flex rounded-full border border-outline/40 bg-surface-variant/60 p-1 text-sm font-medium text-text-muted sm:mb-6">
             <button type="button" class="flex-1 rounded-full py-2 transition"
               :class="mode === 'login' ? 'bg-surface text-text border border-outline/50' : ''"
               @click="switchMode('login')">
@@ -37,31 +37,31 @@
             <div>
               <label class="block text-sm font-medium text-text-muted">用户名</label>
               <input v-model.trim="form.username" type="text" autocomplete="username" required
-                class="mt-1 block w-full rounded-2xl border border-outline/50 bg-surface px-4 py-3 text-sm text-text transition focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                class="mt-1 block w-full rounded-2xl border border-outline/50 bg-surface px-3 py-2.5 text-sm text-text transition focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 sm:px-4 sm:py-3"
                 placeholder="输入用户名" />
             </div>
             <div>
               <label class="block text-sm font-medium text-text-muted">密码</label>
               <input v-model="form.password" type="password" autocomplete="current-password" required
-                class="mt-1 block w-full rounded-2xl border border-outline/50 bg-surface px-4 py-3 text-sm text-text transition focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                class="mt-1 block w-full rounded-2xl border border-outline/50 bg-surface px-3 py-2.5 text-sm text-text transition focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 sm:px-4 sm:py-3"
                 placeholder="输入密码" />
             </div>
             <transition name="fade">
               <div v-if="mode === 'register'">
                 <label class="block text-sm font-medium text-text-muted">确认密码</label>
                 <input v-model="form.confirmPassword" type="password" autocomplete="new-password" required
-                  class="mt-1 block w-full rounded-2xl border border-outline/50 bg-surface px-4 py-3 text-sm text-text transition focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                  class="mt-1 block w-full rounded-2xl border border-outline/50 bg-surface px-3 py-2.5 text-sm text-text transition focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 sm:px-4 sm:py-3"
                   placeholder="再次输入密码" />
               </div>
             </transition>
 
             <p v-if="errorMessage"
-              class="rounded-2xl border border-danger/30 bg-danger/10 px-4 py-2 text-sm text-danger">
+              class="rounded-2xl border border-danger/30 bg-danger/10 px-3 py-1.5 text-sm text-danger sm:px-4 sm:py-2">
               {{ errorMessage }}
             </p>
 
             <button type="submit"
-              class="w-full rounded-2xl bg-primary py-3 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
+              class="w-full rounded-2xl bg-primary py-2.5 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60 sm:py-3"
               :disabled="submitting">
               <span v-if="submitting" class="inline-flex items-center justify-center gap-2">
                 <svg class="h-5 w-5 animate-spin" viewBox="0 0 24 24" fill="none">

@@ -1,14 +1,14 @@
 <template>
-    <div class="space-y-8">
-        <section class="space-y-6">
-            <div class="flex flex-col gap-4">
+    <div class="space-y-6 sm:space-y-8">
+        <section class="space-y-5 sm:space-y-6">
+            <div class="flex flex-col gap-3 sm:gap-4">
                 <div class="flex flex-wrap items-center justify-between gap-3">
                     <div>
                         <h1 class="text-3xl f-semibold text-text">为你推荐</h1>
                         <p class="text-sm text-text-secondary">灵感来自订阅与 AI 筛选 · 分类与热门标签来自最近两周</p>
                     </div>
                     <button
-                        class="inline-flex items-center gap-2 rounded-full border border-primary/20 px-4 py-2 text-sm font-semibold text-primary transition hover:bg-primary/10"
+                        class="inline-flex items-center gap-2 rounded-full border border-primary/20 px-3 py-1.5 text-sm font-semibold text-primary transition hover:bg-primary/10 sm:px-4 sm:py-2"
                         @click="refresh">
                         <svg class="h-4 w-4" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6">
                             <path stroke-linecap="round" stroke-linejoin="round"
@@ -25,12 +25,12 @@
                     <div
                         class="flex items-center gap-2 overflow-x-auto whitespace-nowrap rounded-2xl border border-outline/20 bg-surface p-2 text-sm text-text-secondary">
                         <button
-                            class="rounded-full px-4 py-2 font-medium transition bg-surface text-text-secondary cursor-default"
+                            class="rounded-full px-3 py-1.5 font-medium transition bg-surface text-text-secondary cursor-default sm:px-4 sm:py-2"
                             disabled>
                             分类
                         </button>
                         <!-- 全部分类按钮 -->
-                        <button class="rounded-full px-4 py-2 font-medium transition"
+                        <button class="rounded-full px-3 py-1.5 font-medium transition sm:px-4 sm:py-2"
                             :class="getFilterClassForCategory('')" @click="clearCategoryFilter()">
                             全部
                         </button>
@@ -39,7 +39,7 @@
                         </template>
                         <template v-else>
                             <button v-for="c in topCategories" :key="c.category"
-                                class="rounded-full px-4 py-2 font-medium transition"
+                                class="rounded-full px-3 py-1.5 font-medium transition sm:px-4 sm:py-2"
                                 :class="getFilterClassForCategory(c.category)"
                                 @click="handleSelectCategory(c.category)">
                                 {{ c.category }}
@@ -187,8 +187,8 @@
             <!--            </div>-->
         </section>
 
-        <section class="space-y-5">
-            <div class="flex flex-wrap items-center justify-between gap-4">
+        <section class="space-y-4 sm:space-y-5">
+            <div class="flex flex-wrap items-center justify-between gap-3 sm:gap-4">
                 <div class="space-y-1">
                     <h2 class="text-2xl font-semibold text-text">最新</h2>
                     <p class="text-sm text-text-secondary">
@@ -197,7 +197,7 @@
                     </p>
                 </div>
                 <button
-                    class="inline-flex items-center gap-2 rounded-full border border-primary/20 px-4 py-2 text-sm font-semibold text-primary transition hover:bg-primary/10"
+                    class="inline-flex items-center gap-2 rounded-full border border-primary/20 px-3 py-1.5 text-sm font-semibold text-primary transition hover:bg-primary/10 sm:px-4 sm:py-2"
                     @click="refresh">
                     <svg class="h-4 w-4" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6">
                         <path stroke-linecap="round" stroke-linejoin="round"
@@ -209,25 +209,25 @@
             </div>
 
             <div v-if="articlesLoading"
-                class="grid place-items-center rounded-3xl border border-outline/20 bg-surface-container py-20 text-sm text-text-muted">
+                class="grid place-items-center rounded-3xl border border-outline/20 bg-surface-container py-14 text-sm text-text-muted sm:py-20">
                 正在加载文章...
             </div>
 
-            <div v-else class="space-y-4">
+            <div v-else class="space-y-3 sm:space-y-4">
                 <ArticleList :items="recommendedArticles" @select="handleSelect" @select-tag="handleSelectTag" />
                 <p v-if="articleError" class="text-sm text-danger">{{ articleError }}</p>
             </div>
 
             <div
-                class="flex items-center justify-between rounded-2xl border border-outline/20 bg-surface px-4 py-3 text-sm text-text-secondary">
+                class="flex items-center justify-between rounded-2xl border border-outline/20 bg-surface px-3 py-2 text-sm text-text-secondary sm:px-4 sm:py-3">
                 <button
-                    class="rounded-full border border-outline/40 px-3 py-2 font-medium text-primary transition hover:bg-primary/10 disabled:cursor-not-allowed disabled:border-outline/30 disabled:text-text-muted disabled:opacity-70"
+                    class="rounded-full border border-outline/40 px-2.5 py-1.5 font-medium text-primary transition hover:bg-primary/10 disabled:cursor-not-allowed disabled:border-outline/30 disabled:text-text-muted disabled:opacity-70 sm:px-3 sm:py-2"
                     :disabled="!hasPrevious" @click="prevPage">
                     上一页
                 </button>
                 <span>第 {{ currentPage }} 页</span>
                 <button
-                    class="rounded-full border border-outline/40 px-3 py-2 font-medium text-primary transition hover:bg-primary/10 disabled:cursor-not-allowed disabled:border-outline/30 disabled:text-text-muted disabled:opacity-70"
+                    class="rounded-full border border-outline/40 px-2.5 py-1.5 font-medium text-primary transition hover:bg-primary/10 disabled:cursor-not-allowed disabled:border-outline/30 disabled:text-text-muted disabled:opacity-70 sm:px-3 sm:py-2"
                     :disabled="!hasNext" @click="nextPage">
                     下一页
                 </button>

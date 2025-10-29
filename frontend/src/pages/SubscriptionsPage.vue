@@ -1,7 +1,8 @@
 <template>
-  <div class="mx-auto max-w-5xl space-y-10 px-4 py-10">
+  <div class="mx-auto max-w-5xl space-y-6 px-0 py-6 sm:space-y-8 sm:px-4 sm:py-8 lg:space-y-10 lg:py-10">
     <section class="rounded-2xl border border-outline/15 bg-surface transition">
-      <div class="flex flex-col gap-3 border-b border-outline/10 px-6 py-5 md:flex-row md:items-end md:justify-between">
+      <div
+        class="flex flex-col gap-3 border-b border-outline/10 px-3 py-4 md:flex-row md:items-end md:justify-between sm:px-6 sm:py-5">
         <div>
           <h2 class="text-lg font-semibold text-text">管理订阅源</h2>
           <p class="mt-1 text-sm text-text-secondary">选择手动添加或批量导入订阅。</p>
@@ -11,7 +12,7 @@
           <div class="absolute inset-y-1 rounded-full bg-primary/10 shadow-sm transition-all duration-300 ease-out"
             :style="tabIndicatorStyle"></div>
           <button v-for="tab in tabs" :key="tab.key" type="button"
-            class="relative z-[1] flex-1 rounded-full px-4 py-2 transition focus:outline-none focus:ring-2 focus:ring-primary/20"
+            class="relative z-[1] flex-1 rounded-full px-3 py-1.5 transition focus:outline-none focus:ring-2 focus:ring-primary/20 sm:px-4 sm:py-2"
             :class="activeTab === tab.key ? 'text-text' : 'text-text-muted hover:text-text'"
             @click="setActiveTab(tab.key)">
             {{ tab.label }}
@@ -19,15 +20,14 @@
         </nav>
       </div>
 
-      <div class="px-6 py-6">
-        <div v-if="activeTab === 'manual'"
-          class="space-y-5 rounded-xl border border-outline/10 bg-surface-container p-5">
+      <div class="px-3 py-5 sm:px-6 sm:py-6">
+        <div v-if="activeTab === 'manual'" class="space-y-4 rounded-xl bg-surface-container ">
           <p class="text-sm text-text-secondary">粘贴 RSS 地址或网站链接，我们会自动检测支持的内容。</p>
           <form class="flex flex-col gap-3 md:flex-row" @submit.prevent="handleAdd">
             <input v-model.trim="newFeedUrl" type="url" required placeholder="https://example.com/feed.xml"
-              class="flex-1 rounded-full border border-outline/40 bg-surface px-4 py-3 text-sm text-text transition placeholder:text-text-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20" />
+              class="flex-1 rounded-full border border-outline/40 bg-surface px-3 py-2.5 text-sm text-text transition placeholder:text-text-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 sm:px-4 sm:py-3" />
             <button type="submit"
-              class="inline-flex items-center justify-center rounded-full bg-gradient-to-r from-primary to-primary/80 px-5 py-3 text-sm font-semibold text-primary-foreground transition hover:from-primary/90 hover:to-primary/70 disabled:cursor-not-allowed disabled:opacity-60"
+              class="inline-flex items-center justify-center rounded-full bg-gradient-to-r from-primary to-primary/80 px-3.5 py-2.5 text-sm font-semibold text-primary-foreground transition hover:from-primary/90 hover:to-primary/70 disabled:cursor-not-allowed disabled:opacity-60 sm:px-5 sm:py-3"
               :disabled="subscriptionsStore.submitting">
               {{ subscriptionsStore.submitting ? '添加中...' : '添加订阅' }}
             </button>
@@ -35,26 +35,25 @@
           <p v-if="subscriptionsStore.error" class="text-sm text-danger">{{ subscriptionsStore.error }}</p>
         </div>
 
-        <div v-else-if="activeTab === 'search'"
-          class="space-y-5 rounded-xl border border-outline/10 bg-surface-container p-5">
+        <div v-else-if="activeTab === 'search'" class="space-y-4 bg-surface-container">
           <p class="text-sm text-text-secondary">
             输入关键词、站点或订阅标题，快速查找系统内已存在的订阅源。
           </p>
           <form class="flex flex-col gap-3 md:flex-row" @submit.prevent="handleSearch">
             <input v-model.trim="searchQuery" type="search" placeholder="例如：36kr、https://example.com 或科技"
-              class="flex-1 rounded-full border border-outline/40 bg-surface px-4 py-3 text-sm text-text transition placeholder:text-text-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20" />
+              class="flex-1 rounded-full border border-outline/40 bg-surface px-3 py-2.5 text-sm text-text transition placeholder:text-text-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 sm:px-4 sm:py-3" />
             <button type="submit"
-              class="inline-flex items-center justify-center rounded-full border border-outline/40 bg-surface px-5 py-3 text-sm font-semibold text-text transition hover:border-primary hover:text-primary disabled:cursor-not-allowed disabled:opacity-60"
+              class="inline-flex items-center justify-center rounded-full border border-outline/40 bg-surface px-3.5 py-2.5 text-sm font-semibold text-text transition hover:border-primary hover:text-primary disabled:cursor-not-allowed disabled:opacity-60 sm:px-5 sm:py-3"
               :disabled="searchLoading">
               {{ searchLoading ? '搜索中...' : '搜索订阅' }}
             </button>
           </form>
           <p v-if="searchError" class="text-sm text-danger">{{ searchError }}</p>
-          <div v-if="searchLoading" class="py-10 text-center text-sm text-text-muted">正在搜索订阅源...</div>
-          <ul v-else class="space-y-4">
+          <div v-if="searchLoading" class="py-8 text-center text-sm text-text-muted sm:py-10">正在搜索订阅源...</div>
+          <ul v-else class="space-y-3 sm:space-y-4">
             <li v-for="feed in searchResults" :key="feed.feedId"
-              class="rounded-xl border border-outline/20 bg-surface p-4 transition hover:border-outline/40">
-              <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+              class="rounded-xl border border-outline/20 bg-surface p-3 transition hover:border-outline/40 sm:p-4">
+              <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
                 <div class="min-w-0 space-y-1.5">
                   <p class="truncate text-sm font-medium text-text">
                     {{ displayTitle(feed) }}
@@ -74,17 +73,17 @@
                 </div>
                 <div class="flex flex-col items-stretch gap-2 text-xs sm:flex-row sm:items-center sm:gap-3">
                   <button v-if="isSubscribed(feed)" type="button"
-                    class="rounded-full border border-outline/40 px-4 py-2 font-medium text-primary transition hover:border-primary hover:text-primary"
+                    class="rounded-full border border-outline/40 px-3 py-1.5 font-medium text-primary transition hover:border-primary hover:text-primary sm:px-4 sm:py-2"
                     @click="viewArticles(feed.feedId)">
                     查看频道
                   </button>
                   <button v-else type="button"
-                    class="rounded-full bg-gradient-to-r from-primary to-primary/80 px-4 py-2 font-semibold text-primary-foreground transition hover:from-primary/90 hover:to-primary/70 disabled:cursor-not-allowed disabled:opacity-60"
+                    class="rounded-full bg-gradient-to-r from-primary to-primary/80 px-3 py-1.5 font-semibold text-primary-foreground transition hover:from-primary/90 hover:to-primary/70 disabled:cursor-not-allowed disabled:opacity-60 sm:px-4 sm:py-2"
                     :disabled="subscriptionsStore.submitting" @click="subscribeFromSearch(feed)">
                     {{ subscriptionsStore.submitting ? '处理中...' : '添加订阅' }}
                   </button>
                   <a :href="feed.url" target="_blank" rel="noopener noreferrer"
-                    class="rounded-full border border-outline/30 px-4 py-2 text-center font-medium text-text-muted transition hover:border-outline/50 hover:text-text">
+                    class="rounded-full border border-outline/30 px-3 py-1.5 text-center font-medium text-text-muted transition hover:border-outline/50 hover:text-text sm:px-4 sm:py-2">
                     访问 RSS
                   </a>
                 </div>
@@ -97,12 +96,11 @@
           </ul>
         </div>
 
-        <div v-else class="space-y-5 rounded-xl border border-outline/10 bg-surface-container p-5">
+        <div v-else class="space-y-4 bg-surface-container">
           <p class="text-sm text-text-secondary">
             上传一个 OPML 文件批量导入订阅。我们会先解析并展示结果，你可以选择保留的订阅项。
           </p>
-          <div
-            class="flex flex-col gap-4 rounded-xl border border-dashed border-outline/30 bg-surface p-5 md:flex-row md:items-center md:justify-between">
+          <div class="flex flex-col gap-4    md:flex-row md:items-center md:justify-between">
             <div class="flex flex-1 items-center gap-4">
               <div
                 class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-outline/20 bg-primary/10 text-xs font-semibold uppercase tracking-[0.3em] text-primary">
@@ -115,7 +113,7 @@
             </div>
             <div class="flex items-center gap-3">
               <input ref="opmlFileInput" type="file" accept=".opml,.xml"
-                class="block w-full cursor-pointer rounded-full border border-outline/40 bg-surface px-4 py-3 text-sm text-text transition file:mr-3 file:rounded-full file:border-0 file:bg-primary file:px-4 file:py-2 file:text-sm file:font-semibold file:text-primary-foreground hover:border-primary focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 md:w-auto"
+                class="block w-full cursor-pointer rounded-full border border-outline/40 bg-surface px-3 py-2.5 text-sm text-text transition file:mr-3 file:rounded-full file:border-0 file:bg-primary file:px-3.5 file:py-2 file:text-sm file:font-semibold file:text-primary-foreground hover:border-primary focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 md:w-auto sm:px-4 sm:py-3 sm:file:px-4"
                 @change="handleOpmlFileChange" />
               <button
                 class="inline-flex items-center justify-center rounded-full bg-gradient-to-r from-primary to-primary/80 px-5 py-3 text-sm font-semibold text-primary-foreground transition hover:from-primary/90 hover:to-primary/70 disabled:cursor-not-allowed disabled:opacity-60"
@@ -130,17 +128,18 @@
     </section>
 
     <section class="rounded-2xl border border-outline/30 bg-surface-container">
-      <header class="flex flex-wrap items-center justify-between gap-3 border-b border-outline/30 px-6 py-4">
+      <header
+        class="flex flex-wrap items-center justify-between gap-3 border-b border-outline/30 px-3 py-3 sm:px-6 sm:py-4">
         <div>
           <h2 class="text-lg font-semibold text-text">我的订阅</h2>
           <p class="text-sm text-text-secondary">当前共 {{ items.length }} 个订阅源。</p>
         </div>
         <button class="text-sm font-medium text-text-muted transition hover:text-text" @click="refresh">刷新</button>
       </header>
-      <div v-if="subscriptionsStore.loading" class="py-12 text-center text-text-muted">加载中...</div>
+      <div v-if="subscriptionsStore.loading" class="py-9 text-center text-text-muted sm:py-12">加载中...</div>
       <ul v-else class="divide-y divide-outline/20">
         <li v-for="item in items" :key="item.feedId"
-          class="flex flex-wrap items-center justify-between gap-4 px-6 py-4">
+          class="flex flex-wrap items-center justify-between gap-3 px-3 py-3 sm:gap-4 sm:px-6 sm:py-4">
           <div class="min-w-0 space-y-1.5">
             <p class="truncate text-sm font-medium text-text">
               {{ displayTitle(item) }}
@@ -174,15 +173,16 @@
             </button>
           </div>
         </li>
-        <li v-if="!items.length" class="px-6 py-10 text-center text-text-muted">暂无订阅，先添加一个试试。</li>
+        <li v-if="!items.length" class="px-3 py-7 text-center text-text-muted sm:px-6 sm:py-10">暂无订阅，先添加一个试试。</li>
       </ul>
     </section>
     <transition name="fade">
-      <div v-if="showOpmlModal" class="fixed inset-0 z-50 flex items-center justify-center px-4 py-6"
+      <div v-if="showOpmlModal" class="fixed inset-0 z-50 flex items-center justify-center px-2 py-5 sm:px-4 sm:py-6"
         style="--tw-space-y-reverse:none">
         <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" @click="closeOpmlModal"></div>
         <div class="relative z-10 w-full max-w-3xl overflow-hidden rounded-2xl border border-outline/15 bg-surface">
-          <header class="flex items-start justify-between gap-4 border-b border-outline/15 px-6 py-4">
+          <header
+            class="flex items-start justify-between gap-3 border-b border-outline/15 px-3 py-3 sm:gap-4 sm:px-6 sm:py-4">
             <div>
               <h3 class="text-lg font-semibold text-text">OPML 导入预览</h3>
               <p class="text-sm text-text-secondary">勾选需要导入的订阅，确认后即可批量添加。</p>
@@ -192,7 +192,7 @@
               关闭
             </button>
           </header>
-          <div class="px-6 py-5 space-y-4">
+          <div class="space-y-3 px-3 py-4 sm:space-y-4 sm:px-6 sm:py-5">
             <div v-if="opmlWarnings.length"
               class="rounded-xl border border-warning/30 bg-warning/10 p-4 text-sm text-warning-foreground">
               <p class="font-medium">解析提醒</p>
@@ -211,9 +211,9 @@
                   {{ isAllSelected ? '全不选' : '全选可导入项' }}
                 </button>
               </div>
-              <ul class="space-y-3">
+              <ul class="space-y-2.5 sm:space-y-3">
                 <li v-for="feed in opmlPreviewFeeds" :key="feed.feedUrl"
-                  class="rounded-xl border border-outline/20 bg-surface p-4">
+                  class="rounded-xl border border-outline/20 bg-surface p-3 sm:p-4">
                   <label class="flex flex-col gap-3 md:flex-row md:items-start md:gap-4">
                     <input type="checkbox"
                       class="mt-1 h-4 w-4 rounded border-outline/40 text-primary focus:ring-primary/20 md:mt-2"
@@ -264,14 +264,14 @@
                 </p>
               </div>
               <button type="button"
-                class="inline-flex items-center justify-center rounded-full bg-gradient-to-r from-primary to-primary/80 px-5 py-3 text-sm font-semibold text-primary-foreground transition hover:from-primary/90 hover:to-primary/70 disabled:cursor-not-allowed disabled:opacity-60 md:ml-auto"
+                class="inline-flex items-center justify-center rounded-full bg-gradient-to-r from-primary to-primary/80 px-3.5 py-2.5 text-sm font-semibold text-primary-foreground transition hover:from-primary/90 hover:to-primary/70 disabled:cursor-not-allowed disabled:opacity-60 md:ml-auto sm:px-5 sm:py-3"
                 :disabled="opmlConfirmLoading || !hasSelectedFeeds || selectedCount > remainingQuota"
                 @click="handleConfirmOpml">
                 {{ opmlConfirmLoading ? '导入中...' : '确认导入' }}
               </button>
             </div>
             <div v-if="opmlConfirmResult"
-              class="rounded-xl border border-outline/20 bg-surface px-4 py-4 text-sm text-text-secondary">
+              class="rounded-xl border border-outline/20 bg-surface px-3 py-3 text-sm text-text-secondary sm:px-4 sm:py-4">
               <div class="flex flex-col gap-3">
                 <div class="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
                   <div>
@@ -279,7 +279,7 @@
                     <p class="text-xs text-text-muted">成功导入 {{ opmlConfirmResult.importedCount }} 个订阅。</p>
                   </div>
                   <button
-                    class="rounded-full border border-outline/40 px-4 py-2 text-xs font-medium text-text-muted transition hover:border-outline/60 hover:text-text"
+                    class="rounded-full border border-outline/40 px-3 py-1.5 text-xs font-medium text-text-muted transition hover:border-outline/60 hover:text-text sm:px-4 sm:py-2"
                     @click="handleSuccessClose">
                     关闭
                   </button>
