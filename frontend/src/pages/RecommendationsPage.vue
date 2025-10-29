@@ -153,14 +153,17 @@ const handleSelectTag = (tag: string) => {
   router.push({ name: 'home', query: { tags: tag.toLowerCase() } });
 };
 
-// 监听路由参数变化
-watch(
-  () => routePage.value,
-  (page) => {
-    loadRecommendations(page);
-  },
-  { immediate: true }
-);
+onMounted(() => {
+  // 监听路由参数变化
+  watch(
+    () => routePage.value,
+    (page) => {
+      loadRecommendations(page);
+    },
+    { immediate: true }
+  );
+});
+
 
 function nextPage() {
   if (hasNextPage.value) {

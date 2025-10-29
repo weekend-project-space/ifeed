@@ -79,8 +79,6 @@ const router = createRouter({
 router.beforeEach(async (to: any) => {
   const auth = useAuthStore();
   window.scrollTo({ top: 0, behavior: 'smooth' });
-
-  // console.log(auth)
   if (!auth.initialized && auth.token) {
     try {
       await auth.fetchUser();
