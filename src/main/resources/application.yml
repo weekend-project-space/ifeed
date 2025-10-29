@@ -6,6 +6,12 @@ spring:
     username: i_feed
     password: 0123.
     driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 200
+      connection-timeout: 30000
+  threads:
+    virtual:
+      enabled: true
   ai:
     openai:
       api-key: ${ai.provider.api-key}
@@ -43,7 +49,7 @@ rss:
     max-items: 500
 embedding:
   document:
-    fixed-delay: ${rss.fetcher.fixed-delay}
+    fixed-delay: PT15M
     initial-delay: ${rss.fetcher.initial-delay}
   user:
     fixed-delay: PT12H
