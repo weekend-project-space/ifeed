@@ -117,8 +117,7 @@
 
     <!-- <section class="rounded-3xl border border-outline/40 bg-surface-container px-4 py-5 sm:px-6 sm:py-6"> -->
     <section>
-      <header
-        class="flex flex-wrap items-center justify-between gap-3 border-b border-outline/20 pb-3 sm:gap-4 sm:pb-4">
+      <header class="flex flex-wrap items-center justify-between gap-3  pb-3 sm:gap-4 sm:pb-4">
         <div>
           <h2 class="text-xl font-semibold text-text">频道文章</h2>
           <p class="text-sm text-text-secondary">基于订阅源实时抓取的最新内容。</p>

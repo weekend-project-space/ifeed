@@ -1,8 +1,11 @@
 <template>
-  <article
-    class="group relative flex h-full cursor-pointer flex-col overflow-hidden rounded-xl border border-outline/20 bg-surface transition hover:border-outline/40"
+  <article class="group relative flex h-full cursor-pointer flex-col overflow-hidden rounded-xl bg-surface p-2 "
     @click="handleSelect">
-    <figure class="relative aspect-video w-full overflow-hidden bg-surface">
+    <!-- 扩散背景 -->
+    <span class="pointer-events-none absolute inset-0 origin-center scale-50 rounded h-1/2
+                bg-primary/10 transition-transform duration-500 ease-out 
+                group-hover:scale-[1.02] group-hover:h-full"></span>
+    <figure class="relative aspect-video w-full overflow-hidden bg-surface rounded-xl">
       <img v-if="article.thumbnail && !thumbError" :src="article.thumbnail" alt="文章缩略图" loading="lazy"
         class="h-full w-full object-cover transition duration-300 group-hover:scale-[1.02]"
         @error="thumbError = true" />
@@ -21,7 +24,7 @@
       </div>
       <!-- Remove hover gradient overlay for a flatter look -->
     </figure>
-    <div class="flex flex-1 flex-col gap-3 p-4 sm:gap-4 sm:p-5">
+    <div class="flex flex-1 flex-col gap-3 py-4 sm:gap-4 sm:py-5">
       <header class="flex items-start gap-3 sm:gap-4">
         <div class="min-w-0 flex-1 space-y-1">
           <h3 class="text-base font-semibold leading-tight text-text"

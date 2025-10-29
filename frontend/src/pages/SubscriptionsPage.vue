@@ -43,7 +43,7 @@
             <input v-model.trim="searchQuery" type="search" placeholder="例如：36kr、https://example.com 或科技"
               class="flex-1 rounded-full border border-outline/40 bg-surface px-3 py-2.5 text-sm text-text transition placeholder:text-text-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 sm:px-4 sm:py-3" />
             <button type="submit"
-              class="inline-flex items-center justify-center rounded-full border border-outline/40 bg-surface px-3.5 py-2.5 text-sm font-semibold text-text transition hover:border-primary hover:text-primary disabled:cursor-not-allowed disabled:opacity-60 sm:px-5 sm:py-3"
+              class="inline-flex items-center justify-center rounded-full bg-gradient-to-r from-primary to-primary/80 px-3.5 py-2.5 text-sm font-semibold text-primary-foreground transition hover:from-primary/90 hover:to-primary/70 disabled:cursor-not-allowed disabled:opacity-60 sm:px-5 sm:py-3"
               :disabled="searchLoading">
               {{ searchLoading ? '搜索中...' : '搜索订阅' }}
             </button>
