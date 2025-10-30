@@ -24,8 +24,8 @@ public class EmbeddingScheduler {
 
     private final ArticleRepository articleRepository;
 
-    @Scheduled(initialDelayString = "${rss.user.initial-delay:PT10S}",
-            fixedDelayString = "${rss.user.fixed-delay:PT30M}")
+    @Scheduled(initialDelayString = "${embedding.user.initial-delay:PT10S}",
+            fixedDelayString = "${embedding.user.fixed-delay:PT30M}")
     public void userEmbedding() {
         log.info("init user embedding");
         try {
@@ -44,8 +44,8 @@ public class EmbeddingScheduler {
     }
 
 
-    @Scheduled(initialDelayString = "${rss.document.initial-delay:PT10S}",
-            fixedDelayString = "${rss.document.fixed-delay:PT30M}")
+    @Scheduled(initialDelayString = "${embedding.document.initial-delay:PT10S}",
+            fixedDelayString = "${embedding.document.fixed-delay:PT30M}")
     public void docEmbedding() {
         log.info("init article embedding");
         try {

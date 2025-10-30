@@ -37,23 +37,23 @@ spring:
       password: mongo_MDNyW6
       database: i_feed
   profiles:
-    active: dev
+    active: rel
 
 # 定时任务
 rss:
   fetcher:
-    fixed-delay: PT30M
-    initial-delay: PT30S
+    fixed-delay: PT60M
+    initial-delay: PT5M
     connect-timeout: 50s
     read-timeout: 100s
     max-items: 500
 embedding:
   document:
-    fixed-delay: PT15M
-    initial-delay: ${rss.fetcher.initial-delay}
+    fixed-delay: PT10M
+    initial-delay: PT15M
   user:
     fixed-delay: PT12H
-    initial-delay: PT30S
+    initial-delay: PT30s
 
 # ai 集成
 ai:
@@ -72,4 +72,6 @@ search:
     fusion-top-k: 200
     bm25-weight: 0.6
     vector-weight: 0.4
+    freshness-time-weight: 0.3
+    freshness-lambda: 0.01
     similarity-threshold: 0.3

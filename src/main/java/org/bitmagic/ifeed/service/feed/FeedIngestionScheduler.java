@@ -33,7 +33,7 @@ public class FeedIngestionScheduler {
                     log.error("fetch err", e);
                 }
             });
-            log.info("end scheduled time:{}ms ingestion for {} feeds success :{}", System.currentTimeMillis() - start, feedIds.size(), counter.get());
+            log.info("end scheduled time:{}s ingestion for {} feeds success :{}", (System.currentTimeMillis() - start) / 1000, feedIds.size(), counter.get());
         } catch (RuntimeException e) {
             log.warn("refreshFeeds", e);
         }
