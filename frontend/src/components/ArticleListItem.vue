@@ -1,5 +1,5 @@
 <template>
-  <article class="group relative flex h-full cursor-pointer flex-col overflow-hidden rounded-xl bg-surface p-2 "
+  <article class="group relative flex h-full cursor-pointer flex-col overflow-hidden rounded-xl bg-surface p-3"
     @click="handleSelect">
     <!-- 扩散背景 -->
     <span class="pointer-events-none absolute inset-0 origin-center scale-50 rounded h-1/2

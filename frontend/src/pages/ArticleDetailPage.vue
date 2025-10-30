@@ -19,8 +19,10 @@
               <div class="flex flex-wrap items-start justify-between gap-3 sm:gap-4">
                 <div class="space-y-2">
                   <p class="text-sm text-text-muted">
-                    <router-link v-if="article.feedId" :to="'/feeds/'+article.feedId"
-                       class="font-medium text-primary transition hover:opacity-80">{{ article.feedTitle }} </router-link> · {{ article.timeAgo }}</p>
+                    <router-link v-if="article.feedId" :to="'/feeds/' + article.feedId"
+                      class="font-medium text-primary transition hover:opacity-80">{{ article.feedTitle }}
+                    </router-link> · {{ article.timeAgo }}
+                  </p>
                   <h1 class="text-3xl font-semibold leading-tight text-text">{{ article.title }}</h1>
                 </div>
                 <button
@@ -351,137 +353,128 @@ watch(
 );
 </script>
 
-<style scoped>
+<style lang="scss">
 .article-content {
   font-size: 1rem;
   line-height: 1.8;
   color: rgb(var(--md-text));
+
+  p {
+    margin-bottom: 1.25rem;
+    color: inherit;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-weight: 600;
+    color: rgb(var(--md-text));
+    margin-top: 2.5rem;
+    margin-bottom: 1rem;
+    scroll-margin-top: 128px;
+  }
+
+  h1 {
+    font-size: 1.875rem;
+  }
+
+  h2 {
+    font-size: 1.5rem;
+  }
+
+  h3 {
+    font-size: 1.25rem;
+  }
+
+  a {
+    color: rgb(var(--md-primary));
+    text-decoration: underline;
+    transition: color 0.2s ease;
+  }
+
+  ul,
+  ol {
+    margin-bottom: 1.5rem;
+    padding-left: 1.5rem;
+  }
+
+  li {
+    margin-bottom: 0.5rem;
+  }
+
+  blockquote {
+    border-left: 3px solid rgb(var(--md-primary) / 0.35);
+    background: rgb(var(--md-primary) / 0.08);
+    padding: 1.25rem 1.5rem;
+    margin: 2rem 0;
+    border-radius: 1rem;
+    color: rgb(var(--md-text));
+  }
+
+  pre {
+    background: rgb(var(--md-outline) / 0.1);
+    padding: 1.1rem 1.4rem;
+    margin: 1.75rem 0;
+    border-radius: 0.75rem;
+    overflow-x: auto;
+    border: 1px solid rgb(var(--md-outline) / 0.25);
+
+    code {
+      background: transparent;
+      color: inherit;
+      padding: 0;
+      border-radius: 0;
+    }
+  }
+
+  code {
+    background: rgb(var(--md-outline) / 0.18);
+    color: rgb(var(--md-text));
+    padding: 0.2rem 0.45rem;
+    border-radius: 0.45rem;
+    font-size: 0.95rem;
+  }
+
+  img {
+    display: block;
+    width: 100%;
+    height: auto;
+    border-radius: 1rem;
+    margin: 2rem 0;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 2rem 0;
+    font-size: 0.95rem;
+    border: 1px solid rgb(var(--md-outline) / 0.2);
+  }
+
+  th,
+  td {
+    border: 1px solid rgb(var(--md-outline) / 0.2);
+    padding: 0.75rem 0.9rem;
+    text-align: left;
+  }
+
+  thead th {
+    background: rgb(var(--md-outline) / 0.12);
+    font-weight: 600;
+  }
+
+  hr {
+    border: none;
+    height: 1px;
+    background: rgb(var(--md-outline) / 0.35);
+    margin: 2.5rem 0;
+  }
 }
 
-.article-content :deep(p) {
-  margin-bottom: 1.25rem;
-  color: inherit;
-}
-
-.article-content :deep(p:last-child) {
-  margin-bottom: 0;
-}
-
-.article-content :deep(h1),
-.article-content :deep(h2),
-.article-content :deep(h3) {
-  font-weight: 600;
-  color: rgb(var(--md-text));
-  margin-top: 2.5rem;
-  margin-bottom: 1rem;
-  scroll-margin-top: 128px;
-}
-
-.article-content :deep(h1) {
-  font-size: 1.875rem;
-}
-
-.article-content :deep(h2) {
-  font-size: 1.5rem;
-}
-
-.article-content :deep(h3) {
-  font-size: 1.25rem;
-}
-
-.article-content :deep(a) {
-  color: rgb(var(--md-primary));
-  text-decoration: underline;
-  transition: color 0.2s ease;
-}
-
-.article-content :deep(ul),
-.article-content :deep(ol) {
-  margin-bottom: 1.5rem;
-  padding-left: 1.5rem;
-}
-
-.article-content :deep(li) {
-  margin-bottom: 0.5rem;
-}
-
-.article-content :deep(blockquote) {
-  border-left: 3px solid rgba(var(--md-primary), 0.35);
-  background: rgba(var(--md-primary), 0.08);
-  padding: 1.25rem 1.5rem;
-  margin: 2rem 0;
-  border-radius: 1rem;
-  color: rgb(var(--md-text));
-}
-
-.article-content :deep(pre) {
-  background: rgba(var(--md-outline), 0.1);
-  padding: 1.1rem 1.4rem;
-  margin: 1.75rem 0;
-  border-radius: 0.75rem;
-  overflow-x: auto;
-  border: 1px solid rgba(var(--md-outline), 0.25);
-}
-
-.article-content :deep(code) {
-  background: rgba(var(--md-outline), 0.18);
-  color: rgb(var(--md-text));
-  padding: 0.2rem 0.45rem;
-  border-radius: 0.45rem;
-  font-size: 0.95rem;
-}
-
-.article-content :deep(pre code) {
-  background: transparent;
-  color: inherit;
-  padding: 0;
-  border-radius: 0;
-}
-
-.article-content :deep(img) {
-  display: block;
-  width: 100%;
-  height: auto;
-  border-radius: 1rem;
-  margin: 2rem 0;
-}
-
-.article-content :deep(table) {
-  width: 100%;
-  border-collapse: collapse;
-  margin: 2rem 0;
-  font-size: 0.95rem;
-  border: 1px solid rgba(var(--md-outline), 0.2);
-}
-
-.article-content :deep(th),
-.article-content :deep(td) {
-  border: 1px solid rgba(var(--md-outline), 0.2);
-  padding: 0.75rem 0.9rem;
-  text-align: left;
-}
-
-.article-content :deep(thead th) {
-  background: rgba(var(--md-outline), 0.12);
-  font-weight: 600;
-}
-
-.article-content :deep(hr) {
-  border: none;
-  height: 1px;
-  background: rgba(var(--md-outline), 0.35);
-  margin: 2.5rem 0;
-}
-
-/* .toc-container {
-  border-color: rgba(var(--md-outline), 0.2);
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
-}
-
-.toc-container:hover {
-  border-color: rgba(var(--md-outline), 0.3);
-  box-shadow: 0 10px 24px rgba(var(--md-outline), 0.12);
-} */
 
 .toc-list {
   display: flex;

@@ -1,6 +1,6 @@
 <template>
   <section class="space-y-3 sm:space-y-4">
-    <div v-if="items.length" class="grid gap-3 sm:grid-cols-2 sm:gap-2 xl:grid-cols-3 2xl:grid-cols-4">
+    <div v-if="items.length" class="grid gap-3 sm:grid-cols-2 sm:gap-1 xl:grid-cols-3 2xl:grid-cols-4">
       <ArticleListItem v-for="item in items" :key="item.id" :article="item" @select="emitSelect"
         @toggle-favorite="emitToggleFavorite" @select-tag="emitSelectTag" />
     </div>
