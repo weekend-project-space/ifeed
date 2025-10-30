@@ -1,6 +1,6 @@
 <template>
-    <div class="space-y-6 sm:space-y-8">
-        <section class="space-y-5 sm:space-y-6">
+    <div class="">
+        <header>
             <div class="flex flex-col gap-3 sm:gap-4">
                 <div class="flex flex-wrap items-center justify-between gap-3">
                     <div>
@@ -21,15 +21,15 @@
                     </div>
                 </div>
 
-                <div class="space-y-3">
+                <div class="">
                     <!-- 分类：样式参考标签胶囊条 -->
                     <div
-                        class="flex items-center gap-2 overflow-x-auto whitespace-nowrap rounded-2xl border border-outline/20 bg-surface p-2 text-sm text-text-secondary">
-                        <button
+                        class="flex items-center gap-2 overflow-x-auto whitespace-nowrap  bg-surface p-2 text-sm text-text-secondary">
+                        <!-- <button
                             class="rounded-full px-3 py-1.5 font-medium transition bg-surface text-text-secondary cursor-default sm:px-4 sm:py-2"
                             disabled>
                             分类
-                        </button>
+                        </button> -->
                         <!-- 全部分类按钮 -->
                         <button class="rounded-full px-3 py-1.5 font-medium transition sm:px-4 sm:py-2"
                             :class="getFilterClassForCategory('')" @click="clearCategoryFilter()">
@@ -49,16 +49,6 @@
                         </template>
                     </div>
 
-                    <!-- 隐藏标签快速筛选：如需还原可取消注释 -->
-                    <!--
-                        <div class="flex items-center gap-2 overflow-x-auto whitespace-nowrap rounded-2xl border border-outline/20 bg-surface p-2 text-sm text-text-secondary">
-                            <button v-for="filter in quickFilters" :key="filter.value ?? 'all'" type="button"
-                                class="rounded-full px-4 py-2 font-medium transition" :class="getFilterClass(filter.value)"
-                                @click="filter.value ? handleSelectTag(filter.value) : clearTagFilter()">
-                                {{ filter.label }}
-                            </button>
-                        </div>
-                        -->
                 </div>
 
                 <div class="flex flex-wrap gap-2 text-xs text-text-secondary">
@@ -74,58 +64,21 @@
                 </div>
             </div>
 
+        </header>
 
-            <!--            <div class="rounded-3xl border border-outline/20 bg-surface p-6">-->
-            <!--                <h3 class="text-sm font-semibold text-text">热门标签</h3>-->
-            <!--                <p class="mt-2 text-xs text-text-secondary">快速探索近期高频出现的主题。</p>-->
-            <!--                <div class="mt-4 flex flex-wrap gap-2">-->
-            <!--                    <template v-if="insightsLoading">-->
-            <!--                        <span class="text-text-muted text-xs">加载中...</span>-->
-            <!--                    </template>-->
-            <!--                    <template v-else>-->
-            <!--                        <button v-for="t in hotTags" :key="t.tag" type="button"-->
-            <!--                            class="rounded-full bg-surface-variant px-3 py-1 text-xs font-medium text-text-secondary transition hover:bg-primary/10 hover:text-primary"-->
-            <!--                            @click="handleSelectTag(t.tag)">-->
-            <!--                            #{{ t.tag }}-->
-            <!--                        </button>-->
-            <!--                        <div v-if="!hotTags.length" class="text-xs text-text-muted">等待新的标签更新...</div>-->
-            <!--                    </template>-->
-            <!--                </div>-->
-            <!--            </div>-->
-        </section>
-
-        <section class="space-y-5">
-            <!--            <div class="flex flex-wrap items-center justify-between gap-4">
-                <div class="space-y-1">
-                    <h2 class="text-2xl font-semibold text-text">最新</h2>
-                    <p class="text-sm text-text-secondary">
-                        来自你的订阅源
-                    </p>
-                </div>
-                <button
-                    class="inline-flex items-center gap-2 rounded-full border border-primary/20 px-4 py-2 text-sm font-semibold text-primary transition hover:bg-primary/10"
-                    @click="refresh">
-                    <svg class="h-4 w-4" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6">
-                        <path stroke-linecap="round" stroke-linejoin="round"
-                            d="M4.5 8.5A5.5 5.5 0 0 1 10 3a5.5 5.5 0 0 1 4.75 2.75M15.5 11.5A5.5 5.5 0 0 1 10 17a5.5 5.5 0 0 1-4.75-2.75" />
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.5 5.75V3h-2.75M4.5 14.25V17h2.75" />
-                    </svg>
-                    刷新列表
-                </button>
-            </div>-->
-
+        <div>
             <div v-if="articlesLoading"
                 class="grid place-items-center rounded-3xl border border-outline/20 bg-surface-container py-20 text-sm text-text-muted">
                 正在加载文章...
             </div>
 
-            <div v-else class="space-y-3 sm:space-y-4">
+            <template v-else>
                 <ArticleList :items="items" @select="handleSelect" @select-tag="handleSelectTag" />
                 <p v-if="articleError" class="text-sm text-danger">{{ articleError }}</p>
-            </div>
+            </template>
 
             <div
-                class="flex items-center justify-between rounded-2xl border border-outline/20 bg-surface px-3 py-2 text-sm text-text-secondary sm:px-4 sm:py-3">
+                class="mt-5 sm:mt-6  flex items-center justify-between rounded-2xl border border-outline/20 bg-surface px-3 py-2 text-sm text-text-secondary sm:px-4 sm:py-3">
                 <button
                     class="rounded-full border border-outline/40 px-2.5 py-1.5 font-medium text-primary transition hover:bg-primary/10 disabled:cursor-not-allowed disabled:border-outline/30 disabled:text-text-muted disabled:opacity-70 sm:px-3 sm:py-2"
                     :disabled="!hasPrevious" @click="prevPage">
@@ -138,7 +91,7 @@
                     下一页
                 </button>
             </div>
-        </section>
+        </div>
     </div>
 </template>
 
@@ -309,17 +262,6 @@ const handleSelectCategory = (category: string) => {
 
 const clearCategoryFilter = () => {
     router.push({ name: 'feedsSubscriptions', query: buildQuery({ page: 1, category: null }) });
-};
-
-const getFilterClass = (filterValue: string | null) => {
-    if (filterValue) {
-        return activeTag.value === filterValue
-            ? 'bg-primary text-primary-foreground shadow-sm'
-            : 'bg-surface text-text-secondary hover:bg-primary/10 hover:text-primary';
-    }
-    return !activeTag.value
-        ? 'bg-primary text-primary-foreground shadow-sm'
-        : 'bg-surface text-text-secondary hover:bg-primary/10 hover:text-primary';
 };
 
 const getFilterClassForCategory = (category: string) => {
