@@ -2,7 +2,7 @@
   <section class="space-y-3 sm:space-y-4">
     <div v-if="loading" class="grid gap-3 sm:grid-cols-2 sm:gap-1 xl:grid-cols-3 2xl:grid-cols-4">
       <div v-for="i in 20" :key="`recommend-skeleton-${i}`"
-        class="animate-pulse rounded-xl bg-surface-container px-4 py-5 shadow-sm shadow-black/0 transition sm:px-5 sm:py-6">
+        class="animate-pulse rounded-xl bg-surface-container p-3 shadow-sm shadow-black/0 transition sm:px-5 sm:py-6">
         <figure class="relative aspect-video w-full overflow-hidden bg-surface rounded-xl">
           <div class="h-full w-full bg-outline/15 rounded">
           </div>
