@@ -54,7 +54,7 @@ public class DefaultAiContentService implements AiContentService {
                 .user(USER_PROMPT_TEMPLATE.formatted(title, content))
                 .call()
                 .entity(AiContent.class);
-        log.info("AI provider returned summaryLength={} tagsCount={}",
+        log.debug("AI provider returned summaryLength={} tagsCount={}",
                 result.summary() == null ? 0 : result.summary().length(),
                 result.tags() == null ? 0 : result.tags().size());
         return result;
@@ -161,7 +161,7 @@ public class DefaultAiContentService implements AiContentService {
     }
 
     private AiContent fallbackContent(String title, String content) {
-        log.info("Using fallback heuristic summary for title='{}'", title);
+        log.debug("Using fallback heuristic summary for title='{}'", title);
         return new AiContent(
                 generateSummary(content),
                 guessCategory(title, content),

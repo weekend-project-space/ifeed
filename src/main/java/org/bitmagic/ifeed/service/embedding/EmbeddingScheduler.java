@@ -28,14 +28,18 @@ public class EmbeddingScheduler {
             fixedDelayString = "${rss.user.fixed-delay:PT30M}")
     public void userEmbedding() {
         log.info("init user embedding");
-        userRepository.findAll().forEach(user -> {
-            log.info("init user embedding :{}", user.getUsername());
-            try {
-                userEmbeddingService.rebuildUserEmbedding(user.getId());
-            } catch (RuntimeException e) {
-                log.warn("init user embedding", e);
-            }
-        });
+        try {
+            userRepository.findAll().forEach(user -> {
+                log.info("init user embedding :{}", user.getUsername());
+                try {
+                    userEmbeddingService.rebuildUserEmbedding(user.getId());
+                } catch (RuntimeException e) {
+                    log.warn("init user embedding", e);
+                }
+            });
+        } catch (RuntimeException e) {
+            log.warn("user embedding", e);
+        }
 
     }
 
@@ -44,16 +48,19 @@ public class EmbeddingScheduler {
             fixedDelayString = "${rss.document.fixed-delay:PT30M}")
     public void docEmbedding() {
         log.info("init article embedding");
-        articleRepository.findAll(ArticleSpec.noEmbeddingSpec(), Pageable.ofSize(100)).stream().parallel().forEach(article -> {
-            try {
-                log.info("init embedding :{}", article.getTitle());
-                articleEmbeddingService.buildArticleEmbedding(article);
-                article.setEmbedding("1");
-                articleRepository.save(article);
-            } catch (RuntimeException e) {
-                log.warn("init article embedding", e);
-            }
-        });
-
+        try {
+            articleRepository.findAll(ArticleSpec.noEmbeddingSpec(), Pageable.ofSize(100)).stream().parallel().forEach(article -> {
+                try {
+                    log.info("init embedding :{}", article.getTitle());
+                    articleEmbeddingService.buildArticleEmbedding(article);
+                    article.setEmbedding("1");
+                    articleRepository.save(article);
+                } catch (RuntimeException e) {
+                    log.warn("init article embedding", e);
+                }
+            });
+        } catch (RuntimeException e) {
+            log.warn("article embedding", e);
+        }
     }
 }

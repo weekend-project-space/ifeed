@@ -15,7 +15,7 @@ RUN ./mvnw  clean package -DskipTests
 
 FROM openjdk:21-jdk-slim AS runtime
 WORKDIR /app
-
+ENV TZ=Asia/Shanghai
 # 复制构建产物（假设生成的 jar 在 target）
 COPY --from=build /build/target/*.jar app.jar
 
