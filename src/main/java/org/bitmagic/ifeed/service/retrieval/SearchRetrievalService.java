@@ -1,20 +1,18 @@
 package org.bitmagic.ifeed.service.retrieval;
 
-import com.rometools.utils.Strings;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.bitmagic.ifeed.config.SearchRetrievalProperties;
 import org.bitmagic.ifeed.config.vectore.SearchRequestTurbo;
 import org.bitmagic.ifeed.config.vectore.VectorStoreTurbo;
 import org.bitmagic.ifeed.domain.projection.ArticleSummaryView;
-import org.bitmagic.ifeed.domain.repository.ArticleRepository;
 import org.bitmagic.ifeed.domain.repository.UserSubscriptionRepository;
 import org.bitmagic.ifeed.service.ArticleService;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.vectorstore.SearchRequest;
 import org.springframework.ai.vectorstore.filter.FilterExpressionBuilder;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
@@ -23,16 +21,12 @@ import org.springframework.util.StringUtils;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
-import java.util.UUID;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -49,6 +43,8 @@ public class SearchRetrievalService {
             ),
             documents AS (
                 SELECT a.id,
+                       a.pub_date,
+                       a.title,
                        setweight(to_tsvector('simple', coalesce(a.title, '')), 'A') ||
                        setweight(to_tsvector('simple', coalesce(a.category, '')), 'A') ||
                        setweight(to_tsvector('simple', coalesce(a.tags, '')), 'B') ||
@@ -65,7 +61,9 @@ public class SearchRetrievalService {
                 )
             )
             SELECT d.id,
-                   ts_rank_cd(d.document, query.q) AS score
+                   ts_rank_cd(d.document, query.q) AS score,
+                   d.title,
+                   d.pub_date AS pubDate
             FROM documents d
             CROSS JOIN query
             WHERE query.q @@ d.document
@@ -110,7 +108,7 @@ public class SearchRetrievalService {
         int safeSize = maxSize <= 0 ? properties.getFusionTopK() : maxSize;
         String normalizedQuery = StringUtils.hasText(query) ? query.trim() : null;
         int desired = Math.max(properties.getFusionTopK(), safeSize);
-        if (Objects.isNull(query) && Strings.isBlank(normalizedQuery)) {
+        if (Objects.isNull(query)) {
             return Collections.emptyList();
         }
 
@@ -127,37 +125,37 @@ public class SearchRetrievalService {
 
         List<UUID> ids = combined.stream()
                 .limit(safeSize)
-                .map(CombinedScore::id)
+                .map(CombinedScore::getId)
                 .toList();
         log.debug("Hybrid search(IDs) complete: user={}, query='{}', returnCount={}", userId, normalizedQuery, ids.size());
         return ids;
     }
 
-    private Map<UUID, Double> fetchBm25Scores(String query,
-                                              UUID userId,
-                                              boolean includeGlobal,
-                                              int limit) {
+    private Map<UUID, DocScore> fetchBm25Scores(String query,
+                                                UUID userId,
+                                                boolean includeGlobal,
+                                                int limit) {
         log.trace("BM25 fetch: user={}, includeGlobal={}, limit={}, query='{}'", userId, includeGlobal, limit, query);
         List<Bm25Row> rows = jdbcTemplate.query(BM25_SQL,
-                (rs, rowNum) -> new Bm25Row(readUuid(rs, "id"), rs.getDouble("score")),
+                (rs, rowNum) -> new Bm25Row(readUuid(rs, "id"), rs.getDouble("score"), rs.getTimestamp("pubDate").toInstant(), rs.getString("title")),
                 query,
                 includeGlobal,
                 userId,
                 limit);
 
-        Map<UUID, Double> scores = new LinkedHashMap<>();
+        Map<UUID, DocScore> scores = new LinkedHashMap<>();
         for (Bm25Row row : rows) {
             if (row.id() != null) {
-                scores.putIfAbsent(row.id(), row.score());
+                scores.putIfAbsent(row.id(), row.toScore());
             }
         }
         return scores;
     }
 
-    private Map<UUID, Double> fetchVectorScores(float[] queryEmbedding, String query,
-                                                boolean includeGlobal,
-                                                int limit,
-                                                List<UUID> feedIds) {
+    private Map<UUID, DocScore> fetchVectorScores(float[] queryEmbedding, String query,
+                                                  boolean includeGlobal,
+                                                  int limit,
+                                                  List<UUID> feedIds) {
         log.trace("Vector fetch: includeGlobal={}, limit={}, feedIds={}", includeGlobal, limit, feedIds.size());
         if (queryEmbedding == null && !StringUtils.hasText(query)) {
             return Collections.emptyMap();
@@ -198,7 +196,7 @@ public class SearchRetrievalService {
             return Collections.emptyMap();
         }
 
-        Map<UUID, Double> scores = new LinkedHashMap<>();
+        Map<UUID, DocScore> scores = new LinkedHashMap<>();
         for (Document document : documents) {
             Object articleIdValue = document.getMetadata().get("articleId");
             if (articleIdValue == null) {
@@ -206,7 +204,7 @@ public class SearchRetrievalService {
             }
             try {
                 UUID articleId = UUID.fromString(articleIdValue.toString());
-                scores.putIfAbsent(articleId, document.getScore());
+                scores.putIfAbsent(articleId, new DocScore(document.getScore(), Instant.ofEpochSecond(Long.parseLong(document.getMetadata().get("publishedAt").toString())), document.getMetadata().get("title").toString()));
             } catch (IllegalArgumentException ignored) {
                 // skip invalid IDs
             }
@@ -214,22 +212,23 @@ public class SearchRetrievalService {
         return scores;
     }
 
-    private Map<UUID, Double> normalizeScores(Map<UUID, Double> scores) {
+    private Map<UUID, DocScore> normalizeScores(Map<UUID, DocScore> scores) {
         if (scores.isEmpty()) {
             return Collections.emptyMap();
         }
-        double min = scores.values().stream().min(Double::compareTo).orElse(0.0);
-        double max = scores.values().stream().max(Double::compareTo).orElse(0.0);
-
+        double min = scores.values().stream().mapToDouble(DocScore::score).min().orElse(0.0);
+        double max = scores.values().stream().mapToDouble(DocScore::score).max().orElse(0.0);
         if (Double.compare(max, min) == 0) {
-            Map<UUID, Double> normalized = new HashMap<>();
-            scores.keySet().forEach(id -> normalized.put(id, 1.0));
+            Map<UUID, DocScore> normalized = new HashMap<>();
+            scores.forEach((id, score) -> {
+                normalized.put(id, new DocScore(1.0, score.pubDate(), score.title()));
+            });
             return normalized;
         }
 
         double range = max - min;
-        Map<UUID, Double> normalized = new HashMap<>();
-        scores.forEach((id, score) -> normalized.put(id, (score - min) / range));
+        Map<UUID, DocScore> normalized = new HashMap<>();
+        scores.forEach((id, score) -> normalized.put(id, new DocScore((score.score() - min) / range, score.pubDate(), score.title())));
         return normalized;
     }
 
@@ -242,17 +241,26 @@ public class SearchRetrievalService {
         int bm25Limit = Math.max(properties.getBm25TopK(), desired);
         int vectorLimit = Math.max(properties.getVectorTopK(), desired);
 
-        Map<UUID, Double> bm25Scores = StringUtils.hasText(normalizedQuery)
+        Map<UUID, DocScore> bm25Scores = StringUtils.hasText(normalizedQuery)
                 ? fetchBm25Scores(normalizedQuery, userId, includeGlobal, bm25Limit)
                 : Collections.emptyMap();
-        Map<UUID, Double> vectorScores = fetchVectorScores(queryEmbedding, normalizedQuery, includeGlobal, vectorLimit, feedIds);
+        Map<UUID, DocScore> vectorScores = fetchVectorScores(queryEmbedding, normalizedQuery, includeGlobal, vectorLimit, feedIds);
 
-        Map<UUID, Double> normalizedBm25 = normalizeScores(bm25Scores);
-        Map<UUID, Double> normalizedVector = normalizeScores(vectorScores);
+        Map<UUID, DocScore> normalizedBm25 = normalizeScores(bm25Scores);
+        Map<UUID, DocScore> normalizedVector = normalizeScores(vectorScores);
 
-        Set<UUID> allIds = new HashSet<>();
-        allIds.addAll(normalizedBm25.keySet());
-        allIds.addAll(normalizedVector.keySet());
+        List<Map.Entry<UUID, DocScore>> allDocScore = new ArrayList<>();
+        allDocScore.addAll(normalizedBm25.entrySet());
+        allDocScore.addAll(normalizedVector.entrySet());
+//        移除一样标题的内容
+        List<UUID> allIds = allDocScore.stream().collect(Collectors.toMap(
+                entry -> entry.getValue().key(),    // key: id
+                Function.identity(),     // value: 对象本身
+                (existing, replacement) -> existing  // 冲突时保留第一个
+        )).values().stream().map(Map.Entry::getKey).toList();
+//        Set<UUID> allIds = new HashSet<>();
+//        allIds.addAll(normalizedBm25.keySet());
+//        allIds.addAll(normalizedVector.keySet());
 
         if (allIds.isEmpty()) {
             return Collections.emptyList();
@@ -260,15 +268,19 @@ public class SearchRetrievalService {
 
         double bm25Weight = properties.getBm25Weight();
         double vectorWeight = properties.getVectorWeight();
+        double freshnessWeight = properties.getFreshnessTimeWeight();
+        double freshnessLambda = properties.getFreshnessLambda();
 
         List<CombinedScore> combined = allIds.stream()
                 .map(id -> new CombinedScore(id,
-                        normalizedBm25.getOrDefault(id, 0.0),
-                        normalizedVector.getOrDefault(id, 0.0),
+                        normalizedBm25.getOrDefault(id, DocScore.INSTANT),
+                        normalizedVector.getOrDefault(id, DocScore.INSTANT),
                         bm25Weight,
-                        vectorWeight))
+                        vectorWeight,
+                        freshnessWeight, freshnessLambda))
                 .sorted((a, b) -> Double.compare(b.totalScore(), a.totalScore()))
-                .collect(Collectors.toCollection(ArrayList::new));
+//                .peek(a -> log.info("{}:{}", a.id, a.totalScore()))
+                .collect(Collectors.toList());
 
         int fusionLimit = Math.max(properties.getFusionTopK(), desired);
         if (combined.size() > fusionLimit) {
@@ -293,13 +305,43 @@ public class SearchRetrievalService {
         return null;
     }
 
-    private record CombinedScore(UUID id, double bm25Score, double vectorScore, double bm25Weight,
-                                 double vectorWeight) {
-        double totalScore() {
-            return bm25Score * bm25Weight + vectorScore * vectorWeight;
+    @RequiredArgsConstructor
+    @Getter
+    private class CombinedScore {
+        private final UUID id;
+        private final DocScore bm25Score;
+        private final DocScore vectorScore;
+        private final double bm25Weight;
+        private final double vectorWeight;
+        private final double freshnessWeight;
+        private final double freshnessLambda;
+        private Double totalScore;
+
+        public double totalScore() {
+            if (Objects.nonNull(totalScore)) {
+                return totalScore;
+            }
+            Instant minPubDate = bm25Score.pubDate().compareTo(vectorScore.pubDate()) < 0 ? bm25Score.pubDate() : vectorScore.pubDate();
+            long ageHours = Duration.between(minPubDate, LocalDateTime.now().toInstant(ZoneOffset.UTC)).toHours();
+            double freshnessScore = Math.max(Math.exp(-freshnessLambda * ageHours), 0);
+            double relevanceScore = (bm25Score.score() * bm25Weight + vectorScore.score() * vectorWeight);
+            totalScore = (1 - freshnessWeight) * relevanceScore + freshnessWeight * freshnessScore;
+            return totalScore;
         }
     }
 
-    private record Bm25Row(UUID id, double score) {
+    private record Bm25Row(UUID id, double score, Instant pubDate, String title) {
+
+        DocScore toScore() {
+            return new DocScore(score, pubDate, title);
+        }
+    }
+
+    private record DocScore(double score, Instant pubDate, String title) {
+        static DocScore INSTANT = new DocScore(0, Instant.now(), null);
+
+        String key() {
+            return Objects.nonNull(title) ? title : "";
+        }
     }
 }
