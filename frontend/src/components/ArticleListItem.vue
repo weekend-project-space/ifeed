@@ -10,7 +10,7 @@
         class="h-full w-full object-cover transition duration-300 group-hover:scale-[1.02]"
         @error="thumbError = true" />
       <div v-else class="flex h-full w-full items-center justify-center">
-        <div class="flex h-full w-full items-center justify-center">
+        <div class="flex h-full w-full items-center justify-center bg-primary/10">
           <div
             class="flex items-center gap-2 rounded-md border border-outline/30 bg-surface px-3 py-2 text-xs text-text-muted">
             <svg class="h-4 w-4 text-text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor"

@@ -1,6 +1,33 @@
 <template>
   <section class="space-y-3 sm:space-y-4">
-    <div v-if="items.length" class="grid gap-3 sm:grid-cols-2 sm:gap-1 xl:grid-cols-3 2xl:grid-cols-4">
+    <div v-if="loading" class="grid gap-3 sm:grid-cols-2 sm:gap-1 xl:grid-cols-3 2xl:grid-cols-4">
+      <div v-for="i in 20" :key="`recommend-skeleton-${i}`"
+        class="animate-pulse rounded-xl bg-surface-container px-4 py-5 shadow-sm shadow-black/0 transition sm:px-5 sm:py-6">
+        <figure class="relative aspect-video w-full overflow-hidden bg-surface rounded-xl">
+          <div class="h-full w-full bg-outline/15 rounded">
+          </div>
+        </figure>
+        <div class="mt-8 flex items-center justify-between gap-3">
+          <div class="flex flex-1 items-center gap-2">
+            <div class="h-6 w-20 rounded-full bg-outline/15" />
+            <div class="h-3 w-10 rounded-full bg-outline/10" />
+          </div>
+          <div class="h-6 w-16 rounded-full bg-outline/15" />
+        </div>
+        <div class="mt-4 space-y-3">
+          <div class="h-4 w-3/4 rounded-full bg-outline/15" />
+          <div class="h-4 w-full rounded-full bg-outline/10" />
+          <div class="h-4 w-5/6 rounded-full bg-outline/10" />
+          <div class="h-4 w-1/2 rounded-full bg-outline/10" />
+        </div>
+        <!-- <div class="mt-6 flex flex-wrap gap-2">
+          <div class="h-6 w-16 rounded-full bg-outline/10" />
+          <div class="h-6 w-20 rounded-full bg-outline/10" />
+          <div class="h-6 w-12 rounded-full bg-outline/10" />
+        </div> -->
+      </div>
+    </div>
+    <div v-else-if="items.length" class="grid gap-3 sm:grid-cols-2 sm:gap-1 xl:grid-cols-3 2xl:grid-cols-4">
       <ArticleListItem v-for="item in items" :key="item.id" :article="item" @select="emitSelect"
         @toggle-favorite="emitToggleFavorite" @select-tag="emitSelectTag" />
     </div>
@@ -19,8 +46,8 @@ import { computed } from 'vue';
 import type { ArticleListItemProps } from './ArticleListItem.vue';
 import ArticleListItem from './ArticleListItem.vue';
 
-const props = withDefaults(defineProps<{ items: ArticleListItemProps[]; emptyMessage?: string }>(), {
-  emptyMessage: '暂无文章，添加订阅后即可看到 AI 推荐内容。'
+const props = withDefaults(defineProps<{ items: ArticleListItemProps[]; emptyMessage?: string, loading?: boolean }>(), {
+  emptyMessage: '暂无文章，添加订阅后即可看到 AI 推荐内容。', loading: false
 });
 const emit = defineEmits<{
   select: [string];

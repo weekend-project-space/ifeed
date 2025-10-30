@@ -1,47 +1,45 @@
 <template>
     <div class="space-y-5 sm:space-y-6">
-        <div class="rounded-3xl border border-outline/20 bg-surface-container px-4 py-5 sm:px-6 sm:py-6 lg:px-7">
-            <div class="flex flex-wrap items-center justify-between gap-3 sm:gap-4">
-                <div class="mb-2 space-y-1">
-                    <h2 class="text-2xl font-semibold text-text">
-                        <template v-if="hasQuery">搜索 “{{ searchQuery }}” 的结果</template>
-                        <template v-else>搜索</template>
-                    </h2>
-<!--                    <p class="text-sm text-text-secondary">
+        <header class="flex flex-wrap items-center justify-between px-2  sm:px-4">
+            <div class="mb-2 space-y-1">
+                <h1 class="text-xl font-semibold text-text">
+                    <template v-if="hasQuery">搜索 “{{ searchQuery }}” 的结果</template>
+                    <template v-else>搜索</template>
+                </h1>
+                <!--                    <p class="text-sm text-text-secondary">
                         <template v-if="hasQuery">共 {{ searchTotalText }}，当前第 {{ currentPage }} 页。</template>
                         <template v-else>输入关键词开始搜索。</template>
                     </p>-->
-                </div>
-                <div class="flex flex-wrap items-center gap-3 text-sm">
-                    <div
-                        class="flex rounded-full border border-outline/20 bg-surface-variant px-1 py-1 text-text-muted">
-                        <button type="button" class="rounded-full px-3 py-1 transition sm:px-4"
-                            :class="searchType === 'keyword' ? 'bg-primary/15 text-primary' : 'text-text-muted'"
-                            @click="setSearchType('keyword')">
-                            关键词匹配
-                        </button>
-                        <button type="button" class="rounded-full px-3 py-1 transition sm:px-4"
-                            :class="searchType === 'semantic' ? 'bg-primary/15 text-primary' : 'text-text-muted'"
-                            @click="setSearchType('semantic')">
-                            语义匹配
-                        </button>
-                    </div>
-                    <button class="text-sm font-medium text-primary transition hover:underline" @click="goBackToHome">
-                        返回推荐
+            </div>
+            <div class="flex flex-wrap items-center gap-3 text-sm">
+                <div class="flex rounded-full border border-outline/20 bg-surface-variant px-1 py-1 text-text-muted">
+                    <button type="button" class="rounded-full px-3 py-1 transition sm:px-4"
+                        :class="searchType === 'keyword' ? 'bg-primary/15 text-primary' : 'text-text-muted'"
+                        @click="setSearchType('keyword')">
+                        关键词匹配
+                    </button>
+                    <button type="button" class="rounded-full px-3 py-1 transition sm:px-4"
+                        :class="searchType === 'semantic' ? 'bg-primary/15 text-primary' : 'text-text-muted'"
+                        @click="setSearchType('semantic')">
+                        语义匹配
                     </button>
                 </div>
+                <button class="text-sm font-medium text-primary transition hover:underline" @click="goBackToHome">
+                    返回推荐
+                </button>
             </div>
+        </header>
 
+        <div class="mt-3 space-y-3 ">
             <div v-if="!hasQuery" class="py-14 text-center text-text-muted sm:py-20">输入关键词开始搜索。</div>
-            <div v-else-if="searchLoading" class="py-14 text-center text-text-muted sm:py-20">正在搜索...</div>
-            <div v-else class="mt-3 space-y-3 sm:space-y-4">
-                <ArticleList :items="searchArticleItems" empty-message="未找到相关结果，换个关键词试试。" @select="handleSelect"
-                    @select-tag="handleSelectTag" />
+            <div v-else class="sm:space-y-4">
+                <ArticleList :items="searchArticleItems" :loading="searchLoading" empty-message="未找到相关结果，换个关键词试试。"
+                    @select="handleSelect" @select-tag="handleSelectTag" />
                 <p v-if="searchError" class="text-sm text-danger">{{ searchError }}</p>
             </div>
 
             <div
-                class="mt-5 flex items-center justify-between rounded-2xl border border-outline/20 bg-surface px-3 py-2 text-sm text-text-secondary sm:mt-6 sm:px-4 sm:py-3">
+                class="mt-6 flex items-center justify-between border-t border-outline/20 pt-3 text-sm text-text-secondary sm:mt-6 sm:pt-4">
                 <button
                     class="rounded-full border border-outline/40 px-2.5 py-1.5 font-medium text-primary transition hover:bg-primary/10 disabled:cursor-not-allowed disabled:border-outline/30 disabled:text-text-muted disabled:opacity-70 sm:px-3 sm:py-2"
                     :disabled="!hasQuery || !hasPrevious" @click="prevPage">

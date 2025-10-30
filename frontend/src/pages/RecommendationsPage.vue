@@ -1,6 +1,6 @@
 <template>
   <div class="flex h-full flex-col gap-4 sm:gap-6">
-    <header class="flex flex-wrap items-center justify-between gap-3">
+    <header class="flex flex-wrap items-center justify-between px-2  sm:px-4">
       <div>
         <h1 class="text-xl font-semibold text-text">智能推荐</h1>
         <p class="text-sm text-text-secondary">
@@ -30,47 +30,9 @@
           重试一次
         </button>
       </div>
-      <div v-else-if="articlesLoading" class="space-y-3 sm:space-y-4">
-        <div class="grid gap-3 sm:grid-cols-2 sm:gap-4 xl:grid-cols-3 2xl:grid-cols-4">
-          <div v-for="i in 4" :key="`recommend-skeleton-${i}`"
-            class="animate-pulse rounded-xl border border-outline/15 bg-surface-container px-4 py-5 shadow-sm shadow-black/0 transition sm:px-5 sm:py-6">
-            <div class="flex items-center justify-between gap-3">
-              <div class="flex flex-1 items-center gap-2">
-                <div class="h-6 w-20 rounded-full bg-outline/15" />
-                <div class="h-3 w-10 rounded-full bg-outline/10" />
-              </div>
-              <div class="h-6 w-16 rounded-full bg-outline/15" />
-            </div>
-            <div class="mt-4 space-y-3">
-              <div class="h-4 w-3/4 rounded-full bg-outline/15" />
-              <div class="h-4 w-full rounded-full bg-outline/10" />
-              <div class="h-4 w-5/6 rounded-full bg-outline/10" />
-              <div class="h-4 w-1/2 rounded-full bg-outline/10" />
-            </div>
-            <div class="mt-6 flex flex-wrap gap-2">
-              <div class="h-6 w-16 rounded-full bg-outline/10" />
-              <div class="h-6 w-20 rounded-full bg-outline/10" />
-              <div class="h-6 w-12 rounded-full bg-outline/10" />
-            </div>
-          </div>
-        </div>
-        <div
-          class="flex items-center justify-center gap-2 rounded-xl border border-outline/20 bg-surface py-2.5 text-xs text-text-muted sm:py-3">
-          <svg class="h-4 w-4 animate-spin text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-            stroke-width="1.5">
-            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"></circle>
-            <path class="opacity-75" d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" stroke-linecap="round"></path>
-          </svg>
-          正在加载最新推荐…
-        </div>
-      </div>
-      <div v-else-if="recommendations.length === 0"
-        class="rounded-xl border border-outline/20 bg-surface-container p-6 text-center text-sm text-text-secondary sm:p-8">
-        暂无推荐结果，尝试刷新或多收藏一些感兴趣的文章吧。
-      </div>
       <div v-else>
-        <ArticleList :items="articleItems" empty-message="暂无推荐结果，尝试刷新或多收藏一些文章吧。" @select="handleSelect"
-          @select-tag="handleSelectTag" />
+        <ArticleList :items="articleItems" :loading="articlesLoading" empty-message="暂无推荐结果，尝试刷新或多收藏一些文章吧。"
+          @select="handleSelect" @select-tag="handleSelectTag" />
         <!-- 分页控件 -->
         <div
           class="mt-5 flex items-center justify-between border-t border-outline/20 pt-3 text-sm text-text-secondary sm:mt-6 sm:pt-4">

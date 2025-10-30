@@ -2,7 +2,7 @@
     <div>
         <header>
             <div class="flex flex-col gap-3 sm:gap-4">
-                <div class="flex flex-wrap items-center justify-between gap-3">
+                <div class="flex flex-wrap items-center justify-between px-2  sm:px-4">
                     <div>
                         <h1 class="text-lg font-semibold text-text">最新</h1>
                         <p class="text-sm text-text-secondary">来自你的订阅源</p>
@@ -23,7 +23,7 @@
 
                 <!-- 分类：样式参考标签胶囊条 -->
                 <div
-                    class="flex items-center gap-2 overflow-x-auto whitespace-nowrap  bg-surface my-2 text-sm text-text-secondary">
+                    class="flex items-center gap-2 overflow-x-auto whitespace-nowrap  bg-surface my-2 text-sm text-text-secondary px-2  sm:px-4">
                     <!-- <button
                             class="rounded-full px-3 py-1.5 font-medium transition bg-surface text-text-secondary cursor-default sm:px-4 sm:py-2"
                             disabled>
@@ -47,30 +47,31 @@
                     </template>
                 </div>
 
-                <!-- <div class="flex flex-wrap gap-2 text-xs text-text-secondary">
-                    <div v-if="activeTag"
-                        class="flex items-center gap-2 rounded-full border border-outline/30 bg-surface px-3 py-1">
+                <div v-if="activeTag" class="flex flex-wrap gap-2 text-xs text-text-secondary">
+                    <div class="flex items-center gap-2 rounded-full border border-outline/30 bg-surface px-3 py-1">
                         <span class="font-medium">#{{ activeTag }}</span>
                         <button class="text-xs font-semibold text-primary transition hover:underline"
                             @click="clearTagFilter">
                             移除
                         </button>
                     </div>
-                </div> -->
+                </div>
             </div>
 
         </header>
 
         <div class="mt-3">
-            <div v-if="articlesLoading"
-                class="grid place-items-center rounded-3xl border border-outline/20 bg-surface-container py-20 text-sm text-text-muted">
-                正在加载文章...
+            <ArticleList :items="items" :loading="articlesLoading" @select="handleSelect"
+                @select-tag="handleSelectTag" />
+            <div v-if="articleError"
+                class="rounded-xl border border-outline/30 bg-error/5 p-4 text-sm text-error sm:p-6">
+                <p class="font-medium">请求出错：{{ articleError }}</p>
+                <button type="button"
+                    class="mt-3 inline-flex items-center gap-2 rounded-full bg-error text-error-foreground px-3 py-1.5 text-xs font-semibold transition hover:bg-error/90 sm:px-4"
+                    @click="refresh">
+                    重试一次
+                </button>
             </div>
-
-            <template v-else>
-                <ArticleList :items="items" @select="handleSelect" @select-tag="handleSelectTag" />
-                <p v-if="articleError" class="text-sm text-danger">{{ articleError }}</p>
-            </template>
 
             <div
                 class="mt-5 sm:mt-6  flex items-center justify-between rounded-2xl border border-outline/20 bg-surface px-3 py-2 text-sm text-text-secondary sm:px-4 sm:py-3">

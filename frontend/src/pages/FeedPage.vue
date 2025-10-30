@@ -135,17 +135,14 @@
         </div>
       </header>
 
-      <div v-if="articlesLoading" class="py-14 text-center text-text-muted sm:py-20">正在加载文章...</div>
-      <div v-else>
-        <div v-if="selectedTagDisplay"
-          class="mb-3 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-outline/20 bg-surface px-3 py-1.5 text-sm text-text sm:mb-4 sm:px-4 sm:py-2">
-          <span>标签筛选：#{{ selectedTagDisplay }}</span>
-          <button class="text-sm font-medium text-primary hover:underline" @click="clearTag">清除标签</button>
-        </div>
-        <ArticleList :items="channelArticles" empty-message="该频道暂时没有文章，稍后再来看看。" @select="handleSelect"
-          @select-tag="handleSelectTag" />
-        <p v-if="articleError" class="mt-4 text-sm text-danger">{{ articleError }}</p>
+      <div v-if="selectedTagDisplay"
+        class="mb-3 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-outline/20 bg-surface px-3 py-1.5 text-sm text-text sm:mb-4 sm:px-4 sm:py-2">
+        <span>标签筛选：#{{ selectedTagDisplay }}</span>
+        <button class="text-sm font-medium text-primary hover:underline" @click="clearTag">清除标签</button>
       </div>
+      <ArticleList :items="channelArticles" :loading="articlesLoading" empty-message="该频道暂时没有文章，稍后再来看看。"
+        @select="handleSelect" @select-tag="handleSelectTag" />
+      <p v-if="articleError" class="mt-4 text-sm text-danger">{{ articleError }}</p>
 
       <div
         class="mt-5 flex items-center justify-between border-t border-outline/20 pt-3 text-sm text-text-secondary sm:mt-6 sm:pt-4">
