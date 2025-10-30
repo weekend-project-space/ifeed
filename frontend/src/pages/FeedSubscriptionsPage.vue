@@ -1,5 +1,5 @@
 <template>
-    <div class="">
+    <div>
         <header>
             <div class="flex flex-col gap-3 sm:gap-4">
                 <div class="flex flex-wrap items-center justify-between gap-3">
@@ -21,38 +21,33 @@
                     </div>
                 </div>
 
-                <div class="">
-                    <!-- 分类：样式参考标签胶囊条 -->
-                    <div
-                        class="flex items-center gap-2 overflow-x-auto whitespace-nowrap  bg-surface p-2 text-sm text-text-secondary">
-                        <!-- <button
+                <!-- 分类：样式参考标签胶囊条 -->
+                <div
+                    class="flex items-center gap-2 overflow-x-auto whitespace-nowrap  bg-surface my-2 text-sm text-text-secondary">
+                    <!-- <button
                             class="rounded-full px-3 py-1.5 font-medium transition bg-surface text-text-secondary cursor-default sm:px-4 sm:py-2"
                             disabled>
                             分类
                         </button> -->
-                        <!-- 全部分类按钮 -->
-                        <button class="rounded-full px-3 py-1.5 font-medium transition sm:px-4 sm:py-2"
-                            :class="getFilterClassForCategory('')" @click="clearCategoryFilter()">
-                            全部
+                    <!-- 全部分类按钮 -->
+                    <button class="rounded-full px-3 py-1.5 font-medium transition sm:px-4 sm:py-2"
+                        :class="getFilterClassForCategory('')" @click="clearCategoryFilter()">
+                        全部
+                    </button>
+                    <template v-if="insightsLoading">
+                        <span class="text-text-muted">正在加载分类...</span>
+                    </template>
+                    <template v-else>
+                        <button v-for="c in topCategories" :key="c.category"
+                            class="rounded-full px-3 py-1.5 font-medium transition sm:px-4 sm:py-2"
+                            :class="getFilterClassForCategory(c.category)" @click="handleSelectCategory(c.category)">
+                            {{ c.category }}
                         </button>
-                        <template v-if="insightsLoading">
-                            <span class="text-text-muted">正在加载分类...</span>
-                        </template>
-                        <template v-else>
-                            <button v-for="c in topCategories" :key="c.category"
-                                class="rounded-full px-3 py-1.5 font-medium transition sm:px-4 sm:py-2"
-                                :class="getFilterClassForCategory(c.category)"
-                                @click="handleSelectCategory(c.category)">
-                                {{ c.category }}
-                            </button>
-                            <span v-if="!topCategories.length" class="text-text-muted">暂无分类统计</span>
-                        </template>
-                    </div>
-
+                        <span v-if="!topCategories.length" class="text-text-muted">暂无分类统计</span>
+                    </template>
                 </div>
 
-                <div class="flex flex-wrap gap-2 text-xs text-text-secondary">
-                    <!-- Feed 筛选相关 UI 已移除 -->
+                <!-- <div class="flex flex-wrap gap-2 text-xs text-text-secondary">
                     <div v-if="activeTag"
                         class="flex items-center gap-2 rounded-full border border-outline/30 bg-surface px-3 py-1">
                         <span class="font-medium">#{{ activeTag }}</span>
@@ -61,12 +56,12 @@
                             移除
                         </button>
                     </div>
-                </div>
+                </div> -->
             </div>
 
         </header>
 
-        <div>
+        <div class="mt-3">
             <div v-if="articlesLoading"
                 class="grid place-items-center rounded-3xl border border-outline/20 bg-surface-container py-20 text-sm text-text-muted">
                 正在加载文章...

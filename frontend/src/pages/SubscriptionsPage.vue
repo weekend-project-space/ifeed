@@ -1,6 +1,6 @@
 <template>
   <div class="mx-auto max-w-5xl space-y-6 px-0 py-6 sm:space-y-8 sm:px-4 sm:py-8 lg:space-y-10 lg:py-10">
-    <section class="rounded-2xl border border-outline/15 bg-surface transition">
+    <section class="rounded-2xl border border-outline/15  transition bg-surface-container">
       <div
         class="flex flex-col gap-3 border-b border-outline/10 px-3 py-4 md:flex-row md:items-end md:justify-between sm:px-6 sm:py-5">
         <div>
@@ -21,7 +21,7 @@
       </div>
 
       <div class="px-3 py-5 sm:px-6 sm:py-6">
-        <div v-if="activeTab === 'manual'" class="space-y-4 rounded-xl bg-surface-container ">
+        <div v-if="activeTab === 'manual'" class="space-y-4 rounded-xl ">
           <p class="text-sm text-text-secondary">粘贴 RSS 地址或网站链接，我们会自动检测支持的内容。</p>
           <form class="flex flex-col gap-3 md:flex-row" @submit.prevent="handleAdd">
             <input v-model.trim="newFeedUrl" type="url" required placeholder="https://example.com/feed.xml"
@@ -35,7 +35,7 @@
           <p v-if="subscriptionsStore.error" class="text-sm text-danger">{{ subscriptionsStore.error }}</p>
         </div>
 
-        <div v-else-if="activeTab === 'search'" class="space-y-4 bg-surface-container">
+        <div v-else-if="activeTab === 'search'" class="space-y-4">
           <p class="text-sm text-text-secondary">
             输入关键词、站点或订阅标题，快速查找系统内已存在的订阅源。
           </p>
@@ -50,7 +50,7 @@
           </form>
           <p v-if="searchError" class="text-sm text-danger">{{ searchError }}</p>
           <div v-if="searchLoading" class="py-8 text-center text-sm text-text-muted sm:py-10">正在搜索订阅源...</div>
-          <ul v-else class="space-y-3 sm:space-y-4">
+          <ul v-else class="space-y-4 sm:space-y-4">
             <li v-for="feed in searchResults" :key="feed.feedId"
               class="rounded-xl border border-outline/20 bg-surface p-3 transition hover:border-outline/40 sm:p-4">
               <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
@@ -96,7 +96,7 @@
           </ul>
         </div>
 
-        <div v-else class="space-y-4 bg-surface-container">
+        <div v-else class="space-y-4 ">
           <p class="text-sm text-text-secondary">
             上传一个 OPML 文件批量导入订阅。我们会先解析并展示结果，你可以选择保留的订阅项。
           </p>
