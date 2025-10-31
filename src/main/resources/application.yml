@@ -43,10 +43,15 @@ spring:
 rss:
   fetcher:
     fixed-delay: PT60M
-    initial-delay: PT5M
+    initial-delay: PT1M
+    thread-pool-size: 10
     connect-timeout: 50s
     read-timeout: 100s
     max-items: 500
+    max-retries: 3
+    cache:
+      expire-after-write: 30m
+      maximum-size: 1000
 embedding:
   document:
     fixed-delay: PT10M
@@ -75,3 +80,8 @@ search:
     freshness-time-weight: 0.3
     freshness-lambda: 0.01
     similarity-threshold: 0.3
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,threaddump

@@ -3,6 +3,7 @@ package org.bitmagic.ifeed.service.feed;
 import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.bitmagic.ifeed.config.RssFetcherProperties;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -23,10 +24,10 @@ public class FeedIngestionScheduler {
 
     @Autowired
     public FeedIngestionScheduler(FeedIngestionService ingestionService,
-                                  @Value("${rss.fetcher.thread-pool-size:10}") int threadPoolSize) {
+                                  RssFetcherProperties properties) {
         this.ingestionService = ingestionService;
         AtomicInteger counter = new AtomicInteger(0);
-        this.executor = Executors.newFixedThreadPool(threadPoolSize, (runnable)->{
+        this.executor = Executors.newFixedThreadPool(properties.getThreadPoolSize(), (runnable) -> {
             Thread t = new Thread(runnable, "feed-fetch-worker-" + counter.incrementAndGet());
             t.setDaemon(true);
             return t;
