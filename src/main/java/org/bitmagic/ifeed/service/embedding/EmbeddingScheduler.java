@@ -2,11 +2,9 @@ package org.bitmagic.ifeed.service.embedding;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.bitmagic.ifeed.domain.repository.ArticleEmbeddingRepository;
 import org.bitmagic.ifeed.domain.repository.ArticleRepository;
 import org.bitmagic.ifeed.domain.repository.UserRepository;
 import org.bitmagic.ifeed.domain.spec.ArticleSpec;
-import org.bitmagic.ifeed.service.feed.FeedIngestionService;
 import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -49,7 +47,7 @@ public class EmbeddingScheduler {
     public void docEmbedding() {
         log.info("init article embedding");
         try {
-            articleRepository.findAll(ArticleSpec.noEmbeddingSpec(), Pageable.ofSize(100)).stream().parallel().forEach(article -> {
+            articleRepository.findAll(ArticleSpec.noEmbeddingSpec(), Pageable.ofSize(100)).forEach(article -> {
                 try {
                     log.info("init embedding :{}", article.getTitle());
                     articleEmbeddingService.buildArticleEmbedding(article);
