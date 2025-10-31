@@ -3,7 +3,7 @@ package org.bitmagic.ifeed.service.feed;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rometools.rome.feed.synd.*;
-import com.rometools.rome.io.ParsingFeedException;
+import com.rometools.rome.io.FeedException;
 import com.rometools.rome.io.SyndFeedInput;
 import com.rometools.rome.io.XmlReader;
 import lombok.RequiredArgsConstructor;
@@ -16,15 +16,17 @@ import org.bitmagic.ifeed.domain.repository.ArticleRepository;
 import org.bitmagic.ifeed.domain.repository.FeedRepository;
 import org.bitmagic.ifeed.service.ai.AiContentService;
 import org.bitmagic.ifeed.service.content.ContentCleaner;
-import org.bitmagic.ifeed.util.UrlChecker;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -42,6 +44,8 @@ import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import static org.bitmagic.ifeed.config.RssFetcherProperties.Cache.CACHE_NAME;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -53,6 +57,7 @@ public class FeedIngestionService {
             DateTimeFormatter.ISO_ZONED_DATE_TIME
     );
     private static final int MAX_ERROR_MESSAGE_LENGTH = 2048;
+
 
     private final FeedRepository feedRepository;
     private final ArticleRepository articleRepository;
@@ -67,114 +72,169 @@ public class FeedIngestionService {
         return feedRepository.findAll().stream()
                 .filter(predicate)
                 .map(Feed::getId)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Transactional
-    public void ingestFeed(UUID feedId) {
-        feedRepository.findById(feedId).ifPresent(this::fetchFeedSafely);
+    public Optional<Boolean> ingestFeed(UUID feedId) {
+        return feedRepository.findById(feedId).map(this::fetchFeedSafely);
     }
 
-    private void fetchFeedSafely(Feed feed) {
+    private boolean fetchFeedSafely(Feed feed) {
+        Instant latestContentUpdate = null;
         try {
+            byte[] bodyBytes = fetchRawBytesWithRetry(feed.getUrl());
+            SyndFeed syndFeed = parseFeed(bodyBytes, feed.getUrl());
+            log.debug("Successfully fetched feed: {}", feed.getUrl());
 
-            var syndFeed = fetchFeed(feed.getUrl());
-            log.info("fetch url:{}", feed.getUrl());
-            var latestContentUpdate = processEntries(feed, syndFeed.getEntries());
+            latestContentUpdate = processEntries(feed, syndFeed.getEntries());
             updateFeedInfo(feed, syndFeed);
+
             if (latestContentUpdate != null) {
-                var currentLastUpdated = feed.getLastUpdated();
-                if (currentLastUpdated == null || latestContentUpdate.isAfter(currentLastUpdated)) {
+                var current = feed.getLastUpdated();
+                if (current == null || latestContentUpdate.isAfter(current)) {
                     feed.setLastUpdated(latestContentUpdate);
                 }
             }
+
             feed.setLastFetched(Instant.now());
             feed.setLastFetchStatus(FeedFetchStatus.SUCCEEDED);
             feed.setFetchErrorAt(null);
             feed.setFetchError(null);
             feed.setFailureCount(0);
             feedRepository.save(feed);
+            return true;
         } catch (Exception ex) {
-            log.warn("Failed to fetch feed {}", feed.getUrl(), ex);
+            log.warn("Failed to ingest feed: {}", feed.getUrl(), ex);
             feed.setLastFetchStatus(FeedFetchStatus.FAILED);
             feed.setFetchErrorAt(Instant.now());
-            feed.setFetchError(resolveErrorMessage(ex));
-            var currentFailures = Optional.ofNullable(feed.getFailureCount()).orElse(0);
-            feed.setFailureCount(currentFailures + 1);
+            feed.setFetchError(truncate(resolveErrorMessage(ex), MAX_ERROR_MESSAGE_LENGTH));
+            feed.setFailureCount(Optional.ofNullable(feed.getFailureCount()).orElse(0) + 1);
             feedRepository.save(feed);
+            return false;
         }
     }
 
-    private SyndFeed fetchFeed(String feedUrl) throws Exception {
-        var request = HttpRequest.newBuilder()
-                .uri(URI.create(feedUrl))
-                .timeout(properties.getReadTimeout())
-                .header("Accept", "application/rss+xml, application/xml, text/xml, */*")
-                .GET()
-                .build();
+    /**
+     * 带重试 + 缓存的原始字节抓取
+     */
+    @Cacheable(cacheNames = CACHE_NAME, key = "#feedUrl", unless = "#result == null")
+    public byte[] fetchRawBytesWithRetry(String feedUrl) {
+        int attempt = 0;
+        IOException lastError = null;
 
-        var response = rssHttpClient.send(request, HttpResponse.BodyHandlers.ofInputStream());
-        if (response.statusCode() >= 400) {
-            throw new IllegalStateException("Failed to fetch feed. Status code: " + response.statusCode());
+        while (attempt < properties.getMaxRetries()) {
+            attempt++;
+            try {
+                log.debug("Fetching RSS (attempt {}/{}): {}", attempt, properties.getMaxRetries(), feedUrl);
+
+                HttpRequest request = HttpRequest.newBuilder()
+                        .uri(URI.create(feedUrl))
+                        .timeout(properties.getReadTimeout())
+                        .header("Accept", "application/rss+xml, application/atom+xml, application/xml, text/xml, */*")
+                        .header("User-Agent", "Mozilla/5.0 (compatible; RssBot/1.0)")
+                        .GET()
+                        .build();
+
+                HttpResponse<InputStream> response = rssHttpClient.send(request, HttpResponse.BodyHandlers.ofInputStream());
+                int status = response.statusCode();
+                if (status >= 400) {
+                    throw new IOException("HTTP " + status);
+                }
+
+                byte[] bytes = readAllBytesSafe(response.body());
+                log.debug("Fetched {} bytes from {}", bytes.length, feedUrl);
+                return bytes;
+
+            } catch (IOException e) {
+                lastError = e;
+                log.warn("Attempt {}/{} failed for {}: {}", attempt, properties.getMaxRetries(), feedUrl, e.toString());
+                if (attempt < properties.getMaxRetries()) {
+                    long delay = 1000L * (1L << (attempt - 1)); // 1s, 2s, 4s...
+                    try {
+                        Thread.sleep(delay);
+                    } catch (InterruptedException ie) {
+                        Thread.currentThread().interrupt();
+                    }
+                }
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new RuntimeException("Interrupted during retry", e);
+            }
         }
+        throw new IllegalStateException("Exhausted retries for " + feedUrl, lastError);
+    }
 
-        byte[] bodyBytes;
-        try (InputStream is = response.body()) {
-            bodyBytes = is.readAllBytes();
+    /**
+     * 安全读取流，避开 Content-Length 校验
+     */
+    private byte[] readAllBytesSafe(InputStream is) throws IOException {
+        try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+            byte[] buffer = new byte[8192];
+            int len;
+            long total = 0;
+            while ((len = is.read(buffer)) != -1) {
+                baos.write(buffer, 0, len);
+                total += len;
+                if (total > 10 * 1024 * 1024) { // 10MB 上限
+                    throw new IOException("Feed too large (>10MB): " + total);
+                }
+            }
+            return baos.toByteArray();
         }
+    }
 
-        var feedInput = new SyndFeedInput();
-
+    /**
+     * 解析 RSS（主解析 + Jsoup 兜底）
+     */
+    private SyndFeed parseFeed(byte[] bytes, String feedUrl) {
         try {
-            return buildFeed(feedInput, bodyBytes);
-        } catch (ParsingFeedException parsingFeedException) {
-            log.warn("Standard feed parsing failed for {}. Trying Jsoup fallback.", feedUrl, parsingFeedException);
-            var fallback = buildFeedWithJsoupFallback(feedUrl, bodyBytes);
+            return buildFeed(new SyndFeedInput(), bytes);
+        } catch (Exception e) {
+            log.warn("Standard parsing failed for {}. Trying Jsoup fallback.", feedUrl, e);
+            var fallback = buildFeedWithJsoupFallback(feedUrl, bytes);
             if (fallback != null) {
-                log.info("Jsoup fallback parsing succeeded for {}", feedUrl);
+                log.info("Jsoup fallback succeeded for {}", feedUrl);
                 return fallback;
             }
-            throw new IllegalArgumentException(new String(bodyBytes));
+            throw new IllegalArgumentException("Failed to parse feed: " + feedUrl, e);
         }
     }
 
     private Instant processEntries(Feed feed, List<SyndEntry> entries) {
-        if (entries == null || entries.isEmpty()) {
-            return null;
-        }
+        if (entries == null || entries.isEmpty()) return null;
 
-        var latestPublished = entries.stream()
-                .sorted(Comparator.comparing(this::resolvePublishedAt).reversed())
+        var articles = entries.stream()
                 .limit(Math.max(1, properties.getMaxItems()))
                 .map(entry -> processEntry(feed, entry))
-                .filter(Optional::isPresent)
-                .map(Optional::get)
+                .flatMap(Optional::stream)
+                .toList();
+
+        if (articles.isEmpty()) return null;
+
+        var latest = articles.stream()
+                .map(Article::getPublishedAt)
+                .filter(Objects::nonNull)
                 .max(Comparator.naturalOrder())
                 .orElse(null);
 
-        return latestPublished;
+        articleRepository.saveAllAndFlush(articles);
+        return latest;
     }
 
-    private Optional<Instant> processEntry(Feed feed, SyndEntry entry) {
+    private Optional<Article> processEntry(Feed feed, SyndEntry entry) {
         var link = Optional.ofNullable(entry.getLink()).orElse(entry.getUri());
-        if (!StringUtils.hasText(link)) {
-            return Optional.empty();
-        }
+        if (!StringUtils.hasText(link)) return Optional.empty();
 
         var publishedAt = resolvePublishedAt(entry);
-
         if (articleRepository.existsByFeedIdAndLink(feed.getId(), link)) {
-            return Optional.ofNullable(publishedAt);
+            return Optional.empty();
         }
 
         var rawContent = resolveContent(entry);
         var thumbnail = resolveThumbnail(entry, rawContent);
-        var cleanedContent = contentCleaner.clean(rawContent);
-        var textContent = cleanedContent.textContent();
-        if (!StringUtils.hasText(cleanedContent.textContent())) {
-            textContent = entry.getTitle();
-        }
-
+        var cleaned = contentCleaner.clean(rawContent);
+        var textContent = StringUtils.hasText(cleaned.textContent()) ? cleaned.textContent() : entry.getTitle();
         var aiContent = aiContentService.analyze(entry.getTitle(), textContent);
 
         var article = Article.builder()
@@ -186,16 +246,18 @@ public class FeedIngestionService {
                 .publishedAt(publishedAt)
                 .enclosure(resolveEnclosure(entry))
                 .thumbnail(thumbnail)
-                .content(cleanedContent.mdContent())
+                .content(cleaned.mdContent())
                 .summary(aiContent.summary())
                 .category(aiContent.category())
                 .tags(writeJson(aiContent.tags()))
                 .embedding(null)
                 .build();
 
-        articleRepository.save(article);
-        log.debug("save [{}]", article.getTitle());
-        return Optional.ofNullable(publishedAt);
+        return Optional.of(article);
+    }
+
+    private String truncate(String s, int max) {
+        return s != null && s.length() > max ? s.substring(0, max) : s;
     }
 
     private void updateFeedInfo(Feed feed, SyndFeed syndFeed) {
@@ -264,8 +326,8 @@ public class FeedIngestionService {
     }
 
     private Instant resolvePublishedAt(SyndEntry entry) {
-        if (entry.getPublishedDate() != null) {
-            return entry.getPublishedDate().toInstant();
+        if (entry.getUpdatedDate() != null) {
+            return entry.getUpdatedDate().toInstant();
         }
         if (entry.getUpdatedDate() != null) {
             return entry.getUpdatedDate().toInstant();
@@ -360,7 +422,7 @@ public class FeedIngestionService {
         return message;
     }
 
-    private SyndFeed buildFeed(SyndFeedInput feedInput, byte[] bytes) throws Exception {
+    private SyndFeed buildFeed(SyndFeedInput feedInput, byte[] bytes) throws IOException, FeedException {
         try (var reader = new XmlReader(new ByteArrayInputStream(bytes), StandardCharsets.UTF_8.name(), true)) {
             return feedInput.build(reader);
         }
