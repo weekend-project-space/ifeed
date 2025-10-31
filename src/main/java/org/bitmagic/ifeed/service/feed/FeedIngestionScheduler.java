@@ -34,8 +34,8 @@ public class FeedIngestionScheduler {
         });
     }
 
-    @Scheduled(initialDelayString = "${rss.fetcher.initial-delay:PT10S}",
-            fixedDelayString = "${rss.fetcher.fixed-delay:PT30M}")
+//    @Scheduled(initialDelayString = "${app.rss.fetcher.initial-delay:PT10S}",
+//            fixedDelayString = "${app,rss.fetcher.fixed-delay:PT30M}")
     public void refreshFeeds() {
         long start = System.currentTimeMillis();
 

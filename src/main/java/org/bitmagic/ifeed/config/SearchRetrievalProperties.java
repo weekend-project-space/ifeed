@@ -6,7 +6,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 
 @Getter
 @Setter
-@ConfigurationProperties(prefix = "search.retrieval")
+@ConfigurationProperties(prefix = "app.search.retrieval")
 public class SearchRetrievalProperties {
 
     /**

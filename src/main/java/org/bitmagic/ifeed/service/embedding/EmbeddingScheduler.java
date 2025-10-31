@@ -22,10 +22,10 @@ public class EmbeddingScheduler {
 
     private final ArticleRepository articleRepository;
 
-    @Scheduled(initialDelayString = "${embedding.user.initial-delay:PT10S}",
-            fixedDelayString = "${embedding.user.fixed-delay:PT30M}")
+    @Scheduled(initialDelayString = "${app.embedding.user.initial-delay:PT10S}",
+            fixedDelayString = "${app.embedding.user.fixed-delay:PT30M}")
     public void userEmbedding() {
-        log.info("init user embedding");
+        log.info("begin gen user embedding");
         try {
             userRepository.findAll().forEach(user -> {
                 log.info("init user embedding :{}", user.getUsername());
@@ -38,14 +38,14 @@ public class EmbeddingScheduler {
         } catch (RuntimeException e) {
             log.warn("user embedding", e);
         }
-
+        log.info("end gen user embedding");
     }
 
 
-    @Scheduled(initialDelayString = "${embedding.document.initial-delay:PT10S}",
-            fixedDelayString = "${embedding.document.fixed-delay:PT30M}")
-    public void docEmbedding() {
-        log.info("init article embedding");
+    @Scheduled(initialDelayString = "${app.embedding.document.initial-delay:PT10S}",
+            fixedDelayString = "${app.embedding.document.fixed-delay:PT30M}")
+    public void documentEmbedding() {
+        log.info("begin init article embedding");
         try {
             articleRepository.findAll(ArticleSpec.noEmbeddingSpec(), Pageable.ofSize(100)).forEach(article -> {
                 try {
@@ -60,5 +60,6 @@ public class EmbeddingScheduler {
         } catch (RuntimeException e) {
             log.warn("article embedding", e);
         }
+        log.info("end init article embedding");
     }
 }

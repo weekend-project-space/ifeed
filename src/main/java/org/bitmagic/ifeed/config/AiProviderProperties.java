@@ -4,7 +4,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
-@ConfigurationProperties(prefix = "ai.provider")
+@ConfigurationProperties(prefix = "app.ai.provider")
 public class AiProviderProperties {
 
     /**

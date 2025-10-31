@@ -8,7 +8,7 @@ import java.time.Duration;
 
 @Data
 @Configuration
-@ConfigurationProperties(prefix = "rss.fetcher")
+@ConfigurationProperties(prefix = "app.rss.fetcher")
 public class RssFetcherProperties {
 
     private Duration connectTimeout = Duration.ofSeconds(10);
