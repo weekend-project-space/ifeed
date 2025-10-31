@@ -15,6 +15,7 @@ public class RecommendationProperties {
      * Number of recent user interactions (reads/collections) to consider when building profiles.
      */
     private int recentBehaviorLimit = 200;
+    private String defaultProfile = "";
     private double readWeight = 1.0;
     private double collectWeight = 2.0;
     private double skipWeight = -0.6;
