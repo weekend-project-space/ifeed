@@ -14,14 +14,19 @@ spring:
       enabled: true
   ai:
     openai:
-      api-key: ${ai.provider.api-key}
-      base-url: ${ai.provider.endpoint}
+      api-key: ${app.ai.provider.api-key}
+      base-url: ${app.ai.provider.endpoint}
+      chat:
+        options:
+          model: ${app.ai.provider.model}
+          temperature: 0.5
       embedding:
         options:
           dimensions: 1024
-          model: ${ai.provider.embedding-model}
+          model: ${app.ai.provider.embedding-model}
           encoding-format: 'float'
-        base-url: ${ai.provider.embedding-endpoint}
+        base-url: ${app.ai.provider.embedding-endpoint}
+        api-key: ${app.ai.provider.embedding-api-key}
     vectorstore:
       pgvector:
         initialize-schema: true
@@ -39,47 +44,50 @@ spring:
   profiles:
     active: rel
 
-# 定时任务
-rss:
-  fetcher:
-    fixed-delay: PT60M
-    initial-delay: PT1M
-    thread-pool-size: 10
-    connect-timeout: 50s
-    read-timeout: 100s
-    max-items: 500
-    max-retries: 3
-    cache:
-      expire-after-write: 30m
-      maximum-size: 1000
-embedding:
-  document:
-    fixed-delay: PT10M
-    initial-delay: PT15M
-  user:
-    fixed-delay: PT12H
-    initial-delay: PT30s
-
-# ai 集成
-ai:
-  provider:
-    enabled: false
-    endpoint: ''
-    embedding-endpoint: '${ai.provider.endpoint}'
-    api-key: ''
-    model: 'gpt-4o-mini'
-    embedding-model: 'Qwen/Qwen3-Embedding-4B'
-# 检索
-search:
-  retrieval:
-    bm25-top-k: 120
-    vector-top-k: 120
-    fusion-top-k: 200
-    bm25-weight: 0.6
-    vector-weight: 0.4
-    freshness-time-weight: 0.3
-    freshness-lambda: 0.01
-    similarity-threshold: 0.3
+app:
+  # 定时任务
+  rss:
+    fetcher:
+      fixed-delay: PT60M
+      initial-delay: PT1M
+      thread-pool-size: 10
+      connect-timeout: 50s
+      read-timeout: 100s
+      max-items: 500
+      max-retries: 3
+      cache:
+        expire-after-write: 30m
+        maximum-size: 1000
+  embedding:
+    document:
+      fixed-delay: PT10M
+      initial-delay: PT15M
+    user:
+      fixed-delay: PT12H
+      initial-delay: PT30s
+      options:
+        recent-behavior-limit: 200
+  # ai 集成
+  ai:
+    provider:
+      enabled: false
+      endpoint: ''
+      api-key: ''
+      model: 'gpt-4o-mini'
+      embedding-endpoint: '${app.ai.provider.endpoint}'
+      embedding-api-key: '${app.ai.provider.api-key}'
+      embedding-model: 'Qwen/Qwen3-Embedding-4B'
+  # 检索
+  search:
+    retrieval:
+      bm25-top-k: 120
+      vector-top-k: 120
+      fusion-top-k: 200
+      bm25-weight: 0.6
+      vector-weight: 0.4
+      freshness-time-weight: 0.3
+      freshness-lambda: 0.01
+      similarity-threshold: 0.3
 management:
   endpoints:
     web:
