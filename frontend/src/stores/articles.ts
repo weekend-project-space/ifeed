@@ -1,9 +1,9 @@
 import { computed, ref } from 'vue';
 import { defineStore } from 'pinia';
-import MarkdownIt from 'markdown-it';
 import { request } from '../api/client';
 import { formatRelativeTime } from '../utils/datetime';
 import type { PageResponse } from '../types/api';
+import { md2html } from '../utils/markdown';
 
 export interface ArticleDto {
   id: string;
@@ -17,6 +17,7 @@ export interface ArticleDto {
   feedTitle?: string;
   publishedAt?: string;
   tags?: string[];
+  collected?: boolean;
 }
 
 export interface ArticleListItem {
@@ -30,6 +31,7 @@ export interface ArticleListItem {
   publishedAt?: string;
   timeAgo: string;
   tags: string[];
+  collected?: boolean;
 }
 
 export interface ArticleDetail extends ArticleListItem {
@@ -53,16 +55,12 @@ const normalizeArticle = (article: ArticleDto): ArticleListItem => {
     feedTitle,
     publishedAt,
     timeAgo: formatRelativeTime(publishedAt ?? Date.now()),
-    tags: Array.from(new Set(tags)).slice(0, 6)
+    tags: Array.from(new Set(tags)).slice(0, 6),
+    collected: article.collected ?? false
   };
 };
 
 export const useArticlesStore = defineStore('articles', () => {
-  const markdown = new MarkdownIt({
-    html: false,
-    linkify: true,
-    breaks: true
-  });
 
   const items = ref<ArticleListItem[]>([]);
   const currentArticle = ref<ArticleDetail | null>(null);
@@ -80,7 +78,7 @@ export const useArticlesStore = defineStore('articles', () => {
   // insights state
   const insightsLoading = ref(false);
   const insightsError = ref<string | null>(null);
-  const insights = ref<{ categories: { category: string; count: number }[]; hotTags: { tag: string; count: number }[]}>({
+  const insights = ref<{ categories: { category: string; count: number }[]; hotTags: { tag: string; count: number }[] }>({
     categories: [],
     hotTags: []
   });
@@ -136,11 +134,44 @@ export const useArticlesStore = defineStore('articles', () => {
     }
   };
 
+  const fetchRecommendArticles = async (override?: { page?: number; size?: number; }) => {
+    loading.value = true;
+    error.value = null;
+    const nextPage = override?.page ?? page.value;
+    const nextSize = override?.size ?? size.value;
+
+
+    try {
+      const response = await request<PageResponse<ArticleDto>>(
+        '/api/articles/recommendations',
+        {
+          query: {
+            page: Math.max(0, nextPage - 1),
+            size: nextSize,
+          }
+        }
+      );
+
+      const list = Array.isArray(response?.content) ? response.content : [];
+      items.value = list.map(normalizeArticle);
+      page.value = (response?.number ?? 0) + 1;
+      size.value = response?.size ?? nextSize;
+      total.value = response?.totalElements ?? list.length;
+      totalPages.value = response?.totalPages ?? (list.length ? 1 : 0);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : '文章加载失败';
+      error.value = message;
+      throw err;
+    } finally {
+      loading.value = false;
+    }
+  };
+
   const fetchInsights = async (params?: { top?: number; from?: string; to?: string }) => {
     insightsLoading.value = true;
     insightsError.value = null;
     try {
-      const data = await request<{ categories: { category: string; count: number }[]; hotTags: { tag: string; count: number }[]}>(
+      const data = await request<{ categories: { category: string; count: number }[]; hotTags: { tag: string; count: number }[] }>(
         '/api/articles/insights',
         { query: { top: params?.top ?? 12, from: params?.from, to: params?.to } }
       );
@@ -166,11 +197,11 @@ export const useArticlesStore = defineStore('articles', () => {
       const data = await request<ArticleDto & { content?: string }>(`/api/articles/${articleId}`);
       const normalized = normalizeArticle(data);
       const rawContent = data.content ?? data.summary ?? '';
-      const hasHtmlTags = /<\/?[a-z][\s\S]*>/i.test(rawContent);
       currentArticle.value = {
         ...normalized,
-        feedId:data.feedId,
-        content: hasHtmlTags ? rawContent : markdown.render(rawContent)
+        feedId: data.feedId,
+        content: md2html(rawContent),
+        collected: data.collected ?? normalized.collected ?? false
       };
       return currentArticle.value;
     } catch (err) {
@@ -214,6 +245,7 @@ export const useArticlesStore = defineStore('articles', () => {
     hasNextPage,
     hasPreviousPage,
     fetchArticles,
+    fetchRecommendArticles,
     fetchArticleById,
     clearCurrentArticle,
     recordHistory,

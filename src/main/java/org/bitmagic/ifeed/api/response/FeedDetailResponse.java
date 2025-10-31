@@ -15,6 +15,8 @@ public record FeedDetailResponse(
         Instant latestPublishedAt,
         long articleCount,
         long subscriberCount,
-        boolean subscribed
+        boolean subscribed,
+        Integer failureCount,
+        String fetchError
 ) {
 }

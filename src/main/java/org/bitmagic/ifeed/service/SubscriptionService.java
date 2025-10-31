@@ -9,12 +9,17 @@ import org.bitmagic.ifeed.domain.entity.UserSubscriptionId;
 import org.bitmagic.ifeed.domain.repository.FeedRepository;
 import org.bitmagic.ifeed.domain.repository.UserSubscriptionRepository;
 import org.bitmagic.ifeed.exception.ApiException;
+import org.bitmagic.ifeed.util.UrlChecker;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -29,6 +34,7 @@ public class SubscriptionService {
     @Transactional
     public UserSubscription subscribe(User user, SubscriptionRequest request) {
         var normalizedUrl = request.feedUrl().trim();
+        Assert.isTrue(UrlChecker.isValidUrl(normalizedUrl), "check url" + normalizedUrl);
         var feed = feedRepository.findByUrl(normalizedUrl)
                 .orElseGet(() -> createFeed(normalizedUrl, request));
 
@@ -68,6 +74,19 @@ public class SubscriptionService {
         return subscriptionRepository.findAllByUserAndActiveTrue(user);
     }
 
+    @Transactional(readOnly = true)
+    public Set<UUID> getActiveFeedIds(User user) {
+        return new HashSet<>(subscriptionRepository.findActiveFeedIdsByUserId(user.getId()));
+    }
+
+    @Transactional(readOnly = true)
+    public long getSubscriberCount(Feed feed) {
+        if (feed == null) {
+            return 0;
+        }
+        return subscriptionRepository.countByFeedAndActiveTrue(feed);
+    }
+
     @Transactional
     public void unsubscribe(User user, UUID feedId) {
         var feed = feedRepository.findById(feedId)
@@ -82,6 +101,15 @@ public class SubscriptionService {
 
         subscription.setActive(false);
         subscriptionRepository.save(subscription);
+    }
+
+    @Transactional(readOnly = true)
+    public List<Feed> searchFeeds(String query) {
+        if (!StringUtils.hasText(query)) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "query must not be empty");
+        }
+        var normalized = query.trim();
+        return feedRepository.searchByQuery(normalized, PageRequest.of(0, 20));
     }
 
     private Feed createFeed(String feedUrl, SubscriptionRequest request) {

@@ -2,6 +2,8 @@ package org.bitmagic.ifeed.domain.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
@@ -42,10 +44,31 @@ public class Feed {
     @Column(name = "last_updated")
     private Instant lastUpdated;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "last_fetch_status", length = 32)
+    @Builder.Default
+    private FeedFetchStatus lastFetchStatus = FeedFetchStatus.PENDING;
+
+    @Column(name = "fetch_error_at")
+    private Instant fetchErrorAt;
+
+    @Column(name = "fetch_error", length = 2048)
+    private String fetchError;
+
+    @Column(name = "failure_count")
+    @Builder.Default
+    private Integer failureCount = 0;
+
     @PrePersist
     void onCreate() {
         if (id == null) {
             id = UUID.randomUUID();
+        }
+        if (lastFetchStatus == null) {
+            lastFetchStatus = FeedFetchStatus.PENDING;
+        }
+        if (failureCount == null) {
+            failureCount = 0;
         }
     }
 }

@@ -1,21 +1,20 @@
 <template>
-  <article
-    class="group relative flex h-full cursor-pointer flex-col overflow-hidden rounded-xl border border-outline/20 bg-surface transition hover:border-outline/40"
-    @click="handleSelect"
-  >
-    <figure class="relative aspect-video w-full overflow-hidden bg-surface">
-      <img
-        v-if="article.thumbnail && !thumbError"
-        :src="article.thumbnail"
-        alt="文章缩略图"
-        loading="lazy"
+  <article class="group relative flex h-full cursor-pointer flex-col overflow-hidden rounded-xl bg-surface p-3"
+    @click="handleSelect">
+    <!-- 扩散背景 -->
+    <span class="pointer-events-none absolute inset-0 origin-center scale-50 rounded h-1/2
+                bg-primary/10 transition-transform duration-500 ease-out 
+                group-hover:scale-[1.02] group-hover:h-full"></span>
+    <figure class="relative aspect-video w-full overflow-hidden bg-surface rounded-xl">
+      <img v-if="article.thumbnail && !thumbError" :src="article.thumbnail" alt="文章缩略图" loading="lazy"
         class="h-full w-full object-cover transition duration-300 group-hover:scale-[1.02]"
-        @error="thumbError = true"
-      />
+        @error="thumbError = true" />
       <div v-else class="flex h-full w-full items-center justify-center">
-        <div class="flex h-full w-full items-center justify-center">
-          <div class="flex items-center gap-2 rounded-md border border-outline/30 bg-surface px-3 py-2 text-xs text-text-muted">
-            <svg class="h-4 w-4 text-text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <div class="flex h-full w-full items-center justify-center bg-primary/10">
+          <div
+            class="flex items-center gap-2 rounded-md border border-outline/30 bg-surface px-3 py-2 text-xs text-text-muted">
+            <svg class="h-4 w-4 text-text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="1.5">
               <rect x="3" y="3" width="18" height="14" rx="2" ry="2"></rect>
               <path d="M3 17l5-5 4 4 3-3 6 6"></path>
             </svg>
@@ -25,20 +24,18 @@
       </div>
       <!-- Remove hover gradient overlay for a flatter look -->
     </figure>
-    <div class="flex flex-1 flex-col gap-4 p-5">
-      <header class="flex items-start gap-4">
+    <div class="flex flex-1 flex-col gap-3 py-4 sm:gap-4 sm:py-5">
+      <header class="flex items-start gap-3 sm:gap-4">
         <div class="min-w-0 flex-1 space-y-1">
-          <h3
-            class="text-base font-semibold leading-tight text-text"
-            style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;"
-          >
+          <h3 class="text-base font-semibold leading-tight text-text"
+            style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
             {{ article.title }}
           </h3>
           <p class="text-xs text-text-muted">
             {{ article.feedTitle }} · {{ article.timeAgo }}
           </p>
         </div>
-        <button
+        <!-- <button
           class="inline-flex shrink-0 items-center justify-center gap-2 rounded-full border border-outline/30 bg-surface px-3 py-1.5 text-xs font-medium text-text-secondary transition hover:border-outline/50 min-w-[6rem]"
           :class="article.collected ? 'border-primary bg-primary/15 text-primary' : ''"
           aria-label="收藏"
@@ -62,22 +59,16 @@
             />
           </svg>
           {{ article.collected ? '已收藏' : '收藏' }}
-        </button>
+        </button> -->
       </header>
-      <p
-        class="text-sm leading-relaxed text-text-secondary"
-        style="display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;"
-      >
+      <p class="text-sm leading-relaxed text-text-secondary"
+        style="display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;">
         {{ article.summary }}
       </p>
-      <footer class="mt-auto flex flex-wrap gap-2 text-xs text-text-muted">
-        <button
-          v-for="tag in article.tags"
-          :key="tag"
-          type="button"
+      <footer v-if="article.tags && article.tags.length" class="mt-auto flex flex-wrap gap-2 text-xs text-text-muted">
+        <button v-for="tag in article.tags" :key="tag" type="button"
           class="rounded-full bg-surface px-3 py-1 font-medium text-text-secondary border border-outline/30 hover:border-outline/50"
-          @click.stop="handleTagClick(tag)"
-        >
+          @click.stop="handleTagClick(tag)">
           #{{ tag }}
         </button>
       </footer>
@@ -115,9 +106,9 @@ const handleSelect = () => {
   emit('select', article.value.id);
 };
 
-const handleToggleFavorite = () => {
-  emit('toggle-favorite', article.value.id);
-};
+// const handleToggleFavorite = () => {
+//   emit('toggle-favorite', article.value.id);
+// };
 
 const handleTagClick = (tag: string) => {
   if (!tag) {

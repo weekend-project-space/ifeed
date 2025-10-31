@@ -2,9 +2,11 @@ package org.bitmagic.ifeed.api.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.bitmagic.ifeed.api.response.SearchResultResponse;
+import org.bitmagic.ifeed.domain.projection.ArticleSummaryView;
 import org.bitmagic.ifeed.exception.ApiException;
 import org.bitmagic.ifeed.security.UserPrincipal;
 import org.bitmagic.ifeed.service.ArticleService;
+import org.bitmagic.ifeed.service.retrieval.SearchRetrievalService;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -29,6 +31,7 @@ public class SearchController {
     private static final String SOURCE_GLOBAL = "global";
 
     private final ArticleService articleService;
+    private final SearchRetrievalService searchRetrievalService;
 
     @GetMapping
     public ResponseEntity<Page<SearchResultResponse>> search(@AuthenticationPrincipal UserPrincipal principal,
@@ -38,6 +41,9 @@ public class SearchController {
                                                              @RequestParam(required = false) Integer size,
                                                              @RequestParam(required = false, defaultValue = SOURCE_OWNER) String source) {
         ensureAuthenticated(principal);
+        if (query == null || query.isBlank()) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "Query must not be blank");
+        }
         var normalizedType = type == null ? TYPE_KEYWORD : type.trim().toLowerCase(Locale.ROOT);
         if (!TYPE_KEYWORD.equals(normalizedType) && !TYPE_SEMANTIC.equals(normalizedType)) {
             throw new ApiException(HttpStatus.BAD_REQUEST, "Unsupported search type");
@@ -47,9 +53,23 @@ public class SearchController {
         if (!SOURCE_OWNER.equals(normalizedSource) && !SOURCE_GLOBAL.equals(normalizedSource)) {
             throw new ApiException(HttpStatus.BAD_REQUEST, "Unsupported source type");
         }
+        var pageNumber = page == null || page < 0 ? 0 : page;
+        var pageSize = size == null || size <= 0 ? 10 : Math.min(size, 100);
         var includeGlobal = SOURCE_GLOBAL.equals(normalizedSource);
 
-        var articlePage = articleService.searchArticles(principal.getId(), query, includeGlobal, page, size)
+        if (TYPE_SEMANTIC.equals(normalizedType)) {
+            return ResponseEntity.ok(searchRetrievalService.hybridSearch(principal.getId(), query, includeGlobal, pageNumber, pageSize).map(article -> new SearchResultResponse(
+                    article.id().toString(),
+                    article.title(),
+                    article.summary(),
+                    article.thumbnail(),
+                    article.feedTitle(),
+                    formatRelativeTime(article.publishedAt()),
+                    null
+            )));
+        }
+
+        var articlePage = articleService.searchArticles(principal.getId(), query, includeGlobal, pageNumber, pageSize)
                 .map(article -> new SearchResultResponse(
                         article.id().toString(),
                         article.title(),

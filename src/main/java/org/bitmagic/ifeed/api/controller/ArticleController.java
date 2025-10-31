@@ -7,20 +7,17 @@ import org.bitmagic.ifeed.api.response.ArticleDetailResponse;
 import org.bitmagic.ifeed.api.response.ArticleSummaryResponse;
 import org.bitmagic.ifeed.api.response.UserSubscriptionInsightResponse;
 import org.bitmagic.ifeed.api.util.IdentifierUtils;
-import org.bitmagic.ifeed.domain.entity.Article;
 import org.bitmagic.ifeed.domain.projection.ArticleSummaryView;
 import org.bitmagic.ifeed.exception.ApiException;
 import org.bitmagic.ifeed.security.UserPrincipal;
 import org.bitmagic.ifeed.service.ArticleService;
+import org.bitmagic.ifeed.service.UserCollectionService;
+import org.bitmagic.ifeed.service.recommendation.RecommendationService;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -39,6 +36,10 @@ public class ArticleController {
     private static final String SOURCE_GLOBAL = "global";
 
     private final ArticleService articleService;
+
+    private final UserCollectionService userCollectionService;
+
+    private final RecommendationService recommendationService;
 
     @GetMapping
     public ResponseEntity<Page<ArticleSummaryResponse>> listArticles(@AuthenticationPrincipal UserPrincipal principal,
@@ -60,6 +61,16 @@ public class ArticleController {
         return ResponseEntity.ok(articlePage);
     }
 
+
+    @GetMapping("/recommendations")
+    public ResponseEntity<Page<ArticleSummaryResponse>> searchArticles(@AuthenticationPrincipal UserPrincipal principal,
+                                                                       @RequestParam(defaultValue = "0") Integer page,
+                                                                       @RequestParam(required = false) Integer size) {
+        ensureAuthenticated(principal);
+
+        return ResponseEntity.ok(recommendationService.recommend(principal.getId(), page, size).map(this::toSummaryResponse2));
+    }
+
     @GetMapping("/insights")
     public ResponseEntity<UserSubscriptionInsightResponse> insights(
             @AuthenticationPrincipal UserPrincipal principal,
@@ -79,6 +90,7 @@ public class ArticleController {
         ensureAuthenticated(principal);
         var article = articleService.getArticle(IdentifierUtils.parseUuid(articleId, "article id"));
         var tags = extractTags(article.getTags());
+        var collected = userCollectionService.isCollected(principal.getId(), article.getId());
         var response = new ArticleDetailResponse(
                 article.getId().toString(),
                 article.getTitle(),
@@ -90,7 +102,8 @@ public class ArticleController {
                 article.getFeed().getId().toString(),
                 resolveFeedTitle(article.getFeed() == null ? null : article.getFeed().getTitle()),
                 formatTimestamp(article.getPublishedAt()),
-                tags);
+                tags,
+                collected);
         return ResponseEntity.ok(response);
     }
 
@@ -107,6 +120,21 @@ public class ArticleController {
                 resolveFeedTitle(article.feedTitle()),
                 formatTimestamp(publishedAt),
                 tags,
+                formatRelativeTime(publishedAt));
+    }
+
+    private ArticleSummaryResponse toSummaryResponse2(ArticleSummaryView article) {
+        var publishedAt = article.publishedAt();
+        return new ArticleSummaryResponse(
+                article.id().toString(),
+                article.title(),
+                article.link(),
+                article.summary(),
+                article.thumbnail(),
+                article.enclosure(),
+                resolveFeedTitle(article.feedTitle()),
+                formatTimestamp(publishedAt),
+                null,
                 formatRelativeTime(publishedAt));
     }
 

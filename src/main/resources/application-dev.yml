@@ -1,32 +1,48 @@
-spring:
-  application:
-    name: iFeed
-  datasource:
-    url: jdbc:postgresql://182.160.1.158:5432/i_feed
-    username: i_feed
-    password: MCkmdDzn8yDbSTKb
-    driver-class-name: org.postgresql.Driver
-  jpa:
-    hibernate:
-      ddl-auto: update
-  data:
-    mongodb:
-      host: 182.160.1.158
-      port: 27017
-      username: "admin"
-      password: "password123"
-      database: admin
-rss:
-  fetcher:
-    fixed-delay: 900000
-    initial-delay: 5000
-    connect-timeout: 5s
-    read-timeout: 10s
-    max-items: 500
-ai:
-  provider:
-    enabled: false
-    endpoint: 'https://oneapi.jisuai.cn'
-    api-key: 'sk-HGq0GZEFP3xI5lGksbthh71U3p2VE04YcxUmTMbTgkpAl9zp'
-    model: 'deepseek-v3.1'
-
+app:
+  # 定时任务
+  rss:
+    fetcher:
+      fixed-delay: PT60M
+      initial-delay: PT1M
+      thread-pool-size: 10
+      connect-timeout: 50s
+      read-timeout: 100s
+      max-items: 500
+      max-retries: 3
+      cache:
+        expire-after-write: 30m
+        maximum-size: 1000
+  embedding:
+    document:
+      fixed-delay: PT10M
+      initial-delay: PT15M
+    user:
+      fixed-delay: PT12H
+      initial-delay: PT30s
+      options:
+        recent-behavior-limit: 200
+        default-profile: '科技, 人工智能, 金融科技, 产品设计, 财经, 商业, 社会, 文化, 人物故事, 政治, 国际关系, 娱乐, 生活方式, 音乐, 游戏, 体育, 健康, 教育, 播客, 新闻, 科学, 犯罪悬疑, 环境保护, 历史, 心理学, 文学, 艺术, 创业, 政策, 国际贸易, 网络安全, 航天科技, 健康医疗, 社会经济, 文化评论, 综合'
+  # ai 集成
+  ai:
+    provider:
+      enabled: false
+      endpoint: ''
+      api-key: ''
+      model: 'gpt-4o-mini'
+      embedding:
+        endpoint: '${app.ai.provider.endpoint}'
+        api-key: '${app.ai.provider.api-key}'
+        model: 'Qwen/Qwen3-Embedding-4B'
+        options:
+          dimensions: 1024
+  # 检索
+  search:
+    retrieval:
+      bm25-top-k: 120
+      vector-top-k: 120
+      fusion-top-k: 200
+      bm25-weight: 0.6
+      vector-weight: 0.4
+      freshness-time-weight: 0.3
+      freshness-lambda: 0.01
+      similarity-threshold: 0.3

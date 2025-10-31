@@ -71,6 +71,19 @@ public class UserCollectionService {
     }
 
     @Transactional(readOnly = true)
+    public boolean isCollected(UUID userId, UUID articleId) {
+        var document = userBehaviorRepository.findById(userId.toString()).orElse(null);
+        if (document == null) {
+            return false;
+        }
+
+        ensureCollectionsInitialized(document);
+        var articleIdValue = articleId.toString();
+        return document.getCollections().stream()
+                .anyMatch(item -> articleIdValue.equals(item.getArticleId()));
+    }
+
+    @Transactional(readOnly = true)
     public Page<CollectionItemResponse> listCollections(User user, Pageable pageable) {
         var document = userBehaviorRepository.findById(user.getId().toString()).orElse(null);
         if (document == null) {

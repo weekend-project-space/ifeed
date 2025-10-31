@@ -51,6 +51,7 @@ public class FeedController {
 
     private FeedDetailResponse toResponse(FeedService.FeedDetail detail, boolean subscribed) {
         var feed = detail.feed();
+        var failureCount = feed.getFailureCount() == null ? 0 : feed.getFailureCount();
         return new FeedDetailResponse(
                 feed.getId().toString(),
                 feed.getTitle(),
@@ -62,7 +63,9 @@ public class FeedController {
                 detail.latestPublishedAt(),
                 detail.articleCount(),
                 detail.subscriberCount(),
-                subscribed
+                subscribed,
+                failureCount,
+                feed.getFetchError()
         );
     }
 

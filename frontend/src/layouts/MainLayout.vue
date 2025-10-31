@@ -2,7 +2,7 @@
   <div class="min-h-screen bg-surface text-text transition-colors duration-300"
     :class="{ 'overflow-hidden': mobileNavOpen }">
     <header class="sticky top-0 z-40  border-outline/40 bg-surface/90 backdrop-blur">
-      <div class="flex items-center gap-3 px-4 py-3 sm:px-6">
+      <div class="flex items-center gap-3 px-3 py-2 sm:px-6 sm:py-3">
         <div class="flex items-center gap-3">
           <button type="button"
             class="inline-flex h-10 w-10 items-center justify-center rounded-full border border-outline/60 text-text transition hover:border-primary/50 hover:text-primary lg:hidden"
@@ -11,12 +11,21 @@
               <path stroke-linecap="round" d="M4 7h16M4 12h16M4 17h16" />
             </svg>
           </button>
+          <button type="button"
+            class="hidden h-10 w-10 items-center justify-center rounded-full border border-outline/60 text-text transition hover:border-primary/50 hover:text-primary lg:inline-flex"
+            :aria-label="isSidebarCollapsed ? '展开导航' : '收起导航'" @click="toggleSidebar">
+            <svg v-if="isSidebarCollapsed" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="1.8">
+              <path stroke-linecap="round" d="M5 7h14M5 12h9M5 17h14" />
+            </svg>
+            <svg v-else class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <path stroke-linecap="round" d="M4 7h16M4 12h16M4 17h16" />
+            </svg>
+          </button>
           <RouterLink :to="{ name: 'home' }"
             class="flex items-center gap-2 text-lg font-semibold tracking-tight text-text">
-            <span
-              class="inline-flex h-9 w-9 items-center justify-center rounded-2xl bg-primary text-primary-foreground">
-              i
-            </span>
+            <img class="inline-flex h-9 w-9 items-center justify-center rounded-2xl bg-primary text-primary-foreground"
+              src="https://ifeed.cc/logo.svg" />
             <span class="leading-none">iFeed</span>
           </RouterLink>
         </div>
@@ -83,7 +92,7 @@
         </div>
       </div>
 
-      <div class="px-4 pb-3 lg:hidden">
+      <div class="px-3 pb-3 lg:hidden sm:px-4">
         <div class="relative">
           <input v-model="search" type="search" placeholder="搜索文章、标签、订阅..."
             class="w-full rounded-full border border-outline/40 bg-surface-container pl-12 pr-12 py-3 text-sm text-text focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
@@ -116,7 +125,7 @@
       <div v-if="mobileNavOpen"
         class="fixed inset-y-0 left-0 z-40 flex w-64 flex-col border-r border-outline/30 bg-surface py-6 shadow-xl lg:hidden">
         <div class="flex h-full flex-col overflow-hidden">
-          <div class="flex items-center justify-between px-4 pb-4">
+          <div class="flex items-center justify-between px-3 pb-4 sm:px-4">
             <RouterLink :to="{ name: 'home' }" class="flex items-center gap-2 text-base font-semibold text-text"
               @click="mobileNavOpen = false">
               <span
@@ -131,7 +140,7 @@
               </svg>
             </button>
           </div>
-          <div class="px-4 pb-3">
+          <div class="px-3 pb-3 sm:px-4">
             <p class="text-[11px] font-semibold text-text-muted/80">导航</p>
           </div>
           <nav class="flex-1 space-y-5 overflow-y-auto px-2">
@@ -143,13 +152,23 @@
                 <component v-for="item in section.items" :is="item.to ? 'RouterLink' : 'button'" :key="item.id"
                   v-bind="item.to ? { to: item.to } : { type: 'button' }"
                   class="group flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition-colors"
-                  :class="isActiveItem(item)
-                    ? 'bg-primary/5 text-text font-semibold shadow-sm'
-                    : 'text-text-secondary hover:bg-surface-variant/50 hover:text-text'"
-                  @click="handleNavItemClick(item)">
+                  :class="[
+                    isActiveItem(item)
+                      ? item.danger
+                        ? 'bg-danger/10 text-danger font-semibold shadow-sm'
+                        : 'bg-primary/5 text-text font-semibold shadow-sm'
+                      : item.danger
+                        ? 'text-danger hover:bg-danger/10 hover:text-danger'
+                        : 'text-text-secondary hover:bg-surface-variant/50 hover:text-text'
+                  ]" @click="handleNavItemClick(item)">
                   <span v-if="item.icon"
-                    class="flex h-6 w-6 items-center justify-center rounded-full text-text-muted transition group-hover:text-primary"
-                    :class="isActiveItem(item) ? 'bg-surface text-text' : 'bg-surface-variant/60'">
+                    class="flex h-6 w-6 items-center justify-center rounded-full transition group-hover:text-primary"
+                    :class="[
+                      item.danger ? 'text-danger' : 'text-text-muted',
+                      isActiveItem(item)
+                        ? item.danger ? 'bg-danger/10 text-danger' : 'bg-surface text-text'
+                        : 'bg-surface-variant/60'
+                    ]">
                     <svg class="h-5 w-5" :viewBox="item.icon.viewBox ?? '0 0 20 20'"
                       :fill="item.icon.stroke ? 'none' : 'currentColor'"
                       :stroke="item.icon.stroke ? 'currentColor' : 'none'"
@@ -160,17 +179,16 @@
                         :fill="item.icon.stroke ? 'none' : 'currentColor'" />
                     </svg>
                   </span>
-                  <img v-else-if="item.avatar"
-                       :src="item.avatar "
-                       class="flex h-6 w-6 items-center justify-center rounded-full text-xs font-semibold uppercase"
-                       :class="item.accent ?? 'bg-primary'" />
+                  <img v-else-if="item.avatar" :src="item.avatar"
+                    class="flex h-6 w-6 items-center justify-center rounded-full text-xs font-semibold uppercase"
+                    :class="item.accent ?? 'bg-primary'" />
                   <span v-else-if="item.avatarText"
                     class="flex h-6 w-6 items-center justify-center rounded-full text-xs font-semibold uppercase"
                     :class="item.accent ?? 'bg-primary'">
                     {{ item.avatarText }}
                   </span>
                   <div class="flex min-w-0 flex-1 items-center justify-between gap-3">
-                    <span class="truncate">{{ item.label }}</span>
+                    <span class="truncate" :class="item.danger ? 'text-danger' : undefined">{{ item.label }}</span>
                     <span v-if="item.badge"
                       class="inline-flex h-5 min-w-[1.5rem] items-center justify-center rounded-full bg-primary/10 px-2 text-[11px] font-semibold text-primary">
                       {{ item.badge }}
@@ -183,8 +201,8 @@
               </div>
             </div>
           </nav>
-          <div class="mt-auto px-4 pt-6">
-            <div class="rounded-2xl border border-outline/40 bg-surface-container px-4 py-4">
+          <div v-if="!isSidebarCollapsed" class="mt-auto px-3 pt-5 sm:px-4 sm:pt-6">
+            <div class="rounded-2xl border border-outline/40 bg-surface-container px-3 py-3 sm:px-4 sm:py-4">
               <div class="flex items-center gap-3">
                 <div
                   class="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-primary text-sm font-semibold text-primary-foreground">
@@ -205,29 +223,43 @@
       </div>
     </transition>
 
-    <div class="flex flex-1 overflow-hidden lg:pl-64">
+    <div class="flex flex-1 overflow-hidden" :class="isSidebarCollapsed ? 'lg:pl-20' : 'lg:pl-64'">
       <!-- Make sidebar fixed and full height on desktop so it never scrolls with main content -->
-      <aside class="fixed left-0 top-[75px] bottom-0 z-30 hidden w-64  border-outline/30 bg-surface py-6 lg:block">
+      <aside :class="[
+        'fixed left-0 top-[75px] bottom-0 z-30 hidden border-outline/30 bg-surface py-6 lg:block transition-[width] duration-200',
+        isSidebarCollapsed ? 'w-20' : 'w-64'
+      ]">
         <div class="flex h-full flex-col overflow-hidden">
-          <div class="px-5 pb-3">
+          <div v-if="!isSidebarCollapsed" class="px-5 pb-3">
             <p class="text-[11px] font-semibold text-text-muted/80">导航</p>
           </div>
-          <nav class="flex-1 space-y-5 overflow-y-auto px-3">
+          <nav class="flex-1 space-y-5 overflow-y-auto" :class="isSidebarCollapsed ? 'px-2' : 'px-3'">
             <div v-for="(section, index) in navSections" :key="section.id" class="space-y-2">
-              <div v-if="section.title" class="px-3 text-[11px] font-semibold text-text-muted/70">
+              <div v-if="section.title && !isSidebarCollapsed"
+                class="px-3 text-[11px] font-semibold text-text-muted/70">
                 {{ section.title }}
               </div>
               <div class="space-y-1">
                 <component v-for="item in section.items" :is="item.to ? 'RouterLink' : 'button'" :key="item.id"
                   v-bind="item.to ? { to: item.to } : { type: 'button' }"
-                  class="group flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition-colors"
-                  :class="isActiveItem(item)
-                    ? 'bg-primary/5 text-text font-semibold shadow-sm'
-                    : 'text-text-secondary hover:bg-surface-variant/50 hover:text-text'"
-                  @click="handleNavItemClick(item)">
+                  class="group flex w-full items-center rounded-xl py-2 text-sm font-medium transition-colors" :class="[
+                    isSidebarCollapsed ? 'justify-center px-2' : 'gap-3 px-3',
+                    isActiveItem(item)
+                      ? item.danger
+                        ? 'bg-danger/10 text-danger font-semibold shadow-sm'
+                        : 'bg-primary/5 text-text font-semibold shadow-sm'
+                      : item.danger
+                        ? 'text-danger hover:bg-danger/10 hover:text-danger'
+                        : 'text-text-secondary hover:bg-surface-variant/50 hover:text-text'
+                  ]" :title="isSidebarCollapsed ? item.label : undefined" @click="handleNavItemClick(item)">
                   <span v-if="item.icon"
-                    class="flex h-6 w-6 items-center justify-center rounded-lg text-text-muted transition group-hover:text-primary"
-                    :class="isActiveItem(item) ? 'bg-surface text-text' : 'bg-surface-variant/60'">
+                    class="flex h-6 w-6 items-center justify-center rounded-lg transition group-hover:text-primary"
+                    :class="[
+                      item.danger ? 'text-danger' : 'text-text-muted',
+                      isActiveItem(item)
+                        ? item.danger ? 'bg-danger/10 text-danger' : 'bg-surface text-text'
+                        : 'bg-surface-variant/60'
+                    ]">
                     <svg class="h-5 w-5" :viewBox="item.icon.viewBox ?? '0 0 20 20'"
                       :fill="item.icon.stroke ? 'none' : 'currentColor'"
                       :stroke="item.icon.stroke ? 'currentColor' : 'none'"
@@ -238,25 +270,24 @@
                         :fill="item.icon.stroke ? 'none' : 'currentColor'" />
                     </svg>
                   </span>
-                  <img v-else-if="item.avatar"
-                       :src="item.avatar "
-                        class="flex h-6 w-6 items-center justify-center rounded-full text-xs font-semibold uppercase"
-                        :class="item.accent ?? 'bg-primary'" />
+                  <img v-else-if="item.avatar" :src="item.avatar"
+                    class="flex h-6 w-6 items-center justify-center rounded-full text-xs font-semibold uppercase"
+                    :class="item.accent ?? 'bg-primary'" />
                   <span v-else-if="item.avatarText"
                     class="flex h-8 w-8 items-center justify-center rounded-full text-xs font-semibold uppercase"
                     :class="item.accent ?? 'bg-primary'">
                     {{ item.avatarText }}
                   </span>
-                  <div class="flex min-w-0 flex-1 items-center justify-between gap-3">
-                    <span class="truncate">{{ item.label }}</span>
+                  <div v-if="!isSidebarCollapsed" class="flex min-w-0 flex-1 items-center justify-between gap-3">
+                    <span class="truncate" :class="item.danger ? 'text-danger' : undefined">{{ item.label }}</span>
                     <span v-if="item.badge"
                       class="inline-flex h-1 w-1 items-center justify-center rounded-lg bg-primary/90 text-[11px] font-semibold text-primary">
-<!--                      {{ item.badge }}-->
+                      <!--                      {{ item.badge }}-->
                     </span>
                   </div>
                 </component>
               </div>
-              <div v-if="index < navSections.length - 1" class="px-3 pt-2">
+              <div v-if="index < navSections.length - 1 && !isSidebarCollapsed" class="px-3 pt-2">
                 <div class="h-px bg-outline/20" />
               </div>
             </div>
@@ -264,7 +295,7 @@
         </div>
       </aside>
 
-      <main class="flex-1 overflow-y-auto bg-surface-variant/30 px-4 pb-12 pt-6 sm:px-6">
+      <main class="flex-1 overflow-y-auto bg-surface-variant/30 px-3 pb-10 pt-5 sm:px-6 sm:pb-12 sm:pt-6">
         <router-view />
       </main>
     </div>
@@ -290,6 +321,7 @@ const { user } = storeToRefs(authStore);
 const { isDark, label: themeLabel } = storeToRefs(themeStore);
 
 const mobileNavOpen = ref(false);
+const isSidebarCollapsed = ref(localStorage.getItem('sidebar-collapsed') == 'true');
 const search = ref('');
 
 type NavIcon = {
@@ -307,6 +339,7 @@ type NavItem = {
   avatar?: string;
   accent?: string;
   badge?: string;
+  danger?: boolean;
   activeMatch?: (current: RouteLocationNormalizedLoaded) => boolean;
   action?: () => void;
 };
@@ -334,7 +367,17 @@ const baseNavSections: NavSection[] = [
           const section = current.query.section as string | undefined;
           return current.name === 'home' && view !== 'shorts' && !section;
         }
-      }
+      },
+      // {
+      //   id: 'recommendations',
+      //   label: '推荐',
+      //   to: { name: 'recommendations' as const },
+      //   icon: {
+      //     stroke: true,
+      //     paths: ['M5 10.25c0-3.5 2.5-5.5 5-6.5 2.5 1 5 3 5 6.5s-2.5 5.5-5 6.5c-2.5-1-5-3-5-6.5Z', 'M10 8.5v3.5', 'M8.5 10H11']
+      //   },
+      //   activeMatch: (current) => current.name === 'recommendations'
+      // },
       // ,
       //   {
       //     id: 'shorts',
@@ -351,18 +394,19 @@ const baseNavSections: NavSection[] = [
       //       return current.name === 'home' && view === 'shorts';
       //     }
       //   },
-      //   {
-      //     id: 'subscriptions',
-      //     label: '订阅',
-      //     to: { name: 'subscriptions' as const },
-      //     icon: {
-      //       paths: [
-      //         'M4 5.5A1.5 1.5 0 0 1 5.5 4h9A1.5 1.5 0 0 1 16 5.5v9A1.5 1.5 0 0 1 14.5 16h-9A1.5 1.5 0 0 1 4 14.5v-9Z',
-      //         'M9.2 7.25a.6.6 0 0 0-.6.6v4.3a.6.6 0 0 0 .92.52l3.16-2.15a.6.6 0 0 0 0-1.04L9.52 7.33a.6.6 0 0 0-.32-.08Z'
-      //       ]
-      //     },
-      //     activeMatch: (current) => current.name === 'subscriptions'
-      //   }
+      {
+        id: 'feedsSubscriptions',
+        label: '订阅',
+        to: { name: 'feedsSubscriptions' as const },
+        icon: {
+          stroke: true,
+          paths: [
+            'M4 6h12M4 10h12M4 14h12' // 三条横线 ≈ 列表图标
+          ],
+          viewBox: '0 0 20 20'
+        },
+        activeMatch: (current) => current.name === 'feedsSubscriptions'
+      }
     ]
   },
   {
@@ -509,62 +553,122 @@ const baseNavSections: NavSection[] = [
   // }
 ];
 
-// Generate dynamic subscriptions section from store items
+const showAllSubscriptions = ref(false); // 控制展开/折叠状态
+
 const subscriptionNavSection = computed<NavSection>(() => {
-  const items = subscriptionsStore.items.map((s, idx) => {
-    const label = s.title?.trim() || (new URL(s.siteUrl || s.url).hostname);
-    const initials = label
-      .split(/\s+/)
-      .map((p) => p.charAt(0).toUpperCase())
-      .join('')
-      .slice(0, 2) || 'S';
+  const accentPalette = [
+    'bg-slate-200 text-slate-900',
+    'bg-zinc-200 text-zinc-900',
+    'bg-stone-200 text-stone-900',
+    'bg-gray-200 text-gray-900',
+    'bg-neutral-200 text-neutral-900'
+  ];
 
-    const accentPalette = [
-      'bg-slate-200 text-slate-900',
-      'bg-zinc-200 text-zinc-900',
-      'bg-stone-200 text-stone-900',
-      'bg-gray-200 text-gray-900',
-      'bg-neutral-200 text-neutral-900'
-    ];
+  const entries = subscriptionsStore.items.map((s) => {
+    const label =
+      s.title?.trim() ||
+      (() => {
+        const candidate = s.siteUrl || s.url;
+        if (!candidate) {
+          return '订阅源';
+        }
+        try {
+          return new URL(candidate).hostname || candidate;
+        } catch {
+          return candidate;
+        }
+      })();
 
-    const accent = accentPalette[idx % accentPalette.length];
+    const initials =
+      label
+        .split(/\s+/)
+        .map((part) => part.charAt(0).toUpperCase())
+        .join('')
+        .slice(0, 2) || 'S';
+
+    const danger = Boolean((s.failureCount ?? 0) > 0 || s.fetchError?.trim());
+
+    return {
+      subscription: s,
+      label,
+      initials,
+      danger
+    };
+  });
+
+  // danger优先显示
+  entries.sort((a, b) => {
+    if (a.danger === b.danger) return 0;
+    return a.danger ? 1 : -1;
+  });
+
+  // ⚙️ 控制展示数量
+  const visibleEntries = showAllSubscriptions.value ? entries : entries.slice(0, 9);
+
+  const items: NavItem[] = visibleEntries.map((meta, idx) => {
+    const s = meta.subscription;
+    const accent = meta.danger
+      ? 'bg-danger/15 text-danger border border-danger/40'
+      : accentPalette[idx % accentPalette.length];
 
     return {
       id: `sub-${s.feedId}`,
-      label,
+      label: meta.label,
       to: { name: 'feed' as const, params: { feedId: s.feedId } },
       avatar: s.avatar,
-      avatarText: initials,
+      avatarText: meta.initials,
       accent,
-      activeMatch: (current: RouteLocationNormalizedLoaded) => {
+      activeMatch: (current) => {
         const paramId = typeof current.params.feedId === 'string' ? current.params.feedId : undefined;
         return current.name === 'feed' && paramId === s.feedId;
       },
-      badge: s.isRead?'':'1'
-    } satisfies NavItem;
+      badge: s.isRead ? '' : '1',
+      danger: meta.danger
+    };
   });
-
-  // Always include a manage entry at the end
+  // --- 管理订阅按钮 ---
   items.push({
     id: 'manage-subscriptions',
     label: '管理订阅',
-    to: { name: 'subscriptions' as const, query: { manage: 'true' } },
+    to: { name: 'subscriptions' as const },
     icon: {
       stroke: true,
-      paths: ['M5 5.5h10a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-7a1 1 0 0 1 1-1Z', 'M5 7.5h10', 'M7 9.5h6', 'M7 11.5h4'],
+      paths: [
+        'M5 5.5h10a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-7a1 1 0 0 1 1-1Z',
+        'M5 7.5h10',
+        'M7 9.5h6',
+        'M7 11.5h4'
+      ],
       viewBox: '0 0 20 20'
     },
     activeMatch: (current) => {
       const manage = current.query.manage as string | undefined;
-      return current.name === 'subscriptions' && manage === 'true';
+      return current.name === 'subscriptions';
     }
   });
+  // 展开 / 折叠按钮
+  if (entries.length > 9) {
+    items.push({
+      id: 'toggle-subscriptions',
+      label: showAllSubscriptions.value ? '折叠' : `展开全部（${entries.length}）`,
+      action: () => {
+        showAllSubscriptions.value = !showAllSubscriptions.value;
+      },
+      icon: {
+        stroke: true,
+        paths: showAllSubscriptions.value
+          ? ['M5 13 L10 8 L15 13'] // “∧”图标
+          : ['M5 8 L10 13 L15 8'], // “∨”图标
+        viewBox: '0 0 20 20'
+      }
+    } as unknown as NavItem);
+  }
 
   return {
     id: 'subscriptions',
     title: '订阅',
     items
-  } satisfies NavSection;
+  };
 });
 
 // Combine base + dynamic sections for rendering
@@ -609,15 +713,42 @@ const userInitials = computed(() => {
 
 const handleSearch = () => {
   const keyword = search.value.trim();
-  const currentType = typeof route.query.type === 'string' ? route.query.type : undefined;
-  const query: Record<string, string> = {};
-  if (keyword) {
-    query.q = keyword;
-    if (currentType === 'semantic') {
-      query.type = currentType;
+  const currentType =
+    route.name === 'search' && typeof route.query.type === 'string' ? route.query.type : undefined;
+
+  const feedId = typeof route.query.feedId === 'string' ? route.query.feedId : undefined;
+  const tag = typeof route.query.tags === 'string' ? route.query.tags : undefined;
+  const category = typeof route.query.category === 'string' ? route.query.category : undefined;
+
+  if (!keyword) {
+    const query: Record<string, string> = {};
+    if (feedId) {
+      query.feedId = feedId;
     }
+    if (tag) {
+      query.tags = tag;
+    }
+    if (category) {
+      query.category = category;
+    }
+    router.push({ name: 'home', query });
+    return;
   }
-  router.push({ name: 'home', query });
+
+  const query: Record<string, string> = { q: keyword };
+  if (currentType === 'semantic') {
+    query.type = currentType;
+  }
+  if (feedId) {
+    query.feedId = feedId;
+  }
+  if (tag) {
+    query.tags = tag;
+  }
+  if (category) {
+    query.category = category;
+  }
+  router.push({ name: 'search', query });
 };
 
 const handleLogout = async () => {
@@ -627,6 +758,11 @@ const handleLogout = async () => {
 
 const toggleTheme = () => {
   themeStore.toggle();
+};
+
+const toggleSidebar = () => {
+  isSidebarCollapsed.value = !isSidebarCollapsed.value;
+  localStorage.setItem('sidebar-collapsed', isSidebarCollapsed.value)
 };
 
 watch(
@@ -639,13 +775,13 @@ watch(
 
 // Ensure subscriptions are loaded once when layout mounts
 onMounted(async () => {
-  if (!subscriptionsStore.items.length && !subscriptionsStore.loading) {
-    try {
-      await subscriptionsStore.fetchSubscriptions();
-    } catch {
-      // ignore here; page components already show error details where needed
-    }
-  }
+  // if (!subscriptionsStore.items.length && !subscriptionsStore.loading) {
+  //   try {
+  await subscriptionsStore.fetchSubscriptions();
+  // } catch {
+  //   // ignore here; page components already show error details where needed
+  // }
+  // }
 });
 </script>
 
@@ -675,7 +811,8 @@ onMounted(async () => {
 :deep(nav.flex-1.overflow-y-auto) {
   /* Firefox default (almost hidden) */
   scrollbar-width: thin;
-  scrollbar-color: transparent transparent; /* thumb | track */
+  scrollbar-color: transparent transparent;
+  /* thumb | track */
 }
 
 /* Firefox hover: show clearer thumb */
@@ -694,8 +831,10 @@ onMounted(async () => {
 }
 
 :deep(nav.flex-1.overflow-y-auto)::-webkit-scrollbar-thumb {
-  background-color: transparent;     /* hidden by default */
-  border-radius: 9999px;             /* fully rounded */
+  background-color: transparent;
+  /* hidden by default */
+  border-radius: 9999px;
+  /* fully rounded */
 }
 
 /* WebKit hover: make thumb visible and slightly wider */

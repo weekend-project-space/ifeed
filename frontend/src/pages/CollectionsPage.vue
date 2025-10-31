@@ -1,7 +1,7 @@
 <template>
-  <div class="space-y-6">
+  <div class="space-y-5 sm:space-y-6">
     <section class="rounded-2xl border border-outline/30 bg-surface-container">
-      <header class="flex flex-wrap items-center justify-between gap-3 border-b border-outline/30 px-6 py-4">
+      <header class="flex flex-wrap items-center justify-between gap-3 border-b border-outline/30 px-4 py-3 sm:px-6 sm:py-4">
         <div>
           <h2 class="text-lg font-semibold text-text">我的收藏</h2>
           <p class="text-sm text-text-secondary">保存你想稍后阅读的文章。</p>
@@ -9,13 +9,13 @@
         <button class="text-sm font-medium text-text-muted transition hover:text-text" @click="refresh">刷新</button>
       </header>
 
-      <div v-if="loading" class="py-12 text-center text-text-muted">加载中...</div>
+      <div v-if="loading" class="py-9 text-center text-text-muted sm:py-12">加载中...</div>
 
       <ul v-else class="divide-y divide-outline/20">
         <li
           v-for="item in items"
           :key="item.articleId + (item.collectedAt ?? '')"
-          class="flex flex-wrap items-center justify-between gap-4 px-6 py-4"
+          class="flex flex-wrap items-center justify-between gap-3 px-4 py-3 sm:gap-4 sm:px-6 sm:py-4"
         >
           <div class="min-w-0 space-y-2">
             <p class="truncate text-sm font-medium text-text">{{ item.title || '未命名文章' }}</p>
@@ -30,12 +30,12 @@
             </button>
           </div>
         </li>
-        <li v-if="!items.length" class="px-6 py-10 text-center text-text-muted">暂时还没有收藏的文章。</li>
+        <li v-if="!items.length" class="px-4 py-8 text-center text-text-muted sm:px-6 sm:py-10">暂时还没有收藏的文章。</li>
       </ul>
 
-      <p v-if="errorMessage" class="border-t border-outline/30 px-6 pb-0 pt-4 text-sm text-danger">{{ errorMessage }}</p>
+      <p v-if="errorMessage" class="border-t border-outline/30 px-4 pb-0 pt-3 text-sm text-danger sm:px-6 sm:pt-4">{{ errorMessage }}</p>
 
-      <footer class="flex flex-wrap items-center justify-between gap-3 border-t border-outline/30 px-6 py-4 text-sm text-text-secondary">
+      <footer class="flex flex-wrap items-center justify-between gap-3 border-t border-outline/30 px-4 py-3 text-sm text-text-secondary sm:px-6 sm:py-4">
         <div>共 {{ totalText }}</div>
         <div class="flex items-center gap-3">
           <button

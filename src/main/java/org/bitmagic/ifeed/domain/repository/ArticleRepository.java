@@ -6,19 +6,19 @@ import org.bitmagic.ifeed.domain.projection.ArticleSummaryView;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.Instant;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-public interface ArticleRepository extends JpaRepository<Article, UUID> {
+public interface ArticleRepository extends JpaRepository<Article, UUID>, JpaSpecificationExecutor<Article> {
 
-    List<Article> findByFeed(Feed feed);
-
-    boolean existsByLink(String link);
+    boolean existsByFeedIdAndLink(UUID feedId, String link);
 
     @Query(value = """
             select new org.bitmagic.ifeed.domain.projection.ArticleSummaryView(
@@ -79,6 +79,7 @@ public interface ArticleRepository extends JpaRepository<Article, UUID> {
             from Article a
             left join a.feed f
             where (lower(a.title) like :term
+               or lower(a.author) like :term
                or lower(a.summary) like :term
                or lower(a.category) like :term
                or lower(a.tags) like :term)
@@ -150,4 +151,22 @@ public interface ArticleRepository extends JpaRepository<Article, UUID> {
     List<String> findTagJsonForOwnerWithin(@Param("ownerId") UUID ownerId,
                                            @Param("fromTs") Instant fromTs,
                                            @Param("toTs") Instant toTs);
+
+
+    @Query(value = """
+            select new org.bitmagic.ifeed.domain.projection.ArticleSummaryView(
+                a.id,
+                a.title,
+                a.link,
+                a.summary,
+                f.title,
+                a.publishedAt,
+                a.tags,
+                a.thumbnail,
+                a.enclosure)
+            from Article a
+            left join a.feed f
+            where a.id in (:ids)
+            """)
+    List<ArticleSummaryView> findArticleSummariesByIds(@Param("ids") Collection<UUID> ids);
 }

@@ -1,23 +1,21 @@
 <template>
-  <div class="space-y-10">
-    <section class="relative overflow-hidden rounded-3xl border border-outline/40 bg-surface-container px-8 py-10">
+  <div class="space-y-6 sm:space-y-8 lg:space-y-10">
+    <section
+      class="relative overflow-hidden rounded-3xl border border-outline/40 bg-surface-container px-4 py-6 sm:px-6 sm:py-8 lg:px-8 lg:py-10">
       <div
         class="pointer-events-none absolute inset-0 bg-gradient-to-br from-primary/25 via-primary/10 to-transparent blur-3xl">
       </div>
-      <div class="relative flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
-        <div class="space-y-6">
+      <div class="relative flex flex-col gap-5 sm:gap-6 lg:flex-row lg:items-end lg:justify-between lg:gap-8">
+        <div class="space-y-4 sm:space-y-5 lg:space-y-6">
           <div class="flex flex-wrap items-center gap-3 text-xs font-semibold uppercase tracking-[0.3em] text-primary">
             <span class="rounded-full bg-primary/15 px-3 py-1">Feed Channel</span>
             <span v-if="detail?.siteUrl" class="truncate text-primary/80">{{ detail.siteUrl }}</span>
           </div>
-          <div class="flex flex-col gap-5 sm:flex-row sm:items-center sm:gap-6">
-            <img v-if="detail.avatar"
-                :src="detail.avatar"
-                class="flex h-20 w-20 items-center justify-center rounded-full bg-primary text-3xl font-bold text-primary-foreground shadow-xl"
-                />
-            <div
-                v-else
-              class="flex h-20 w-20 items-center justify-center rounded-full bg-primary text-3xl font-bold text-primary-foreground shadow-xl">
+          <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-5 lg:gap-6">
+            <img v-if="detail?.avatar" :src="detail.avatar"
+              class="flex h-20 w-20 items-center justify-center rounded-full bg-surface text-3xl font-bold text-primary-foreground shadow-xl" />
+            <div v-else
+              class="flex h-20 w-20 items-center justify-center rounded-full bg-surface text-3xl font-bold text-primary-foreground shadow-xl">
               {{ channelInitial }}
             </div>
             <div class="space-y-2">
@@ -29,15 +27,15 @@
               </p>
             </div>
           </div>
-          <div class="flex flex-wrap items-center gap-4 text-sm text-text-secondary">
-            <span class="inline-flex items-center gap-2 rounded-full bg-surface/60 px-4 py-2">
+          <div class="flex flex-wrap items-center gap-3 text-sm text-text-secondary sm:gap-4">
+            <span class="inline-flex items-center gap-2 rounded-full bg-surface/60 px-3 py-1.5 sm:px-4 sm:py-2">
               <svg class="h-4 w-4 text-primary" viewBox="0 0 20 20" fill="none" stroke="currentColor"
                 stroke-width="1.6">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M5 4h10M5 10h10M5 16h10" />
               </svg>
               文章 {{ detail?.articleCount ?? 0 }} 篇
             </span>
-            <span class="inline-flex items-center gap-2 rounded-full bg-surface/60 px-4 py-2">
+            <span class="inline-flex items-center gap-2 rounded-full bg-surface/60 px-3 py-1.5 sm:px-4 sm:py-2">
               <svg class="h-4 w-4 text-primary" viewBox="0 0 20 20" fill="none" stroke="currentColor"
                 stroke-width="1.6">
                 <path stroke-linecap="round" stroke-linejoin="round"
@@ -45,7 +43,7 @@
               </svg>
               订阅者 {{ detail?.subscriberCount ?? 0 }} 名
             </span>
-            <span class="inline-flex items-center gap-2 rounded-full bg-surface/60 px-4 py-2">
+            <span class="inline-flex items-center gap-2 rounded-full bg-surface/60 px-3 py-1.5 sm:px-4 sm:py-2">
               <svg class="h-4 w-4 text-primary" viewBox="0 0 20 20" fill="none" stroke="currentColor"
                 stroke-width="1.6">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M10 2v4m0 8v4m8-8h-4M6 10H2" />
@@ -53,16 +51,17 @@
               最近抓取 {{ lastFetchedText }}
             </span>
           </div>
+
           <div class="flex flex-wrap items-center gap-3">
             <a v-if="detail?.siteUrl" :href="detail.siteUrl" target="_blank" rel="noopener noreferrer"
-              class="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-surface px-4 py-2 text-sm font-medium text-primary transition hover:bg-primary/10">
+              class="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-surface px-3 py-1.5 text-sm font-medium text-primary transition hover:bg-primary/10 sm:px-4 sm:py-2">
               访问官网
               <svg class="h-4 w-4" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M7 7h6v6M7 13l6-6" />
               </svg>
             </a>
             <button type="button"
-              class="inline-flex items-center gap-2 rounded-full px-5 py-2 text-sm font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary/40"
+              class="inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-sm font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary/40 sm:px-5 sm:py-2"
               :class="detail?.subscribed ? 'border border-primary/30 bg-primary/10 text-primary hover:bg-primary/15' : 'bg-primary text-primary-foreground hover:bg-primary/90'"
               :disabled="subscriptionSubmitting || feedLoading" @click="toggleSubscription">
               <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
@@ -72,7 +71,7 @@
               {{ detail?.subscribed ? '取消订阅' : '订阅频道' }}
             </button>
             <button type="button"
-              class="inline-flex items-center gap-2 rounded-full border border-outline/30 px-4 py-2 text-sm font-medium text-text transition hover:border-primary/40 hover:text-primary"
+              class="inline-flex items-center gap-2 rounded-full border border-outline/30 px-3 py-1.5 text-sm font-medium text-text transition hover:border-primary/40 hover:text-primary sm:px-4 sm:py-2"
               :disabled="feedLoading || articlesLoading" @click="refreshChannel">
               <svg class="h-4 w-4" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6">
                 <path stroke-linecap="round" stroke-linejoin="round"
@@ -83,11 +82,19 @@
               刷新频道
             </button>
           </div>
+          <div v-if="hasFetchIssue"
+            class="inline-flex max-w-full items-center gap-2 rounded-full border border-danger/30 bg-danger/10 px-3 py-1.5 text-sm text-danger min-w-0 sm:px-4 sm:py-2"
+            :title="fetchIssueTooltip">
+            <svg class="h-4 w-4 flex-shrink-0" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M10 3.5 2.5 16.5h15L10 3.5Zm0 5v3.5m0 2v.5" />
+            </svg>
+            <span class="truncate max-w-[70vw] sm:max-w-[20rem]">{{ fetchIssueLabel }}</span>
+          </div>
           <p v-if="feedError" class="text-sm text-danger">{{ feedError }}</p>
         </div>
 
         <form
-          class="flex w-full max-w-md flex-col gap-3 rounded-3xl border border-outline/30 bg-surface p-6 shadow-lg/20"
+          class="flex w-full max-w-md flex-col gap-3 rounded-3xl border border-outline/30 bg-surface p-4 shadow-lg/20 sm:p-6"
           @submit.prevent="handleLookup">
           <div class="space-y-2">
             <p class="text-xs font-semibold uppercase tracking-widest text-text-muted">快速定位频道</p>
@@ -95,10 +102,10 @@
           </div>
           <div class="flex flex-col gap-2 sm:flex-row">
             <input v-model.trim="lookupUrl" type="url" placeholder="https://example.com/feed.xml"
-              class="flex-1 rounded-2xl border border-outline/40 bg-surface-container px-4 py-3 text-sm text-text transition focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+              class="flex-1 rounded-2xl border border-outline/40 bg-surface-container px-3 py-2.5 text-sm text-text transition focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 sm:px-4 sm:py-3"
               :disabled="isLookingUp" required />
             <button type="submit"
-              class="inline-flex items-center justify-center rounded-2xl bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
+              class="inline-flex items-center justify-center rounded-2xl bg-primary px-3 py-2.5 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60 sm:px-4 sm:py-3"
               :disabled="isLookingUp">
               {{ isLookingUp ? '查询中...' : '跳转频道' }}
             </button>
@@ -108,47 +115,45 @@
       </div>
     </section>
 
-    <section class="rounded-3xl border border-outline/40 bg-surface-container px-6 py-6">
-      <header class="flex flex-wrap items-center justify-between gap-4 border-b border-outline/20 pb-4">
+    <!-- <section class="rounded-3xl border border-outline/40 bg-surface-container px-4 py-5 sm:px-6 sm:py-6"> -->
+    <section>
+      <header class="flex flex-wrap items-center justify-between gap-3  pb-3 sm:gap-4 sm:pb-4">
         <div>
           <h2 class="text-xl font-semibold text-text">频道文章</h2>
           <p class="text-sm text-text-secondary">基于订阅源实时抓取的最新内容。</p>
         </div>
-        <div class="flex flex-wrap items-center gap-3 text-sm text-primary">
+        <div class="flex flex-wrap items-center gap-2">
           <button type="button"
-            class="inline-flex items-center gap-2 rounded-full border border-primary/20 px-4 py-2 font-medium transition hover:bg-primary/10"
-            :disabled="articlesLoading" @click="refreshArticles">
+            class="inline-flex items-center gap-1 rounded-full border border-outline/40 bg-surface-container px-3 py-1.5 text-xs text-text-secondary transition hover:border-primary/50 hover:text-primary"
+            @click="refreshArticles" :disabled="articlesLoading">
             <svg class="h-4 w-4" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v4h4M16 16v-4h-4" />
               <path stroke-linecap="round" stroke-linejoin="round"
-                d="M5.5 8.5A5.5 5.5 0 0 1 16 7.5M14.5 11.5A5.5 5.5 0 0 1 4 12.5" />
+                d="M4 10a6 6 0 0 1 10-4.24M16 10a6 6 0 0 1-10 4.24M4 6V3.5M4 3.5h2.5M4 3.5 6.5 6M16 14v2.5M16 16.5h-2.5M16 16.5 13.5 14" />
             </svg>
-            刷新列表
+            <span>{{ articlesLoading ? '刷新中…' : '刷新' }}</span>
           </button>
         </div>
       </header>
 
-      <div v-if="articlesLoading" class="py-20 text-center text-text-muted">正在加载文章...</div>
-      <div v-else>
-        <div v-if="selectedTagDisplay"
-          class="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-outline/20 bg-surface px-4 py-2 text-sm text-text">
-          <span>标签筛选：#{{ selectedTagDisplay }}</span>
-          <button class="text-sm font-medium text-primary hover:underline" @click="clearTag">清除标签</button>
-        </div>
-        <ArticleList :items="channelArticles" empty-message="该频道暂时没有文章，稍后再来看看。" @select="handleSelect"
-          @toggle-favorite="handleToggleFavorite" @select-tag="handleSelectTag" />
-        <p v-if="articleError" class="mt-4 text-sm text-danger">{{ articleError }}</p>
+      <div v-if="selectedTagDisplay"
+        class="mb-3 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-outline/20 bg-surface px-3 py-1.5 text-sm text-text sm:mb-4 sm:px-4 sm:py-2">
+        <span>标签筛选：#{{ selectedTagDisplay }}</span>
+        <button class="text-sm font-medium text-primary hover:underline" @click="clearTag">清除标签</button>
       </div>
+      <ArticleList :items="channelArticles" :loading="articlesLoading" empty-message="该频道暂时没有文章，稍后再来看看。"
+        @select="handleSelect" @select-tag="handleSelectTag" />
+      <p v-if="articleError" class="mt-4 text-sm text-danger">{{ articleError }}</p>
 
-      <div class="mt-6 flex items-center justify-between border-t border-outline/20 pt-4 text-sm text-text-secondary">
+      <div
+        class="mt-5 flex items-center justify-between border-t border-outline/20 pt-3 text-sm text-text-secondary sm:mt-6 sm:pt-4">
         <button
-          class="rounded-full border border-outline/30 px-3 py-2 font-medium text-primary transition hover:bg-primary/10 disabled:cursor-not-allowed disabled:border-outline/20 disabled:text-text-muted disabled:opacity-70"
+          class="rounded-full border border-outline/30 px-2.5 py-1.5 font-medium text-primary transition hover:bg-primary/10 disabled:cursor-not-allowed disabled:border-outline/20 disabled:text-text-muted disabled:opacity-70 sm:px-3 sm:py-2"
           :disabled="!hasPrevious" @click="prevPage">
           上一页
         </button>
         <span>第 {{ currentPage }} 页</span>
         <button
-          class="rounded-full border border-outline/30 px-3 py-2 font-medium text-primary transition hover:bg-primary/10 disabled:cursor-not-allowed disabled:border-outline/20 disabled:text-text-muted disabled:opacity-70"
+          class="rounded-full border border-outline/30 px-2.5 py-1.5 font-medium text-primary transition hover:bg-primary/10 disabled:cursor-not-allowed disabled:border-outline/20 disabled:text-text-muted disabled:opacity-70 sm:px-3 sm:py-2"
           :disabled="!hasNext" @click="nextPage">
           下一页
         </button>
@@ -158,12 +163,11 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { storeToRefs } from 'pinia';
 import ArticleList from '../components/ArticleList.vue';
 import { useArticlesStore } from '../stores/articles';
-import { useCollectionsStore } from '../stores/collections';
 import { useFeedStore } from '../stores/feeds';
 import { useSubscriptionsStore } from '../stores/subscriptions';
 import { useReadFeedStore } from '../stores/readfeed';
@@ -173,7 +177,6 @@ const route = useRoute();
 const router = useRouter();
 const feedStore = useFeedStore();
 const articlesStore = useArticlesStore();
-const collectionsStore = useCollectionsStore();
 const subscriptionsStore = useSubscriptionsStore();
 const readFeedStore = useReadFeedStore();
 
@@ -186,7 +189,6 @@ const {
   hasPreviousPage,
   page
 } = storeToRefs(articlesStore);
-const { items: collectionItems } = storeToRefs(collectionsStore);
 const { items: subscriptionItems, submitting: subscriptionSubmitting } = storeToRefs(subscriptionsStore);
 
 const lookupUrl = ref('');
@@ -266,12 +268,46 @@ const lastFetchedText = computed(() => {
   return formatRelativeTime(target.lastFetched);
 });
 
-const channelArticles = computed(() =>
-  items.value.map((item) => ({
-    ...item,
-    collected: collectionsStore.isCollected(item.id)
-  }))
-);
+const failureCount = computed(() => detail.value?.failureCount ?? 0);
+
+const fetchErrorMessage = computed(() => {
+  const message = detail.value?.fetchError;
+  if (!message) {
+    return null;
+  }
+  const trimmed = message.trim();
+  return trimmed.length ? trimmed : null;
+});
+
+const hasFetchIssue = computed(() => failureCount.value > 0 || !!fetchErrorMessage.value);
+
+const fetchIssueLabel = computed(() => {
+  const parts: string[] = [];
+  if (failureCount.value > 0) {
+    parts.push(`连续失败 ${failureCount.value} 次`);
+  }
+  if (fetchErrorMessage.value) {
+    parts.push(`最近错误：${fetchErrorMessage.value}`);
+  }
+  const summary = parts.join(' · ');
+  return summary ? `抓取异常 · ${summary}` : '抓取异常 · 请稍后再试';
+});
+
+const fetchIssueTooltip = computed(() => {
+  if (!hasFetchIssue.value) {
+    return '';
+  }
+  const lines: string[] = ['抓取异常'];
+  if (failureCount.value > 0) {
+    lines.push(`连续失败 ${failureCount.value} 次`);
+  }
+  if (fetchErrorMessage.value) {
+    lines.push(`最近错误：${fetchErrorMessage.value}`);
+  }
+  return lines.join('\n');
+});
+
+const channelArticles = computed(() => items.value);
 
 const currentPage = computed(() => page.value);
 const hasNext = computed(() => hasNextPage.value);
@@ -309,17 +345,6 @@ const fetchArticles = async (targetPage = 1) => {
   }
 };
 
-const ensureCollections = async () => {
-  if (collectionItems.value.length) {
-    return;
-  }
-  try {
-    await collectionsStore.fetchCollections();
-  } catch (err) {
-    console.warn('收藏列表加载失败', err);
-  }
-};
-
 const ensureSubscriptions = async () => {
   if (subscriptionItems.value.length) {
     return;
@@ -343,17 +368,23 @@ const loadFeed = async () => {
   } catch (err) {
     return;
   }
-  // Mark this feed as read on entering the page (non-blocking)
-  readFeedStore.recordFeedRead(feedId)
-    .then(() => subscriptionsStore.fetchSubscriptions())
-    .catch((err) => console.warn('记录订阅已读失败', err));
-  await ensureCollections();
-  await ensureSubscriptions();
+  setTimeout(async () => {
+    await ensureSubscriptions();
+    if (!(subscriptionItems.value.find((sub) => sub.feedId === feedId)?.isRead)) {
+      readFeedStore.recordFeedRead(feedId)
+        .then(() => subscriptionsStore.fetchSubscriptions())
+        .catch((err) => console.warn('记录订阅已读失败', err));
+    }
+  }, 1000);
+
 };
 
-watch(currentFeedId, async () => {
-  await loadFeed();
-}, { immediate: true });
+onMounted(() => {
+  watch(currentFeedId, async () => {
+    await loadFeed();
+  }, { immediate: true });
+})
+
 
 watch([currentFeedId, routePage, normalizedTag], async ([feedId, page]) => {
   if (!feedId) {
@@ -410,15 +441,6 @@ const refreshArticles = async () => {
 const handleSelect = (articleId: string) => {
   articlesStore.recordHistory(articleId);
   router.push({ name: 'article-detail', params: { id: articleId } });
-};
-
-const handleToggleFavorite = async (articleId: string) => {
-  const target = channelArticles.value.find((item) => item.id === articleId);
-  try {
-    await collectionsStore.toggleCollection(articleId, { title: target?.title });
-  } catch (err) {
-    console.warn('收藏操作失败', err);
-  }
 };
 
 const handleSelectTag = (tag: string) => {

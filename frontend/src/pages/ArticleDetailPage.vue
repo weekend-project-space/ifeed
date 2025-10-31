@@ -1,5 +1,5 @@
 <template>
-  <div class="flex h-full flex-col gap-6 pb-16 pt-6">
+  <div class="flex h-full flex-col gap-4 pb-12 pt-4 sm:gap-6 sm:pb-16 sm:pt-6">
     <button class="inline-flex items-center text-sm font-medium text-primary transition hover:opacity-80"
       @click="goBack">
       ← 返回列表
@@ -7,24 +7,26 @@
 
     <div class="flex-1">
       <div v-if="articlesStore.loading"
-        class="mx-auto w-full max-w-4xl rounded-3xl border border-outline/40 bg-surface-container p-12 text-center text-text-muted">
+        class="mx-auto w-full max-w-4xl rounded-3xl border border-outline/40 bg-surface-container p-8 text-center text-text-muted sm:p-10 md:p-12">
         正在加载文章...
       </div>
 
       <div v-else-if="article"
-        class="mx-auto w-full max-w-5xl space-y-10 rounded-3xl border border-outline/20 bg-surface p-6 md:p-10">
-        <div class="flex flex-col gap-10 lg:flex-row lg:items-start">
-          <div class="flex-1 space-y-8 lg:max-w-[720px]">
-            <header class="space-y-5">
-              <div class="flex flex-wrap items-start justify-between gap-4">
+        class="mx-auto w-full max-w-5xl space-y-6 rounded-3xl border border-outline/20 bg-surface p-4 sm:space-y-8 sm:p-6 md:space-y-10 md:p-10">
+        <div class="flex flex-col gap-6 lg:flex-row lg:items-start lg:gap-8 xl:gap-10">
+          <div class="flex-1 space-y-6 lg:max-w-[720px] lg:space-y-8">
+            <header class="space-y-4 sm:space-y-5">
+              <div class="flex flex-wrap items-start justify-between gap-3 sm:gap-4">
                 <div class="space-y-2">
                   <p class="text-sm text-text-muted">
-                    <router-link v-if="article.feedId" :to="'/feeds/'+article.feedId"
-                       class="font-medium text-primary transition hover:opacity-80">{{ article.feedTitle }} </router-link> · {{ article.timeAgo }}</p>
+                    <router-link v-if="article.feedId" :to="'/feeds/' + article.feedId"
+                      class="font-medium text-primary transition hover:opacity-80">{{ article.feedTitle }}
+                    </router-link> · {{ article.timeAgo }}
+                  </p>
                   <h1 class="text-3xl font-semibold leading-tight text-text">{{ article.title }}</h1>
                 </div>
                 <button
-                  class="inline-flex items-center gap-2 rounded-full border border-outline/50 px-5 py-2 text-sm font-medium transition hover:border-primary/60 hover:text-primary"
+                  class="inline-flex items-center gap-2 rounded-full border border-outline/50 px-4 py-1.5 text-sm font-medium transition hover:border-primary/60 hover:text-primary sm:px-5 sm:py-2"
                   :class="isCollected ? 'border-transparent bg-primary/15 text-primary' : ''" @click="toggleCollection">
                   <span>{{ isCollected ? '已收藏' : '收藏' }}</span>
                 </button>
@@ -39,7 +41,7 @@
             </header>
 
             <div v-if="tocItems.length"
-              class="toc-container rounded-2xl border border-outline/20 bg-surface p-4 text-sm text-text-secondary lg:hidden">
+              class="toc-container rounded-2xl border border-outline/20 bg-surface p-3 text-sm text-text-secondary sm:p-4 lg:hidden">
               <div class="toc-header mb-3 flex items-center justify-between text-xs font-semibold text-text-muted">
                 <span class="toc-title">章节导航</span>
                 <span class="toc-hint text-[10px] text-text-disabled">点击跳转</span>
@@ -55,18 +57,18 @@
             </div>
 
             <section v-if="article.summary"
-              class="rounded-2xl border border-outline/20 bg-surface-variant/60 p-5 leading-relaxed text-text-secondary lg:hidden">
+              class="rounded-2xl border border-outline/20 bg-surface-variant/60 p-4 leading-relaxed text-text-secondary sm:p-5 lg:hidden">
               <h2 class="mb-2 text-sm font-semibold uppercase tracking-wide text-text-muted">AI 摘要</h2>
               <p class="text-base text-text">{{ article.summary }}</p>
             </section>
-            <section class="space-y-4 text-text">
+            <section class="space-y-3 text-text sm:space-y-4">
               <h2 class="text-lg font-semibold">正文内容</h2>
               <div v-if="article.content" ref="articleContentRef" class="article-content" v-html="article.content">
               </div>
               <p v-else class="text-text-muted">暂无正文内容。</p>
             </section>
             <footer
-              class="flex flex-wrap items-center gap-4 border-t border-outline/30 pt-4 text-sm text-text-secondary">
+              class="flex flex-wrap items-center gap-3 border-t border-outline/30 pt-3 text-sm text-text-secondary sm:gap-4 sm:pt-4">
               <a v-if="article.link" :href="article.link" target="_blank" rel="noopener"
                 class="font-medium text-primary transition hover:opacity-80">
                 在原文中打开
@@ -79,7 +81,7 @@
             </footer>
           </div>
           <aside v-if="article.summary || tocItems.length"
-            class="sticky top-24 hidden w-full max-w-xs shrink-0 space-y-6 lg:block">
+            class="sticky top-24 hidden w-full max-w-xs shrink-0 space-y-5 lg:block">
             <div v-if="article.summary"
               class="rounded-2xl border border-outline/20 bg-surface p-5 text-sm leading-relaxed text-text-secondary">
               <h2 class="mb-3 text-xs font-semibold uppercase tracking-wide text-text-muted">AI 摘要</h2>
@@ -102,7 +104,7 @@
       </div>
 
       <div v-else
-        class="w-full rounded-3xl border border-outline/40 bg-surface-container p-12 text-center text-text-muted">
+        class="w-full rounded-3xl border border-outline/40 bg-surface-container p-8 text-center text-text-muted sm:p-10 md:p-12">
         未找到文章或加载失败。
       </div>
     </div>
@@ -135,7 +137,18 @@ const { currentArticle } = storeToRefs(articlesStore);
 const { items: collectionItems } = storeToRefs(collectionsStore);
 
 const article = computed(() => currentArticle.value);
-const isCollected = computed(() => collectionsStore.isCollected(props.id));
+const collectionState = computed(() => collectionsStore.isCollected(props.id));
+const isCollected = computed(() => {
+  if (article.value && typeof article.value.collected === 'boolean') {
+    return article.value.collected;
+  }
+  return collectionState.value;
+});
+watch(collectionState, (value) => {
+  if (article.value) {
+    article.value.collected = value;
+  }
+});
 const scrollTracked = ref(false);
 const articleContentRef = ref<HTMLElement | null>(null);
 const tocItems = ref<TocItem[]>([]);
@@ -153,7 +166,7 @@ const loadArticle = async (articleId: string) => {
   try {
     await articlesStore.fetchArticleById(articleId);
     articlesStore.recordHistory(articleId);
-    if (!collectionItems.value.length) {
+    if (!collectionItems.value.length && typeof article.value?.collected !== 'boolean') {
       await collectionsStore.fetchCollections();
     }
   } catch (err) {
@@ -164,6 +177,9 @@ const loadArticle = async (articleId: string) => {
 const toggleCollection = async () => {
   try {
     await collectionsStore.toggleCollection(props.id, { title: article.value?.title });
+    if (article.value) {
+      article.value.collected = !article.value.collected;
+    }
   } catch (err) {
     console.warn('收藏操作失败', err);
   }
@@ -337,137 +353,128 @@ watch(
 );
 </script>
 
-<style scoped>
+<style lang="scss">
 .article-content {
   font-size: 1rem;
   line-height: 1.8;
   color: rgb(var(--md-text));
+
+  p {
+    margin-bottom: 1.25rem;
+    color: inherit;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-weight: 600;
+    color: rgb(var(--md-text));
+    margin-top: 2.5rem;
+    margin-bottom: 1rem;
+    scroll-margin-top: 128px;
+  }
+
+  h1 {
+    font-size: 1.875rem;
+  }
+
+  h2 {
+    font-size: 1.5rem;
+  }
+
+  h3 {
+    font-size: 1.25rem;
+  }
+
+  a {
+    color: rgb(var(--md-primary));
+    text-decoration: underline;
+    transition: color 0.2s ease;
+  }
+
+  ul,
+  ol {
+    margin-bottom: 1.5rem;
+    padding-left: 1.5rem;
+  }
+
+  li {
+    margin-bottom: 0.5rem;
+  }
+
+  blockquote {
+    border-left: 3px solid rgb(var(--md-primary) / 0.35);
+    background: rgb(var(--md-primary) / 0.08);
+    padding: 1.25rem 1.5rem;
+    margin: 2rem 0;
+    border-radius: 1rem;
+    color: rgb(var(--md-text));
+  }
+
+  pre {
+    background: rgb(var(--md-outline) / 0.1);
+    padding: 1.1rem 1.4rem;
+    margin: 1.75rem 0;
+    border-radius: 0.75rem;
+    overflow-x: auto;
+    border: 1px solid rgb(var(--md-outline) / 0.25);
+
+    code {
+      background: transparent;
+      color: inherit;
+      padding: 0;
+      border-radius: 0;
+    }
+  }
+
+  code {
+    background: rgb(var(--md-outline) / 0.18);
+    color: rgb(var(--md-text));
+    padding: 0.2rem 0.45rem;
+    border-radius: 0.45rem;
+    font-size: 0.95rem;
+  }
+
+  img {
+    display: block;
+    width: 100%;
+    height: auto;
+    border-radius: 1rem;
+    margin: 2rem 0;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 2rem 0;
+    font-size: 0.95rem;
+    border: 1px solid rgb(var(--md-outline) / 0.2);
+  }
+
+  th,
+  td {
+    border: 1px solid rgb(var(--md-outline) / 0.2);
+    padding: 0.75rem 0.9rem;
+    text-align: left;
+  }
+
+  thead th {
+    background: rgb(var(--md-outline) / 0.12);
+    font-weight: 600;
+  }
+
+  hr {
+    border: none;
+    height: 1px;
+    background: rgb(var(--md-outline) / 0.35);
+    margin: 2.5rem 0;
+  }
 }
 
-.article-content :deep(p) {
-  margin-bottom: 1.25rem;
-  color: inherit;
-}
-
-.article-content :deep(p:last-child) {
-  margin-bottom: 0;
-}
-
-.article-content :deep(h1),
-.article-content :deep(h2),
-.article-content :deep(h3) {
-  font-weight: 600;
-  color: rgb(var(--md-text));
-  margin-top: 2.5rem;
-  margin-bottom: 1rem;
-  scroll-margin-top: 128px;
-}
-
-.article-content :deep(h1) {
-  font-size: 1.875rem;
-}
-
-.article-content :deep(h2) {
-  font-size: 1.5rem;
-}
-
-.article-content :deep(h3) {
-  font-size: 1.25rem;
-}
-
-.article-content :deep(a) {
-  color: rgb(var(--md-primary));
-  text-decoration: underline;
-  transition: color 0.2s ease;
-}
-
-.article-content :deep(ul),
-.article-content :deep(ol) {
-  margin-bottom: 1.5rem;
-  padding-left: 1.5rem;
-}
-
-.article-content :deep(li) {
-  margin-bottom: 0.5rem;
-}
-
-.article-content :deep(blockquote) {
-  border-left: 3px solid rgba(var(--md-primary), 0.35);
-  background: rgba(var(--md-primary), 0.08);
-  padding: 1.25rem 1.5rem;
-  margin: 2rem 0;
-  border-radius: 1rem;
-  color: rgb(var(--md-text));
-}
-
-.article-content :deep(pre) {
-  background: rgba(var(--md-outline), 0.1);
-  padding: 1.1rem 1.4rem;
-  margin: 1.75rem 0;
-  border-radius: 0.75rem;
-  overflow-x: auto;
-  border: 1px solid rgba(var(--md-outline), 0.25);
-}
-
-.article-content :deep(code) {
-  background: rgba(var(--md-outline), 0.18);
-  color: rgb(var(--md-text));
-  padding: 0.2rem 0.45rem;
-  border-radius: 0.45rem;
-  font-size: 0.95rem;
-}
-
-.article-content :deep(pre code) {
-  background: transparent;
-  color: inherit;
-  padding: 0;
-  border-radius: 0;
-}
-
-.article-content :deep(img) {
-  display: block;
-  width: 100%;
-  height: auto;
-  border-radius: 1rem;
-  margin: 2rem 0;
-}
-
-.article-content :deep(table) {
-  width: 100%;
-  border-collapse: collapse;
-  margin: 2rem 0;
-  font-size: 0.95rem;
-  border: 1px solid rgba(var(--md-outline), 0.2);
-}
-
-.article-content :deep(th),
-.article-content :deep(td) {
-  border: 1px solid rgba(var(--md-outline), 0.2);
-  padding: 0.75rem 0.9rem;
-  text-align: left;
-}
-
-.article-content :deep(thead th) {
-  background: rgba(var(--md-outline), 0.12);
-  font-weight: 600;
-}
-
-.article-content :deep(hr) {
-  border: none;
-  height: 1px;
-  background: rgba(var(--md-outline), 0.35);
-  margin: 2.5rem 0;
-}
-
-/* .toc-container {
-  border-color: rgba(var(--md-outline), 0.2);
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
-}
-
-.toc-container:hover {
-  border-color: rgba(var(--md-outline), 0.3);
-  box-shadow: 0 10px 24px rgba(var(--md-outline), 0.12);
-} */
 
 .toc-list {
   display: flex;
