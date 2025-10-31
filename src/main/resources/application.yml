@@ -2,9 +2,9 @@ spring:
   application:
     name: iFeed
   datasource:
-    url: jdbc:postgresql://127.0.0.1:5432/i_feed
-    username: i_feed
-    password: 0123.
+    url: jdbc:postgresql://${PG:127.0.0.1}:${PG_PORT:5432}/${PG_DATABASE:i_feed}
+    username: ${PG_USERNAME:i_feed}
+    password: ${PG_PASSWORD:0123.}
     driver-class-name: org.postgresql.Driver
     hikari:
       maximum-pool-size: 200
@@ -22,25 +22,25 @@ spring:
           temperature: 0.5
       embedding:
         options:
-          dimensions: 1024
-          model: ${app.ai.provider.embedding-model}
+          dimensions: ${app.ai.provider.embedding.options.dimensions}
+          model: ${app.ai.provider.embedding.model}
           encoding-format: 'float'
-        base-url: ${app.ai.provider.embedding-endpoint}
-        api-key: ${app.ai.provider.embedding-api-key}
+        base-url: ${app.ai.provider.embedding.endpoint}
+        api-key: ${app.ai.provider.embedding.api-key}
     vectorstore:
       pgvector:
         initialize-schema: true
         table-name: article_embeddings
-        index-type: HNSW
-        distance-type: COSINE_DISTANCE
-        dimensions: 1024
+        index-type: ${VECTOR_INDEX_TYPE:HNSW}
+        distance-type: ${VECTOR_DISTANCE_TYPE:COSINE_DISTANCE}
+        dimensions: ${app.ai.provider.embedding.options.dimensions}
   data:
     mongodb:
-      host: 127.0.0.1
-      port: 27017
-      username: mongo_cTXZaN
-      password: mongo_MDNyW6
-      database: i_feed
+      host: ${MONGO_DB:127.0.0.1}
+      port: ${MONGO_DB_PORT:27017}
+      username: ${MONGO_DB_USERNAME:mongo_cTXZaN}
+      password: ${MONGO_DB_PASSWORD:mongo_MDNyW6}
+      database: ${MONGO_DB_DATABASE:i_feed}
   profiles:
     active: rel
 
@@ -75,9 +75,12 @@ app:
       endpoint: ''
       api-key: ''
       model: 'gpt-4o-mini'
-      embedding-endpoint: '${app.ai.provider.endpoint}'
-      embedding-api-key: '${app.ai.provider.api-key}'
-      embedding-model: 'Qwen/Qwen3-Embedding-4B'
+      embedding:
+        endpoint: '${app.ai.provider.endpoint}'
+        api-key: '${app.ai.provider.api-key}'
+        model: 'Qwen/Qwen3-Embedding-4B'
+        options:
+          dimensions: 1024
   # 检索
   search:
     retrieval:
