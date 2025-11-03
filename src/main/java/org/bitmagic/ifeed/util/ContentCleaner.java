@@ -1,4 +1,4 @@
-package org.bitmagic.ifeed.service.content;
+package org.bitmagic.ifeed.util;
 
 import com.vladsch.flexmark.html2md.converter.FlexmarkHtmlConverter;
 import org.jsoup.Jsoup;
@@ -7,10 +7,9 @@ import org.jsoup.safety.Safelist;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
-@Component
 public class ContentCleaner {
 
-    public Content clean(String html) {
+    public static Content clean(String html) {
         if (!StringUtils.hasText(html)) {
             return new Content("", "");
         }

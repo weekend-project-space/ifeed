@@ -15,7 +15,7 @@ import org.bitmagic.ifeed.domain.entity.FeedFetchStatus;
 import org.bitmagic.ifeed.domain.repository.ArticleRepository;
 import org.bitmagic.ifeed.domain.repository.FeedRepository;
 import org.bitmagic.ifeed.service.ai.AiContentService;
-import org.bitmagic.ifeed.service.content.ContentCleaner;
+import org.bitmagic.ifeed.util.ContentCleaner;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -61,7 +61,6 @@ public class FeedIngestionService {
 
     private final FeedRepository feedRepository;
     private final ArticleRepository articleRepository;
-    private final ContentCleaner contentCleaner;
     private final AiContentService aiContentService;
     private final ObjectMapper objectMapper;
     private final HttpClient rssHttpClient;
@@ -233,7 +232,7 @@ public class FeedIngestionService {
 
         var rawContent = resolveContent(entry);
         var thumbnail = resolveThumbnail(entry, rawContent);
-        var cleaned = contentCleaner.clean(rawContent);
+        var cleaned = ContentCleaner.clean(rawContent);
         var textContent = StringUtils.hasText(cleaned.textContent()) ? cleaned.textContent() : entry.getTitle();
         var aiContent = aiContentService.analyze(entry.getTitle(), textContent);
 
