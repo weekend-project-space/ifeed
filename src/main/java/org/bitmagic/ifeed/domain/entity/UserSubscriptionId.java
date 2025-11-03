@@ -20,8 +20,8 @@ import java.util.UUID;
 public class UserSubscriptionId implements Serializable {
 
     @Column(name = "user_id", nullable = false)
-    private UUID userId;
+    private Integer userId;
 
     @Column(name = "feed_id", nullable = false)
-    private UUID feedId;
+    private Integer feedId;
 }

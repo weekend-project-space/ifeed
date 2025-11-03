@@ -60,7 +60,7 @@ public class UserEmbeddingService {
             """;
 
     @Transactional
-    public Optional<UserEmbedding> rebuildUserEmbedding(UUID userId) {
+    public Optional<UserEmbedding> rebuildUserEmbedding(Integer userId) {
         var doc = userBehaviorRepository.findById(userId.toString()).orElse(null);
         if (doc == null) {
             log.debug("No behavior document for user {}", userId);
@@ -78,12 +78,12 @@ public class UserEmbeddingService {
         var articleIds = recent.stream().map(BehaviorEvent::articleId).collect(Collectors.toSet());
         var embeddings = articleEmbeddingRepository.findAllByIds(articleIds).stream()
                 .collect(Collectors.toMap(ArticleEmbeddingRecord::id, Function.identity()));
-        var articles = articleRepository.findByIdIn(articleIds);
+        var articles = articleRepository.findByUidIn(articleIds);
         var articleById = articles.stream()
                 .filter(Objects::nonNull)
-                .collect(Collectors.toMap(Article::getId, Function.identity()));
+                .collect(Collectors.toMap(Article::getUid, Function.identity()));
         var interests = articles.stream()
-                .collect(Collectors.toMap(Article::getId, ArticleInterest::from));
+                .collect(Collectors.toMap(Article::getUid, ArticleInterest::from));
 
         var aggregated = VectorAggregator.aggregate(recent, embeddings, interests, articleById, doc, recommendationProperties);
         if (aggregated.isEmpty()) return Optional.empty();

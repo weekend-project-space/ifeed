@@ -26,7 +26,7 @@ public class RetrievalRecommendationService implements RecommendationService {
     private final SearchRetrievalService searchRetrievalService;
     private final ArticleService articleService;
     private final UserEmbeddingRepository userEmbeddingRepository;
-    private final Map<UUID, List<UUID>> user2Items = new ConcurrentHashMap<>();
+    private final Map<Integer, List<UUID>> user2Items = new ConcurrentHashMap<>();
     private final UserEmbedding defaultUserEmbedding;
 
     public RetrievalRecommendationService(RecommendationProperties properties, SearchRetrievalService searchRetrievalService, ArticleService articleService, UserEmbeddingRepository userEmbeddingRepository) {
@@ -38,7 +38,7 @@ public class RetrievalRecommendationService implements RecommendationService {
 
 
     @Override
-    public Page<ArticleSummaryView> recommend(UUID userId, int page, int size) {
+    public Page<ArticleSummaryView> recommend(Integer userId, int page, int size) {
         long start = System.currentTimeMillis();
         int safePage = Math.max(page, 0);
         int safeSize = size <= 0 ? 10 : size;

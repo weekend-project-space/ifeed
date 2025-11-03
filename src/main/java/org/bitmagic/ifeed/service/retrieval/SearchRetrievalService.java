@@ -42,7 +42,7 @@ public class SearchRetrievalService {
                 SELECT websearch_to_tsquery('simple', ?) AS q
             ),
             documents AS (
-                SELECT a.id,
+                SELECT a.uid as id,
                        a.pub_date,
                        a.title,
                        setweight(to_tsvector('simple', coalesce(a.title, '')), 'A') ||
@@ -78,11 +78,11 @@ public class SearchRetrievalService {
     private final SearchRetrievalProperties properties;
 
 
-    public Page<ArticleSummaryView> hybridSearch(UUID userId,
-                                                 String query,
-                                                 boolean includeGlobal,
-                                                 int page,
-                                                 int size) {
+    public Page<ArticleSummaryView> hybridSearch(Integer userId,
+                                                  String query,
+                                                  boolean includeGlobal,
+                                                  int page,
+                                                  int size) {
 
         if (!StringUtils.hasText(query)) {
             return Page.empty(PageRequest.of(Math.max(page, 0), Math.max(size, 1)));
@@ -100,11 +100,11 @@ public class SearchRetrievalService {
      * 对查询执行混合检索：BM25 + 向量召回，并融合得分返回分页结果
      * 返回融合后的文章 ID 列表。
      */
-    public List<UUID> hybridSearch(UUID userId,
-                                   float[] queryEmbedding,
-                                   String query,
-                                   boolean includeGlobal,
-                                   int maxSize) {
+    public List<UUID> hybridSearch(Integer userId,
+                                    float[] queryEmbedding,
+                                    String query,
+                                    boolean includeGlobal,
+                                    int maxSize) {
         int safeSize = maxSize <= 0 ? properties.getFusionTopK() : maxSize;
         String normalizedQuery = StringUtils.hasText(query) ? query.trim() : null;
         int desired = Math.max(properties.getFusionTopK(), safeSize);
@@ -132,7 +132,7 @@ public class SearchRetrievalService {
     }
 
     private Map<UUID, DocScore> fetchBm25Scores(String query,
-                                                UUID userId,
+                                                Integer userId,
                                                 boolean includeGlobal,
                                                 int limit) {
         log.trace("BM25 fetch: user={}, includeGlobal={}, limit={}, query='{}'", userId, includeGlobal, limit, query);
@@ -234,7 +234,7 @@ public class SearchRetrievalService {
 
     private List<CombinedScore> combineScores(String normalizedQuery,
                                               float[] queryEmbedding,
-                                              UUID userId,
+                                              Integer userId,
                                               boolean includeGlobal,
                                               int desired,
                                               List<UUID> feedIds) {

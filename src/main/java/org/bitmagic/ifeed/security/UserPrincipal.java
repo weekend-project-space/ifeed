@@ -12,7 +12,7 @@ import java.util.UUID;
 @Getter
 public class UserPrincipal implements UserDetails {
 
-    private final UUID id;
+    private final Integer id;
     private final String username;
     private final String password;
 

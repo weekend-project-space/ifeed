@@ -10,8 +10,10 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-public interface FeedRepository extends JpaRepository<Feed, UUID> {
+public interface FeedRepository extends JpaRepository<Feed, Integer> {
     Optional<Feed> findByUrl(String url);
+
+    Optional<Feed> findByUid(UUID uid);
 
     @Query("""
             select f from Feed f

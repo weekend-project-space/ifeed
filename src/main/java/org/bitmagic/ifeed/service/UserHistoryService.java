@@ -33,13 +33,13 @@ public class UserHistoryService {
 
     @Transactional
     public void recordHistory(User user, UUID articleId, Instant readAt) {
-        var article = articleRepository.findById(articleId)
+        var article = articleRepository.findOne((root, query, cb) -> cb.equal(root.get("uid"), articleId))
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Article not found"));
 
         var document = getOrCreateDocument(user);
         ensureReadHistoryInitialized(document);
 
-        var articleIdValue = article.getId().toString();
+        var articleIdValue = article.getUid().toString();
         var timestamp = readAt != null ? readAt : Instant.now();
 //      添加文章阅读记录
         var existing = document.getReadHistory().stream()
@@ -57,7 +57,7 @@ public class UserHistoryService {
         }
 
         //      添加feed阅读记录
-        var feedIdValue = article.getFeed().getId().toString();
+        var feedIdValue = article.getFeed().getUid().toString();
         var feedExisting = document.getReadFeedHistory().stream()
                 .filter(item -> feedIdValue.equals(item.getFeedId()))
                 .findFirst()
@@ -97,8 +97,8 @@ public class UserHistoryService {
                 .map(UUID::fromString)
                 .toList();
 
-        Map<UUID, Article> articles = articleRepository.findByIdIn(articleIds).stream()
-                .collect(Collectors.toMap(Article::getId, Function.identity()));
+        Map<UUID, Article> articles = articleRepository.findByUidIn(articleIds).stream()
+                .collect(Collectors.toMap(Article::getUid, Function.identity()));
 
         var content = pageRefs.stream()
                 .map(item -> {

@@ -33,10 +33,10 @@ public class DefaultRecommendationService implements RecommendationService {
     private final UserBehaviorRepository userBehaviorRepository;
     private final UserEmbeddingRepository userEmbeddingRepository;
     private final ArticleRepository articleRepository;
-    private final Map<UUID, List<UUID>> user2Items = new ConcurrentHashMap<>();
+    private final Map<Integer, List<UUID>> user2Items = new ConcurrentHashMap<>();
 
     @Override
-    public Page<ArticleSummaryView> recommend(UUID userId, int page, int size) {
+    public Page<ArticleSummaryView> recommend(Integer userId, int page, int size) {
         int safePage = Math.max(page, 0);
         int safeSize = size <= 0 ? 10 : size;
 
@@ -64,7 +64,7 @@ public class DefaultRecommendationService implements RecommendationService {
         int toIndex = Math.min(fromIndex + safeSize, cachedIds.size());
         List<UUID> pageIds = cachedIds.subList(fromIndex, toIndex);
 
-        Map<UUID, ArticleSummaryView> summariesById = articleRepository.findArticleSummariesByIds(pageIds).stream()
+        Map<UUID, ArticleSummaryView> summariesById = articleRepository.findArticleSummariesByUids(pageIds).stream()
                 .collect(Collectors.toMap(ArticleSummaryView::id, summary -> summary));
 
         List<ArticleSummaryView> ordered = pageIds.stream()
@@ -75,7 +75,7 @@ public class DefaultRecommendationService implements RecommendationService {
         return new PageImpl<>(ordered, PageRequest.of(safePage, safeSize), cachedIds.size());
     }
 
-    private List<Document> recall(UUID userId) {
+    private List<Document> recall(Integer userId) {
         return userEmbeddingRepository.findById(userId).map(userEmbedding -> {
             List<String> articleIds = userBehaviorRepository.findById(userId.toString()).map(UserBehaviorDocument::getReadHistory).orElse(Collections.emptyList()).stream().map(UserBehaviorDocument.ArticleRef::getArticleId).toList();
             FilterExpressionBuilder b = new FilterExpressionBuilder();

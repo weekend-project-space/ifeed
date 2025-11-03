@@ -33,13 +33,13 @@ public class UserCollectionService {
 
     @Transactional
     public void addToCollection(User user, UUID articleId) {
-        var article = articleRepository.findById(articleId)
+        var article = articleRepository.findOne((root, query, cb) -> cb.equal(root.get("uid"), articleId))
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Article not found"));
 
         var document = getOrCreateDocument(user);
         ensureCollectionsInitialized(document);
 
-        var articleIdValue = article.getId().toString();
+        var articleIdValue = article.getUid().toString();
         var exists = document.getCollections().stream()
                 .anyMatch(item -> articleIdValue.equals(item.getArticleId()));
 
@@ -71,7 +71,7 @@ public class UserCollectionService {
     }
 
     @Transactional(readOnly = true)
-    public boolean isCollected(UUID userId, UUID articleId) {
+    public boolean isCollected(Integer userId, UUID articleId) {
         var document = userBehaviorRepository.findById(userId.toString()).orElse(null);
         if (document == null) {
             return false;
@@ -106,8 +106,8 @@ public class UserCollectionService {
                 .map(UUID::fromString)
                 .toList();
 
-        Map<UUID, Article> articles = articleRepository.findByIdIn(articleIds).stream()
-                .collect(Collectors.toMap(Article::getId, Function.identity()));
+        Map<UUID, Article> articles = articleRepository.findByUidIn(articleIds).stream()
+                .collect(Collectors.toMap(Article::getUid, Function.identity()));
 
         var content = pageRefs.stream()
                 .map(item -> {

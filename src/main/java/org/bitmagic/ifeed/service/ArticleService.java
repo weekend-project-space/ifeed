@@ -31,8 +31,8 @@ public class ArticleService {
     private static final TypeReference<List<String>> TAGS_TYPE = new TypeReference<>() {
     };
 
-    public Page<ArticleSummaryView> listArticles(UUID ownerId,
-                                                 UUID feedId,
+    public Page<ArticleSummaryView> listArticles(Integer ownerId,
+                                                 UUID feedUid,
                                                  Set<String> tags,
                                                  String category,
                                                  boolean includeGlobal, Integer page,
@@ -40,8 +40,8 @@ public class ArticleService {
                                                  String sort) {
         var pageable = buildPageable(page, size, sort);
         var tagPattern = buildTagPattern(tags);
-        var scopeOwnerId = Objects.nonNull(feedId) || includeGlobal ? null : ownerId;
-        return articleRepository.findArticleSummaries(feedId, tagPattern, category, scopeOwnerId, pageable);
+        var scopeOwnerId = Objects.nonNull(feedUid) || includeGlobal ? null : ownerId;
+        return articleRepository.findArticleSummaries(feedUid, tagPattern, category, scopeOwnerId, pageable);
     }
 
 
@@ -66,7 +66,7 @@ public class ArticleService {
 
         List<UUID> pageIds = artIds.subList(fromIndex, toIndex);
 
-        Map<UUID, ArticleSummaryView> summaries = articleRepository.findArticleSummariesByIds(pageIds).stream()
+        Map<UUID, ArticleSummaryView> summaries = articleRepository.findArticleSummariesByUids(pageIds).stream()
                 .collect(Collectors.toMap(ArticleSummaryView::id, summary -> summary));
 
         List<ArticleSummaryView> ordered = pageIds.stream()
@@ -76,12 +76,12 @@ public class ArticleService {
         return new PageImpl<>(ordered, PageRequest.of(safePage, safeSize), artIds.size());
     }
 
-    public Article getArticle(UUID articleId) {
-        return articleRepository.findById(articleId)
+    public Article getArticle(UUID articleUid) {
+        return articleRepository.findOne((root, query, cb) -> cb.equal(root.get("uid"), articleUid))
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Article not found"));
     }
 
-    public Page<ArticleSummaryView> searchArticles(UUID ownerId,
+    public Page<ArticleSummaryView> searchArticles(Integer ownerId,
                                                    String query,
                                                    boolean includeGlobal,
                                                    Integer page,
@@ -156,7 +156,7 @@ public class ArticleService {
     /**
      * Aggregate categories and tags for user's visible articles within window.
      */
-    public UserSubscriptionInsightResponse insights(UUID ownerId,
+    public UserSubscriptionInsightResponse insights(Integer ownerId,
                                                     Instant fromTs,
                                                     Instant toTs,
                                                     Integer topN) {

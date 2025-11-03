@@ -23,8 +23,8 @@ public class FeedService {
     private final UserSubscriptionRepository userSubscriptionRepository;
 
     @Transactional(readOnly = true)
-    public FeedDetail getFeedDetail(UUID feedId) {
-        var feed = feedRepository.findById(feedId)
+    public FeedDetail getFeedDetail(UUID feedUid) {
+        var feed = feedRepository.findByUid(feedUid)
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Feed not found"));
         return buildDetail(feed);
     }
@@ -50,7 +50,7 @@ public class FeedService {
     }
 
     @Transactional(readOnly = true)
-    public boolean isSubscribed(UUID userId, Feed feed) {
+    public boolean isSubscribed(Integer userId, Feed feed) {
         if (userId == null || feed == null) {
             return false;
         }

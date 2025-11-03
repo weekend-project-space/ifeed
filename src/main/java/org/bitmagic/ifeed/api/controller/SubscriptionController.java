@@ -80,13 +80,13 @@ public class SubscriptionController {
         UserBehaviorDocument userBehaviorDocument = userBehaviorRepository.findById(user.getId().toString()).orElse(null);
         Map<String, Instant> feedReadTimes = Objects.nonNull(userBehaviorDocument) ? userBehaviorDocument.getReadFeedHistory().stream().collect(Collectors.toMap(UserBehaviorDocument.FeedRef::getFeedId, UserBehaviorDocument.FeedRef::getTimestamp)) : new HashMap<>();
         var feeds = subscriptionService.searchFeeds(query);
-        var subscribedFeedIds = subscriptionService.getActiveFeedIds(user).stream()
-                .map(UUID::toString)
+        var subscribedFeedIds = subscriptionService.getActiveSubscriptions(user).stream()
+                .map(sub -> sub.getFeed().getUid().toString())
                 .collect(Collectors.toSet());
         var responses = feeds.stream()
                 .map(feed -> {
                     var subscriberCount = subscriptionService.getSubscriberCount(feed);
-                    return toSubscriptionSearchResponse(feed, feedReadTimes, subscribedFeedIds.contains(feed.getId().toString()), subscriberCount);
+                    return toSubscriptionSearchResponse(feed, feedReadTimes, subscribedFeedIds.contains(feed.getUid().toString()), subscriberCount);
                 })
                 .toList();
         return ResponseEntity.ok(responses);
@@ -138,14 +138,14 @@ public class SubscriptionController {
             siteUrl = feedUrl;
         }
         var failureCount = Optional.ofNullable(feed.getFailureCount()).orElse(0);
-        var readTimestamp = feedReadTimes.getOrDefault(feed.getId().toString(), Instant.EPOCH);
+        var readTimestamp = feedReadTimes.getOrDefault(feed.getUid().toString(), Instant.EPOCH);
         var effectiveLastUpdated = Objects.nonNull(feed.getLastUpdated()) ? feed.getLastUpdated() : Instant.EPOCH;
         var avatarHost = extractHost(siteUrl);
         if (avatarHost == null || avatarHost.isBlank()) {
             avatarHost = extractHost(feedUrl);
         }
         return new SubscriptionResponse(
-                feed.getId().toString(),
+                feed.getUid().toString(),
                 title,
                 feedUrl,
                 siteUrl,
@@ -184,14 +184,14 @@ public class SubscriptionController {
             siteUrl = feedUrl;
         }
         var failureCount = Optional.ofNullable(feed.getFailureCount()).orElse(0);
-        var readTimestamp = feedReadTimes.getOrDefault(feed.getId().toString(), Instant.EPOCH);
+        var readTimestamp = feedReadTimes.getOrDefault(feed.getUid().toString(), Instant.EPOCH);
         var effectiveLastUpdated = Objects.nonNull(feed.getLastUpdated()) ? feed.getLastUpdated() : Instant.EPOCH;
         var avatarHost = extractHost(siteUrl);
         if (avatarHost == null || avatarHost.isBlank()) {
             avatarHost = extractHost(feedUrl);
         }
         return new SubscriptionSearchResponse(
-                feed.getId().toString(),
+                feed.getUid().toString(),
                 title,
                 feedUrl,
                 siteUrl,

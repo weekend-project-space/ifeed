@@ -11,5 +11,5 @@ import java.util.UUID;
  **/
 public interface RecommendationService {
 
-    Page<ArticleSummaryView> recommend(UUID userId, int page, int size);
+    Page<ArticleSummaryView> recommend(Integer userId, int page, int size);
 }

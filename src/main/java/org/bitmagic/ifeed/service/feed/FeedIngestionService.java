@@ -70,13 +70,13 @@ public class FeedIngestionService {
     public List<UUID> getFeedIds(Predicate<Feed> predicate) {
         return feedRepository.findAll().stream()
                 .filter(predicate)
-                .map(Feed::getId)
+                .map(Feed::getUid)
                 .toList();
     }
 
     @Transactional
-    public Optional<Boolean> ingestFeed(UUID feedId) {
-        return feedRepository.findById(feedId).map(this::fetchFeedSafely);
+    public Optional<Boolean> ingestFeed(UUID feedUid) {
+        return feedRepository.findByUid(feedUid).map(this::fetchFeedSafely);
     }
 
     private boolean fetchFeedSafely(Feed feed) {
@@ -226,7 +226,7 @@ public class FeedIngestionService {
         if (!StringUtils.hasText(link)) return Optional.empty();
 
         var publishedAt = resolvePublishedAt(entry);
-        if (articleRepository.existsByFeedIdAndLink(feed.getId(), link)) {
+        if (articleRepository.existsByFeedAndLink(feed, link)) {
             return Optional.empty();
         }
 

@@ -1,12 +1,6 @@
 package org.bitmagic.ifeed.domain.entity;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.Id;
-import jakarta.persistence.PrePersist;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -26,8 +20,12 @@ import java.util.UUID;
 public class Feed {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", nullable = false, updatable = false)
-    private UUID id;
+    private Integer id;
+
+    @Column(name = "uid", nullable = false, updatable = false, unique = true)
+    private UUID uid;
 
     @Column(name = "url", nullable = false, unique = true, length = 255)
     private String url;
@@ -61,8 +59,8 @@ public class Feed {
 
     @PrePersist
     void onCreate() {
-        if (id == null) {
-            id = UUID.randomUUID();
+        if (uid == null) {
+            uid = UUID.randomUUID();
         }
         if (lastFetchStatus == null) {
             lastFetchStatus = FeedFetchStatus.PENDING;

@@ -16,7 +16,7 @@ public interface UserSubscriptionRepository extends JpaRepository<UserSubscripti
 
     List<UserSubscription> findAllByUser(User user);
 
-    List<UserSubscription> findAllByUserId(UUID userId);
+    List<UserSubscription> findAllByUserId(Integer userId);
 
     List<UserSubscription> findAllByUserAndActiveTrue(User user);
 
@@ -26,8 +26,8 @@ public interface UserSubscriptionRepository extends JpaRepository<UserSubscripti
 
     long countByFeedAndActiveTrue(Feed feed);
 
-    boolean existsByUser_IdAndFeedAndActiveTrue(UUID userId, Feed feed);
+    boolean existsByUser_IdAndFeedAndActiveTrue(Integer userId, Feed feed);
 
-    @Query("select us.feed.id from UserSubscription us where us.user.id = :userId and us.active = true")
-    List<UUID> findActiveFeedIdsByUserId(@Param("userId") UUID userId);
+    @Query("select us.feed.uid from UserSubscription us where us.user.id = :userId and us.active = true")
+    List<UUID> findActiveFeedIdsByUserId(@Param("userId") Integer userId);
 }

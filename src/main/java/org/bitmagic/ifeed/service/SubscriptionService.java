@@ -88,8 +88,8 @@ public class SubscriptionService {
     }
 
     @Transactional
-    public void unsubscribe(User user, UUID feedId) {
-        var feed = feedRepository.findById(feedId)
+    public void unsubscribe(User user, UUID feedUid) {
+        var feed = feedRepository.findByUid(feedUid)
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Feed not found"));
 
         var subscription = subscriptionRepository.findByUserAndFeed(user, feed)

@@ -16,13 +16,13 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-public interface ArticleRepository extends JpaRepository<Article, UUID>, JpaSpecificationExecutor<Article> {
+public interface ArticleRepository extends JpaRepository<Article, Integer>, JpaSpecificationExecutor<Article> {
 
-    boolean existsByFeedIdAndLink(UUID feedId, String link);
+    boolean existsByFeedAndLink(Feed feed, String link);
 
     @Query(value = """
             select new org.bitmagic.ifeed.domain.projection.ArticleSummaryView(
-                a.id,
+                a.uid,
                 a.title,
                 a.link,
                 a.summary,
@@ -33,7 +33,7 @@ public interface ArticleRepository extends JpaRepository<Article, UUID>, JpaSpec
                 a.enclosure)
             from Article a
             left join a.feed f
-            where (:feedId is null or f.id = :feedId)
+            where (:feedUid is null or f.uid = :feedUid)
               and (:tagPattern is null or lower(coalesce(a.tags, '')) like :tagPattern)
               and (:category is null or lower(coalesce(a.category, '')) = :category)
               and (:ownerId is null or exists (
@@ -48,7 +48,7 @@ public interface ArticleRepository extends JpaRepository<Article, UUID>, JpaSpec
                     select count(a)
                     from Article a
                     left join a.feed f
-                    where (:feedId is null or f.id = :feedId)
+                    where (:feedUid is null or f.uid = :feedUid)
                       and (:tagPattern is null or lower(coalesce(a.tags, '')) like :tagPattern)
                       and (:category is null or lower(coalesce(a.category, '')) = :category)
                       and (:ownerId is null or exists (
@@ -59,15 +59,15 @@ public interface ArticleRepository extends JpaRepository<Article, UUID>, JpaSpec
                               and us.active = true
                       ))
                     """)
-    Page<ArticleSummaryView> findArticleSummaries(@Param("feedId") UUID feedId,
+    Page<ArticleSummaryView> findArticleSummaries(@Param("feedUid") UUID feedUid,
                                                   @Param("tagPattern") String tagPattern,
                                                   @Param("category") String category,
-                                                  @Param("ownerId") UUID ownerId,
+                                                  @Param("ownerId") Integer ownerId,
                                                   Pageable pageable);
 
     @Query(value = """
             select new org.bitmagic.ifeed.domain.projection.ArticleSummaryView(
-                a.id,
+                a.uid,
                 a.title,
                 a.link,
                 a.summary,
@@ -107,10 +107,10 @@ public interface ArticleRepository extends JpaRepository<Article, UUID>, JpaSpec
                       ))
                     """)
     Page<ArticleSummaryView> searchArticleSummaries(@Param("term") String term,
-                                                    @Param("ownerId") UUID ownerId,
+                                                    @Param("ownerId") Integer ownerId,
                                                     Pageable pageable);
 
-    List<Article> findByIdIn(Iterable<UUID> ids);
+    List<Article> findByUidIn(Iterable<UUID> uids);
 
     long countByFeed(Feed feed);
 
@@ -131,7 +131,7 @@ public interface ArticleRepository extends JpaRepository<Article, UUID>, JpaSpec
             group by a.category
             order by cnt desc
             """)
-    List<Object[]> countCategoriesForOwnerWithin(@Param("ownerId") UUID ownerId,
+    List<Object[]> countCategoriesForOwnerWithin(@Param("ownerId") Integer ownerId,
                                                  @Param("fromTs") Instant fromTs,
                                                  @Param("toTs") Instant toTs);
 
@@ -148,14 +148,14 @@ public interface ArticleRepository extends JpaRepository<Article, UUID>, JpaSpec
               ))
               and (coalesce(a.tags, '') <> '')
             """)
-    List<String> findTagJsonForOwnerWithin(@Param("ownerId") UUID ownerId,
+    List<String> findTagJsonForOwnerWithin(@Param("ownerId") Integer ownerId,
                                            @Param("fromTs") Instant fromTs,
                                            @Param("toTs") Instant toTs);
 
 
     @Query(value = """
             select new org.bitmagic.ifeed.domain.projection.ArticleSummaryView(
-                a.id,
+                a.uid,
                 a.title,
                 a.link,
                 a.summary,
@@ -166,7 +166,7 @@ public interface ArticleRepository extends JpaRepository<Article, UUID>, JpaSpec
                 a.enclosure)
             from Article a
             left join a.feed f
-            where a.id in (:ids)
+            where a.uid in (:ids)
             """)
-    List<ArticleSummaryView> findArticleSummariesByIds(@Param("ids") Collection<UUID> ids);
+    List<ArticleSummaryView> findArticleSummariesByUids(@Param("ids") Collection<UUID> ids);
 }

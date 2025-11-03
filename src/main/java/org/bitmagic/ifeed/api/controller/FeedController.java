@@ -53,7 +53,7 @@ public class FeedController {
         var feed = detail.feed();
         var failureCount = feed.getFailureCount() == null ? 0 : feed.getFailureCount();
         return new FeedDetailResponse(
-                feed.getId().toString(),
+                feed.getUid().toString(),
                 feed.getTitle(),
                 feed.getUrl(),
                 feed.getSiteUrl(),

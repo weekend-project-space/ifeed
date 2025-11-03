@@ -24,7 +24,7 @@ public class UserEmbedding {
 
     @Id
     @Column(name = "user_id", nullable = false, updatable = false)
-    private UUID userId;
+    private Integer userId;
 
     @JdbcTypeCode(SqlTypes.VECTOR)
     @Array(length = 1024)

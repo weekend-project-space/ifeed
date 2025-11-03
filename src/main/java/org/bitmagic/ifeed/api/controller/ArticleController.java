@@ -90,16 +90,16 @@ public class ArticleController {
         ensureAuthenticated(principal);
         var article = articleService.getArticle(IdentifierUtils.parseUuid(articleId, "article id"));
         var tags = extractTags(article.getTags());
-        var collected = userCollectionService.isCollected(principal.getId(), article.getId());
+        var collected = userCollectionService.isCollected(principal.getId(), article.getUid());
         var response = new ArticleDetailResponse(
-                article.getId().toString(),
+                article.getUid().toString(),
                 article.getTitle(),
                 article.getContent(),
                 article.getSummary(),
                 article.getLink(),
                 article.getThumbnail(),
                 article.getEnclosure(),
-                article.getFeed().getId().toString(),
+                article.getFeed().getUid().toString(),
                 resolveFeedTitle(article.getFeed() == null ? null : article.getFeed().getTitle()),
                 formatTimestamp(article.getPublishedAt()),
                 tags,
