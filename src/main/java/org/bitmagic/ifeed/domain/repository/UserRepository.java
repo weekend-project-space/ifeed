@@ -1,6 +1,6 @@
 package org.bitmagic.ifeed.domain.repository;
 
-import org.bitmagic.ifeed.domain.entity.User;
+import org.bitmagic.ifeed.domain.model.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;

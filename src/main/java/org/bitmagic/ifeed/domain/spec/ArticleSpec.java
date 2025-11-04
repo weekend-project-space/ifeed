@@ -1,6 +1,6 @@
 package org.bitmagic.ifeed.domain.spec;
 
-import org.bitmagic.ifeed.domain.entity.Article;
+import org.bitmagic.ifeed.domain.model.Article;
 import org.springframework.data.jpa.domain.Specification;
 
 /**

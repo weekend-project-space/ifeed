@@ -1,9 +1,9 @@
 package org.bitmagic.ifeed.domain.repository;
 
-import org.bitmagic.ifeed.domain.entity.Feed;
-import org.bitmagic.ifeed.domain.entity.User;
-import org.bitmagic.ifeed.domain.entity.UserSubscription;
-import org.bitmagic.ifeed.domain.entity.UserSubscriptionId;
+import org.bitmagic.ifeed.domain.model.Feed;
+import org.bitmagic.ifeed.domain.model.User;
+import org.bitmagic.ifeed.domain.model.UserSubscription;
+import org.bitmagic.ifeed.domain.model.UserSubscriptionId;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;

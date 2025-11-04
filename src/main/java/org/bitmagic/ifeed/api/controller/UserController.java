@@ -3,7 +3,7 @@ package org.bitmagic.ifeed.api.controller;
 import lombok.RequiredArgsConstructor;
 import org.bitmagic.ifeed.api.response.UserResponse;
 import org.bitmagic.ifeed.exception.ApiException;
-import org.bitmagic.ifeed.security.UserPrincipal;
+import org.bitmagic.ifeed.config.security.UserPrincipal;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;

@@ -1,6 +1,7 @@
 package org.bitmagic.ifeed.config;
 
 import com.github.benmanes.caffeine.cache.Caffeine;
+import org.bitmagic.ifeed.config.properties.RssFetcherProperties;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.cache.caffeine.CaffeineCacheManager;

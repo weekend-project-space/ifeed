@@ -2,7 +2,7 @@ package org.bitmagic.ifeed.domain.repository;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.bitmagic.ifeed.domain.model.ArticleEmbeddingRecord;
+import org.bitmagic.ifeed.domain.record.ArticleEmbeddingRecord;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.jdbc.core.JdbcTemplate;
