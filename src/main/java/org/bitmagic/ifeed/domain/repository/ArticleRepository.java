@@ -21,8 +21,9 @@ public interface ArticleRepository extends JpaRepository<Article, Integer>, JpaS
     boolean existsByFeedAndLink(Feed feed, String link);
 
     @Query(value = """
-            select new org.bitmagic.ifeed.domain.projection.ArticleSummaryView(
+            select new org.bitmagic.ifeed.domain.record.ArticleSummaryView(
                 a.uid,
+                a.id,
                 a.title,
                 a.link,
                 a.summary,
@@ -66,8 +67,9 @@ public interface ArticleRepository extends JpaRepository<Article, Integer>, JpaS
                                                   Pageable pageable);
 
     @Query(value = """
-            select new org.bitmagic.ifeed.domain.projection.ArticleSummaryView(
+            select new org.bitmagic.ifeed.domain.record.ArticleSummaryView(
                 a.uid,
+                a.id,
                 a.title,
                 a.link,
                 a.summary,
@@ -154,8 +156,9 @@ public interface ArticleRepository extends JpaRepository<Article, Integer>, JpaS
 
 
     @Query(value = """
-            select new org.bitmagic.ifeed.domain.projection.ArticleSummaryView(
+            select new org.bitmagic.ifeed.domain.record.ArticleSummaryView(
                 a.uid,
+                a.id,
                 a.title,
                 a.link,
                 a.summary,
@@ -169,4 +172,16 @@ public interface ArticleRepository extends JpaRepository<Article, Integer>, JpaS
             where a.id in (:ids)
             """)
     List<ArticleSummaryView> findArticleSummariesByIds(@Param("ids") Collection<Long> ids);
+
+    @Query("select a.uid from Article a where a.id = :articleId")
+    Optional<UUID> findUidByArticleId(@Param("articleId") Long articleId);
+
+    @Query("select a.id from Article a where lower(coalesce(a.category, '')) = lower(:category) order by a.publishedAt desc")
+    List<Long> findTopIdsByCategory(@Param("category") String category, Pageable pageable);
+
+    @Query("select a.id from Article a where lower(coalesce(a.author, '')) = lower(:author) order by a.publishedAt desc")
+    List<Long> findTopIdsByAuthor(@Param("author") String author, Pageable pageable);
+
+    @Query("select a.id, a.publishedAt from Article a where a.id in (:ids)")
+    List<Object[]> findPublishedAtByIdIn(@Param("ids") Collection<Long> ids);
 }

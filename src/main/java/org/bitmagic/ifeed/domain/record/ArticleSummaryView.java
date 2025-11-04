@@ -5,6 +5,7 @@ import java.util.UUID;
 
 public record ArticleSummaryView(
         UUID id,
+        Long articleId,
         String title,
         String link,
         String summary,

@@ -2,22 +2,21 @@ package org.bitmagic.ifeed.application.recommendation;
 
 import com.rometools.utils.Strings;
 import lombok.extern.slf4j.Slf4j;
-import org.bitmagic.ifeed.config.properties.RecommendationProperties;
-import org.bitmagic.ifeed.config.properties.SearchRetrievalProperties;
-import org.bitmagic.ifeed.infrastructure.vector.VectorStoreTurbo;
-import org.bitmagic.ifeed.domain.model.UserEmbedding;
-import org.bitmagic.ifeed.domain.record.ArticleSummaryView;
-import org.bitmagic.ifeed.domain.repository.UserEmbeddingRepository;
-import org.bitmagic.ifeed.domain.service.ArticleService;
 import org.bitmagic.ifeed.application.retrieval.RetrievalContext;
 import org.bitmagic.ifeed.application.retrieval.RetrievalPipeline;
 import org.bitmagic.ifeed.application.retrieval.impl.Bm25RetrievalHandler;
 import org.bitmagic.ifeed.application.retrieval.impl.MultiChannelRetrievalPipeline;
 import org.bitmagic.ifeed.application.retrieval.impl.VectorRetrievalHandler;
+import org.bitmagic.ifeed.config.properties.RecommendationProperties;
+import org.bitmagic.ifeed.config.properties.SearchRetrievalProperties;
+import org.bitmagic.ifeed.domain.model.UserEmbedding;
+import org.bitmagic.ifeed.domain.record.ArticleSummaryView;
+import org.bitmagic.ifeed.domain.repository.UserEmbeddingRepository;
+import org.bitmagic.ifeed.domain.service.ArticleService;
+import org.bitmagic.ifeed.infrastructure.vector.VectorStoreTurbo;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.stereotype.Service;
 
 import java.util.Collections;
 import java.util.List;
@@ -30,7 +29,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * @date 2025/10/28
  **/
 @Slf4j
-@Service
+//@Service
 public class RetrievalRecommendationService implements RecommendationService {
 
     private final ArticleService articleService;

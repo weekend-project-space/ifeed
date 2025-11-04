@@ -66,8 +66,8 @@ public class ArticleService {
 
         List<Long> pageIds = artIds.subList(fromIndex, toIndex);
 
-        Map<UUID, ArticleSummaryView> summaries = articleRepository.findArticleSummariesByIds(pageIds).stream()
-                .collect(Collectors.toMap(ArticleSummaryView::id, summary -> summary));
+        Map<Long, ArticleSummaryView> summaries = articleRepository.findArticleSummariesByIds(pageIds).stream()
+                .collect(Collectors.toMap(ArticleSummaryView::articleId, summary -> summary));
 
         List<ArticleSummaryView> ordered = pageIds.stream()
                 .map(summaries::get)
