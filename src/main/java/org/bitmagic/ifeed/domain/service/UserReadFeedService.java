@@ -29,7 +29,7 @@ public class UserReadFeedService {
 
         var document = userBehaviorRepository.findById(userId.toString())
                 .orElseGet(() -> UserBehaviorDocument.builder()
-                        .id(user.getId().toString())
+                        .id(userId.toString())
                         .build());
 
         if (document.getReadFeedHistory() == null) {
