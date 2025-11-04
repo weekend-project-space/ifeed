@@ -166,7 +166,7 @@ public interface ArticleRepository extends JpaRepository<Article, Integer>, JpaS
                 a.enclosure)
             from Article a
             left join a.feed f
-            where a.uid in (:ids)
+            where a.id in (:ids)
             """)
-    List<ArticleSummaryView> findArticleSummariesByUids(@Param("ids") Collection<UUID> ids);
+    List<ArticleSummaryView> findArticleSummariesByIds(@Param("ids") Collection<Long> ids);
 }

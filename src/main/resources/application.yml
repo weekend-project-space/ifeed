@@ -42,7 +42,7 @@ spring:
       password: ${MONGO_DB_PASSWORD:mongo_MDNyW6}
       database: ${MONGO_DB_DATABASE:i_feed}
   profiles:
-    active: rel
+    active: local
 
 app:
   # 定时任务
@@ -61,7 +61,7 @@ app:
   embedding:
     document:
       fixed-delay: PT10M
-      initial-delay: PT15M
+      initial-delay: PT1M
     user:
       fixed-delay: PT12H
       initial-delay: PT30s
@@ -90,7 +90,7 @@ app:
       bm25-weight: 0.6
       vector-weight: 0.4
       freshness-time-weight: 0.3
-      freshness-lambda: 0.01
+      freshness-lambda: 0.5
       similarity-threshold: 0.3
 management:
   endpoints:

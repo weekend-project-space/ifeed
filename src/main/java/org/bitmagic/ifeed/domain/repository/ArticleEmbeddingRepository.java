@@ -24,9 +24,10 @@ public class ArticleEmbeddingRepository {
 
 
     public void upsert(
-            UUID feedId,
+            Integer feedId,
             String feedTitle,
-            UUID articleId,
+            Long articleId,
+            UUID articleUuid,
             String title,
             String category,
             String tags,
@@ -42,7 +43,7 @@ public class ArticleEmbeddingRepository {
         }
 
         var document = Document.builder()
-                .id(articleId.toString())
+                .id(articleUuid.toString())
                 .text(textBody)
                 .metadata(buildMetadata(feedId, feedTitle, articleId, title, link, summary, publishedAt))
                 .build();
@@ -69,16 +70,16 @@ public class ArticleEmbeddingRepository {
     }
 
 
-    private Map<String, Object> buildMetadata(UUID feedId,
+    private Map<String, Object> buildMetadata(Integer feedId,
                                               String feedTitle,
-                                              UUID articleId,
+                                              Long articleId,
                                               String title,
                                               String link,
                                               String summary,
                                               Instant publishedAt) {
         var metadata = new HashMap<String, Object>();
-        metadata.put("articleId", articleId.toString());
-        metadata.put("feedId", feedId != null ? feedId.toString() : null);
+        metadata.put("articleId", articleId);
+        metadata.put("feedId", feedId != null ? feedId : null);
         if (StringUtils.hasText(feedTitle)) {
             metadata.put("feedTitle", feedTitle);
         }

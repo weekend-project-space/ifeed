@@ -10,7 +10,6 @@ import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 public interface UserSubscriptionRepository extends JpaRepository<UserSubscription, UserSubscriptionId> {
 
@@ -28,6 +27,6 @@ public interface UserSubscriptionRepository extends JpaRepository<UserSubscripti
 
     boolean existsByUser_IdAndFeedAndActiveTrue(Integer userId, Feed feed);
 
-    @Query("select us.feed.uid from UserSubscription us where us.user.id = :userId and us.active = true")
-    List<UUID> findActiveFeedIdsByUserId(@Param("userId") Integer userId);
+    @Query("select us.feed.id from UserSubscription us where us.user.id = :userId and us.active = true")
+    List<Integer> findActiveFeedIdsByUserId(@Param("userId") Integer userId);
 }

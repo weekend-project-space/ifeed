@@ -75,11 +75,6 @@ public class SubscriptionService {
     }
 
     @Transactional(readOnly = true)
-    public Set<UUID> getActiveFeedIds(User user) {
-        return new HashSet<>(subscriptionRepository.findActiveFeedIdsByUserId(user.getId()));
-    }
-
-    @Transactional(readOnly = true)
     public long getSubscriberCount(Feed feed) {
         if (feed == null) {
             return 0;

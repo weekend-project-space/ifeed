@@ -325,8 +325,8 @@ public class FeedIngestionService {
     }
 
     private Instant resolvePublishedAt(SyndEntry entry) {
-        if (entry.getUpdatedDate() != null) {
-            return entry.getUpdatedDate().toInstant();
+        if (entry.getPublishedDate() != null) {
+            return entry.getPublishedDate().toInstant();
         }
         if (entry.getUpdatedDate() != null) {
             return entry.getUpdatedDate().toInstant();

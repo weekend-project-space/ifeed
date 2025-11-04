@@ -266,7 +266,7 @@ public class UserEmbeddingService {
                 if (it.getTimestamp() == null || it.getTimestamp().isBefore(fromTs) || it.getTimestamp().isAfter(now))
                     return;
                 Tools.uuid(it.getArticleId()).ifPresent(aid -> {
-                    var art = articles.stream().filter(a -> a.getId().equals(aid)).findFirst().orElse(null);
+                    var art = articles.stream().filter(a -> a.getUid().equals(aid)).findFirst().orElse(null);
                     if (art != null) {
                         String author = Tools.normalizeAuthor(art.getAuthor());
                         authorRead.merge(author, 1, Integer::sum);
@@ -279,7 +279,7 @@ public class UserEmbeddingService {
                 if (it.getTimestamp() == null || it.getTimestamp().isBefore(fromTs) || it.getTimestamp().isAfter(now))
                     return;
                 Tools.uuid(it.getArticleId()).ifPresent(aid -> {
-                    var art = articles.stream().filter(a -> a.getId().equals(aid)).findFirst().orElse(null);
+                    var art = articles.stream().filter(a -> a.getUid().equals(aid)).findFirst().orElse(null);
                     if (art != null) {
                         String author = Tools.normalizeAuthor(art.getAuthor());
                         authorCollected.merge(author, 1, Integer::sum);

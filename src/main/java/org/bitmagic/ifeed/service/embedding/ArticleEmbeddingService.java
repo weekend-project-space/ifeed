@@ -25,8 +25,9 @@ public class ArticleEmbeddingService {
     public void buildArticleEmbedding(Article article) {
         if (aiProviderProperties.isEnabled()) {
             repository.upsert(
-                    article.getFeed().getUid(),
+                    article.getFeed().getId(),
                     article.getFeed().getTitle(),
+                    article.getId(),
                     article.getUid(),
                     article.getTitle(),
                     article.getCategory(),

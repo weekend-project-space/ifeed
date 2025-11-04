@@ -3,16 +3,26 @@ package org.bitmagic.ifeed.service.recommendation;
 import com.rometools.utils.Strings;
 import lombok.extern.slf4j.Slf4j;
 import org.bitmagic.ifeed.config.RecommendationProperties;
+import org.bitmagic.ifeed.config.SearchRetrievalProperties;
+import org.bitmagic.ifeed.config.vectore.VectorStoreTurbo;
 import org.bitmagic.ifeed.domain.entity.UserEmbedding;
 import org.bitmagic.ifeed.domain.projection.ArticleSummaryView;
 import org.bitmagic.ifeed.domain.repository.UserEmbeddingRepository;
 import org.bitmagic.ifeed.service.ArticleService;
-import org.bitmagic.ifeed.service.retrieval.SearchRetrievalService;
+import org.bitmagic.ifeed.service.retrieval.RetrievalContext;
+import org.bitmagic.ifeed.service.retrieval.RetrievalPipeline;
+import org.bitmagic.ifeed.service.retrieval.impl.Bm25RetrievalHandler;
+import org.bitmagic.ifeed.service.retrieval.impl.MultiChannelRetrievalPipeline;
+import org.bitmagic.ifeed.service.retrieval.impl.VectorRetrievalHandler;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -23,17 +33,53 @@ import java.util.concurrent.ConcurrentHashMap;
 @Service
 public class RetrievalRecommendationService implements RecommendationService {
 
-    private final SearchRetrievalService searchRetrievalService;
     private final ArticleService articleService;
     private final UserEmbeddingRepository userEmbeddingRepository;
-    private final Map<Integer, List<UUID>> user2Items = new ConcurrentHashMap<>();
+    private final Map<Integer, List<Long>> user2Items = new ConcurrentHashMap<>();
     private final UserEmbedding defaultUserEmbedding;
+    private final RetrievalPipeline retrievalPipeline;
 
-    public RetrievalRecommendationService(RecommendationProperties properties, SearchRetrievalService searchRetrievalService, ArticleService articleService, UserEmbeddingRepository userEmbeddingRepository) {
-        this.searchRetrievalService = searchRetrievalService;
+    private static final String BM25_SQL = """
+             WITH query AS (
+                SELECT websearch_to_tsquery('simple', ?) AS q
+            ),
+            documents AS (
+                SELECT a.uid as id,
+                       a.pub_date,
+                       a.title,
+                       setweight(to_tsvector('simple', coalesce(a.title, '')), 'A') ||
+                       setweight(to_tsvector('simple', coalesce(a.category, '')), 'A') ||
+                       setweight(to_tsvector('simple', coalesce(a.tags, '')), 'B') ||
+                       setweight(to_tsvector('simple', coalesce(a.summary, '')), 'B') ||
+                       setweight(to_tsvector('simple', coalesce(a.author, '')), 'C') AS document
+                FROM articles a
+                WHERE (? = TRUE) OR EXISTS (
+                    SELECT 1
+                    FROM user_subscriptions us
+                    WHERE us.feed_id = a.feed_id
+                      AND us.user_id = ?
+                      AND us.is_active = TRUE
+                )
+            )
+            SELECT d.id,
+                   ts_rank_cd(d.document, query.q) AS score,
+                   d.title,
+                   d.pub_date AS pubDate
+            FROM documents d
+            CROSS JOIN query
+            WHERE query.q @@ d.document
+            ORDER BY score DESC
+            LIMIT ?
+            """;
+
+    public RetrievalRecommendationService(JdbcTemplate jdbcTemplate, VectorStoreTurbo vectorStore, RecommendationProperties recommendationProperties, SearchRetrievalProperties properties, ArticleService articleService, UserEmbeddingRepository userEmbeddingRepository) {
         this.articleService = articleService;
         this.userEmbeddingRepository = userEmbeddingRepository;
-        defaultUserEmbedding = new UserEmbedding(null, null, properties.getDefaultProfile(), null);
+        defaultUserEmbedding = new UserEmbedding(null, null, recommendationProperties.getDefaultProfile(), null);
+        this.retrievalPipeline = new MultiChannelRetrievalPipeline(properties.getFreshnessTimeWeight(), properties.getFreshnessLambda()).
+                addHandler(new Bm25RetrievalHandler(jdbcTemplate, BM25_SQL), properties.getBm25Weight())
+                .addHandler(new VectorRetrievalHandler(vectorStore, properties.getSimilarityThreshold()), properties.getVectorWeight());
+//          .addHandler(new ItemCFRetrievalHandler(vectorStore, properties.getSimilarityThreshold()), properties.getVectorWeight());
     }
 
 
@@ -46,9 +92,10 @@ public class RetrievalRecommendationService implements RecommendationService {
             if (Strings.isBlank(userEmbedding.getContent())) {
                 return new PageImpl<ArticleSummaryView>(Collections.emptyList());
             } else {
-                List<UUID> cachedIds = user2Items.get(userId);
+                List<Long> cachedIds = user2Items.get(userId);
                 if (safePage == 0 || cachedIds == null) {
-                    cachedIds = searchRetrievalService.hybridSearch(userId, userEmbedding.getEmbedding(), userEmbedding.getContent(), true, -1);
+                    cachedIds = retrievalPipeline.execute(RetrievalContext.builder().userId(userId).embedding(userEmbedding.getEmbedding()).query(userEmbedding.getContent()).includeGlobal(true).topK(200).build());
+//                    cachedIds = searchRetrievalService.hybridSearch(userId, userEmbedding.getEmbedding(), userEmbedding.getContent(), true, -1);
                     user2Items.put(userId, cachedIds);
                 }
                 log.info("recall:{}ms", System.currentTimeMillis() - start);

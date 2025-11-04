@@ -48,7 +48,7 @@ public class ArticleService {
     /**
      * 对查询执行混合检索：BM25 + 向量召回，并融合得分返回分页结果。
      */
-    public Page<ArticleSummaryView> findIds2Article(List<UUID> artIds,
+    public Page<ArticleSummaryView> findIds2Article(List<Long> artIds,
                                                     int page,
                                                     int size) {
 
@@ -64,9 +64,9 @@ public class ArticleService {
             return new PageImpl<>(Collections.emptyList(), PageRequest.of(safePage, safeSize), artIds.size());
         }
 
-        List<UUID> pageIds = artIds.subList(fromIndex, toIndex);
+        List<Long> pageIds = artIds.subList(fromIndex, toIndex);
 
-        Map<UUID, ArticleSummaryView> summaries = articleRepository.findArticleSummariesByUids(pageIds).stream()
+        Map<UUID, ArticleSummaryView> summaries = articleRepository.findArticleSummariesByIds(pageIds).stream()
                 .collect(Collectors.toMap(ArticleSummaryView::id, summary -> summary));
 
         List<ArticleSummaryView> ordered = pageIds.stream()
@@ -111,7 +111,6 @@ public class ArticleService {
         var normalized = sort.trim();
         if (!normalized.contains(",")) {
             return switch (normalized.toLowerCase()) {
-                case "latest" -> Sort.by(Sort.Direction.DESC, "publishedAt");
                 case "oldest" -> Sort.by(Sort.Direction.ASC, "publishedAt");
                 case "title" -> Sort.by(Sort.Direction.ASC, "title");
                 default -> Sort.by(Sort.Direction.DESC, "publishedAt");

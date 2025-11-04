@@ -5,12 +5,14 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.bitmagic.ifeed.config.RssFetcherProperties;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
-import java.util.concurrent.*;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @Slf4j
@@ -24,7 +26,7 @@ public class FeedIngestionScheduler {
 
     @Autowired
     public FeedIngestionScheduler(FeedIngestionService ingestionService,
-                                  RssFetcherProperties properties) {
+            RssFetcherProperties properties) {
         this.ingestionService = ingestionService;
         AtomicInteger counter = new AtomicInteger(0);
         this.executor = Executors.newFixedThreadPool(properties.getThreadPoolSize(), (runnable) -> {
@@ -34,13 +36,12 @@ public class FeedIngestionScheduler {
         });
     }
 
-    @Scheduled(initialDelayString = "${app.rss.fetcher.initial-delay:PT10S}",
-            fixedDelayString = "${app,rss.fetcher.fixed-delay:PT30M}")
+    @Scheduled(initialDelayString = "${app.rss.fetcher.initial-delay:PT10S}", fixedDelayString = "${app.rss.fetcher.fixed-delay:PT30M}")
     public void refreshFeeds() {
         long start = System.currentTimeMillis();
 
-        var feedIds = ingestionService.getFeedIds(feed ->
-                LocalDateTime.now().getHour() == 0 || feed.getFailureCount() < 7);
+        var feedIds = ingestionService
+                .getFeedIds(feed -> LocalDateTime.now().getHour() == 0 || feed.getFailureCount() < 7);
 
         if (feedIds.isEmpty()) {
             log.info("No feeds scheduled for ingestion at this time");
@@ -68,7 +69,6 @@ public class FeedIngestionScheduler {
                         success.get(), failed.get());
             });
         });
-
 
         // 等待所有任务结束（最多 15 分钟）
         try {
