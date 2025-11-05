@@ -8,5 +8,5 @@ import java.util.List;
  **/
 public interface RetrievalPipeline {
 
-   List<Long> execute(RetrievalContext context);
+   List<DocScore> execute(RetrievalContext context);
 }

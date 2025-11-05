@@ -80,7 +80,7 @@ public class ArticleEmbeddingRepository {
             String value = rs.getString("embedding");
             float[] vector = parseVector(value);
             return new ArticleEmbeddingRecord(rs.getLong("id"), vector);
-        }, (Object) articleIds.toArray(new Long[]{}));
+        }, articleIds.toArray(new Long[]{}));
     }
 
 

@@ -34,7 +34,7 @@ public class MultiChannelRetrievalPipeline implements RetrievalPipeline {
     }
 
 
-    public List<Long> execute(RetrievalContext context) {
+    public List<DocScore> execute(RetrievalContext context) {
         Map<Long, DocScore> merged = new LinkedHashMap<>();
         for (WeightedHandler wh : handlers) {
             RetrievalHandler handler = wh.handler();
@@ -73,7 +73,7 @@ public class MultiChannelRetrievalPipeline implements RetrievalPipeline {
 
 
         // 排序：按综合得分降序
-        return docScores.stream().sorted((a, b) -> Double.compare(b.score(), a.score())).map(DocScore::docId).limit(context.getTopK()).collect(Collectors.toList());
+        return docScores.stream().sorted((a, b) -> Double.compare(b.score(), a.score())).limit(context.getTopK()).collect(Collectors.toList());
 //        return adjusted.entrySet().stream()
 //                .sorted((a, b) -> Double.compare(b.getValue().score(), a.getValue().score()))
 //                .collect(LinkedHashMap::new,

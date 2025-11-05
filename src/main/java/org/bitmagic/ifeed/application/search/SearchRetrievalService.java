@@ -1,6 +1,7 @@
 package org.bitmagic.ifeed.application.search;
 
 import lombok.extern.slf4j.Slf4j;
+import org.bitmagic.ifeed.application.retrieval.DocScore;
 import org.bitmagic.ifeed.config.properties.SearchRetrievalProperties;
 import org.bitmagic.ifeed.infrastructure.vector.VectorStoreTurbo;
 import org.bitmagic.ifeed.domain.record.ArticleSummaryView;
@@ -116,7 +117,7 @@ public class SearchRetrievalService {
         if (!includeGlobal && CollectionUtils.isEmpty(feedIds)) {
             return Collections.emptyList();
         }
-        List<Long> ids = retrievalPipeline.execute(RetrievalContext.builder().query(normalizedQuery).embedding(queryEmbedding).userId(userId).topK(desired).feedIds(feedIds).build());
+        List<Long> ids = retrievalPipeline.execute(RetrievalContext.builder().query(normalizedQuery).embedding(queryEmbedding).userId(userId).topK(desired).feedIds(feedIds).build()).stream().map(DocScore::docId).toList();
         log.debug("Hybrid search(IDs) complete: user={}, query='{}', returnCount={}", userId, normalizedQuery, ids.size());
         return ids;
     }

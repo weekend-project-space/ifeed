@@ -22,8 +22,8 @@ public class EmbeddingScheduler {
 
     private final ArticleRepository articleRepository;
 
-//    @Scheduled(initialDelayString = "${app.embedding.user.initial-delay:PT10S}",
-//            fixedDelayString = "${app.embedding.user.fixed-delay:PT30M}")
+    @Scheduled(initialDelayString = "${app.embedding.user.initial-delay:PT10S}",
+            fixedDelayString = "${app.embedding.user.fixed-delay:PT30M}")
     public void userEmbedding() {
         log.info("begin gen user embedding");
         try {
