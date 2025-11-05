@@ -10,6 +10,8 @@ import org.bitmagic.ifeed.domain.record.ArticleEmbeddingRecord;
 import org.bitmagic.ifeed.domain.repository.ArticleEmbeddingRepository;
 import org.bitmagic.ifeed.domain.repository.ArticleRepository;
 import org.bitmagic.ifeed.domain.repository.UserEmbeddingRepository;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -52,6 +54,14 @@ public class UserEmbeddingService {
                 userId,
                 Math.max(1, recommendationProperties.getRecentBehaviorLimit())
         );
+
+        Instant lastTime = interactions.stream().map(SequenceStore.UserInteraction::timestamp).max(Comparator.naturalOrder()).orElse(Instant.ofEpochSecond(0));
+
+        boolean canRebuild = userEmbeddingRepository.findById(userId).map(UserEmbedding::getUpdatedAt).orElse(Instant.ofEpochSecond(0)).isBefore(lastTime);
+
+        if (!canRebuild) {
+            return Optional.empty();
+        }
 
         if (interactions.isEmpty()) {
             userEmbeddingRepository.deleteAllByIdInBatch(List.of(userId));

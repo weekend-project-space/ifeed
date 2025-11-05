@@ -10,6 +10,7 @@ import org.bitmagic.ifeed.application.recommendation.recall.spi.EmbeddingStore;
 import org.bitmagic.ifeed.application.recommendation.recall.spi.ScoredId;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
@@ -47,6 +48,7 @@ public class U2I2IRecallStrategy implements RecallStrategy {
         return StrategyId.U2I2I;
     }
 
+    @Cacheable(cacheNames = "U2I2I", key = "#context.userId()", unless = "#result == null")
     @Override
     public List<ItemCandidate> recall(UserContext context, int limit) {
         return embeddingStore.getUserVector(context.userId())

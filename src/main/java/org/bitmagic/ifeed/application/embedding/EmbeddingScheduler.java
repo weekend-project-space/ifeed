@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.bitmagic.ifeed.domain.repository.ArticleRepository;
 import org.bitmagic.ifeed.domain.repository.UserRepository;
 import org.bitmagic.ifeed.domain.spec.ArticleSpec;
+import org.springframework.cache.CacheManager;
 import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -22,6 +23,9 @@ public class EmbeddingScheduler {
 
     private final ArticleRepository articleRepository;
 
+
+    private final CacheManager cacheManager;
+
     @Scheduled(initialDelayString = "${app.embedding.user.initial-delay:PT10S}",
             fixedDelayString = "${app.embedding.user.fixed-delay:PT30M}")
     public void userEmbedding() {
@@ -30,6 +34,8 @@ public class EmbeddingScheduler {
             userRepository.findAll().forEach(user -> {
                 log.info("init user embedding :{}", user.getUsername());
                 try {
+                    evictU2I2ICache(user.getId());
+                    evictU2ICache(user.getId());
                     userEmbeddingService.rebuildUserEmbedding(user.getId());
                 } catch (RuntimeException e) {
                     log.warn("init user embedding", e);
@@ -61,5 +67,20 @@ public class EmbeddingScheduler {
             log.warn("article embedding", e);
         }
         log.info("end init article embedding");
+    }
+
+
+    public void evictU2I2ICache(Integer userId) {
+        var cache = cacheManager.getCache("U2I2I");
+        if (cache != null) {
+            cache.evict(userId);
+        }
+    }
+
+    public void evictU2ICache(Integer userId) {
+        var cache = cacheManager.getCache("U2I");
+        if (cache != null) {
+            cache.evict(userId);
+        }
     }
 }

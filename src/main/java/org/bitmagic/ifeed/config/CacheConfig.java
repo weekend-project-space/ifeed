@@ -23,7 +23,7 @@ public class CacheConfig {
                 properties.getCache().getExpireAfterWrite().getSeconds()
         );
 
-        CaffeineCacheManager manager = new CaffeineCacheManager(RssFetcherProperties.Cache.CACHE_NAME, "rss-feed-cache");
+        CaffeineCacheManager manager = new CaffeineCacheManager(RssFetcherProperties.Cache.CACHE_NAME, "rss-feed-cache", "U2I", "U2I2I");
         manager.setCaffeine(Caffeine.from(spec));
         manager.setAllowNullValues(true);
         return manager;

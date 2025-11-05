@@ -9,6 +9,7 @@ import org.bitmagic.ifeed.application.recommendation.recall.spi.AnnIndex;
 import org.bitmagic.ifeed.application.recommendation.recall.spi.EmbeddingStore;
 import org.bitmagic.ifeed.application.recommendation.recall.spi.ScoredId;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -29,6 +30,7 @@ public class U2IRecallStrategy implements RecallStrategy {
         return StrategyId.U2I;
     }
 
+    @Cacheable(cacheNames = "U2I", key = "#context.userId()", unless = "#result == null")
     @Override
     public List<ItemCandidate> recall(UserContext context, int limit) {
         // 用户无向量时返回空集合，防止影响召回效率
