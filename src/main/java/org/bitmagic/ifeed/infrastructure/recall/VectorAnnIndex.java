@@ -17,6 +17,7 @@ import java.util.Map;
 
 /**
  * 基于向量检索的 ANN 查询实现，直接调用 PgVector 向量库。
+ *
  */
 @Slf4j
 @Component
@@ -27,6 +28,13 @@ public class VectorAnnIndex implements AnnIndex {
 
     private final RecallVectorProperties properties;
 
+    /**
+     * 查找符合条件的k个
+     * @param vector
+     * @param k
+     * @param filters
+     * @return
+     */
     @Override
     public List<ScoredId> query(float[] vector, int k, Map<String, Object> filters) {
         if (vector == null || vector.length == 0 || k <= 0) {
@@ -47,7 +55,7 @@ public class VectorAnnIndex implements AnnIndex {
 
         Map<Long, ScoredId> dedup = new LinkedHashMap<>();
         for (Document document : documents) {
-            Long articleId = extractArticleId(document);
+            Long articleId = Long.parseLong(document.getId());
             if (articleId == null) {
                 continue;
             }
@@ -62,20 +70,5 @@ public class VectorAnnIndex implements AnnIndex {
         }
 
         return new ArrayList<>(dedup.values());
-    }
-
-    private Long extractArticleId(Document document) {
-        Object value = document.getMetadata().get("articleId");
-        if (value instanceof Number number) {
-            return number.longValue();
-        }
-        if (value != null) {
-            try {
-                return Long.parseLong(value.toString());
-            } catch (NumberFormatException ignored) {
-                return null;
-            }
-        }
-        return null;
     }
 }

@@ -34,7 +34,7 @@ public class SearchRetrievalService {
                 SELECT websearch_to_tsquery('simple', ?) AS q
             ),
             documents AS (
-                SELECT a.uid as id,
+                SELECT a.id,
                        a.pub_date,
                        a.title,
                        setweight(to_tsvector('simple', coalesce(a.title, '')), 'A') ||

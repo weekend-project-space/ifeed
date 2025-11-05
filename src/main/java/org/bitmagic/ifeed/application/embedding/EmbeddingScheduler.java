@@ -22,8 +22,8 @@ public class EmbeddingScheduler {
 
     private final ArticleRepository articleRepository;
 
-    @Scheduled(initialDelayString = "${app.embedding.user.initial-delay:PT10S}",
-            fixedDelayString = "${app.embedding.user.fixed-delay:PT30M}")
+//    @Scheduled(initialDelayString = "${app.embedding.user.initial-delay:PT10S}",
+//            fixedDelayString = "${app.embedding.user.fixed-delay:PT30M}")
     public void userEmbedding() {
         log.info("begin gen user embedding");
         try {
@@ -47,7 +47,7 @@ public class EmbeddingScheduler {
     public void documentEmbedding() {
         log.info("begin init article embedding");
         try {
-            articleRepository.findAll(ArticleSpec.noEmbeddingSpec(), Pageable.ofSize(100)).forEach(article -> {
+            articleRepository.findAll(ArticleSpec.noEmbeddingSpec(), Pageable.ofSize(100)).stream().parallel().forEach(article -> {
                 try {
                     log.info("init embedding :{}", article.getTitle());
                     articleEmbeddingService.buildArticleEmbedding(article);

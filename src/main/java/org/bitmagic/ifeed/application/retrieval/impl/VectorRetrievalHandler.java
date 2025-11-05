@@ -44,7 +44,7 @@ public class VectorRetrievalHandler implements RetrievalHandler {
         if (!context.isIncludeGlobal() && !CollectionUtils.isEmpty(context.getFeedIds())) {
             builder.filterExpression(
                     new FilterExpressionBuilder()
-                            .in("feedId", context.getFeedIds().toArray(Integer[]::new))
+                            .in("feedId", (Object) context.getFeedIds().toArray(Integer[]::new))
                             .build());
         }
 
@@ -55,23 +55,19 @@ public class VectorRetrievalHandler implements RetrievalHandler {
 
         List<DocScore> scores = new ArrayList<>();
         for (Document doc : documents) {
-            Object idValue = doc.getMetadata().get("articleId");
-            if (idValue == null) continue;
+            Object idValue = doc.getId();
             try {
-                long articleId;
-                if (idValue instanceof Number n) {
-                    articleId = n.longValue();
-                } else {
-                    articleId = Long.parseLong(idValue.toString());
-                }
-
+                Long articleId = Long.parseLong(idValue.toString());
                 long publishedAtSec = 0L;
                 Object tsVal = doc.getMetadata().get("publishedAt");
                 if (tsVal != null) {
                     if (tsVal instanceof Number n) {
                         publishedAtSec = n.longValue();
                     } else {
-                        try { publishedAtSec = Long.parseLong(tsVal.toString()); } catch (NumberFormatException ignored) {}
+                        try {
+                            publishedAtSec = Long.parseLong(tsVal.toString());
+                        } catch (NumberFormatException ignored) {
+                        }
                     }
                 }
 

@@ -8,11 +8,13 @@ import org.bitmagic.ifeed.application.recommendation.recall.spi.ScoredId;
 import org.bitmagic.ifeed.infrastructure.vector.SearchRequestTurbo;
 import org.bitmagic.ifeed.infrastructure.vector.VectorStoreTurbo;
 import org.springframework.ai.document.Document;
+import org.springframework.ai.vectorstore.filter.FilterExpressionBuilder;
 import org.springframework.stereotype.Component;
 
-import java.util.LinkedHashMap;
+import java.util.Collections;
 import java.util.List;
-import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 
 /**
  * 使用向量相似度实现的物品共现索引。
@@ -37,46 +39,13 @@ public class VectorCoOccurIndex implements CoOccurIndex {
                 .orElse(List.of());
     }
 
-    private List<ScoredId> searchSimilarItems(Long seedId, float[] vector, int limit) {
+    private List<ScoredId> searchSimilarItems(Long seedId, float[] vector, int topK) {
         var request = SearchRequestTurbo.builder()
                 .embedding(vector)
-                .topK(limit + 1)
+                .topK(topK)
                 .similarityThreshold(properties.similarityThreshold())
                 .build();
-
-        List<Document> documents = vectorStore.similaritySearch(request);
-        if (documents == null || documents.isEmpty()) {
-            return List.of();
-        }
-
-        Map<Long, ScoredId> candidates = new LinkedHashMap<>();
-        for (Document document : documents) {
-            Long articleId = extractArticleId(document);
-            if (articleId == null || articleId.equals(seedId)) {
-                continue;
-            }
-            double score = document.getScore();
-            candidates.merge(articleId, new ScoredId(articleId, score, Map.of()),
-                    (left, right) -> left.score() >= right.score() ? left : right);
-            if (candidates.size() >= limit) {
-                break;
-            }
-        }
-        return List.copyOf(candidates.values());
+        return Objects.requireNonNull(vectorStore.similaritySearch(request)).stream().map(document -> new ScoredId(Long.parseLong(document.getId()), Optional.ofNullable(document.getScore()).orElse(0d), document.getMetadata())).filter(s->s.id()!=seedId).toList();
     }
 
-    private Long extractArticleId(Document document) {
-        Object value = document.getMetadata().get("articleId");
-        if (value instanceof Number number) {
-            return number.longValue();
-        }
-        if (value != null) {
-            try {
-                return Long.parseLong(value.toString());
-            } catch (NumberFormatException ignored) {
-                return null;
-            }
-        }
-        return null;
-    }
 }

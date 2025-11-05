@@ -50,6 +50,21 @@ public class ArticleEmbeddingRepository {
         vectorStore.add(List.of(document));
     }
 
+    public Optional<ArticleEmbeddingRecord> findById(Long articleId) {
+        if (articleId == null) {
+            return Optional.empty();
+        }
+        var sql = """
+                SELECT id, embedding FROM article_embeddings  WHERE id = ?
+                """;
+        List<ArticleEmbeddingRecord> results = jdbcTemplate.query(sql, (rs, rowNum) -> {
+            String value = rs.getString("embedding");
+            float[] vector = parseVector(value);
+            return new ArticleEmbeddingRecord(rs.getLong("id"), vector);
+        }, articleId);
+        return results.isEmpty() ? Optional.empty() : Optional.of(results.getFirst());
+    }
+
     public List<ArticleEmbeddingRecord> findAllByIds(Collection<Long> articleIds) {
         if (articleIds == null || articleIds.isEmpty()) {
             return Collections.emptyList();
@@ -65,7 +80,7 @@ public class ArticleEmbeddingRepository {
             String value = rs.getString("embedding");
             float[] vector = parseVector(value);
             return new ArticleEmbeddingRecord(rs.getLong("id"), vector);
-        }, articleIds.toArray(new Long[]{}));
+        }, (Object) articleIds.toArray(new Long[]{}));
     }
 
 

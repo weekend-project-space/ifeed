@@ -31,6 +31,7 @@ public class EmbeddingUserNeighborFinder implements UserNeighborFinder {
     @Value("${recall.u2u.neighbor-items:30}")
     private int neighborItemLimit;
 
+    //    TODO 需要重构
     @Override
     public List<UserNeighbor> topNeighbors(Integer userId, int k) {
         if (userId == null || k <= 0) {

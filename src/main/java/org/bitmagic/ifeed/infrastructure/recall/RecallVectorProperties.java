@@ -17,7 +17,7 @@ public class RecallVectorProperties {
     /**
      * 相似度阈值，越大意味着召回更严格。
      */
-    private double similarityThreshold = 0.3d;
+    private double similarityThreshold = 0.2d;
 
     public double similarityThreshold() {
         return similarityThreshold;

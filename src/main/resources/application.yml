@@ -31,9 +31,10 @@ spring:
       pgvector:
         initialize-schema: true
         table-name: article_embeddings
-        index-type: ${VECTOR_INDEX_TYPE:HNSW}
+        index-type: ${VECTOR_INDEX_TYPE:IVFFLAT}
         distance-type: ${VECTOR_DISTANCE_TYPE:COSINE_DISTANCE}
         dimensions: ${app.ai.provider.embedding.options.dimensions}
+        id-type: serial
   data:
     mongodb:
       host: ${MONGO_DB:127.0.0.1}

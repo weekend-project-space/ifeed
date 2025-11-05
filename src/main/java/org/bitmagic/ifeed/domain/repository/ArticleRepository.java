@@ -2,6 +2,7 @@ package org.bitmagic.ifeed.domain.repository;
 
 import org.bitmagic.ifeed.domain.model.Article;
 import org.bitmagic.ifeed.domain.model.Feed;
+import org.bitmagic.ifeed.domain.record.ArticleIdPair;
 import org.bitmagic.ifeed.domain.record.ArticleSummaryView;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -173,9 +174,6 @@ public interface ArticleRepository extends JpaRepository<Article, Integer>, JpaS
             """)
     List<ArticleSummaryView> findArticleSummariesByIds(@Param("ids") Collection<Long> ids);
 
-    @Query("select a.uid from Article a where a.id = :articleId")
-    Optional<UUID> findUidByArticleId(@Param("articleId") Long articleId);
-
     @Query("select a.id from Article a where lower(coalesce(a.category, '')) = lower(:category) order by a.publishedAt desc")
     List<Long> findTopIdsByCategory(@Param("category") String category, Pageable pageable);
 
@@ -184,4 +182,8 @@ public interface ArticleRepository extends JpaRepository<Article, Integer>, JpaS
 
     @Query("select a.id, a.publishedAt from Article a where a.id in (:ids)")
     List<Object[]> findPublishedAtByIdIn(@Param("ids") Collection<Long> ids);
+
+
+    @Query("select new org.bitmagic.ifeed.domain.record.ArticleIdPair(a.uid, a.id) from Article a where a.uid in (:ids)")
+    List<ArticleIdPair> findIdByUIdIn(@Param("ids") Collection<UUID> ids);
 }
