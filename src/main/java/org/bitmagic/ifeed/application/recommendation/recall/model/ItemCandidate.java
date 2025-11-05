@@ -21,15 +21,11 @@ public record ItemCandidate(long itemId,
         return new ItemCandidate(itemId, score, source, null, Map.of());
     }
 
-    public ItemCandidate withReason(String detail) {
-        return new ItemCandidate(itemId, score, source, detail, attributes);
-    }
-
     public ItemCandidate withScore(double newScore) {
         return new ItemCandidate(itemId, newScore, source, reason, attributes);
     }
 
-    public ItemCandidate mix(ItemCandidate mix) {
-        return new ItemCandidate(itemId, score + mix.score, StrategyId.MIX, mix.reason, attributes);
-    }
+//    public ItemCandidate mix(ItemCandidate mix) {
+//        return new ItemCandidate(itemId, score + mix.score, StrategyId.MIX, mix.reason, attributes);
+//    }
 }

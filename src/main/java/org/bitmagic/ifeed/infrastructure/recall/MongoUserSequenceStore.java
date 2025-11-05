@@ -4,7 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.bitmagic.ifeed.application.recommendation.recall.spi.SequenceStore;
 import org.bitmagic.ifeed.domain.document.UserBehaviorDocument;
-import org.bitmagic.ifeed.domain.model.Article;
+import org.bitmagic.ifeed.domain.record.ArticleIdPair;
 import org.bitmagic.ifeed.domain.repository.ArticleRepository;
 import org.bitmagic.ifeed.domain.repository.UserBehaviorRepository;
 import org.springframework.stereotype.Component;
@@ -24,7 +24,7 @@ import java.util.stream.Collectors;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class MongoSequenceStore implements SequenceStore {
+public class MongoUserSequenceStore implements SequenceStore {
 
     private final UserBehaviorRepository userBehaviorRepository;
     private final ArticleRepository articleRepository;
@@ -66,8 +66,8 @@ public class MongoSequenceStore implements SequenceStore {
             return List.of();
         }
 
-        Map<UUID, Article> articleMap = articleRepository.findByUidIn(uuids).stream()
-                .collect(Collectors.toMap(Article::getUid, article -> article));
+        Map<UUID, Long> idByUid = articleRepository.findIdByUIdIn(uuids).stream()
+                .collect(Collectors.toMap(ArticleIdPair::uid, ArticleIdPair::id));
 
         Map<String, Long> interactionCounts = document.getInteractionHistory() == null
                 ? Map.of()
@@ -82,8 +82,8 @@ public class MongoSequenceStore implements SequenceStore {
             if (uuid == null) {
                 continue;
             }
-            Article article = articleMap.get(uuid);
-            if (article == null || article.getId() == null) {
+            Long articleId = idByUid.get(uuid);
+            if (articleId == null) {
                 continue;
             }
             double recencyWeight = Math.exp(-index / Math.max(1.0, (double) limit));
@@ -91,7 +91,7 @@ public class MongoSequenceStore implements SequenceStore {
             double weight = recencyWeight * (1.0 + interactionCount);
             double duration = interactionCount * 30.0; // 估算互动总时长，单位秒
             Instant timestamp = ref.getTimestamp() != null ? ref.getTimestamp() : Instant.EPOCH;
-            results.add(new UserInteraction(article.getId(), duration, weight, timestamp));
+            results.add(new UserInteraction(articleId, duration, weight, timestamp));
             index++;
             if (results.size() >= limit) {
                 break;

@@ -81,11 +81,11 @@ public class DefaultEntryProcessor implements EntryProcessor {
     }
 
     private Instant resolvePublishedAt(SyndEntry entry) {
-        if (entry.getPublishedDate() != null) {
-            return entry.getPublishedDate().toInstant();
-        }
         if (entry.getUpdatedDate() != null) {
             return entry.getUpdatedDate().toInstant();
+        }
+        if (entry.getPublishedDate() != null) {
+            return entry.getPublishedDate().toInstant();
         }
         return Instant.now();
     }

@@ -53,7 +53,12 @@ public class RecallEngine {
                 return;
             }
             // 各策略并发执行，异常时降级为空结果
-            futures.put(id, CompletableFuture.supplyAsync(() -> registry.get(id).recall(context, quota), executor)
+            futures.put(id, CompletableFuture.supplyAsync(() -> {
+                        long start0 = System.currentTimeMillis();
+                        List<ItemCandidate> list = registry.get(id).recall(context, quota);
+                        log.info("{} time: {}ms", id, System.currentTimeMillis() - start0);
+                        return list;
+                    }, executor)
                     .exceptionally(ex -> {
                         log.warn("Recall strategy {} failed: {}", id, ex.getMessage());
                         return List.of();

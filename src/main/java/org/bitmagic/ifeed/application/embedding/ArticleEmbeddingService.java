@@ -28,7 +28,6 @@ public class ArticleEmbeddingService {
                     article.getFeed().getId(),
                     article.getFeed().getTitle(),
                     article.getId(),
-                    article.getUid(),
                     article.getTitle(),
                     article.getCategory(),
                     article.getTags(),

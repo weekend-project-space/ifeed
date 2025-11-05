@@ -27,7 +27,6 @@ public class ArticleEmbeddingRepository {
             Integer feedId,
             String feedTitle,
             Long articleId,
-            UUID articleUuid,
             String title,
             String category,
             String tags,
@@ -43,7 +42,7 @@ public class ArticleEmbeddingRepository {
         }
 
         var document = Document.builder()
-                .id(articleUuid.toString())
+                .id(articleId.toString())
                 .text(textBody)
                 .metadata(buildMetadata(feedId, feedTitle, articleId, title, link, summary, publishedAt))
                 .build();
@@ -51,7 +50,7 @@ public class ArticleEmbeddingRepository {
         vectorStore.add(List.of(document));
     }
 
-    public List<ArticleEmbeddingRecord> findAllByIds(Collection<UUID> articleIds) {
+    public List<ArticleEmbeddingRecord> findAllByIds(Collection<Long> articleIds) {
         if (articleIds == null || articleIds.isEmpty()) {
             return Collections.emptyList();
         }
@@ -65,8 +64,8 @@ public class ArticleEmbeddingRepository {
         return jdbcTemplate.query(sql, (rs, rowNum) -> {
             String value = rs.getString("embedding");
             float[] vector = parseVector(value);
-            return new ArticleEmbeddingRecord(UUID.fromString(rs.getString("id")), vector);
-        }, articleIds.toArray(new UUID[]{}));
+            return new ArticleEmbeddingRecord(rs.getLong("id"), vector);
+        }, articleIds.toArray(new Long[]{}));
     }
 
 
