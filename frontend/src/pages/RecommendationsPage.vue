@@ -1,25 +1,5 @@
 <template>
   <div class="flex h-full flex-col gap-4 sm:gap-6">
-    <header class="flex flex-wrap items-center justify-between px-2  sm:px-4">
-      <div>
-        <h1 class="text-xl font-semibold text-text">智能推荐</h1>
-        <p class="text-sm text-text-secondary">
-          <!--          聚合协同过滤、语义向量与流行度信号的候选集，-->
-          实时为你刷新阅读灵感。
-        </p>
-      </div>
-      <div class="flex flex-wrap items-center gap-2">
-        <button type="button"
-          class="inline-flex items-center gap-1 rounded-full border border-outline/40 bg-surface-container px-3 py-1.5 text-xs text-text-secondary transition hover:border-primary/50 hover:text-primary"
-          @click="refresh" :disabled="articlesLoading">
-          <svg class="h-4 w-4" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6">
-            <path stroke-linecap="round" stroke-linejoin="round"
-              d="M4 10a6 6 0 0 1 10-4.24M16 10a6 6 0 0 1-10 4.24M4 6V3.5M4 3.5h2.5M4 3.5 6.5 6M16 14v2.5M16 16.5h-2.5M16 16.5 13.5 14" />
-          </svg>
-          <span>{{ articlesLoading ? '刷新中…' : '刷新' }}</span>
-        </button>
-      </div>
-    </header>
 
     <section class="flex-1">
       <div v-if="articleError" class="rounded-xl border border-outline/30 bg-error/5 p-4 text-sm text-error sm:p-6">
@@ -31,8 +11,8 @@
         </button>
       </div>
       <div v-else>
-        <ArticleList :items="articleItems" :loading="articlesLoading" empty-message="暂无推荐结果，尝试刷新或多收藏一些文章吧。"
-          @select="handleSelect" @select-tag="handleSelectTag" />
+        <ArticleList title="智能推荐" subtitle="实时为你刷新阅读灵感" :items="articleItems" :loading="articlesLoading" empty-message="暂无推荐结果，尝试刷新或多收藏一些文章吧。"
+          @select="handleSelect" @select-tag="handleSelectTag" @refresh="refresh" />
         <!-- 分页控件 -->
         <div
           class="mt-5 flex items-center justify-between border-t border-outline/20 pt-3 text-sm text-text-secondary sm:mt-6 sm:pt-4">

@@ -296,7 +296,10 @@
       </aside>
 
       <main class="flex-1 overflow-y-auto bg-surface-variant/30 px-3 pb-10 pt-5 sm:px-6 sm:pb-12 sm:pt-6">
+<!--        <div class="w-full max-w-3xl lg:max-w-4xl mx-auto">-->
+<!--      <main class="flex-1 overflow-y-auto bg-surface-variant/30 px-3 pb-10 pt-5 sm:px-6 sm:pb-12 sm:pt-6">-->
         <router-view />
+<!--        </div>-->
       </main>
     </div>
   </div>

@@ -193,7 +193,7 @@ const handleTagClick = (tag: string) => {
   if (!tag) {
     return;
   }
-  router.push({ name: 'home', query: { tags: tag.toLowerCase() } });
+  router.push({ name: 'feedsSubscriptions', query: { tags: tag.toLowerCase() } });
 };
 
 const createSlug = (text: string, index: number, used: Map<string, number>) => {

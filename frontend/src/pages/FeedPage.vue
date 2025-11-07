@@ -93,55 +93,37 @@
           <p v-if="feedError" class="text-sm text-danger">{{ feedError }}</p>
         </div>
 
-        <form
-          class="flex w-full max-w-md flex-col gap-3 rounded-3xl border border-outline/30 bg-surface p-4 shadow-lg/20 sm:p-6"
-          @submit.prevent="handleLookup">
-          <div class="space-y-2">
-            <p class="text-xs font-semibold uppercase tracking-widest text-text-muted">快速定位频道</p>
-            <p class="text-sm text-text-secondary">粘贴 Feed URL，快速跳转到对应频道。</p>
-          </div>
-          <div class="flex flex-col gap-2 sm:flex-row">
-            <input v-model.trim="lookupUrl" type="url" placeholder="https://example.com/feed.xml"
-              class="flex-1 rounded-2xl border border-outline/40 bg-surface-container px-3 py-2.5 text-sm text-text transition focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 sm:px-4 sm:py-3"
-              :disabled="isLookingUp" required />
-            <button type="submit"
-              class="inline-flex items-center justify-center rounded-2xl bg-primary px-3 py-2.5 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60 sm:px-4 sm:py-3"
-              :disabled="isLookingUp">
-              {{ isLookingUp ? '查询中...' : '跳转频道' }}
-            </button>
-          </div>
-          <p v-if="lookupStatus" :class="lookupStatusType" class="text-xs">{{ lookupStatus }}</p>
-        </form>
+<!--        <form-->
+<!--          class="flex w-full max-w-md flex-col gap-3 rounded-3xl border border-outline/30 bg-surface p-4 shadow-lg/20 sm:p-6"-->
+<!--          @submit.prevent="handleLookup">-->
+<!--          <div class="space-y-2">-->
+<!--            <p class="text-xs font-semibold uppercase tracking-widest text-text-muted">快速定位频道</p>-->
+<!--            <p class="text-sm text-text-secondary">粘贴 Feed URL，快速跳转到对应频道。</p>-->
+<!--          </div>-->
+<!--          <div class="flex flex-col gap-2 sm:flex-row">-->
+<!--            <input v-model.trim="lookupUrl" type="url" placeholder="https://example.com/feed.xml"-->
+<!--              class="flex-1 rounded-2xl border border-outline/40 bg-surface-container px-3 py-2.5 text-sm text-text transition focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 sm:px-4 sm:py-3"-->
+<!--              :disabled="isLookingUp" required />-->
+<!--            <button type="submit"-->
+<!--              class="inline-flex items-center justify-center rounded-2xl bg-primary px-3 py-2.5 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60 sm:px-4 sm:py-3"-->
+<!--              :disabled="isLookingUp">-->
+<!--              {{ isLookingUp ? '查询中...' : '跳转频道' }}-->
+<!--            </button>-->
+<!--          </div>-->
+<!--          <p v-if="lookupStatus" :class="lookupStatusType" class="text-xs">{{ lookupStatus }}</p>-->
+<!--        </form>-->
       </div>
     </section>
 
-    <!-- <section class="rounded-3xl border border-outline/40 bg-surface-container px-4 py-5 sm:px-6 sm:py-6"> -->
     <section>
-      <header class="flex flex-wrap items-center justify-between gap-3  pb-3 sm:gap-4 sm:pb-4">
-        <div>
-          <h2 class="text-xl font-semibold text-text">频道文章</h2>
-          <p class="text-sm text-text-secondary">基于订阅源实时抓取的最新内容。</p>
-        </div>
-        <div class="flex flex-wrap items-center gap-2">
-          <button type="button"
-            class="inline-flex items-center gap-1 rounded-full border border-outline/40 bg-surface-container px-3 py-1.5 text-xs text-text-secondary transition hover:border-primary/50 hover:text-primary"
-            @click="refreshArticles" :disabled="articlesLoading">
-            <svg class="h-4 w-4" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6">
-              <path stroke-linecap="round" stroke-linejoin="round"
-                d="M4 10a6 6 0 0 1 10-4.24M16 10a6 6 0 0 1-10 4.24M4 6V3.5M4 3.5h2.5M4 3.5 6.5 6M16 14v2.5M16 16.5h-2.5M16 16.5 13.5 14" />
-            </svg>
-            <span>{{ articlesLoading ? '刷新中…' : '刷新' }}</span>
-          </button>
-        </div>
-      </header>
 
       <div v-if="selectedTagDisplay"
         class="mb-3 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-outline/20 bg-surface px-3 py-1.5 text-sm text-text sm:mb-4 sm:px-4 sm:py-2">
         <span>标签筛选：#{{ selectedTagDisplay }}</span>
         <button class="text-sm font-medium text-primary hover:underline" @click="clearTag">清除标签</button>
       </div>
-      <ArticleList :items="channelArticles" :loading="articlesLoading" empty-message="该频道暂时没有文章，稍后再来看看。"
-        @select="handleSelect" @select-tag="handleSelectTag" />
+      <ArticleList title="频道文章" :items="channelArticles" :loading="articlesLoading" empty-message="该频道暂时没有文章，稍后再来看看。"
+        @select="handleSelect" @select-tag="handleSelectTag" @refresh="refreshArticles" />
       <p v-if="articleError" class="mt-4 text-sm text-danger">{{ articleError }}</p>
 
       <div

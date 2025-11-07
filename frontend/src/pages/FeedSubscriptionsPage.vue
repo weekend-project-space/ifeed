@@ -2,25 +2,6 @@
     <div>
         <header>
             <div class="flex flex-col gap-3 sm:gap-4">
-                <div class="flex flex-wrap items-center justify-between px-2  sm:px-4">
-                    <div>
-                        <h1 class="text-lg font-semibold text-text">最新</h1>
-                        <p class="text-sm text-text-secondary">来自你的订阅源</p>
-                    </div>
-                    <div class="flex flex-wrap items-center gap-2">
-                        <button type="button"
-                            class="inline-flex items-center gap-1 rounded-full border border-outline/40 bg-surface-container px-3 py-1.5 text-xs text-text-secondary transition hover:border-primary/50 hover:text-primary"
-                            @click="refresh" :disabled="articlesLoading">
-                            <svg class="h-4 w-4" viewBox="0 0 20 20" fill="none" stroke="currentColor"
-                                stroke-width="1.6">
-                                <path stroke-linecap="round" stroke-linejoin="round"
-                                    d="M4 10a6 6 0 0 1 10-4.24M16 10a6 6 0 0 1-10 4.24M4 6V3.5M4 3.5h2.5M4 3.5 6.5 6M16 14v2.5M16 16.5h-2.5M16 16.5 13.5 14" />
-                            </svg>
-                            <span>{{ articlesLoading ? '刷新中…' : '刷新' }}</span>
-                        </button>
-                    </div>
-                </div>
-
                 <!-- 分类：样式参考标签胶囊条 -->
                 <div
                     class="flex items-center gap-2 overflow-x-auto whitespace-nowrap  bg-surface my-2 text-sm text-text-secondary px-2  sm:px-4">
@@ -30,7 +11,7 @@
                             分类
                         </button> -->
                     <!-- 全部分类按钮 -->
-                    <button class="rounded-full px-3 py-1.5 font-medium transition sm:px-4 sm:py-2"
+                    <button class="rounded-xl px-3 py-1.5 font-medium transition sm:px-4 sm:py-2"
                         :class="getFilterClassForCategory('')" @click="clearCategoryFilter()">
                         全部
                     </button>
@@ -39,7 +20,7 @@
                     </template>
                     <template v-else>
                         <button v-for="c in topCategories" :key="c.category"
-                            class="rounded-full px-3 py-1.5 font-medium transition sm:px-4 sm:py-2"
+                            class="rounded-xl px-3 py-1.5 font-medium transition sm:px-4 sm:py-2"
                             :class="getFilterClassForCategory(c.category)" @click="handleSelectCategory(c.category)">
                             {{ c.category }}
                         </button>
@@ -61,8 +42,8 @@
         </header>
 
         <div class="mt-3">
-            <ArticleList :items="items" :loading="articlesLoading" @select="handleSelect"
-                @select-tag="handleSelectTag" />
+            <ArticleList title="最新" :items="items" :loading="articlesLoading" @select="handleSelect"
+                @select-tag="handleSelectTag" @refresh="refresh" />
             <div v-if="articleError"
                 class="rounded-xl border border-outline/30 bg-error/5 p-4 text-sm text-error sm:p-6">
                 <p class="font-medium">请求出错：{{ articleError }}</p>
@@ -265,7 +246,7 @@ const getFilterClassForCategory = (category: string) => {
     const value = (category ?? '').toLowerCase();
     const isSelected = (!current && !value) || (current && current === value);
     return isSelected
-        ? 'bg-primary text-primary-foreground shadow-sm'
+        ? 'bg-primary/5  font-semibold shadow-sm'
         : 'bg-surface text-text-secondary hover:bg-primary/10 hover:text-primary';
 };
 
