@@ -151,7 +151,7 @@
               <div class="space-y-1">
                 <component v-for="item in section.items" :is="item.to ? 'RouterLink' : 'button'" :key="item.id"
                   v-bind="item.to ? { to: item.to } : { type: 'button' }"
-                  class="group flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition-colors"
+                  class="group flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition-colors "
                   :class="[
                     isActiveItem(item)
                       ? item.danger
@@ -159,7 +159,7 @@
                         : 'bg-primary/5 text-text font-semibold shadow-sm'
                       : item.danger
                         ? 'text-danger hover:bg-danger/10 hover:text-danger'
-                        : 'text-text-secondary hover:bg-surface-variant/50 hover:text-text'
+                        : 'text-text-secondary hover:bg-primary/10 hover:text-text'
                   ]" @click="handleNavItemClick(item)">
                   <span v-if="item.icon"
                     class="flex h-6 w-6 items-center justify-center rounded-full transition group-hover:text-primary"
@@ -242,7 +242,7 @@
               <div class="space-y-1">
                 <component v-for="item in section.items" :is="item.to ? 'RouterLink' : 'button'" :key="item.id"
                   v-bind="item.to ? { to: item.to } : { type: 'button' }"
-                  class="group flex w-full items-center rounded-xl py-2 text-sm font-medium transition-colors" :class="[
+                  class="group flex w-full items-center rounded-xl py-2 text-sm font-medium transition-colors " :class="[
                     isSidebarCollapsed ? 'justify-center px-2' : 'gap-3 px-3',
                     isActiveItem(item)
                       ? item.danger
@@ -250,7 +250,7 @@
                         : 'bg-primary/5 text-text font-semibold shadow-sm'
                       : item.danger
                         ? 'text-danger hover:bg-danger/10 hover:text-danger'
-                        : 'text-text-secondary hover:bg-surface-variant/50 hover:text-text'
+                        : 'text-text-secondary hover:bg-primary/10 hover:text-text'
                   ]" :title="isSidebarCollapsed ? item.label : undefined" @click="handleNavItemClick(item)">
                   <span v-if="item.icon"
                     class="flex h-6 w-6 items-center justify-center rounded-lg transition group-hover:text-primary"

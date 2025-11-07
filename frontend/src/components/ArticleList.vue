@@ -54,7 +54,7 @@
           <div class="h-4 w-1/2 bg-outline/15 rounded"></div>
           <div class="h-3 w-1/5 bg-outline/15 rounded"></div>
         </div>
-        <div class="w-24 h-24 bg-outline/10 rounded"></div>
+        <div class="w-28 h-28 bg-outline/10 rounded"></div>
       </div>
     </div>
 
@@ -88,27 +88,27 @@
       <!-- 列表视图 -->
       <div v-if="view === 'list'" key="view-list" class="overflow-hidden">
         <article v-for="item in items" :key="item.id"
-          class="flex items-start gap-4 p-4 transition cursor-pointer rounded-lg hover:bg-primary/5"
+          class="flex items-start gap-4 p-4 transition cursor-pointer rounded-lg hover:bg-primary/5 "
           @click="onSelect(item.id)">
-          <div class="flex-1 min-w-0">
-            <h3 class="text-base font-semibold leading-snug text-text line-clamp-2">
+          <div class="flex-1 min-w-0 space-y-3">
+            <h3 class="text-base font-medium text-text line-clamp-1">
               {{ item.title }}
             </h3>
-            <p class="mt-1 text-sm text-text-secondary line-clamp-2">
+            <p class=" text-sm text-text-secondary line-clamp-2">
               {{ item.summary }}
             </p>
-            <p class="mt-1 text-xs text-text-muted">
+            <p class=" text-xs text-text-muted">
               {{ item.feedTitle }} · {{ item.timeAgo }}
             </p>
             <div v-if="item.tags?.length" class="mt-2 flex flex-wrap gap-2">
               <button v-for="tag in item.tags" :key="tag" @click.stop="onSelectTag(tag)"
-                class="rounded-full bg-surface px-3 py-1 text-xs text-text-secondary border border-outline/30 hover:border-outline/50">
+                class="rounded-xl  px-3 py-1 text-xs text-text-secondary border border-outline/30 hover:border-outline/50 hover:bg-primary/5 hover:text-primary">
                 #{{ tag }}
               </button>
             </div>
           </div>
 
-          <figure class="flex-shrink-0 w-24 h-24 overflow-hidden rounded-lg bg-outline/10">
+          <figure class="flex-shrink-0 w-28 h-28 overflow-hidden rounded-lg bg-outline/10">
             <img v-if="item.thumbnail && !thumbErrorMap[item.id]" :src="item.thumbnail" :alt="item.title"
               class="w-full h-full object-cover transition duration-300" loading="lazy"
               @error="onThumbError(item.id)" />
@@ -177,15 +177,29 @@
       </div>
 
       <!-- 仅标题视图 -->
-      <div v-else key="view-only-title" class="space-y-2">
+      <!-- 仅标题视图：所有内容在一行 -->
+      <div v-else key="view-only-title" class="space-y-1">
         <article v-for="item in items" :key="item.id"
-          class="flex items-center justify-between py-2 px-4 transition cursor-pointer rounded-md hover:bg-primary/5"
-          @click="onSelect(item.id)">
-          <h3 class="flex-1 text-base font-medium text-text line-clamp-1 pr-4">
-            {{ item.title }}
-          </h3>
-          <div class="flex items-center gap-3 text-xs text-text-muted">
-            <span>{{ item.feedTitle }}</span>
+                 class="flex items-center gap-3 px-4 py-2 transition cursor-pointer rounded-md hover:bg-primary/5 overflow-hidden"
+                 @click="onSelect(item.id)">
+
+          <!-- 左侧：标题 + 摘要（在一行内并排） -->
+          <div class="flex-1 min-w-0 flex items-center gap-3 text-sm">
+            <!-- 标题 -->
+            <h3 class="flex-shrink-0 font-medium text-text whitespace-nowrap">
+              {{ item.title }}
+            </h3>
+
+            <!-- 摘要（仅当存在时显示） -->
+            <p v-if="item.summary"
+               class="flex-1 text-text-secondary line-clamp-1 leading-snug min-w-0">
+              {{ item.summary }}
+            </p>
+          </div>
+
+          <!-- 右侧：来源 · 时间 -->
+          <div class="flex items-center gap-1 text-xs text-text-muted flex-shrink-0 whitespace-nowrap">
+            <span class="max-w-24 truncate">{{ item.feedTitle }}</span>
             <span>·</span>
             <span>{{ item.timeAgo }}</span>
           </div>
@@ -244,7 +258,7 @@ function setView(v: ViewMode) {
 
 function btnClass(active: boolean) {
   return [
-    'px-3 py-1 rounded-xl border text-sm transition ',
+    'px-3 py-1 rounded-xl border text-sm transition border-outline/40',
     active ? 'bg-primary/5 font-semibold' : 'bg-surface text-text-secondary hover:bg-primary/10 hover:text-primary'
   ].join(' ');
 }
