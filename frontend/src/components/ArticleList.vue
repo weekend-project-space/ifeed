@@ -15,15 +15,13 @@
         </svg>
         <span>{{ loading ? '刷新中…' : '刷新' }}</span>
       </button>
-      <button @click="setView('list')" :aria-pressed="view === 'list'" :class="btnClass(view === 'list')" title="列表视图">
-        列表
-      </button>
-      <button @click="setView('magazine')" :aria-pressed="view === 'magazine'" :class="btnClass(view === 'magazine')"
-        title="杂志视图">
+      <button @click="setView('magazine')" :aria-pressed="view === 'magazine'" :class="btnClass(view === 'magazine')" title="杂志视图">
         杂志
       </button>
-      <button @click="setView('only-title')" :aria-pressed="view === 'only-title'"
-        :class="btnClass(view === 'only-title')" title="仅标题视图">
+      <button @click="setView('card')" :aria-pressed="view === 'card'" :class="btnClass(view === 'card')" title="卡片视图">
+        卡片
+      </button>
+      <button @click="setView('only-title')" :aria-pressed="view === 'only-title'" :class="btnClass(view === 'only-title')" title="仅标题视图">
         仅标题
       </button>
     </div>
@@ -31,8 +29,8 @@
 
   <!-- Loading skeleton -->
   <section v-if="loading" class="space-y-3 sm:space-y-4 ">
-    <!-- 杂志视图骨架 -->
-    <div v-if="view === 'magazine'" class="grid gap-3 sm:grid-cols-2 sm:gap-1 xl:grid-cols-3 2xl:grid-cols-4">
+    <!-- 卡片视图骨架 -->
+    <div v-if="view === 'card'" class="grid gap-3 sm:grid-cols-2 sm:gap-1 xl:grid-cols-3 2xl:grid-cols-4">
       <div v-for="i in 12" :key="`mag-skel-${i}`"
         class="animate-pulse rounded-xl bg-surface-container p-3 transition sm:px-5 sm:py-6">
         <figure class="relative aspect-video w-full overflow-hidden bg-surface rounded-xl">
@@ -45,8 +43,8 @@
       </div>
     </div>
 
-    <!-- 列表视图骨架 -->
-    <div v-else-if="view === 'list'" class="space-y-3">
+    <!-- 杂志视图骨架 -->
+    <div v-else-if="view === 'magazine'" class="space-y-3">
       <div v-for="i in 10" :key="`list-skel-${i}`" class="flex items-start gap-3 animate-pulse  pb-3">
         <div class="flex-1 space-y-2">
           <div class="h-6 w-1/2 bg-outline/10 rounded"></div>
@@ -85,8 +83,8 @@
 
     <!-- 视图切换 -->
     <transition name="fade" mode="out-in">
-      <!-- 列表视图 -->
-      <div v-if="view === 'list'" key="view-list" class="overflow-hidden">
+      <!--杂志视图 -->
+      <div v-if="view === 'magazine'" key="view-list" class="overflow-hidden">
         <article v-for="item in items" :key="item.id"
           class="flex items-start gap-4 p-4 transition cursor-pointer rounded-lg hover:bg-primary/5 "
           @click="onSelect(item.id)">
@@ -119,11 +117,11 @@
         </article>
       </div>
 
-      <!-- 杂志视图（最新卡片 + 深夜模式） -->
-      <div v-else-if="view === 'magazine'" key="view-magazine"
+      <!-- 卡片视图 -->
+      <div v-else-if="view === 'card'" key="view-magazine"
         class="grid gap-3 sm:grid-cols-2 sm:gap-1 xl:grid-cols-3 2xl:grid-cols-4">
         <article v-for="item in items" :key="item.id"
-          class="group relative flex h-full cursor-pointer flex-col overflow-hidden rounded-xl bg-surface p-3"
+          class="group relative flex h-full cursor-pointer flex-col overflow-hidden rounded-xl bg-surface p-3 space-y-2"
           @click="onSelect(item.id)">
           <!-- 扩散 hover 背景 -->
           <span class="pointer-events-none absolute inset-0 origin-center scale-50 rounded h-1/5
@@ -149,7 +147,7 @@
             </div>
           </figure>
 
-          <div class="flex flex-1 flex-col gap-3 py-4 sm:gap-4 sm:py-5">
+          <div class="flex flex-1 flex-col gap-3 py-4 sm:gap-4 ">
             <header class="flex items-start gap-3 sm:gap-4">
               <div class="min-w-0 flex-1 space-y-1">
                 <h3 class="text-base font-semibold leading-tight text-text line-clamp-2">
@@ -165,7 +163,7 @@
               {{ item.summary }}
             </p>
 
-            <footer v-if="item.tags?.length" class="mt-auto flex flex-wrap gap-2 text-xs text-text-muted">
+            <footer v-if="item.tags?.length" class=" flex flex-wrap gap-2 text-xs text-text-muted">
               <button v-for="tag in item.tags" :key="tag" type="button"
                 class="rounded-full bg-surface px-3 py-1 font-medium text-text-secondary border border-outline/30 hover:border-outline/50"
                 @click.stop="onSelectTag(tag)">
@@ -244,7 +242,7 @@ const emit = defineEmits<{
   'select-tag': [tag: string];
 }>();
 
-type ViewMode = 'list' | 'magazine' | 'only-title';
+type ViewMode = 'magazine' | 'card' | 'only-title';
 const STORAGE_KEY = 'article_feed_view_mode';
 const saved = localStorage.getItem(STORAGE_KEY) as ViewMode | null;
 const view = ref<ViewMode>(saved ?? 'list');
