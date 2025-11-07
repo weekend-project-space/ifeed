@@ -48,7 +48,7 @@ public class U2I2IRecallStrategy implements RecallStrategy {
         return StrategyId.U2I2I;
     }
 
-    @Cacheable(cacheNames = "U2I2I", key = "#context.userId()", unless = "#result == null")
+    @Cacheable(cacheNames = "U2I2I", key = "#p0.userId", unless = "#result == null")
     @Override
     public List<ItemCandidate> recall(UserContext context, int limit) {
         return embeddingStore.getUserVector(context.userId())

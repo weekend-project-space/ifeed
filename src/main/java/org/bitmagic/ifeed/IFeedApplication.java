@@ -22,6 +22,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import java.net.http.HttpClient;
 import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 @SpringBootApplication
@@ -55,8 +56,10 @@ public class IFeedApplication {
         }
 
         @Bean
-        public Executor taskExecutor() {
-            return Executors.newScheduledThreadPool(10);
+        public ExecutorService taskExecutor() {
+            return Executors.newScheduledThreadPool(
+                    Runtime.getRuntime().availableProcessors() * 2
+            );
         }
     }
 

@@ -30,7 +30,7 @@ public class U2IRecallStrategy implements RecallStrategy {
         return StrategyId.U2I;
     }
 
-    @Cacheable(cacheNames = "U2I", key = "#context.userId()", unless = "#result == null")
+    @Cacheable(cacheNames = "U2I", key = "#p0.userId", unless = "#result == null")
     @Override
     public List<ItemCandidate> recall(UserContext context, int limit) {
         // 用户无向量时返回空集合，防止影响召回效率
