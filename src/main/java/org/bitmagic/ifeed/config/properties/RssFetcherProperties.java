@@ -15,7 +15,7 @@ public class RssFetcherProperties {
     private Duration readTimeout = Duration.ofSeconds(10);
     private int threadPoolSize = 10;
     private int maxItems = 500;
-    private int maxRetries = 3;
+    private int maxRetries = 2;
     private Cache cache = new Cache();
 
     @Data

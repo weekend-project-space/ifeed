@@ -8,6 +8,7 @@ import CollectionsPage from '../pages/CollectionsPage.vue';
 import HistoryPage from '../pages/HistoryPage.vue';
 import ArticleDetailPage from '../pages/ArticleDetailPage.vue';
 import FeedPage from '../pages/FeedPage.vue';
+import HomePage from '../pages/HomePage.vue';
 import RecommendationsPage from '../pages/RecommendationsPage.vue';
 import FeedSubscriptionsPage from '../pages/FeedSubscriptionsPage.vue';
 import { useAuthStore } from '../stores/auth';
@@ -27,7 +28,7 @@ const router = createRouter({
         {
           path: '',
           name: 'home',
-          component: RecommendationsPage
+          component: HomePage
         },
         {
           path: 'search',

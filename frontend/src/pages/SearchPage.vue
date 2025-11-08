@@ -1,5 +1,5 @@
 <template>
-    <div class="space-y-5 sm:space-y-6">
+    <div class="space-y-5 sm:space-y-6 max-w-5xl m-auto">
         <header class="flex flex-wrap items-center justify-between px-2  sm:px-4">
             <div class="mb-2 space-y-1">
                 <h1 class="text-xl font-semibold text-text">
