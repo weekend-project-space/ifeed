@@ -3,7 +3,10 @@ package org.bitmagic.ifeed.infrastructure.recall;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.bitmagic.ifeed.application.recommendation.recall.spi.ItemFreshnessProvider;
+import org.bitmagic.ifeed.application.recommendation.recall.spi.ScoredId;
 import org.bitmagic.ifeed.domain.repository.ArticleRepository;
+import org.bitmagic.ifeed.infrastructure.FreshnessCalculator;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Component;
 
 import java.sql.Timestamp;
@@ -22,6 +25,9 @@ import java.util.Map;
 public class JpaItemFreshnessProvider implements ItemFreshnessProvider {
 
     private final ArticleRepository articleRepository;
+
+
+    private final FreshnessCalculator freshnessCalculator;
 
     @Override
     public Map<Long, Instant> publishedAt(Collection<Long> itemIds) {
@@ -49,6 +55,12 @@ public class JpaItemFreshnessProvider implements ItemFreshnessProvider {
             return Map.of();
         }
     }
+
+    @Override
+    public List<ScoredId> latest(Integer k) {
+        return articleRepository.findAll(PageRequest.ofSize(k)).stream().map(article -> new ScoredId(article.getId(), freshnessCalculator.calculate(article.getPublishedAt()), Map.of("title", article.getTitle()))).toList();
+    }
+
 
     private Long convertId(Object value) {
         if (value instanceof Number number) {

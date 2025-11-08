@@ -22,7 +22,7 @@ public class DefaultRecallPlanner implements RecallPlanner {
         }
 
         // 平均分配每个策略的召回配额，并对剩余的名额做一次补偿
-        int perStrategy = Math.max(1, request.topK() / availableStrategies.size());
+        int perStrategy = Math.max(1, request.topK() * 2 / availableStrategies.size());
         Map<StrategyId, Integer> quotas = new EnumMap<>(StrategyId.class);
         availableStrategies.forEach(id -> quotas.put(id, perStrategy));
 

@@ -8,6 +8,7 @@ public enum StrategyId {
     U2I,
     I2I,
     U2I2I,
-    U2A2I
+    U2A2I,
+    LATEST
 //    MIX
 }
