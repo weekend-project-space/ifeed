@@ -1,6 +1,5 @@
 package org.bitmagic.ifeed.application.recommendation;
 
-import org.bitmagic.ifeed.domain.record.ArticleSummaryView;
 import org.springframework.data.domain.Page;
 
 /**
@@ -9,5 +8,5 @@ import org.springframework.data.domain.Page;
  **/
 public interface RecommendationService {
 
-    Page<ArticleSummaryView> recommend(Integer userId, int page, int size);
+    Page<RecResponse> recommend(RecRequest request, int page, int size);
 }

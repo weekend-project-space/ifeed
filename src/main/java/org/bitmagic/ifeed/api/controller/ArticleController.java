@@ -7,12 +7,15 @@ import org.bitmagic.ifeed.api.response.ArticleDetailResponse;
 import org.bitmagic.ifeed.api.response.ArticleSummaryResponse;
 import org.bitmagic.ifeed.api.response.UserSubscriptionInsightResponse;
 import org.bitmagic.ifeed.api.util.IdentifierUtils;
-import org.bitmagic.ifeed.domain.record.ArticleSummaryView;
-import org.bitmagic.ifeed.exception.ApiException;
+import org.bitmagic.ifeed.application.recommendation.RecRequest;
+import org.bitmagic.ifeed.application.recommendation.RecResponse;
+import org.bitmagic.ifeed.application.recommendation.RecommendationService;
 import org.bitmagic.ifeed.config.security.UserPrincipal;
+import org.bitmagic.ifeed.domain.record.ArticleSummaryView;
 import org.bitmagic.ifeed.domain.service.ArticleService;
 import org.bitmagic.ifeed.domain.service.UserCollectionService;
-import org.bitmagic.ifeed.application.recommendation.RecommendationService;
+import org.bitmagic.ifeed.exception.ApiException;
+import org.bitmagic.ifeed.infrastructure.util.DateUtils;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -63,12 +66,10 @@ public class ArticleController {
 
 
     @GetMapping("/recommendations")
-    public ResponseEntity<Page<ArticleSummaryResponse>> searchArticles(@AuthenticationPrincipal UserPrincipal principal,
+    public ResponseEntity<Page<RecResponse>> rec(@AuthenticationPrincipal UserPrincipal principal,
                                                                        @RequestParam(defaultValue = "0") Integer page,
                                                                        @RequestParam(required = false) Integer size) {
-        ensureAuthenticated(principal);
-
-        return ResponseEntity.ok(recommendationService.recommend(principal.getId(), page, size).map(this::toSummaryResponse2));
+        return ResponseEntity.ok(recommendationService.recommend(new RecRequest(principal.getId(), "home", Map.of(), Map.of()), page, size));
     }
 
     @GetMapping("/insights")
@@ -113,30 +114,15 @@ public class ArticleController {
         return new ArticleSummaryResponse(
                 article.id().toString(),
                 article.title(),
-                article.link(),
                 article.summary(),
                 article.thumbnail(),
                 article.enclosure(),
                 resolveFeedTitle(article.feedTitle()),
-                formatTimestamp(publishedAt),
+                formatTimestamp(article.publishedAt()),
                 tags,
-                formatRelativeTime(publishedAt));
+                DateUtils. formatRelativeTime(publishedAt), "");
     }
 
-    private ArticleSummaryResponse toSummaryResponse2(ArticleSummaryView article) {
-        var publishedAt = article.publishedAt();
-        return new ArticleSummaryResponse(
-                article.id().toString(),
-                article.title(),
-                article.link(),
-                article.summary(),
-                article.thumbnail(),
-                article.enclosure(),
-                resolveFeedTitle(article.feedTitle()),
-                formatTimestamp(publishedAt),
-                null,
-                formatRelativeTime(publishedAt));
-    }
 
     private List<String> extractTags(String raw) {
         if (raw == null || raw.isBlank()) {
@@ -160,29 +146,6 @@ public class ArticleController {
         return instant == null ? null : instant.toString();
     }
 
-    private String formatRelativeTime(Instant instant) {
-        if (instant == null) {
-            return "刚刚";
-        }
-        var now = Instant.now();
-        if (instant.isAfter(now)) {
-            return "刚刚";
-        }
-        var duration = Duration.between(instant, now);
-        if (duration.toMinutes() < 1) {
-            return "刚刚";
-        }
-        if (duration.toMinutes() < 60) {
-            return duration.toMinutes() + " 分钟前";
-        }
-        if (duration.toHours() < 24) {
-            return duration.toHours() + " 小时前";
-        }
-        if (duration.toDays() < 7) {
-            return duration.toDays() + " 天前";
-        }
-        return instant.toString().substring(0, Math.min(10, instant.toString().length()));
-    }
 
     private void ensureAuthenticated(UserPrincipal principal) {
         if (principal == null) {

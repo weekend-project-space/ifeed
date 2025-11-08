@@ -1,12 +1,14 @@
 package org.bitmagic.ifeed.application.recommendation;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.bitmagic.ifeed.application.recommendation.recall.core.RecallEngine;
 import org.bitmagic.ifeed.application.recommendation.recall.model.ItemCandidate;
 import org.bitmagic.ifeed.application.recommendation.recall.model.RecallRequest;
-import org.bitmagic.ifeed.domain.record.ArticleSummaryView;
 import org.bitmagic.ifeed.domain.service.ArticleService;
+import org.bitmagic.ifeed.infrastructure.util.DateUtils;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
@@ -15,6 +17,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -27,22 +30,56 @@ import java.util.stream.Collectors;
 public class RecallRecommendationService implements RecommendationService {
     private final RecallEngine recallEngine;
     private final ArticleService articleService;
-    private final Map<Integer, List<Long>> user2Items = new ConcurrentHashMap<>();
+    private final Map<Integer, List<ItemCandidate>> user2Items = new ConcurrentHashMap<>();
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+    private static final TypeReference<List<String>> TAGS_TYPE = new TypeReference<>() {
+    };
 
     @Override
-    public Page<ArticleSummaryView> recommend(Integer userId, int page, int size) {
+    public Page<RecResponse> recommend(RecRequest request, int page, int size) {
         long start = System.currentTimeMillis();
 
         int safePage = Math.max(page, 0);
         int safeSize = size <= 0 ? 10 : size;
-        List<Long> cachedIds = user2Items.get(userId);
+        List<ItemCandidate> cachedIds = user2Items.get(request.userId());
         if (safePage == 0 || cachedIds == null) {
-            RecallRequest request = new RecallRequest(userId, "home", safeSize * 6, Collections.emptyMap(), false, Instant.now());
-            cachedIds = recallEngine.recall(request).items().stream().map(ItemCandidate::itemId).collect(Collectors.toList());
-            user2Items.put(userId, cachedIds);
+            RecallRequest recallRequest = new RecallRequest(request.userId(), request.scene(), safeSize * 6, Collections.emptyMap(), false, Instant.now());
+            cachedIds = recallEngine.recall(recallRequest).items();
+            user2Items.put(request.userId(), cachedIds);
         }
-
+        Map<Long, ItemCandidate> id2Source = cachedIds.stream().collect(Collectors.toMap(ItemCandidate::itemId, Function.identity()));
         log.info("recall:{}ms", System.currentTimeMillis() - start);
-        return articleService.findIds2Article(cachedIds, safePage, safeSize);
+        return articleService.findIds2Article(cachedIds.stream().map(ItemCandidate::itemId).toList(), safePage, safeSize).map(item -> {
+            ItemCandidate candidate = id2Source.get(item.articleId());
+            return new RecResponse(
+                    item.id(),
+                    item.title(),
+                    item.summary(),
+                    item.feedTitle(),
+                    formatTimestamp(item.publishedAt()),
+                    extractTags(item.tags()),
+                    item.thumbnail(),
+                    item.enclosure(),
+                    candidate.source().name(),
+                    candidate.score(),
+                    candidate.reason()
+
+            );
+        });
+    }
+
+    private List<String> extractTags(String raw) {
+        if (raw == null || raw.isBlank()) {
+            return Collections.emptyList();
+        }
+        try {
+            return OBJECT_MAPPER.readValue(raw, TAGS_TYPE);
+        } catch (Exception ex) {
+            return Collections.emptyList();
+        }
+    }
+
+    private String formatTimestamp(Instant instant) {
+        return instant == null ? null : instant.toString();
     }
 }
