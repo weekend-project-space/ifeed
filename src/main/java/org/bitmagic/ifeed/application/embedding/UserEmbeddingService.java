@@ -3,6 +3,7 @@ package org.bitmagic.ifeed.application.embedding;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.bitmagic.ifeed.application.recommendation.recall.spi.SequenceStore;
+import org.bitmagic.ifeed.config.properties.AiProviderProperties;
 import org.bitmagic.ifeed.config.properties.RecommendationProperties;
 import org.bitmagic.ifeed.domain.model.Article;
 import org.bitmagic.ifeed.domain.model.UserEmbedding;
@@ -10,20 +11,13 @@ import org.bitmagic.ifeed.domain.record.ArticleEmbeddingRecord;
 import org.bitmagic.ifeed.domain.repository.ArticleEmbeddingRepository;
 import org.bitmagic.ifeed.domain.repository.ArticleRepository;
 import org.bitmagic.ifeed.domain.repository.UserEmbeddingRepository;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
@@ -43,9 +37,13 @@ public class UserEmbeddingService {
     private final ArticleRepository articleRepository;
     private final UserEmbeddingRepository userEmbeddingRepository;
     private final RecommendationProperties recommendationProperties;
+    private final AiProviderProperties aiProviderProperties;
 
     @Transactional
     public Optional<UserEmbedding> rebuildUserEmbedding(Integer userId) {
+        if (!aiProviderProperties.isEnabled()) {
+            return Optional.empty();
+        }
         if (userId == null) {
             return Optional.empty();
         }

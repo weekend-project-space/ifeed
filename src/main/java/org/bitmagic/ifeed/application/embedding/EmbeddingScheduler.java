@@ -23,7 +23,6 @@ public class EmbeddingScheduler {
 
     private final ArticleRepository articleRepository;
 
-
     private final CacheManager cacheManager;
 
     @Scheduled(initialDelayString = "${app.embedding.user.initial-delay:PT10S}",
@@ -57,8 +56,6 @@ public class EmbeddingScheduler {
                 try {
                     log.info("init embedding :{}", article.getTitle());
                     articleEmbeddingService.buildArticleEmbedding(article);
-                    article.setEmbeddingGenerated(true);
-                    articleRepository.save(article);
                 } catch (RuntimeException e) {
                     log.warn("init article embedding", e);
                 }

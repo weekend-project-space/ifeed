@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.bitmagic.ifeed.config.properties.AiProviderProperties;
 import org.bitmagic.ifeed.domain.model.Article;
 import org.bitmagic.ifeed.domain.repository.ArticleEmbeddingRepository;
+import org.bitmagic.ifeed.domain.repository.ArticleRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,6 +19,8 @@ import org.springframework.transaction.annotation.Transactional;
 public class ArticleEmbeddingService {
 
     private final ArticleEmbeddingRepository repository;
+
+    private final ArticleRepository articleRepository;
 
     private final AiProviderProperties aiProviderProperties;
 
@@ -36,6 +39,8 @@ public class ArticleEmbeddingService {
                     article.getLink(),
                     article.getPublishedAt()
             );
+            article.setEmbeddingGenerated(true);
+            articleRepository.save(article);
         }
     }
 }
