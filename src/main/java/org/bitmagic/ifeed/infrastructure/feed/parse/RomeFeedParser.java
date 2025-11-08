@@ -13,6 +13,7 @@ import org.springframework.util.StringUtils;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -24,6 +25,8 @@ import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -52,9 +55,25 @@ public class RomeFeedParser implements FeedParser {
     }
 
     private SyndFeed buildFeed(byte[] bytes) throws IOException, FeedException {
-        try (var reader = new XmlReader(new ByteArrayInputStream(bytes), StandardCharsets.UTF_8.name(), true)) {
+        ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
+
+        // 尝试从字节中提取 XML 声明中的 encoding
+        String detectedCharset = detectXmlEncoding(bytes);
+        String charset = (detectedCharset != null) ? detectedCharset : "UTF-8";
+
+        // 确保 JVM 支持该编码
+        if (!Charset.isSupported(charset)) {
+            charset = "UTF-8"; // fallback
+        }
+        try (var reader = new XmlReader(bais, charset, true)) {
             return new SyndFeedInput().build(reader);
         }
+    }
+
+    private String detectXmlEncoding(byte[] bytes) {
+        String header = new String(bytes, 0, Math.min(bytes.length, 200), StandardCharsets.ISO_8859_1);
+        Matcher m = Pattern.compile("encoding=[\"']([^\"']+)[\"']", Pattern.CASE_INSENSITIVE).matcher(header);
+        return m.find() ? m.group(1).toUpperCase() : null;
     }
 
     private SyndFeed buildFeedWithJsoupFallback(String feedUrl, byte[] bytes) {

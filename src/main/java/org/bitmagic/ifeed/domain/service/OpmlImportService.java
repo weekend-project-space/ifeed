@@ -1,41 +1,33 @@
 package org.bitmagic.ifeed.domain.service;
 
+import com.rometools.opml.feed.opml.Opml;
+import com.rometools.opml.feed.opml.Outline;
+import com.rometools.rome.io.WireFeedInput;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.bitmagic.ifeed.api.request.OpmlImportConfirmRequest;
 import org.bitmagic.ifeed.api.request.SubscriptionRequest;
-import org.bitmagic.ifeed.api.response.OpmlImportConfirmResponse;
-import org.bitmagic.ifeed.api.response.OpmlImportSkippedResponse;
-import org.bitmagic.ifeed.api.response.OpmlPreviewFeedResponse;
-import org.bitmagic.ifeed.api.response.OpmlPreviewResponse;
+import org.bitmagic.ifeed.api.response.*;
 import org.bitmagic.ifeed.domain.model.Feed;
 import org.bitmagic.ifeed.domain.model.User;
+import org.bitmagic.ifeed.domain.model.UserSubscription;
+import org.bitmagic.ifeed.domain.model.UserSubscriptionId;
 import org.bitmagic.ifeed.domain.repository.FeedRepository;
 import org.bitmagic.ifeed.domain.repository.UserSubscriptionRepository;
+import org.bitmagic.ifeed.domain.spec.FeedSpecs;
+import org.bitmagic.ifeed.domain.spec.UserSubscriptionSpecs;
 import org.bitmagic.ifeed.exception.ApiException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
-import org.xml.sax.SAXException;
 
-import javax.xml.XMLConstants;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.ArrayList;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-import java.util.regex.Pattern;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
 @RequiredArgsConstructor
@@ -43,269 +35,268 @@ public class OpmlImportService {
 
     private static final String FAVICON_TEMPLATE = "https://favicon.im/%s";
     private static final int USER_SUBSCRIPTION_QUOTA = 500;
-    private static final Pattern INVALID_ENTITY_PATTERN = Pattern.compile("&(?!#?\\w+;)");
 
     private final FeedRepository feedRepository;
     private final UserSubscriptionRepository userSubscriptionRepository;
-    private final SubscriptionService subscriptionService;
 
+    /* ======================  预览  ====================== */
     public OpmlPreviewResponse generatePreview(User user, MultipartFile file) {
         if (file == null || file.isEmpty()) {
             throw new ApiException(HttpStatus.BAD_REQUEST, "OPML file is required");
         }
 
-        Document document = parseOpmlDocument(file);
-        NodeList outlines = document.getElementsByTagName("outline");
-
-        if (outlines == null || outlines.getLength() == 0) {
+        List<Outline> outlines = parseOPMLWithRome(file);
+        if (outlines.isEmpty()) {
             throw new ApiException(HttpStatus.BAD_REQUEST, "No subscriptions found in OPML file");
         }
 
-        List<OpmlPreviewFeedResponse> feeds = new ArrayList<>();
+        // 1. 去重 + 收集所有 feedUrl
+        Set<String> seen = new HashSet<>();
+        List<Outline> unique = new ArrayList<>();
         Set<String> warnings = new LinkedHashSet<>();
-        Set<String> seenUrls = new LinkedHashSet<>();
 
-        for (int i = 0; i < outlines.getLength(); i++) {
-            Node node = outlines.item(i);
-            if (node.getNodeType() != Node.ELEMENT_NODE) {
+        for (Outline o : outlines) {
+            String feedUrl = o.getXmlUrl();
+            if (!StringUtils.hasText(feedUrl)) {
+                warnings.add("Skipped outline without feedUrl" +
+                        (StringUtils.hasText(o.getTitle()) ? ": " + o.getTitle() : ""));
                 continue;
             }
-            Element outline = (Element) node;
-            String feedUrl = resolveAttribute(outline, "xmlUrl");
-            if (!StringUtils.hasText(feedUrl)) {
-                feedUrl = resolveAttribute(outline, "url");
-            }
-
-            if (!StringUtils.hasText(feedUrl)) {
-                String label = resolveAttribute(outline, "title");
-                if (!StringUtils.hasText(label)) {
-                    label = resolveAttribute(outline, "text");
-                }
-                warnings.add("Skipped outline without feedUrl" + (StringUtils.hasText(label) ? ": " + label : ""));
-                continue;
-            }
-
             feedUrl = feedUrl.trim();
-            if (!seenUrls.add(feedUrl)) {
+            if (!seen.add(feedUrl)) {
                 warnings.add("Duplicate feed skipped: " + feedUrl);
                 continue;
             }
-
-            String siteUrl = resolveAttribute(outline, "htmlUrl");
-            String title = resolveTitle(outline);
-
-            Optional<Feed> existingFeed = feedRepository.findByUrl(feedUrl);
-            boolean alreadySubscribed = false;
-            List<String> errors = List.of();
-
-            if (existingFeed.isPresent()) {
-                Feed feed = existingFeed.get();
-                alreadySubscribed = userSubscriptionRepository.existsByUser_IdAndFeedAndActiveTrue(user.getId(), feed);
-
-                if (!StringUtils.hasText(siteUrl)) {
-                    siteUrl = feed.getSiteUrl();
-                }
-                if (!StringUtils.hasText(title)) {
-                    title = feed.getTitle();
-                }
-            }
-
-            siteUrl = fallbackSiteUrl(siteUrl, feedUrl);
-            title = resolveFeedTitle(title, siteUrl, feedUrl);
-            String avatar = resolveAvatar(siteUrl, feedUrl);
-
-            feeds.add(new OpmlPreviewFeedResponse(
-                    feedUrl,
-                    title,
-                    siteUrl,
-                    avatar,
-                    alreadySubscribed,
-                    errors
-            ));
+            unique.add(o);
         }
 
-        if (feeds.isEmpty()) {
+        if (unique.isEmpty()) {
             throw new ApiException(HttpStatus.BAD_REQUEST, "No valid subscriptions found in OPML file");
         }
+
+        // 2. 批量查询已存在的 Feed
+        Set<String> feedUrls = unique.stream().map(o -> o.getXmlUrl().trim()).collect(java.util.stream.Collectors.toSet());
+        Map<String, Feed> feedMap = feedRepository.findAll(FeedSpecs.urlIn(feedUrls)).stream()
+                .collect(java.util.stream.Collectors.toMap(Feed::getUrl, f -> f));
+
+        // 3. 批量查询用户已订阅的 FeedId
+        Set<Integer> existingFeedIds = feedMap.values().stream()
+                .map(Feed::getId).collect(java.util.stream.Collectors.toSet());
+        Set<Integer> subscribedFeedIds = userSubscriptionRepository.findAll(
+                        UserSubscriptionSpecs.userAndFeedIdsActive(user.getId(), existingFeedIds))
+                .stream().map(s -> s.getFeed().getId()).collect(java.util.stream.Collectors.toSet());
+
         long usedQuota = userSubscriptionRepository.countByUserAndActiveTrue(user);
         int remainingQuota = (int) Math.max(0, USER_SUBSCRIPTION_QUOTA - usedQuota);
 
-        return new OpmlPreviewResponse(feeds, warnings.isEmpty() ? List.of() : List.copyOf(warnings), remainingQuota);
+        List<OpmlPreviewFeedResponse> feeds = unique.stream()
+                .map(o -> toPreviewFeed(o, feedMap.get(o.getXmlUrl().trim()), subscribedFeedIds.contains(
+                        feedMap.containsKey(o.getXmlUrl().trim()) ? feedMap.get(o.getXmlUrl().trim()).getId() : null)))
+                .toList();
+
+        return new OpmlPreviewResponse(feeds,
+                warnings.isEmpty() ? List.of() : List.copyOf(warnings),
+                remainingQuota);
     }
 
+    /* ======================  确认导入  ====================== */
+    @Transactional
     public OpmlImportConfirmResponse confirm(User user, OpmlImportConfirmRequest request) {
         if (request == null || request.feeds() == null || request.feeds().isEmpty()) {
             throw new ApiException(HttpStatus.BAD_REQUEST, "Feed list cannot be empty");
         }
 
+        // 1. 收集所有待导入的 feedUrl（去重 + 过滤）
+        Set<String> selectedUrls = request.feeds().stream()
+                .filter(item -> item != null && Boolean.TRUE.equals(item.selected()))
+                .map(item -> normalize(item.feedUrl()))
+                .filter(StringUtils::hasText)
+                .collect(Collectors.toCollection(LinkedHashSet::new));
+
+        if (selectedUrls.isEmpty()) {
+            return new OpmlImportConfirmResponse(0, List.of(), "No valid feeds to import.");
+        }
+
+        // 2. 批量查已存在的 Feed
+        Map<String, Feed> feedMap = feedRepository.findAll(FeedSpecs.urlIn(selectedUrls)).stream()
+                .collect(Collectors.toMap(Feed::getUrl, f -> f));
+
+        // 3. 批量查用户已订阅的 FeedId
+        Set<Integer> existingFeedIds = feedMap.values().stream()
+                .map(Feed::getId)
+                .collect(Collectors.toSet());
+
+        Set<Integer> subscribedFeedIds = userSubscriptionRepository.findAll(
+                        UserSubscriptionSpecs.userAndFeedIdsActive(user.getId(), existingFeedIds))
+                .stream()
+                .map(sub -> sub.getFeed().getId())
+                .collect(Collectors.toSet());
+
+        // 4. 批量创建缺失的 Feed
+        List<Feed> newFeeds = new ArrayList<>();
+        Map<String, OpmlImportConfirmRequest.OpmlImportConfirmRequestItem> itemMap = request.feeds().stream()
+                .filter(item -> item != null && Boolean.TRUE.equals(item.selected()))
+                .collect(Collectors.toMap(
+                        item -> normalize(item.feedUrl()),
+                        item -> item,
+                        (a, b) -> a // 去重
+                ));
+
+        for (String url : selectedUrls) {
+            if (feedMap.containsKey(url)) continue;
+
+            OpmlImportConfirmRequest.OpmlImportConfirmRequestItem item = itemMap.get(url);
+            String siteUrl = fallbackSiteUrl(item.siteUrl(), url);
+            String title = resolveFeedTitle(item.title(), siteUrl, url);
+
+            Feed feed = Feed.builder()
+                    .url(url)
+                    .siteUrl(siteUrl)
+                    .title(title)
+                    .build();
+
+            newFeeds.add(feed);
+            feedMap.put(url, feed); // 预占位
+        }
+
+        if (!newFeeds.isEmpty()) {
+            feedRepository.saveAllAndFlush(newFeeds); // 刷新 ID
+        }
+
+        // 5. 批量创建订阅（跳过已订阅）
+        List<UserSubscription> newSubs = new ArrayList<>();
+        List<OpmlImportSkippedResponse> skipped = new ArrayList<>();
+
         long usedQuota = userSubscriptionRepository.countByUserAndActiveTrue(user);
         int remainingQuota = (int) Math.max(0, USER_SUBSCRIPTION_QUOTA - usedQuota);
-        int importedCount = 0;
-        List<OpmlImportSkippedResponse> skipped = new ArrayList<>();
-        Set<String> processed = new LinkedHashSet<>();
+        int imported = 0;
 
-        for (OpmlImportConfirmRequest.OpmlImportConfirmRequestItem item : request.feeds()) {
-            if (item == null || !Boolean.TRUE.equals(item.selected())) {
+        for (String url : selectedUrls) {
+            Feed feed = feedMap.get(url);
+            if (feed.getId() == null) {
+                skipped.add(new OpmlImportSkippedResponse(url, SkipReason.FAILED.name()));
                 continue;
             }
 
-            String feedUrl = normalize(item.feedUrl());
-            if (!StringUtils.hasText(feedUrl)) {
-                skipped.add(new OpmlImportSkippedResponse(null, SkipReason.INVALID_FEED.name()));
-                continue;
-            }
-
-            if (!processed.add(feedUrl)) {
-                skipped.add(new OpmlImportSkippedResponse(feedUrl, SkipReason.DUPLICATE.name()));
-                continue;
-            }
-
-            String siteUrl = fallbackSiteUrl(item.siteUrl(), feedUrl);
-            String title = resolveFeedTitle(item.title(), siteUrl, feedUrl);
-
-            Feed existingFeed = feedRepository.findByUrl(feedUrl).orElse(null);
-            if (existingFeed != null && userSubscriptionRepository.existsByUser_IdAndFeedAndActiveTrue(user.getId(), existingFeed)) {
-                skipped.add(new OpmlImportSkippedResponse(feedUrl, SkipReason.ALREADY_SUBSCRIBED.name()));
+            if (subscribedFeedIds.contains(feed.getId())) {
+                skipped.add(new OpmlImportSkippedResponse(url, SkipReason.ALREADY_SUBSCRIBED.name()));
                 continue;
             }
 
             if (remainingQuota <= 0) {
-                skipped.add(new OpmlImportSkippedResponse(feedUrl, SkipReason.QUOTA_EXCEEDED.name()));
+                skipped.add(new OpmlImportSkippedResponse(url, SkipReason.QUOTA_EXCEEDED.name()));
                 continue;
             }
 
-            try {
-                subscriptionService.subscribe(user, new SubscriptionRequest(feedUrl, siteUrl, title));
-                importedCount++;
-                remainingQuota--;
-            } catch (ApiException apiException) {
-                if (apiException.getStatus() == HttpStatus.CONFLICT) {
-                    skipped.add(new OpmlImportSkippedResponse(feedUrl, SkipReason.ALREADY_SUBSCRIBED.name()));
-                } else if (apiException.getStatus() == HttpStatus.BAD_REQUEST) {
-                    skipped.add(new OpmlImportSkippedResponse(feedUrl, SkipReason.INVALID_FEED.name()));
-                } else {
-                    skipped.add(new OpmlImportSkippedResponse(feedUrl, SkipReason.FAILED.name()));
-                }
+            UserSubscription sub = UserSubscription.builder()
+                    .id(new UserSubscriptionId(user.getId(), feed.getId()))
+                    .user(user)
+                    .feed(feed)
+                    .active(true)
+                    .build();
+
+            newSubs.add(sub);
+            imported++;
+            remainingQuota--;
+        }
+
+        if (!newSubs.isEmpty()) {
+            userSubscriptionRepository.saveAll(newSubs);
+        }
+
+        return new OpmlImportConfirmResponse(imported, skipped, "OPML import completed.");
+    }
+    /* ======================  ROME-OPML 解析  ====================== */
+    private List<Outline> parseOPMLWithRome(MultipartFile file) {
+        try (InputStream is = file.getInputStream()) {
+            WireFeedInput input = new WireFeedInput();
+            Opml opml = (Opml) input.build(new InputStreamReader(is));
+            if (opml == null || opml.getOutlines() == null) {
+                return List.of();
             }
-        }
-
-        return new OpmlImportConfirmResponse(importedCount, skipped, "OPML import completed.");
-    }
-
-    private Document parseOpmlDocument(MultipartFile file) {
-        try {
-            var rawContent = new String(file.getBytes(), java.nio.charset.StandardCharsets.UTF_8);
-            var sanitizedContent = sanitizeXml(rawContent);
-            try (var inputStream = new ByteArrayInputStream(sanitizedContent.getBytes(java.nio.charset.StandardCharsets.UTF_8))) {
-                DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-                factory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
-                factory.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "");
-                factory.setAttribute(XMLConstants.ACCESS_EXTERNAL_SCHEMA, "");
-                factory.setExpandEntityReferences(false);
-
-                disableFeature(factory, "http://apache.org/xml/features/disallow-doctype-decl", true);
-                disableFeature(factory, "http://xml.org/sax/features/external-general-entities", false);
-                disableFeature(factory, "http://xml.org/sax/features/external-parameter-entities", false);
-                disableFeature(factory, "http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
-
-                DocumentBuilder builder = factory.newDocumentBuilder();
-                return builder.parse(inputStream);
-            }
-        } catch (IOException ex) {
-            throw new ApiException(HttpStatus.BAD_REQUEST, "Failed to read OPML file", ex);
-        } catch (ParserConfigurationException | SAXException ex) {
-            throw new ApiException(HttpStatus.BAD_REQUEST, "Invalid OPML file", ex);
+            return flattenOutlines(opml.getOutlines());
+        } catch (Exception e) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "Invalid OPML file: " + e.getMessage(), e);
         }
     }
 
-    private String sanitizeXml(String xml) {
-        if (xml == null || xml.isEmpty()) {
-            return "";
+    /**
+     * 递归扁平化所有 outline（支持任意层级嵌套）
+     */
+    private List<Outline> flattenOutlines(List<Outline> outlines) {
+        return outlines.stream()
+                .flatMap(out -> {
+                    java.util.List<Outline> result = new ArrayList<>();
+                    if (StringUtils.hasText(out.getXmlUrl())) {
+                        result.add(out);
+                    }
+                    if (out.getChildren() != null && !out.getChildren().isEmpty()) {
+                        result.addAll(flattenOutlines(out.getChildren()));
+                    }
+                    return result.stream();
+                })
+                .toList();
+    }
+
+    /* ======================  辅助方法  ====================== */
+    private OpmlPreviewFeedResponse toPreviewFeed(Outline o, Feed feed, boolean alreadySubscribed) {
+        String feedUrl = o.getXmlUrl().trim();
+        String siteUrl = fallbackSiteUrl(o.getHtmlUrl(), feedUrl);
+        String title = resolveFeedTitle(getTitle(o), siteUrl, feedUrl);
+        String avatar = resolveAvatar(siteUrl, feedUrl);
+
+        if (feed != null) {
+            if (!StringUtils.hasText(siteUrl)) siteUrl = feed.getSiteUrl();
+            if (!StringUtils.hasText(title)) title = feed.getTitle();
         }
-        return INVALID_ENTITY_PATTERN.matcher(xml).replaceAll("&amp;");
+
+        return new OpmlPreviewFeedResponse(feedUrl, title, siteUrl, avatar, alreadySubscribed, List.of());
     }
 
-    private void disableFeature(DocumentBuilderFactory factory, String feature, boolean value) throws ParserConfigurationException {
-        factory.setFeature(feature, value);
-    }
-
-    private String resolveAttribute(Element element, String name) {
-        String value = element.getAttribute(name);
-        return StringUtils.hasText(value) ? value.trim() : null;
-    }
-
-    private String resolveTitle(Element outline) {
-        String title = resolveAttribute(outline, "title");
-        if (!StringUtils.hasText(title)) {
-            title = resolveAttribute(outline, "text");
-        }
-        return title;
+    private String getTitle(Outline o) {
+        return Stream.of(o.getTitle(), o.getText())
+                .filter(StringUtils::hasText)
+                .map(String::trim)
+                .findFirst()
+                .orElse(null);
     }
 
     private String fallbackSiteUrl(String siteUrl, String feedUrl) {
-        if (StringUtils.hasText(siteUrl)) {
-            return siteUrl.trim();
-        }
-        return feedUrl;
+        return StringUtils.hasText(siteUrl) ? siteUrl.trim() : feedUrl;
     }
 
-    private String resolveFeedTitle(String requestedTitle, String siteUrl, String feedUrl) {
-        if (StringUtils.hasText(requestedTitle)) {
-            return requestedTitle.trim();
-        }
-
+    private String resolveFeedTitle(String requested, String siteUrl, String feedUrl) {
+        if (StringUtils.hasText(requested)) return requested.trim();
         String host = extractHost(siteUrl);
-        if (StringUtils.hasText(host)) {
-            return host;
-        }
-
+        if (StringUtils.hasText(host)) return host;
         host = extractHost(feedUrl);
-        if (StringUtils.hasText(host)) {
-            return host;
-        }
-
-        return "未命名订阅";
+        return StringUtils.hasText(host) ? host : "未命名订阅";
     }
 
     private String resolveAvatar(String siteUrl, String feedUrl) {
         String host = extractHost(siteUrl);
-        if (!StringUtils.hasText(host)) {
-            host = extractHost(feedUrl);
-        }
-        if (!StringUtils.hasText(host)) {
-            return null;
-        }
-        return FAVICON_TEMPLATE.formatted(host);
+        if (!StringUtils.hasText(host)) host = extractHost(feedUrl);
+        return StringUtils.hasText(host) ? FAVICON_TEMPLATE.formatted(host) : null;
     }
 
     private String extractHost(String url) {
-        if (!StringUtils.hasText(url)) {
-            return null;
-        }
+        if (!StringUtils.hasText(url)) return null;
         try {
             URI uri = new URI(url.trim());
-            if (StringUtils.hasText(uri.getHost())) {
-                return uri.getHost();
-            }
+            String host = uri.getHost();
+            if (StringUtils.hasText(host)) return host;
             String path = uri.getPath();
-            if (StringUtils.hasText(path)) {
-                return path;
-            }
-        } catch (URISyntaxException ignored) {
-            return url;
+            if (StringUtils.hasText(path)) return path;
+        } catch (Exception ignored) {
         }
         return url;
     }
 
-    private String normalize(String value) {
-        return StringUtils.hasText(value) ? value.trim() : null;
+    private String normalize(String s) {
+        return StringUtils.hasText(s) ? s.trim() : null;
     }
 
     private enum SkipReason {
-        ALREADY_SUBSCRIBED,
-        INVALID_FEED,
-        DUPLICATE,
-        FAILED,
-        QUOTA_EXCEEDED
+        ALREADY_SUBSCRIBED, INVALID_FEED, DUPLICATE, FAILED, QUOTA_EXCEEDED
     }
 }

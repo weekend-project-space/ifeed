@@ -6,6 +6,8 @@ import org.bitmagic.ifeed.domain.model.UserSession;
 import org.bitmagic.ifeed.domain.repository.UserRepository;
 import org.bitmagic.ifeed.domain.repository.UserSessionRepository;
 import org.bitmagic.ifeed.exception.ApiException;
+import org.hibernate.annotations.Cache;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -62,6 +64,7 @@ public class AuthService {
         userSessionRepository.findByToken(token).ifPresent(userSessionRepository::delete);
     }
 
+    @Cacheable(cacheNames = "USERS", key = "#p0", unless = "#result == null")
     public Optional<User> findUserById(Integer userId) {
         return userRepository.findById(userId);
     }

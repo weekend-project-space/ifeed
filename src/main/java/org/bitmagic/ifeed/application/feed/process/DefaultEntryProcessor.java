@@ -61,7 +61,8 @@ public class DefaultEntryProcessor implements EntryProcessor {
                 .summary(aiContent.summary())
                 .category(aiContent.category())
                 .tags(writeJson(aiContent.tags()))
-                .embedding(null)
+                .embeddingGenerated(false)
+                .aiGenerated(false)
                 .build();
 
         return Optional.of(article);

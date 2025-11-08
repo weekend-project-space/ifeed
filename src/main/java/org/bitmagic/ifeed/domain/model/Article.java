@@ -33,7 +33,7 @@ public class Article {
     @Column(name = "link", nullable = false, columnDefinition = "text")
     private String link;
 
-    @Column(name = "author", length = 255)
+    @Column(name = "author")
     private String author;
 
     @Column(name = "description", columnDefinition = "text")
@@ -60,13 +60,16 @@ public class Article {
     @Column(name = "tags", columnDefinition = "text")
     private String tags;
 
-    @Column(name = "embedding", length = 8)
-    private String embedding;
+    private Boolean embeddingGenerated;
+
+    private Boolean aiGenerated;
 
     @PrePersist
     void onCreate() {
         if (uid == null) {
             uid = UUID.randomUUID();
+            embeddingGenerated = false;
+            aiGenerated = false;
         }
     }
 }

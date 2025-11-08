@@ -5,19 +5,20 @@ import org.bitmagic.ifeed.domain.model.User;
 import org.bitmagic.ifeed.domain.model.UserSubscription;
 import org.bitmagic.ifeed.domain.model.UserSubscriptionId;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 import java.util.Optional;
 
-public interface UserSubscriptionRepository extends JpaRepository<UserSubscription, UserSubscriptionId> {
+public interface UserSubscriptionRepository extends JpaRepository<UserSubscription, UserSubscriptionId>, JpaSpecificationExecutor<UserSubscription> {
 
     List<UserSubscription> findAllByUser(User user);
 
     List<UserSubscription> findAllByUserId(Integer userId);
 
-    List<UserSubscription> findAllByUserAndActiveTrue(User user);
+    List<UserSubscription> findAllByUserIdAndActiveTrue(Integer userId);
 
     long countByUserAndActiveTrue(User user);
 
@@ -29,4 +30,13 @@ public interface UserSubscriptionRepository extends JpaRepository<UserSubscripti
 
     @Query("select us.feed.id from UserSubscription us where us.user.id = :userId and us.active = true")
     List<Integer> findActiveFeedIdsByUserId(@Param("userId") Integer userId);
+
+    @Query("""
+        SELECT s.feed.id, COUNT(s.id)
+        FROM UserSubscription s
+        WHERE s.feed.id IN :feedIds
+          AND s.active = true
+        GROUP BY s.feed.uid
+        """)
+    List<Object[]> countActiveSubscribersByFeedIds(@Param("feedIds") List<Integer> feedIds);
 }

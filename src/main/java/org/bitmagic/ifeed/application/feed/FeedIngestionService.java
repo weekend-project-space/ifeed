@@ -111,7 +111,6 @@ public class FeedIngestionService {
     }
 
 
-
     private Instant resolveLatestPublishedAt(List<Article> articles) {
         return articles.stream()
                 .map(Article::getPublishedAt)

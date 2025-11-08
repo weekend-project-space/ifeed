@@ -2,6 +2,8 @@ package org.bitmagic.ifeed.api.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.bitmagic.ifeed.api.converter.SubscriptionViewConverter;
 import org.bitmagic.ifeed.api.request.OpmlImportConfirmRequest;
 import org.bitmagic.ifeed.api.request.SubscriptionRequest;
 import org.bitmagic.ifeed.api.response.*;
@@ -10,10 +12,14 @@ import org.bitmagic.ifeed.config.security.UserPrincipal;
 import org.bitmagic.ifeed.domain.document.UserBehaviorDocument;
 import org.bitmagic.ifeed.domain.model.Feed;
 import org.bitmagic.ifeed.domain.model.User;
+import org.bitmagic.ifeed.domain.model.UserSubscription;
+import org.bitmagic.ifeed.domain.model.UserSubscriptionId;
+import org.bitmagic.ifeed.domain.repository.FeedRepository;
 import org.bitmagic.ifeed.domain.repository.UserBehaviorRepository;
 import org.bitmagic.ifeed.domain.service.AuthService;
 import org.bitmagic.ifeed.domain.service.OpmlImportService;
 import org.bitmagic.ifeed.domain.service.SubscriptionService;
+import org.bitmagic.ifeed.domain.spec.FeedSpecs;
 import org.bitmagic.ifeed.exception.ApiException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -22,12 +28,15 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.time.Instant;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/subscriptions")
 @RequiredArgsConstructor
@@ -37,6 +46,7 @@ public class SubscriptionController {
     private final AuthService authService;
 
     private final UserBehaviorRepository userBehaviorRepository;
+    private final FeedRepository feedRepository;
     private final OpmlImportService opmlImportService;
 
     @PostMapping
@@ -49,13 +59,16 @@ public class SubscriptionController {
 
     @GetMapping
     public ResponseEntity<List<SubscriptionResponse>> list(@AuthenticationPrincipal UserPrincipal principal) {
-        var user = resolveUser(principal);
-        UserBehaviorDocument userBehaviorDocument = userBehaviorRepository.findById(user.getId().toString()).orElse(null);
+        UserBehaviorDocument userBehaviorDocument = userBehaviorRepository.findById(principal.getId().toString()).orElse(null);
         Map<String, Instant> feedReadTimes = Objects.nonNull(userBehaviorDocument) ? userBehaviorDocument.getReadFeedHistory().stream().collect(Collectors.toMap(UserBehaviorDocument.FeedRef::getFeedId, UserBehaviorDocument.FeedRef::getTimestamp)) : new HashMap<>();
-        var subscriptions = subscriptionService.getActiveSubscriptions(user).stream()
+        List<UserSubscription> userSubscriptions = subscriptionService.getActiveSubscriptions(principal.getId());
+        Map<Integer, Feed> id2Feed = feedRepository.findAll(FeedSpecs.idIn(userSubscriptions.stream().map(UserSubscription::getId).map(UserSubscriptionId::getFeedId).collect(Collectors.toSet()))).stream().collect(Collectors.toMap(Feed::getId, Function.identity()));
+        var subscriptions = userSubscriptions.stream()
                 .map(subscription -> {
-                    var feed = subscription.getFeed();
-                    return toSubscriptionResponse(feed, feedReadTimes);
+                    var feed = id2Feed.get(subscription.getId().getFeedId());
+                    return SubscriptionViewConverter.toResponse(feed,
+                            feedReadTimes,
+                            false);
                 })
                 .toList();
         return ResponseEntity.ok(subscriptions);
@@ -64,19 +77,17 @@ public class SubscriptionController {
     @GetMapping("/search")
     public ResponseEntity<List<SubscriptionSearchResponse>> search(@AuthenticationPrincipal UserPrincipal principal,
                                                                    @RequestParam("query") String query) {
-        var user = resolveUser(principal);
-        UserBehaviorDocument userBehaviorDocument = userBehaviorRepository.findById(user.getId().toString()).orElse(null);
+        UserBehaviorDocument userBehaviorDocument = userBehaviorRepository.findById(principal.getId().toString()).orElse(null);
         Map<String, Instant> feedReadTimes = Objects.nonNull(userBehaviorDocument) ? userBehaviorDocument.getReadFeedHistory().stream().collect(Collectors.toMap(UserBehaviorDocument.FeedRef::getFeedId, UserBehaviorDocument.FeedRef::getTimestamp)) : new HashMap<>();
         var feeds = subscriptionService.searchFeeds(query);
-        var subscribedFeedIds = subscriptionService.getActiveSubscriptions(user).stream()
+        var subscribedFeedIds = subscriptionService.getActiveSubscriptions(principal.getId()).stream()
                 .map(sub -> sub.getFeed().getUid().toString())
                 .collect(Collectors.toSet());
+        var subscriberCount = subscriptionService.getSubscriberCounts(feeds.stream().map(Feed::getId).toList());
         var responses = feeds.stream()
-                .map(feed -> {
-                    var subscriberCount = subscriptionService.getSubscriberCount(feed);
-                    return toSubscriptionSearchResponse(feed, feedReadTimes, subscribedFeedIds.contains(feed.getUid().toString()), subscriberCount);
-                })
-                .toList();
+                .map(feed ->
+                        SubscriptionViewConverter.toSearchResponse(feed, feedReadTimes, subscribedFeedIds.contains(feed.getUid().toString()), subscriberCount.get(feed.getId()), false)
+                ).toList();
         return ResponseEntity.ok(responses);
     }
 
@@ -104,141 +115,12 @@ public class SubscriptionController {
         return ResponseEntity.ok(response);
     }
 
-    private SubscriptionResponse toSubscriptionResponse(Feed feed, Map<String, Instant> feedReadTimes) {
-        if (feed == null) {
-            return new SubscriptionResponse(
-                    null,
-                    "未命名订阅",
-                    null,
-                    null,
-                    "https://favicon.im/",
-                    null,
-                    null,
-                    false,
-                    0,
-                    null
-            );
-        }
-        var title = resolveFeedTitle(feed);
-        var feedUrl = feed.getUrl();
-        var siteUrl = feed.getSiteUrl();
-        if (siteUrl == null || siteUrl.isBlank()) {
-            siteUrl = feedUrl;
-        }
-        var failureCount = Optional.ofNullable(feed.getFailureCount()).orElse(0);
-        var readTimestamp = feedReadTimes.getOrDefault(feed.getUid().toString(), Instant.EPOCH);
-        var effectiveLastUpdated = Objects.nonNull(feed.getLastUpdated()) ? feed.getLastUpdated() : Instant.EPOCH;
-        var avatarHost = extractHost(siteUrl);
-        if (avatarHost == null || avatarHost.isBlank()) {
-            avatarHost = extractHost(feedUrl);
-        }
-        return new SubscriptionResponse(
-                feed.getUid().toString(),
-                title,
-                feedUrl,
-                siteUrl,
-                "https://favicon.im/%s".formatted(avatarHost != null ? avatarHost : ""),
-                feed.getLastFetched(),
-                feed.getLastUpdated(),
-                readTimestamp.isAfter(effectiveLastUpdated),
-                failureCount < 3 ? 0 : failureCount,
-                failureCount < 3 ? null : feed.getFetchError()
-        );
-    }
-
-
-    private SubscriptionSearchResponse toSubscriptionSearchResponse(Feed feed, Map<String, Instant> feedReadTimes, boolean subscribed, long subscriberCount) {
-        if (feed == null) {
-            return new SubscriptionSearchResponse(
-                    null,
-                    "未命名订阅",
-                    null,
-                    null,
-                    "https://favicon.im/",
-                    null,
-                    null,
-                    subscriberCount,
-
-                    subscribed,
-                    false,
-                    0,
-                    null
-            );
-        }
-        var title = resolveFeedTitle(feed);
-        var feedUrl = feed.getUrl();
-        var siteUrl = feed.getSiteUrl();
-        if (siteUrl == null || siteUrl.isBlank()) {
-            siteUrl = feedUrl;
-        }
-        var failureCount = Optional.ofNullable(feed.getFailureCount()).orElse(0);
-        var readTimestamp = feedReadTimes.getOrDefault(feed.getUid().toString(), Instant.EPOCH);
-        var effectiveLastUpdated = Objects.nonNull(feed.getLastUpdated()) ? feed.getLastUpdated() : Instant.EPOCH;
-        var avatarHost = extractHost(siteUrl);
-        if (avatarHost == null || avatarHost.isBlank()) {
-            avatarHost = extractHost(feedUrl);
-        }
-        return new SubscriptionSearchResponse(
-                feed.getUid().toString(),
-                title,
-                feedUrl,
-                siteUrl,
-                "https://favicon.im/%s".formatted(avatarHost != null ? avatarHost : ""),
-                feed.getLastFetched(),
-                feed.getLastUpdated(),
-                subscriberCount,
-
-                subscribed,
-                readTimestamp.isAfter(effectiveLastUpdated),
-                failureCount < 3 ? 0 : failureCount,
-                failureCount < 3 ? null : feed.getFetchError()
-        );
-    }
-
     private User resolveUser(UserPrincipal principal) {
         if (principal == null) {
             throw new ApiException(HttpStatus.UNAUTHORIZED, "Unauthorized");
         }
         return authService.findUserById(principal.getId())
                 .orElseThrow(() -> new ApiException(HttpStatus.UNAUTHORIZED, "User not found"));
-    }
-
-    private String resolveFeedTitle(Feed feed) {
-        if (feed == null) {
-            return "未命名订阅";
-        }
-        var title = feed.getTitle();
-        if (title != null && !title.isBlank()) {
-            return title;
-        }
-        var host = extractHost(feed.getSiteUrl());
-        if (host != null && !host.isBlank()) {
-            return host;
-        }
-        host = extractHost(feed.getUrl());
-        if (host != null && !host.isBlank()) {
-            return host;
-        }
-        return "未命名订阅";
-    }
-
-    private String extractHost(String url) {
-        if (url == null || url.isBlank()) {
-            return null;
-        }
-        try {
-            var uri = new URI(url.trim());
-            if (uri.getHost() != null && !uri.getHost().isBlank()) {
-                return uri.getHost();
-            }
-            var path = uri.getPath();
-            if (path != null && !path.isBlank()) {
-                return path;
-            }
-        } catch (URISyntaxException ignored) {
-            return url;
-        }
-        return url;
     }
 
 }

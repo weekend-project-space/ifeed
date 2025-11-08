@@ -17,10 +17,14 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
-import java.util.List;
-import java.util.UUID;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -31,53 +35,60 @@ public class SubscriptionService {
 
     @Transactional
     public UserSubscription subscribe(User user, SubscriptionRequest request) {
-        var normalizedUrl = request.feedUrl().trim();
-        Assert.isTrue(UrlChecker.isValidUrl(normalizedUrl), "check url" + normalizedUrl);
-        var feed = feedRepository.findByUrl(normalizedUrl)
-                .orElseGet(() -> createFeed(normalizedUrl, request));
+        String feedUrl = request.feedUrl().trim();
+        Assert.isTrue(UrlChecker.isValidUrl(feedUrl), "Invalid URL: " + feedUrl);
 
-        if (!StringUtils.hasText(feed.getTitle())) {
-            var resolvedTitle = resolveFeedTitle(request.title(), feed.getSiteUrl(), feed.getUrl());
-            if (!resolvedTitle.equals(feed.getTitle())) {
-                feed.setTitle(resolvedTitle);
-                feed = feedRepository.save(feed);
-            }
-        }
+        Feed feed = feedRepository.findByUrl(feedUrl)
+                .orElseGet(() -> createAndSaveFeed(feedUrl, request));
 
-        var existing = subscriptionRepository.findByUserAndFeed(user, feed);
-        if (existing.isPresent()) {
-            var subscription = existing.get();
-            if (subscription.isActive()) {
-                throw new ApiException(HttpStatus.CONFLICT, "Feed already subscribed");
-            }
-            if (subscription.getId() == null) {
-                subscription.setId(new UserSubscriptionId(user.getId(), feed.getId()));
-            }
-            subscription.setActive(true);
-            return subscriptionRepository.save(subscription);
-        }
-
-        var subscription = UserSubscription.builder()
-                .id(new UserSubscriptionId(user.getId(), feed.getId()))
-                .user(user)
-                .feed(feed)
-                .active(true)
-                .build();
-
-        return subscriptionRepository.save(subscription);
+        return subscriptionRepository.findByUserAndFeed(user, feed)
+                .map(sub -> {
+                    if (sub.isActive()) {
+                        throw new ApiException(HttpStatus.CONFLICT, "Feed already subscribed");
+                    }
+                    sub.setActive(true);
+                    return subscriptionRepository.save(sub);
+                })
+                .orElseGet(() -> {
+                    UserSubscription sub = UserSubscription.builder()
+                            .id(new UserSubscriptionId(user.getId(), feed.getId()))
+                            .user(user)
+                            .feed(feed)
+                            .active(true)
+                            .build();
+                    return subscriptionRepository.save(sub);
+                });
     }
 
     @Transactional(readOnly = true)
-    public List<UserSubscription> getActiveSubscriptions(User user) {
-        return subscriptionRepository.findAllByUserAndActiveTrue(user);
+    public List<UserSubscription> getActiveSubscriptions(Integer userId) {
+        return subscriptionRepository.findAllByUserIdAndActiveTrue(userId);
     }
 
     @Transactional(readOnly = true)
-    public long getSubscriberCount(Feed feed) {
-        if (feed == null) {
-            return 0;
+    public Map<Integer, Long> getSubscriberCounts(List<Integer> feedIds) {
+        if (feedIds == null || feedIds.isEmpty()) {
+            return Map.of();
         }
-        return subscriptionRepository.countByFeedAndActiveTrue(feed);
+
+        // 1. 批量查询
+        List<Object[]> results = subscriptionRepository.countActiveSubscribersByFeedIds(feedIds);
+
+        // 2. 转为 Map
+        Map<Integer, Long> countMap = results.stream()
+                .collect(Collectors.toMap(
+                        row -> (Integer) row[0],
+                        row -> (Long) row[1]
+                ));
+
+        // 3. 补全缺失的 feedId → 0
+        return feedIds.stream()
+                .collect(Collectors.toMap(
+                        Function.identity(),
+                        id -> countMap.getOrDefault(id, 0L),
+                        (a, b) -> a,
+                        LinkedHashMap::new  // 保持顺序
+                ));
     }
 
     @Transactional
@@ -105,20 +116,19 @@ public class SubscriptionService {
         return feedRepository.searchByQuery(normalized, PageRequest.of(0, 20));
     }
 
-    private Feed createFeed(String feedUrl, SubscriptionRequest request) {
-        var siteUrl = request.siteUrl();
-        if (siteUrl == null || siteUrl.isBlank()) {
-            siteUrl = feedUrl;
-        }
+    private Feed createAndSaveFeed(String feedUrl, SubscriptionRequest request) {
+        String siteUrl = StringUtils.hasText(request.siteUrl()) ? request.siteUrl().trim() : feedUrl;
+        String title = resolveFeedTitle(request.title(), siteUrl, feedUrl);
 
-        var title = resolveFeedTitle(request.title(), siteUrl, feedUrl);
-
-        return feedRepository.save(Feed.builder()
+        Feed feed = Feed.builder()
                 .url(feedUrl)
                 .siteUrl(siteUrl)
                 .title(title)
-                .build());
+                .build();
+
+        return feedRepository.save(feed);
     }
+
 
     private String resolveFeedTitle(String requestedTitle, String siteUrl, String feedUrl) {
         if (StringUtils.hasText(requestedTitle)) {

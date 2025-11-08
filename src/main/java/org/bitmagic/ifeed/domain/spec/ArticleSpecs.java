@@ -7,7 +7,7 @@ import org.springframework.data.jpa.domain.Specification;
  * @author yangrd
  * @date 2025/10/23
  **/
-public interface ArticleSpec {
+public interface ArticleSpecs {
 
     static Specification<Article> noEmbeddingSpec() {
 //        return Specifications.<Article>and()
@@ -15,7 +15,7 @@ public interface ArticleSpec {
 //                    return criteriaBuilder.isNull(root.get("embedding"));
 //                }).build();
         return ((root, query, criteriaBuilder) -> {
-            return criteriaBuilder.isNull(root.get("embedding"));
+            return criteriaBuilder.isFalse(root.get("embeddingGenerated"));
         });
     }
 }
