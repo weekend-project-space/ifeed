@@ -43,14 +43,10 @@ public class SubscriptionViewConverter {
 
     public static SubscriptionSearchResponse toSearchResponse(
             Feed feed,
-            Map<String, Instant> readTimes,
             boolean subscribed,
-            long subscriberCount,
-            boolean hasUnread) {
+            long subscriberCount) {
 
         var info = resolveFeedInfo(feed);
-        var readTime = readTimes.getOrDefault(feed.getUid().toString(), EPOCH);
-        var lastUpdated = feed.getLastUpdated() != null ? feed.getLastUpdated() : EPOCH;
         var failureCount = feed.getFailureCount() != null ? feed.getFailureCount() : 0;
 
         return new SubscriptionSearchResponse(
@@ -63,7 +59,6 @@ public class SubscriptionViewConverter {
                 feed.getLastUpdated(),
                 subscriberCount,
                 subscribed,
-                hasUnread || readTime.isAfter(lastUpdated),
                 failureCount < 3 ? 0 : failureCount,
                 failureCount < 3 ? null : feed.getFetchError()
         );
@@ -107,9 +102,11 @@ public class SubscriptionViewConverter {
             if (host != null && !host.isBlank()) return host;
             String path = uri.getPath();
             if (path != null && !path.isBlank() && path.length() > 1) return path.substring(1);
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+        }
         return null;
     }
 
-    private record FeedInfo(String title, String siteUrl, String faviconUrl) {}
+    private record FeedInfo(String title, String siteUrl, String faviconUrl) {
+    }
 }

@@ -133,7 +133,7 @@ export const useSubscriptionsStore = defineStore('subscriptions', () => {
     searchLoading.value = true;
     searchError.value = null;
     try {
-      const response = await request<SubscriptionSearchResultDto[]>('/api/subscriptions/search', {
+      const response = await request<SubscriptionSearchResultDto[]>('/api/feeds/search', {
         query: { query: trimmed }
       });
       if (activeSearchQuery.value !== trimmed) {

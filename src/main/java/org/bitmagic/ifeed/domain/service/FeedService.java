@@ -6,12 +6,14 @@ import org.bitmagic.ifeed.domain.repository.ArticleRepository;
 import org.bitmagic.ifeed.domain.repository.FeedRepository;
 import org.bitmagic.ifeed.domain.repository.UserSubscriptionRepository;
 import org.bitmagic.ifeed.exception.ApiException;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -38,6 +40,15 @@ public class FeedService {
         var feed = feedRepository.findByUrl(normalized)
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Feed not found"));
         return buildDetail(feed);
+    }
+
+    @Transactional(readOnly = true)
+    public List<Feed> searchFeeds(String query) {
+        if (!StringUtils.hasText(query)) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "query must not be empty");
+        }
+        var normalized = query.trim();
+        return feedRepository.searchByQuery(normalized, PageRequest.of(0, 20));
     }
 
     private FeedDetail buildDetail(Feed feed) {

@@ -6,7 +6,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.bitmagic.ifeed.api.converter.SubscriptionViewConverter;
 import org.bitmagic.ifeed.api.request.OpmlImportConfirmRequest;
 import org.bitmagic.ifeed.api.request.SubscriptionRequest;
-import org.bitmagic.ifeed.api.response.*;
+import org.bitmagic.ifeed.api.response.MessageResponse;
+import org.bitmagic.ifeed.api.response.OpmlImportConfirmResponse;
+import org.bitmagic.ifeed.api.response.OpmlPreviewResponse;
+import org.bitmagic.ifeed.api.response.SubscriptionResponse;
 import org.bitmagic.ifeed.api.util.IdentifierUtils;
 import org.bitmagic.ifeed.config.security.UserPrincipal;
 import org.bitmagic.ifeed.domain.document.UserBehaviorDocument;
@@ -74,22 +77,6 @@ public class SubscriptionController {
         return ResponseEntity.ok(subscriptions);
     }
 
-    @GetMapping("/search")
-    public ResponseEntity<List<SubscriptionSearchResponse>> search(@AuthenticationPrincipal UserPrincipal principal,
-                                                                   @RequestParam("query") String query) {
-        UserBehaviorDocument userBehaviorDocument = userBehaviorRepository.findById(principal.getId().toString()).orElse(null);
-        Map<String, Instant> feedReadTimes = Objects.nonNull(userBehaviorDocument) ? userBehaviorDocument.getReadFeedHistory().stream().collect(Collectors.toMap(UserBehaviorDocument.FeedRef::getFeedId, UserBehaviorDocument.FeedRef::getTimestamp)) : new HashMap<>();
-        var feeds = subscriptionService.searchFeeds(query);
-        var subscribedFeedIds = subscriptionService.getActiveSubscriptions(principal.getId()).stream()
-                .map(sub -> sub.getFeed().getUid().toString())
-                .collect(Collectors.toSet());
-        var subscriberCount = subscriptionService.getSubscriberCounts(feeds.stream().map(Feed::getId).toList());
-        var responses = feeds.stream()
-                .map(feed ->
-                        SubscriptionViewConverter.toSearchResponse(feed, feedReadTimes, subscribedFeedIds.contains(feed.getUid().toString()), subscriberCount.get(feed.getId()), false)
-                ).toList();
-        return ResponseEntity.ok(responses);
-    }
 
     @DeleteMapping("/{feedId}")
     public ResponseEntity<MessageResponse> unsubscribe(@AuthenticationPrincipal UserPrincipal principal,

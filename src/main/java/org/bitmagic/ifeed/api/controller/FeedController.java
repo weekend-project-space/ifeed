@@ -1,22 +1,29 @@
 package org.bitmagic.ifeed.api.controller;
 
 import lombok.RequiredArgsConstructor;
+import org.bitmagic.ifeed.api.converter.SubscriptionViewConverter;
 import org.bitmagic.ifeed.api.response.FeedDetailResponse;
+import org.bitmagic.ifeed.api.response.SubscriptionSearchResponse;
 import org.bitmagic.ifeed.api.util.IdentifierUtils;
-import org.bitmagic.ifeed.exception.ApiException;
 import org.bitmagic.ifeed.config.security.UserPrincipal;
+import org.bitmagic.ifeed.domain.document.UserBehaviorDocument;
+import org.bitmagic.ifeed.domain.model.Feed;
 import org.bitmagic.ifeed.domain.service.FeedService;
+import org.bitmagic.ifeed.domain.service.SubscriptionService;
+import org.bitmagic.ifeed.exception.ApiException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.time.Instant;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/feeds")
@@ -25,6 +32,8 @@ public class FeedController {
 
     private final FeedService feedService;
 
+    private final SubscriptionService subscriptionService;
+
     @GetMapping("/{feedId}")
     public ResponseEntity<FeedDetailResponse> getFeed(@AuthenticationPrincipal UserPrincipal principal,
                                                       @PathVariable String feedId) {
@@ -32,6 +41,22 @@ public class FeedController {
         var detail = feedService.getFeedDetail(IdentifierUtils.parseUuid(feedId, "feed id"));
         var subscribed = feedService.isSubscribed(principal.getId(), detail.feed());
         return ResponseEntity.ok(toResponse(detail, subscribed));
+    }
+
+    @GetMapping("/search")
+    public ResponseEntity<List<SubscriptionSearchResponse>> search(@AuthenticationPrincipal UserPrincipal principal,
+                                                                   @RequestParam("query") String query) {
+
+        var feeds = feedService.searchFeeds(query);
+        var subscribedFeedIds = subscriptionService.getActiveSubscriptions(principal.getId()).stream()
+                .map(sub -> sub.getFeed().getId().toString())
+                .collect(Collectors.toSet());
+        var subscriberCount = subscriptionService.getSubscriberCounts(feeds.stream().map(Feed::getId).toList());
+        var responses = feeds.stream()
+                .map(feed ->
+                        SubscriptionViewConverter.toSearchResponse(feed, subscribedFeedIds.contains(feed.getId()), subscriberCount.get(feed.getId()))
+                ).toList();
+        return ResponseEntity.ok(responses);
     }
 
     @GetMapping("/lookup")

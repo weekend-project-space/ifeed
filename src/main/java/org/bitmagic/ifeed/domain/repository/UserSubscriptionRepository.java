@@ -36,7 +36,7 @@ public interface UserSubscriptionRepository extends JpaRepository<UserSubscripti
         FROM UserSubscription s
         WHERE s.feed.id IN :feedIds
           AND s.active = true
-        GROUP BY s.feed.uid
+        GROUP BY s.feed.id
         """)
     List<Object[]> countActiveSubscribersByFeedIds(@Param("feedIds") List<Integer> feedIds);
 }

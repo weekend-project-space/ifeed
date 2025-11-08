@@ -107,14 +107,7 @@ public class SubscriptionService {
         subscriptionRepository.save(subscription);
     }
 
-    @Transactional(readOnly = true)
-    public List<Feed> searchFeeds(String query) {
-        if (!StringUtils.hasText(query)) {
-            throw new ApiException(HttpStatus.BAD_REQUEST, "query must not be empty");
-        }
-        var normalized = query.trim();
-        return feedRepository.searchByQuery(normalized, PageRequest.of(0, 20));
-    }
+
 
     private Feed createAndSaveFeed(String feedUrl, SubscriptionRequest request) {
         String siteUrl = StringUtils.hasText(request.siteUrl()) ? request.siteUrl().trim() : feedUrl;

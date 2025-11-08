@@ -4,7 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.bitmagic.ifeed.domain.repository.ArticleRepository;
 import org.bitmagic.ifeed.domain.repository.UserRepository;
-import org.bitmagic.ifeed.domain.spec.ArticleSpec;
+import org.bitmagic.ifeed.domain.spec.ArticleSpecs;
 import org.springframework.cache.CacheManager;
 import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -53,11 +53,11 @@ public class EmbeddingScheduler {
     public void documentEmbedding() {
         log.info("begin init article embedding");
         try {
-            articleRepository.findAll(ArticleSpec.noEmbeddingSpec(), Pageable.ofSize(100)).stream().parallel().forEach(article -> {
+            articleRepository.findAll(ArticleSpecs.noEmbeddingSpec(), Pageable.ofSize(100)).stream().parallel().forEach(article -> {
                 try {
                     log.info("init embedding :{}", article.getTitle());
                     articleEmbeddingService.buildArticleEmbedding(article);
-                    article.setEmbedding("1");
+                    article.setEmbeddingGenerated(true);
                     articleRepository.save(article);
                 } catch (RuntimeException e) {
                     log.warn("init article embedding", e);

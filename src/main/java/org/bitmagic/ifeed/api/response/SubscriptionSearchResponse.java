@@ -12,7 +12,6 @@ public record SubscriptionSearchResponse(
         Instant lastUpdated,
         Long subscriberCount,
         Boolean subscribed,
-        Boolean isRead,
         Integer failureCount,
         String fetchError
 ) {
