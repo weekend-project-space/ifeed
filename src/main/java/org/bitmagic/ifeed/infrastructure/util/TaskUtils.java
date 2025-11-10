@@ -14,7 +14,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Slf4j
 public final class TaskUtils {
 
-    private TaskUtils() {}
+    private TaskUtils() {
+    }
 
     /**
      * 带超时控制的批量任务执行
@@ -24,13 +25,13 @@ public final class TaskUtils {
      * 2. 指定超时后：取消任务 + 清空队列 + 强制唤醒 latch
      * 3. 自动清理超时监控线程
      *
-     * @param executor     线程池
-     * @param tasks        任务列表（每个任务是一个 Runnable）
-     * @param timeout      超时时间
-     * @param unit         时间单位
-     * @param latch        任务计数器（用于等待）
-     * @param success      成功计数器
-     * @param failed       失败计数器
+     * @param executor 线程池
+     * @param tasks    任务列表（每个任务是一个 Runnable）
+     * @param timeout  超时时间
+     * @param unit     时间单位
+     * @param latch    任务计数器（用于等待）
+     * @param success  成功计数器
+     * @param failed   失败计数器
      * @return 所有 Future 列表
      */
     public static List<Future<?>> executeWithTimeout(
@@ -56,6 +57,7 @@ public final class TaskUtils {
                 } finally {
                     latch.countDown();
                 }
+                log.debug(" Processor success {}. failed:{}", success.get(), failed.get());
             });
             futures.add(future);
         }

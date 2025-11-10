@@ -82,10 +82,14 @@
                     :disabled="subscriptionsStore.submitting" @click="subscribeFromSearch(feed)">
                     {{ subscriptionsStore.submitting ? '处理中...' : '添加订阅' }}
                   </button>
-                  <a :href="feed.url" target="_blank" rel="noopener noreferrer"
-                    class="rounded-full border border-outline/30 px-3 py-1.5 text-center font-medium text-text-muted transition hover:border-outline/50 hover:text-text sm:px-4 sm:py-2">
-                    访问 RSS
-                  </a>
+<!--                  <a :href="feed.url" target="_blank" rel="noopener noreferrer"-->
+<!--                    class="rounded-full border border-outline/30 px-3 py-1.5 text-center font-medium text-text-muted transition hover:border-outline/50 hover:text-text sm:px-4 sm:py-2">-->
+<!--                    访问 RSS-->
+<!--                  </a>-->
+                  <router-link :to="'/feeds/'+feed.feedId" target="_blank" rel="noopener noreferrer"
+                     class="rounded-full border border-outline/30 px-3 py-1.5 text-center font-medium text-text-muted transition hover:border-outline/50 hover:text-text sm:px-4 sm:py-2">
+                    查看
+                  </router-link>
                 </div>
               </div>
             </li>
