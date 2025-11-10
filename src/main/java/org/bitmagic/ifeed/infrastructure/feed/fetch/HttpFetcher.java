@@ -2,7 +2,7 @@ package org.bitmagic.ifeed.infrastructure.feed.fetch;
 
 import java.io.IOException;
 
-public interface FeedFetcher {
+public interface HttpFetcher {
 
     byte[] fetch(String feedUrl) throws IOException, InterruptedException;
 }

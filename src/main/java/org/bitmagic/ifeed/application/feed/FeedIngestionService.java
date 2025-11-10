@@ -5,26 +5,21 @@ import com.rometools.rome.feed.synd.SyndFeed;
 import com.rometools.rome.io.FeedException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.bitmagic.ifeed.application.feed.info.FeedInfoService;
+import org.bitmagic.ifeed.application.feed.process.ArticleCollector;
 import org.bitmagic.ifeed.domain.model.Article;
 import org.bitmagic.ifeed.domain.model.Feed;
 import org.bitmagic.ifeed.domain.model.FeedFetchStatus;
 import org.bitmagic.ifeed.domain.repository.ArticleRepository;
 import org.bitmagic.ifeed.domain.repository.FeedRepository;
-import org.bitmagic.ifeed.infrastructure.feed.fetch.FeedFetcher;
-import org.bitmagic.ifeed.application.feed.info.FeedInfoService;
-import org.bitmagic.ifeed.infrastructure.feed.parse.FeedParser;
-import org.bitmagic.ifeed.application.feed.process.ArticleCollector;
+import org.bitmagic.ifeed.infrastructure.feed.FeedFetcher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.io.IOException;
 import java.time.Instant;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 import java.util.function.Predicate;
 
 @Slf4j
@@ -36,7 +31,6 @@ public class FeedIngestionService {
     private final FeedRepository feedRepository;
     private final ArticleRepository articleRepository;
     private final FeedFetcher feedFetcher;
-    private final FeedParser feedParser;
     private final ArticleCollector articleCollector;
     private final FeedInfoService feedInfoService;
 
@@ -66,8 +60,7 @@ public class FeedIngestionService {
     }
 
     private Instant fetchAndProcessFeed(Feed feed) throws IOException, InterruptedException, FeedException {
-        byte[] bodyBytes = feedFetcher.fetch(feed.getUrl());
-        SyndFeed syndFeed = feedParser.parse(bodyBytes, feed.getUrl());
+        SyndFeed syndFeed = feedFetcher.fetch( feed.getUrl());
         log.debug("Successfully fetched feed: {}", feed.getUrl());
 
         Instant latestContentUpdate = processEntries(feed, syndFeed.getEntries());

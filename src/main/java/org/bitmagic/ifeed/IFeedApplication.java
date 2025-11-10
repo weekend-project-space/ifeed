@@ -1,18 +1,14 @@
 package org.bitmagic.ifeed;
 
 import org.bitmagic.ifeed.config.properties.RssFetcherProperties;
-import org.bitmagic.ifeed.infrastructure.vector.PgVectorStoreTurbo;
-import org.springframework.ai.autoconfigure.vectorstore.pgvector.PgVectorStoreProperties;
+import org.bitmagic.ifeed.infrastructure.FreshnessCalculator;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.model.ChatModel;
-import org.springframework.ai.vectorstore.pgvector.PgVectorStore;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Primary;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.SchedulingConfigurer;
@@ -21,7 +17,6 @@ import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import java.net.http.HttpClient;
-import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -74,6 +69,11 @@ public class IFeedApplication {
                 .connectTimeout(properties.getConnectTimeout())
                 .followRedirects(HttpClient.Redirect.NORMAL)
                 .build();
+    }
+
+    @Bean
+    FreshnessCalculator freshnessCalculator(){
+        return new FreshnessCalculator(3, FreshnessCalculator.TimeUnit.DAYS);
     }
 
     public static void main(String[] args) {

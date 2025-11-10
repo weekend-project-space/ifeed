@@ -4,11 +4,13 @@ import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.bitmagic.ifeed.config.properties.RssFetcherProperties;
+import org.bitmagic.ifeed.infrastructure.util.TaskUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -24,9 +26,11 @@ public class FeedIngestionScheduler {
 
     private final ExecutorService executor;
 
+    private final RssFetcherProperties properties;
+
     @Autowired
     public FeedIngestionScheduler(FeedIngestionService ingestionService,
-            RssFetcherProperties properties) {
+                                  RssFetcherProperties properties) {
         this.ingestionService = ingestionService;
         AtomicInteger counter = new AtomicInteger(0);
         this.executor = Executors.newFixedThreadPool(properties.getThreadPoolSize(), (runnable) -> {
@@ -34,14 +38,17 @@ public class FeedIngestionScheduler {
             t.setDaemon(true);
             return t;
         });
+        this.properties = properties;
     }
 
-    @Scheduled(initialDelayString = "${app.rss.fetcher.initial-delay:PT10S}", fixedDelayString = "${app.rss.fetcher.fixed-delay:PT30M}")
+    @Scheduled(initialDelayString = "${app.rss.fetcher.initial-delay:PT10S}",
+            fixedDelayString = "${app.rss.fetcher.fixed-delay:PT30M}")
     public void refreshFeeds() {
         long start = System.currentTimeMillis();
 
-        var feedIds = ingestionService
-                .getFeedIds(feed -> LocalDateTime.now().getHour() == 0 || feed.getFailureCount() < 7);
+        var feedIds = ingestionService.getFeedIds(
+                feed -> LocalDateTime.now().getHour() == 0 || feed.getFailureCount() < 7
+        );
 
         if (feedIds.isEmpty()) {
             log.info("No feeds scheduled for ingestion at this time");
@@ -54,27 +61,17 @@ public class FeedIngestionScheduler {
         AtomicInteger failed = new AtomicInteger(0);
         CountDownLatch latch = new CountDownLatch(feedIds.size());
 
-        feedIds.forEach(feedId -> {
-            executor.submit(() -> {
-                try {
-                    ingestionService.ingestFeed(feedId);
-                    success.incrementAndGet();
-                } catch (Exception e) {
-                    failed.incrementAndGet();
-                    log.error("Failed to ingest feed: {}", feedId, e);
-                } finally {
-                    latch.countDown();
-                }
-                log.debug("Feed refresh completed: {} success, {} failed",
-                        success.get(), failed.get());
-            });
-        });
+        // 构造任务列表
+        List<Runnable> tasks = feedIds.stream()
+                .map(feedId -> (Runnable) () -> ingestionService.ingestFeed(feedId))
+                .toList();
 
-        // 等待所有任务结束（最多 15 分钟）
+        // 封装执行 + 超时控制
+        TaskUtils.executeWithTimeout(executor, tasks, feedIds.size() / properties.getThreadPoolSize(), TimeUnit.MINUTES, latch, success, failed);
+
+        // 等待完成（稍长于超时，防止竞争）
         try {
-            if (!latch.await(15, TimeUnit.MINUTES)) {
-                log.warn("Feed ingestion timed out after 15 minutes");
-            }
+            latch.await(feedIds.size() / properties.getThreadPoolSize() + 1, TimeUnit.MINUTES);
         } catch (InterruptedException e) {
             log.warn("Feed ingestion interrupted", e);
             Thread.currentThread().interrupt();

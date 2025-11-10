@@ -19,7 +19,7 @@ import static org.bitmagic.ifeed.config.properties.RssFetcherProperties.Cache.CA
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class HttpFeedFetcher implements FeedFetcher {
+public class DefaultHttpFetcher implements HttpFetcher {
 
     private static final int MAX_FEED_BYTES = 10 * 1024 * 1024; // 10MB
 
