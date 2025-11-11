@@ -34,9 +34,9 @@ public class JpaInvertedIndex implements InvertedIndex {
                 SELECT a.id,
                        a.pub_date,
                        a.title,
-                       setweight(to_tsvector('simple', coalesce(a.category, '')), 'A') ||
-                       setweight(to_tsvector('simple', coalesce(a.tags, '')), 'B') ||
-                       setweight(to_tsvector('simple', coalesce(a.author, '')), 'B')AS document
+                       setweight(to_tsvector('simple', coalesce(a.feed_id::text, '')), 'A') ||
+                       setweight(to_tsvector('simple', coalesce(a.category, '')), 'B') ||
+                       setweight(to_tsvector('simple', coalesce(a.tags, '')), 'C')   AS document
                 FROM articles a
                 WHERE (? = TRUE) OR EXISTS (
                     SELECT 1
@@ -47,7 +47,7 @@ public class JpaInvertedIndex implements InvertedIndex {
                 )
             )
             SELECT d.id,
-                   ts_rank_cd(d.document, query.q) AS score,
+                  ts_rank_cd(d.document, query.q) * (1 - ln(1 + extract(epoch FROM (now() - d.pub_date)) / 86400)::numeric / 7) AS score, 
                    d.title,
                    d.pub_date AS pubDate
             FROM documents d
@@ -62,9 +62,9 @@ public class JpaInvertedIndex implements InvertedIndex {
 
     @Autowired
     public JpaInvertedIndex(VectorStoreTurbo vectorStore, JdbcTemplate jdbcTemplate, SearchRetrievalProperties properties) {
-        this.retrievalPipeline = new MultiChannelRetrievalPipeline(properties.getFreshnessTimeWeight(), properties.getFreshnessLambda()).
-                addHandler(new Bm25RetrievalHandler(jdbcTemplate, BM25_SQL), properties.getBm25Weight())
-                .addHandler(new VectorRetrievalHandler(vectorStore, properties.getSimilarityThreshold()), properties.getVectorWeight());
+        this.retrievalPipeline = new MultiChannelRetrievalPipeline(properties.getFreshnessTimeWeight(), properties.getFreshnessLambda())
+                .addHandler(new Bm25RetrievalHandler(jdbcTemplate, BM25_SQL), properties.getBm25Weight());
+//                .addHandler(new VectorRetrievalHandler(vectorStore, properties.getSimilarityThreshold()), properties.getVectorWeight());
     }
 
     @Override

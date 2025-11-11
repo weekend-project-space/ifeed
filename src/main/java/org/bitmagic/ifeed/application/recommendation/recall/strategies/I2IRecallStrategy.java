@@ -27,7 +27,7 @@ public class I2IRecallStrategy implements RecallStrategy {
 
     public I2IRecallStrategy(SequenceStore sequenceStore,
                              CoOccurIndex coOccurIndex,
-                             @Value("${recall.i2i.seed-limit:3}") int seedLimit,
+                             @Value("${recall.i2i.seed-limit:2}") int seedLimit,
                              @Value("${recall.i2i.per-seed-limit:20}") int perSeedLimit) {
         this.sequenceStore = sequenceStore;
         this.coOccurIndex = coOccurIndex;

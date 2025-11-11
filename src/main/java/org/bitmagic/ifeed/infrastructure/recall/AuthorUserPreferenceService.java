@@ -7,17 +7,13 @@ import org.bitmagic.ifeed.domain.document.UserBehaviorDocument;
 import org.bitmagic.ifeed.domain.model.Article;
 import org.bitmagic.ifeed.domain.repository.ArticleRepository;
 import org.bitmagic.ifeed.domain.repository.UserBehaviorRepository;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.util.Comparator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -95,7 +91,7 @@ public class AuthorUserPreferenceService implements UserPreferenceService {
                 continue;
             }
 
-            String author = normalizeAuthor(article.getAuthor());
+            String author = String.valueOf(article.getFeed().getId());
             if (author == null) {
                 continue;
             }
@@ -103,14 +99,38 @@ public class AuthorUserPreferenceService implements UserPreferenceService {
             counts.merge(author, 1L, Long::sum);
         }
 
-        if (counts.isEmpty()) {
-            return List.of();
+        Map<String, Long> categoryCounts = new LinkedHashMap<>();
+        for (UserBehaviorDocument.ArticleRef ref : recent) {
+            UUID uuid = safeUuid(ref.getArticleId());
+            if (uuid == null) {
+                continue;
+            }
+
+            Article article = articleMap.get(uuid);
+            if (article == null) {
+                continue;
+            }
+
+            String category = article.getCategory();
+            if (category == null) {
+                continue;
+            }
+
+            categoryCounts.merge(category, 1L, Long::sum);
         }
 
+        if (counts.isEmpty() && categoryCounts.isEmpty()) {
+            return List.of();
+        }
+        List<AttributePreference> result = new ArrayList<>(getAttrs(counts, "feedId"));
+        result.addAll(getAttrs(categoryCounts, "category"));
+        return result.subList(0, Math.min(result.size(), limit));
+    }
+
+    private static List<AttributePreference> getAttrs(Map<String, Long> counts, String attrKey) {
         return counts.entrySet().stream()
                 .sorted(Map.Entry.<String, Long>comparingByValue().reversed())
-                .limit(limit)
-                .map(entry -> new AttributePreference("author", entry.getKey(), entry.getValue()))
+                .map(entry -> new AttributePreference(attrKey, entry.getKey(), entry.getValue()))
                 .toList();
     }
 
@@ -133,11 +153,4 @@ public class AuthorUserPreferenceService implements UserPreferenceService {
         }
     }
 
-    private String normalizeAuthor(String author) {
-        if (author == null) {
-            return null;
-        }
-        String trimmed = author.trim();
-        return trimmed.isEmpty() ? null : trimmed;
-    }
 }

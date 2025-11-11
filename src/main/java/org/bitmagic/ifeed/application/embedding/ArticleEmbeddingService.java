@@ -6,6 +6,7 @@ import org.bitmagic.ifeed.config.properties.AiProviderProperties;
 import org.bitmagic.ifeed.domain.model.Article;
 import org.bitmagic.ifeed.domain.repository.ArticleEmbeddingRepository;
 import org.bitmagic.ifeed.domain.repository.ArticleRepository;
+import org.bitmagic.ifeed.domain.repository.FeedRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,6 +21,8 @@ public class ArticleEmbeddingService {
 
     private final ArticleEmbeddingRepository repository;
 
+    private final FeedRepository feedRepository;
+
     private final ArticleRepository articleRepository;
 
     private final AiProviderProperties aiProviderProperties;
@@ -29,7 +32,7 @@ public class ArticleEmbeddingService {
         if (aiProviderProperties.isEnabled()) {
             repository.upsert(
                     article.getFeed().getId(),
-                    article.getFeed().getTitle(),
+                    title(article.getFeed().getId()),
                     article.getId(),
                     article.getTitle(),
                     article.getCategory(),
@@ -42,5 +45,9 @@ public class ArticleEmbeddingService {
             article.setEmbeddingGenerated(true);
             articleRepository.save(article);
         }
+    }
+
+    private String title(Integer feedId) {
+        return feedRepository.findById(feedId).orElseThrow().getTitle();
     }
 }

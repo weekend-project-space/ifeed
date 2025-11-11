@@ -2,10 +2,7 @@ package org.bitmagic.ifeed.application.recommendation.recall.core;
 
 import org.bitmagic.ifeed.application.recommendation.recall.model.StrategyId;
 
-import java.util.Collection;
-import java.util.EnumMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * 召回策略注册表，按策略标识管理实际的策略实现。
@@ -27,7 +24,7 @@ public class StrategyRegistry {
         return strategy;
     }
 
-    public Collection<StrategyId> available() {
-        return strategies.keySet();
+    public Collection<StrategyId> available(String scene) {
+        return scene.contains("home") ? strategies.keySet() : Collections.singleton(StrategyId.I2I);
     }
 }

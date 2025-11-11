@@ -23,7 +23,7 @@ public class Article {
     @Column(name = "uid", nullable = false, updatable = false, unique = true)
     private UUID uid;
 
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "feed_id", nullable = false)
     private Feed feed;
 

@@ -10,10 +10,10 @@ import org.springframework.stereotype.Component;
  */
 @Component
 @ConditionalOnBean({ItemProvider.class})
-public class LatestRecallStrategy extends AbstractRecallStrategy {
+public class HotRecallStrategy extends AbstractRecallStrategy{
 
     @Override
     public StrategyId id() {
-        return StrategyId.LATEST;
+        return StrategyId.HOT;
     }
 }

@@ -98,8 +98,8 @@ public class DefaultRecallFusion implements RecallFusion {
         buckets.values().forEach(list -> list.sort(Comparator.comparingDouble(ItemCandidate::score).reversed()));
 
         List<ItemCandidate> reordered = new ArrayList<>();
-        boolean added;
-        do {
+        boolean added = true;
+        while (added) {
             added = false;
             for (Map.Entry<StrategyId, List<ItemCandidate>> entry : buckets.entrySet()) {
                 List<ItemCandidate> bucket = entry.getValue();
@@ -112,7 +112,7 @@ public class DefaultRecallFusion implements RecallFusion {
                     return reordered;
                 }
             }
-        } while (added);
+        }
 
         return reordered;
     }

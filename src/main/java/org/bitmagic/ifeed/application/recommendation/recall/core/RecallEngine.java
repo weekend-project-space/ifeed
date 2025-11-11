@@ -45,7 +45,7 @@ public class RecallEngine {
 
         // 构建用户上下文并生成召回计划
         UserContext context = contextFactory.create(request);
-        RecallPlan plan = planner.plan(request, registry.available());
+        RecallPlan plan = planner.plan(request, registry.available(request.scene()));
         Map<StrategyId, CompletableFuture<List<ItemCandidate>>> futures = new EnumMap<>(StrategyId.class);
 
         plan.quotas().forEach((id, quota) -> {

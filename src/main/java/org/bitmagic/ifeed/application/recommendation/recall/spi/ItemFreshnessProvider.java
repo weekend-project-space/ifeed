@@ -12,14 +12,7 @@ public interface ItemFreshnessProvider {
 
     Map<Long, Instant> publishedAt(Collection<Long> itemIds);
 
-    List<ScoredId> latest(Integer k);
-
     static ItemFreshnessProvider noop() {
-        return new ItemFreshnessProvider() {
-            @Override
-            public Map<Long, Instant> publishedAt(Collection<Long> itemIds) {return Map.of();}
-            @Override
-            public List<ScoredId> latest(Integer k) {return List.of();}
-        };
+        return (ids) -> Map.of();
     }
 }

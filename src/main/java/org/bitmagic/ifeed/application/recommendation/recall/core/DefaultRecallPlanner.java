@@ -1,10 +1,6 @@
 package org.bitmagic.ifeed.application.recommendation.recall.core;
 
-import org.bitmagic.ifeed.application.recommendation.recall.model.DiversityConfig;
-import org.bitmagic.ifeed.application.recommendation.recall.model.FusionConfig;
-import org.bitmagic.ifeed.application.recommendation.recall.model.RecallPlan;
-import org.bitmagic.ifeed.application.recommendation.recall.model.RecallRequest;
-import org.bitmagic.ifeed.application.recommendation.recall.model.StrategyId;
+import org.bitmagic.ifeed.application.recommendation.recall.model.*;
 
 import java.util.Collection;
 import java.util.EnumMap;
@@ -35,7 +31,10 @@ public class DefaultRecallPlanner implements RecallPlanner {
         }
 
         Map<StrategyId, Double> weights = new EnumMap<>(StrategyId.class);
-        availableStrategies.forEach(id -> weights.put(id, 1.0d));
+        availableStrategies.forEach(id -> {
+            double weight = id.equals(StrategyId.U2A2I) ? 1 : (id.name().contains("U2") ? 0.7 : (id.equals(StrategyId.I2I) ? 0.5 : (id.equals(StrategyId.RANDOM_I2I) ? 0.3 : 0.1)));
+            weights.put(id, weight);
+        });
 
         // 从请求的过滤器中读取交织和多样化配置
         boolean interleave = parseBoolean(request.filters().getOrDefault("interleaveChannels", Boolean.TRUE));
