@@ -2,6 +2,8 @@ package org.bitmagic.ifeed.infrastructure.ai;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.hankcs.hanlp.HanLP;
+import com.hankcs.hanlp.classification.classifiers.NaiveBayesClassifier;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
@@ -22,7 +24,6 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class DefaultAiContentService implements AiContentService {
 
-    // ==================== 在类顶部新增常量 ====================
 
     private static final int MIN_TAGS = 3;
     private static final int MAX_TAGS = 7;
@@ -31,6 +32,8 @@ public class DefaultAiContentService implements AiContentService {
     private static final Set<String> STOP_WORDS = Set.of(
             "the", "a", "an", "and", "or", "but", "in", "on", "at", "to", "for", "of", "with", "is", "are", "was", "were",
             "this", "that", "it", "you", "i", "we", "they", "he", "she", "be", "have", "do", "will", "would",
+            "目前", "根据", "报道", "表示", "认为", "进行", "开展", "实现", "推进", "方面", "以及",
+            "其中", "包括", "例如", "相关", "主要", "已经", "能够", "可能", "需要", "应该",
             "的", "了", "和", "是", "在", "有", "就", "不", "人", "都", "一", "一个", "上", "也", "很", "到", "说", "要", "去", "好", "为", "中", "来", "我", "对", "从", "以", "其", "还", "并", "等", "个", "而", "后", "将", "被", "于", "及", "与", "更", "已", "通过", "可以", "但", "或"
     );
 
@@ -48,15 +51,12 @@ public class DefaultAiContentService implements AiContentService {
             "Sports", Set.of("sports", "体育", "football", "足球", "basketball", "篮球", "比赛", "奥运")
     );
 
-    // 正则：中文词（2-8个汉字） + 英文词（3+字母）
-    private static final Pattern CHINESE_PATTERN = Pattern.compile("[\u4e00-\u9fa5]{2,8}");
-    private static final Pattern ENGLISH_PATTERN = Pattern.compile("[a-zA-Z]{3,}");
     private static final int DEFAULT_SUMMARY_LENGTH = 300;
     private static final String SYSTEM_PROMPT = "You are an RSS article content analysis assistant responsible for generating JSON data containing abstracts (please summarize the main content of this article in concise language, highlighting core points and key information) summary, categories, tags. Format example: {summary:'',tags:[''],category:'string',aiGenerated:true} 中文";
     private static final String USER_PROMPT_TEMPLATE = "Title: %s\n\nContent:\n%s";
 
     private final AiProviderProperties properties;
-    private final ChatModel chatModel;
+    private final ChatClient chatClient;
 
     @Override
     public AiContent analyze(String title, String content) {
@@ -75,7 +75,7 @@ public class DefaultAiContentService implements AiContentService {
     }
 
     private AiContent callExternalProvider(String title, String content) {
-        AiContent result = ChatClient.create(chatModel)
+        AiContent result = chatClient
                 .prompt(SYSTEM_PROMPT)
                 .user(USER_PROMPT_TEMPLATE.formatted(title, content))
                 .call()
@@ -145,48 +145,33 @@ public class DefaultAiContentService implements AiContentService {
         return primary + (secondary.isEmpty() ? "" : "|" + String.join("|", secondary));
     }
 
-// ==================== 替换 generateTags ====================
 
     private List<String> generateTags(String content) {
-        if (!StringUtils.hasText(content)) return List.of();
-
-        String lower = content.toLowerCase(Locale.ROOT);
-        Map<String, Integer> freq = new HashMap<>();
-
-        // 1. 提取中文词
-        var cm = CHINESE_PATTERN.matcher(content);
-        while (cm.find()) {
-            String word = cm.group();
-            if (!STOP_WORDS.contains(word)) {
-                freq.merge(word, 1, Integer::sum);
-            }
-        }
-
-        // 2. 提取英文词（简单词形归一：复数 s → 去掉）
-        var em = ENGLISH_PATTERN.matcher(lower);
-        while (em.find()) {
-            String word = em.group();
-            if (word.endsWith("s") && word.length() > 4) {
-                word = word.substring(0, word.length() - 1); // 简单去 s
-            }
-            if (!STOP_WORDS.contains(word) && word.length() >= 3) {
-                freq.merge(word, 1, Integer::sum);
-            }
-        }
-
-        // 动态标签数量：每 400 字约 1 个标签，3~7
-        int targetCount = Math.min(MAX_TAGS, Math.max(MIN_TAGS, content.length() / 400 + 1));
-
-        return freq.entrySet().stream()
-                .sorted(Map.Entry.<String, Integer>comparingByValue(Comparator.reverseOrder())
-                        .thenComparing(Map.Entry::getKey))
-                .limit(targetCount)
-                .map(Map.Entry::getKey)
-                .collect(Collectors.toList());
+        return generateTagsWithHanLP(content);
     }
 
-//    public static void main(String[] args) throws JsonProcessingException {
-//        ObjectMapper objectMapper = new ObjectMapper();
-//       System.out.println(objectMapper.writeValueAsString(new DefaultAiContentService(null, null).fallbackContent("OpenAI 发布 GPT-5 大模型，性能提升 30%", "人工智能领域又迎来突破，OpenAI 最新发布 GPT-5 大模型，训练数据达 10 万亿 token，推理速度提升 30%，支持多模态输入"))); ;
-//    }
+    private List<String> generateTagsWithHanLP(String content) {
+        if (!StringUtils.hasText(content)) return List.of();
+
+        String cleaned = content.replaceAll("[^\\w\\u4e00-\\u9fa5]+", " ");
+        int target = Math.min(MAX_TAGS, Math.max(MIN_TAGS, content.length() / 400 + 1));
+
+        List<String> keywords = HanLP.extractKeyword(cleaned, target * 2);
+
+        return keywords.stream()
+                .filter(word -> word.length() >= 2 && !STOP_WORDS.contains(word))
+                .limit(target)
+                .toList();
+    }
+
+    public static void main(String[] args) throws JsonProcessingException {
+      System.out.println(new ObjectMapper().writeValueAsString(new DefaultAiContentService(null,null).fallbackContent("KPI 是解药也是毒药", "KPI 需要量化，量化的数字越具体，行动点越明确，那么事情做起来目标感就会越强。这也带来了另外一个问题，大家会把思考都聚焦在这个数字上，去想其他东西的时间变得越来越少。想在 KPI 的文化下把创新做好，是比较有挑战的事情，主要依靠那些除了能够把 KPI 做好，还有余力去思考更多价值的人。\n" +
+              "\n" +
+              "OKR 的作用在于凝聚共识，在上下对焦的过程中，想清楚如何为用户创造价值，不断明确 Objectives，确定思路，形成取舍。再回头看看 KPI，它并不直接关心用户价值这件事情，虽然完成 KPI 上的指标可以一定程度实现用户价值，但它强调的是组织「要什么」，而不是「要怎么做」，更不会回答为什么要这么做。\n" +
+              "\n" +
+              "无论是 KPI 还是 OKR 都只是公司和团队管理的一种工具，既然是工具，就有可以改造和升级的地方。如果你看到有人把 OKR 用的像 KPI，或者把 KPI 用出了 OKR 的味道，也不用惊讶，没有人要求一定要按照书本上的方式玩这些工具。\n" +
+              "\n" +
+              "在原文中打开\n")));  ;
+    }
+
 }

@@ -1,9 +1,9 @@
 <template>
   <div class="flex h-full flex-col gap-4 pb-12 pt-4 sm:gap-6 sm:pb-16 sm:pt-6">
-    <button class="inline-flex items-center text-sm font-medium text-primary transition hover:opacity-80"
-      @click="goBack">
-      ← 返回列表
-    </button>
+<!--    <button class="inline-flex items-center text-sm font-medium text-primary transition hover:opacity-80"-->
+<!--      @click="goBack">-->
+<!--      ← 返回列表-->
+<!--    </button>-->
 
     <div class="flex-1">
       <div v-if="articlesStore.loading"

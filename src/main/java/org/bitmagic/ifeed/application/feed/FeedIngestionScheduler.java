@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.bitmagic.ifeed.config.properties.RssFetcherProperties;
 import org.bitmagic.ifeed.infrastructure.util.TaskUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.CacheManager;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -28,9 +29,11 @@ public class FeedIngestionScheduler {
 
     private final RssFetcherProperties properties;
 
+    private final CacheManager cacheManager;
+
     @Autowired
     public FeedIngestionScheduler(FeedIngestionService ingestionService,
-                                  RssFetcherProperties properties) {
+                                  RssFetcherProperties properties, CacheManager cacheManager) {
         this.ingestionService = ingestionService;
         AtomicInteger counter = new AtomicInteger(0);
         this.executor = Executors.newFixedThreadPool(properties.getThreadPoolSize(), (runnable) -> {
@@ -39,6 +42,7 @@ public class FeedIngestionScheduler {
             return t;
         });
         this.properties = properties;
+        this.cacheManager = cacheManager;
     }
 
     @Scheduled(initialDelayString = "${app.rss.fetcher.initial-delay:PT10S}",
@@ -76,7 +80,7 @@ public class FeedIngestionScheduler {
             log.warn("Feed ingestion interrupted", e);
             Thread.currentThread().interrupt();
         }
-
+        evictItemCache();
         long duration = (System.currentTimeMillis() - start) / 1000;
         log.info("Feed refresh completed: {} success, {} failed, {}s",
                 success.get(), failed.get(), duration);
@@ -100,5 +104,12 @@ public class FeedIngestionScheduler {
             Thread.currentThread().interrupt();
         }
         log.info("Feed ingestion thread pool stopped");
+    }
+
+    public void evictItemCache() {
+        var cache = cacheManager.getCache("ITEMS");
+        if (cache != null) {
+            cache.clear();
+        }
     }
 }

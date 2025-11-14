@@ -15,7 +15,7 @@ spring:
   ai:
     openai:
       api-key: ${app.ai.provider.api-key}
-      base-url: ${app.ai.provider.endpoint}
+      base-url: ${app.ai.provider.base-url}
       chat:
         options:
           model: ${app.ai.provider.model}
@@ -25,7 +25,7 @@ spring:
           dimensions: ${app.ai.provider.embedding.options.dimensions}
           model: ${app.ai.provider.embedding.model}
           encoding-format: 'float'
-        base-url: ${app.ai.provider.embedding.endpoint}
+        base-url: ${app.ai.provider.embedding.base-url}
         api-key: ${app.ai.provider.embedding.api-key}
     vectorstore:
       pgvector:
@@ -44,7 +44,6 @@ spring:
       database: ${MONGO_DB_DATABASE:i_feed}
   profiles:
     active: local
-
 app:
   # 定时任务
   rss:
@@ -52,10 +51,10 @@ app:
       fixed-delay: PT60M
       initial-delay: PT1M
       thread-pool-size: 10
-      connect-timeout: 50s
-      read-timeout: 100s
+      connect-timeout: 30s
+      read-timeout: 30s
       max-items: 500
-      max-retries: 3
+      max-retries: 1
       cache:
         expire-after-write: 30m
         maximum-size: 1000
@@ -73,15 +72,19 @@ app:
   ai:
     provider:
       enabled: false
-      endpoint: ''
+      base-url: ''
       api-key: ''
       model: 'gpt-4o-mini'
       embedding:
-        endpoint: '${app.ai.provider.endpoint}'
+        base-url: '${app.ai.provider.endpoint}'
         api-key: '${app.ai.provider.api-key}'
         model: 'Qwen/Qwen3-Embedding-4B'
         options:
           dimensions: 1024
+      reranker:
+        base-url: '${app.ai.provider.endpoint}'
+        api-key: '${app.ai.provider.api-key}'
+        model: 'bge-reranker-v2-m3'
   # 检索
   search:
     retrieval:
