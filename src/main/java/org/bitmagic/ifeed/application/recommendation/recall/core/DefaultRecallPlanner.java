@@ -1,6 +1,7 @@
 package org.bitmagic.ifeed.application.recommendation.recall.core;
 
 import org.bitmagic.ifeed.application.recommendation.recall.model.*;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.EnumMap;
@@ -17,24 +18,9 @@ public class DefaultRecallPlanner implements RecallPlanner {
             return new RecallPlan(Map.of(), new FusionConfig(request.topK(), true, Map.of(), false, DiversityConfig.disabled()));
         }
 
-        // 平均分配每个策略的召回配额，并对剩余的名额做一次补偿
-        int perStrategy = Math.max(1, request.topK() * 2 / availableStrategies.size());
-        Map<StrategyId, Integer> quotas = new EnumMap<>(StrategyId.class);
-        availableStrategies.forEach(id -> quotas.put(id, perStrategy));
+        Map<StrategyId, Integer> quotas = getStrategyQuotas(availableStrategies, request.topK());
 
-        int remaining = Math.max(0, request.topK() - perStrategy * availableStrategies.size());
-        var iterator = availableStrategies.iterator();
-        while (remaining > 0 && iterator.hasNext()) {
-            StrategyId next = iterator.next();
-            quotas.computeIfPresent(next, (k, v) -> v + 1);
-            remaining--;
-        }
-
-        Map<StrategyId, Double> weights = new EnumMap<>(StrategyId.class);
-        availableStrategies.forEach(id -> {
-            double weight = id.equals(StrategyId.U2A2I) ? 1 : (id.name().contains("U2") ? 0.7 : (id.equals(StrategyId.I2I) ? 0.5 : (id.equals(StrategyId.RANDOM_I2I) ? 0.3 : 0.1)));
-            weights.put(id, weight);
-        });
+        Map<StrategyId, Double> weights = getStrategyWeight(availableStrategies);
 
         // 从请求的过滤器中读取交织和多样化配置
         boolean interleave = parseBoolean(request.filters().getOrDefault("interleaveChannels", Boolean.TRUE));
@@ -42,6 +28,32 @@ public class DefaultRecallPlanner implements RecallPlanner {
 
         FusionConfig config = new FusionConfig(request.topK(), true, weights, interleave, diversity);
         return new RecallPlan(quotas, config);
+    }
+
+    private static @NotNull Map<StrategyId, Double> getStrategyWeight(Collection<StrategyId> availableStrategies) {
+        Map<StrategyId, Double> weights = new EnumMap<>(StrategyId.class);
+        availableStrategies.forEach(id -> {
+            double weight = id.equals(StrategyId.U2A2I) ? 1 : (id.name().contains("U2") ? 0.7 : (id.equals(StrategyId.I2I) ? 0.5 : (id.equals(StrategyId.RANDOM_I2I) ? 0.3 : 0.1)));
+            weights.put(id, weight);
+        });
+        return weights;
+    }
+
+    private static @NotNull Map<StrategyId, Integer> getStrategyQuotas(Collection<StrategyId> availableStrategies, int topK) {
+        // 平均分配每个策略的召回配额，并对剩余的名额做一次补偿
+        int recallTotal = topK * 3;
+        int perStrategy = Math.max(1, recallTotal / availableStrategies.size());
+        Map<StrategyId, Integer> quotas = new EnumMap<>(StrategyId.class);
+        availableStrategies.forEach(id -> quotas.put(id, perStrategy));
+//
+//        int remaining = Math.max(0, recallTotal - perStrategy * availableStrategies.size());
+//        var iterator = availableStrategies.iterator();
+//        while (remaining > 0 && iterator.hasNext()) {
+//            StrategyId next = iterator.next();
+//            quotas.computeIfPresent(next, (k, v) -> v + 1);
+//            remaining--;
+//        }
+        return quotas;
     }
 
     private DiversityConfig extractDiversityConfig(RecallRequest request) {

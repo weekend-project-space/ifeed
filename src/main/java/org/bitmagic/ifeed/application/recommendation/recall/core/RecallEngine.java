@@ -56,7 +56,7 @@ public class RecallEngine {
             futures.put(id, CompletableFuture.supplyAsync(() -> {
                         long start0 = System.currentTimeMillis();
                         List<ItemCandidate> list = registry.get(id).recall(context, quota);
-                        log.info("{} time: {}ms size:{}", id, System.currentTimeMillis() - start0, list.size());
+                        log.info("{} time: {}ms quota:{} size:{}", id, System.currentTimeMillis() - start0, quota, list.size());
                         return list;
                     }, executor)
                     .exceptionally(ex -> {

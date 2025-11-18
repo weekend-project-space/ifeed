@@ -110,7 +110,7 @@ public class UserCollectionService {
                     var id = UUID.fromString(item.getArticleId());
                     var article = articles.get(id);
                     var title = article != null ? article.getTitle() : null;
-                    return new CollectionItemResponse(item.getArticleId(), title, item.getTimestamp());
+                    return new CollectionItemResponse(item.getArticleId(), title, article.getFeed().getTitle(), article.getThumbnail(), article.getSummary(), item.getTimestamp());
                 })
                 .toList();
 

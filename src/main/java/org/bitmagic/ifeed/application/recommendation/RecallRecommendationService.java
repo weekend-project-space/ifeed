@@ -8,7 +8,6 @@ import org.bitmagic.ifeed.application.recommendation.recall.core.RecallEngine;
 import org.bitmagic.ifeed.application.recommendation.recall.model.ItemCandidate;
 import org.bitmagic.ifeed.application.recommendation.recall.model.RecallRequest;
 import org.bitmagic.ifeed.domain.service.ArticleService;
-import org.bitmagic.ifeed.infrastructure.util.DateUtils;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
@@ -57,7 +56,6 @@ public class RecallRecommendationService implements RecommendationService {
                     item.summary(),
                     item.feedTitle(),
                     formatTimestamp(item.publishedAt()),
-                    extractTags(item.tags()),
                     item.thumbnail(),
                     item.enclosure(),
                     candidate.source().name(),
@@ -67,18 +65,6 @@ public class RecallRecommendationService implements RecommendationService {
             );
         });
     }
-
-    private List<String> extractTags(String raw) {
-        if (raw == null || raw.isBlank()) {
-            return Collections.emptyList();
-        }
-        try {
-            return OBJECT_MAPPER.readValue(raw, TAGS_TYPE);
-        } catch (Exception ex) {
-            return Collections.emptyList();
-        }
-    }
-
     private String formatTimestamp(Instant instant) {
         return instant == null ? null : instant.toString();
     }

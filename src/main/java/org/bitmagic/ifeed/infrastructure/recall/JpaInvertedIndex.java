@@ -11,11 +11,10 @@ import org.bitmagic.ifeed.application.retrieval.impl.Bm25RetrievalHandler;
 import org.bitmagic.ifeed.application.retrieval.impl.MultiChannelRetrievalPipeline;
 import org.bitmagic.ifeed.config.properties.SearchRetrievalProperties;
 import org.bitmagic.ifeed.infrastructure.vector.VectorStoreTurbo;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
-import java.sql.Array;
-import java.sql.Connection;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -24,7 +23,7 @@ import java.util.stream.Collectors;
  * 基于 JPA 的倒排索引实现，支持按类目或作者获取最新文章集合。
  */
 @Component
-//@RequiredArgsConstructor
+@RequiredArgsConstructor
 public class JpaInvertedIndex implements InvertedIndex {
 
 

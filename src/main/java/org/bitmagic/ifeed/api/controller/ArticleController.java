@@ -120,7 +120,7 @@ public class ArticleController {
                 resolveFeedTitle(article.feedTitle()),
                 formatTimestamp(article.publishedAt()),
                 tags,
-                DateUtils. formatRelativeTime(publishedAt), "");
+                DateUtils. formatRelativeTime(publishedAt));
     }
 
 

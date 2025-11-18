@@ -41,10 +41,9 @@ public class RecallConfiguration {
     @Bean
     public RecallFusion recallFusion(ItemFreshnessProvider freshnessProvider,
                                      @Value("${recall.fusion.freshness-weight:0.25}") double freshnessWeight,
-                                     @Value("${recall.fusion.freshness-lambda:0.5}") double freshnessLambda,
                                      @Value("${recall.fusion.freshness-half-life-hours:48}") long halfLifeHours) {
         Duration halfLife = Duration.ofHours(Math.max(1L, halfLifeHours));
-        return new DefaultRecallFusion(freshnessProvider, freshnessWeight, freshnessLambda, halfLife);
+        return new DefaultRecallFusion(freshnessProvider, freshnessWeight,  halfLife);
     }
 
     @Bean

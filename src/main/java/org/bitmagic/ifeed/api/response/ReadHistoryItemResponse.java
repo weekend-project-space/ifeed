@@ -2,5 +2,6 @@ package org.bitmagic.ifeed.api.response;
 
 import java.time.Instant;
 
-public record ReadHistoryItemResponse(String articleId, String title, Instant readAt) {
+public record ReadHistoryItemResponse(String articleId, String title, String feedTitle, String thumbnail, String summary,
+                                      Instant readAt) {
 }

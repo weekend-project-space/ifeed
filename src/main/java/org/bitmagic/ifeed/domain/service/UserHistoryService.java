@@ -105,7 +105,7 @@ public class UserHistoryService {
                     var id = UUID.fromString(item.getArticleId());
                     var article = articles.get(id);
                     var title = article != null ? article.getTitle() : null;
-                    return new ReadHistoryItemResponse(item.getArticleId(), title, item.getTimestamp());
+                    return new ReadHistoryItemResponse(item.getArticleId(), title, article.getFeed().getTitle(), article.getThumbnail(), article.getSummary(), item.getTimestamp());
                 })
                 .toList();
 
