@@ -115,7 +115,7 @@
                     :key="tag"
                     @click.stop="emit('select-tag', tag)"
                     class="px-2 py-1 text-xs font-medium text-secondary-700 dark:text-secondary-300 bg-secondary-50 dark:bg-secondary-900/30 rounded-full hover:bg-secondary-100 dark:hover:bg-secondary-900/50 transition-colors">
-                  {{ tag }}
+                  #{{ tag }}
                 </button>
               </div>
             </div>
@@ -141,7 +141,7 @@
         <div
             v-else-if="view === 'card'"
             key="view-card"
-            class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            class="grid gap-0 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           <article
               v-for="item in items"
               :key="item.id"

@@ -49,7 +49,7 @@ public class FeedController {
 
         var feeds = feedService.searchFeeds(query);
         var subscribedFeedIds = subscriptionService.getActiveSubscriptions(principal.getId()).stream()
-                .map(sub -> sub.getFeed().getId().toString())
+                .map(sub -> sub.getFeed().getId())
                 .collect(Collectors.toSet());
         var subscriberCount = subscriptionService.getSubscriberCounts(feeds.stream().map(Feed::getId).toList());
         var responses = feeds.stream()

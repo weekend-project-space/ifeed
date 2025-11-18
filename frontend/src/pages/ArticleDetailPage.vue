@@ -34,9 +34,9 @@
                   v-for="tag in article.tags"
                   :key="tag"
                   type="button"
-                  class="px-3 py-1 text-xs font-medium rounded-full bg-secondary/10 text-secondary hover:bg-secondary/20 transition-colors"
+                  class="px-3 py-1 text-xs font-medium rounded-full  text-secondary hover:bg-secondary/20 transition-colors"
                   @click="handleTagClick(tag)">
-                {{ tag }}
+                #{{ tag }}
               </button>
             </div>
             <button
