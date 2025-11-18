@@ -136,31 +136,15 @@
       </div>
 
       <!-- Pagination -->
-      <nav v-if="items.length && !loading" class="flex items-center justify-center gap-2 mt-6 sm:mt-8 pt-4 sm:pt-6 border-t border-outline/10" aria-label="分页导航">
-        <button
-            @click="prevPage"
-            :disabled="!hasPreviousPage || loading"
-            class="p-2 hover:bg-surface-container rounded-full disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent transition-colors"
-            aria-label="上一页"
-        >
-          <svg class="w-5 h-5 text-text-secondary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <polyline points="15 18 9 12 15 6"/>
-          </svg>
-        </button>
-        <div class="px-3 sm:px-4 py-1 text-xs sm:text-sm text-text-secondary">
-          第 {{ page }} 页
-        </div>
-        <button
-            @click="nextPage"
-            :disabled="!hasNextPage || loading"
-            class="p-2 hover:bg-surface-container rounded-full disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent transition-colors"
-            aria-label="下一页"
-        >
-          <svg class="w-5 h-5 text-text-secondary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <polyline points="9 18 15 12 9 6"/>
-          </svg>
-        </button>
-      </nav>
+      <pagination
+          v-if="items.length && !loading"
+          :current-page="page"
+          :has-previous-page="hasPreviousPage"
+          :has-next-page="hasNextPage"
+          :disabled="loading"
+          @prev-page="prevPage"
+          @next-page="nextPage"
+      />
     </div>
   </div>
 </template>

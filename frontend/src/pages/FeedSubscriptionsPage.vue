@@ -1,88 +1,96 @@
 <template>
-    <div>
-        <header>
-            <div class="flex flex-col gap-3 sm:gap-4">
-                <!-- 分类：样式参考标签胶囊条 -->
-                <div
-                    class="flex items-center gap-2 overflow-x-auto whitespace-nowrap  bg-surface my-2 text-sm text-text-secondary px-2  sm:px-4">
-                    <!-- <button
-                            class="rounded-full px-3 py-1.5 font-medium transition bg-surface text-text-secondary cursor-default sm:px-4 sm:py-2"
-                            disabled>
-                            分类
-                        </button> -->
-                    <!-- 全部分类按钮 -->
-                    <button class="rounded-xl px-3 py-1.5 font-medium transition sm:px-4 sm:py-2"
-                        :class="getFilterClassForCategory('')" @click="clearCategoryFilter()">
-                        全部
-                    </button>
-                    <template v-if="insightsLoading">
-                        <span class="text-text-muted">正在加载分类...</span>
-                    </template>
-                    <template v-else>
-                        <button v-for="c in topCategories" :key="c.category"
-                            class="rounded-xl px-3 py-1.5 font-medium transition sm:px-4 sm:py-2"
-                            :class="getFilterClassForCategory(c.category)" @click="handleSelectCategory(c.category)">
-                            {{ c.category }}
-                        </button>
-                        <span v-if="!topCategories.length" class="text-text-muted">暂无分类统计</span>
-                    </template>
-                </div>
+  <div class=" mx-auto ">
+    <!-- 分类筛选 -->
+    <header class="mb-6">
+      <div class="flex items-center gap-1.5 overflow-x-auto pb-2">
+        <button
+            class="px-3 py-1 text-sm font-medium rounded-lg transition-colors whitespace-nowrap"
+            :class="!currentCategory ? 'bg-secondary text-secondary-foreground' : 'bg-secondary/5 text-secondary hover:bg-secondary/20'"
+            @click="clearCategoryFilter"
+        >
+          全部
+        </button>
 
-                <div v-if="activeTag" class="flex flex-wrap gap-2 text-xs text-text-secondary">
-                    <div class="flex items-center gap-2 rounded-full border border-outline/30 bg-surface px-3 py-1">
-                        <span class="font-medium">#{{ activeTag }}</span>
-                        <button class="text-xs font-semibold text-primary transition hover:underline"
-                            @click="clearTagFilter">
-                            移除
-                        </button>
-                    </div>
-                </div>
-            </div>
+        <template v-if="insightsLoading">
+          <span class="text-xs text-gray-500 px-3">加载中...</span>
+        </template>
+        <template v-else>
+          <button
+              v-for="c in topCategories"
+              :key="c.category"
+              class="px-3 py-1 text-sm font-medium rounded-lg transition-colors whitespace-nowrap"
+              :class="currentCategory === c.category.toLowerCase() ? 'bg-secondary text-secondary-foreground' : 'bg-secondary/5 text-secondary hover:bg-secondary/20'"
+              @click="handleSelectCategory(c.category)"
+          >
+            {{ c.category }}
+          </button>
+          <span v-if="!topCategories.length" class="text-sm text-gray-500 px-3">暂无分类</span>
+        </template>
+      </div>
 
-        </header>
-
-        <div class="mt-3">
-            <ArticleList title="最新" :items="items" :loading="articlesLoading" @select="handleSelect"
-                @select-tag="handleSelectTag" @refresh="refresh" />
-            <div v-if="articleError"
-                class="rounded-xl border border-outline/30 bg-error/5 p-4 text-sm text-error sm:p-6">
-                <p class="font-medium">请求出错：{{ articleError }}</p>
-                <button type="button"
-                    class="mt-3 inline-flex items-center gap-2 rounded-full bg-error text-error-foreground px-3 py-1.5 text-xs font-semibold transition hover:bg-error/90 sm:px-4"
-                    @click="refresh">
-                    重试一次
-                </button>
-            </div>
-
-            <div
-                class="mt-5 sm:mt-6  flex items-center justify-between rounded-2xl border border-outline/20 bg-surface px-3 py-2 text-sm text-text-secondary sm:px-4 sm:py-3">
-                <button
-                    class="rounded-full border border-outline/40 px-2.5 py-1.5 font-medium text-primary transition hover:bg-primary/10 disabled:cursor-not-allowed disabled:border-outline/30 disabled:text-text-muted disabled:opacity-70 sm:px-3 sm:py-2"
-                    :disabled="!hasPrevious" @click="prevPage">
-                    上一页
-                </button>
-                <span>第 {{ currentPage }} 页</span>
-                <button
-                    class="rounded-full border border-outline/40 px-2.5 py-1.5 font-medium text-primary transition hover:bg-primary/10 disabled:cursor-not-allowed disabled:border-outline/30 disabled:text-text-muted disabled:opacity-70 sm:px-3 sm:py-2"
-                    :disabled="!hasNext" @click="nextPage">
-                    下一页
-                </button>
-            </div>
+      <!-- 标签筛选提示 -->
+      <div v-if="activeTag" class="mt-3">
+        <div class="inline-flex items-center gap-2 px-3 py-1 text-xs bg-secondary/10 rounded-lg border border-secondary/20">
+          <span class="text-secondary">#{{ activeTag }}</span>
+          <button
+              class="text-secondary hover:text-secondary/80 font-medium"
+              @click="clearTagFilter"
+          >
+            ✕
+          </button>
         </div>
-    </div>
+      </div>
+    </header>
+
+    <!-- 文章列表 -->
+    <main>
+      <!-- 错误提示 -->
+      <div
+          v-if="articleError"
+          class="mt-6 p-4 rounded-lg bg-red-50 border border-red-200"
+      >
+        <p class="text-sm text-red-800 font-medium mb-2">请求出错：{{ articleError }}</p>
+        <button
+            type="button"
+            class="px-4 py-2 text-sm font-medium rounded-md bg-red-600 text-white hover:bg-red-700 transition-colors"
+            @click="refresh"
+        >
+          重试
+        </button>
+      </div>
+      <article-list
+          title="最新"
+          :items="items"
+          :loading="articlesLoading"
+          @select="handleSelect"
+          @select-tag="handleSelectTag"
+          @refresh="refresh"
+      />
+
+
+
+      <!-- 分页 -->
+      <pagination
+          v-if="items.length && !articlesLoading"
+          :current-page="currentPage"
+          :has-previous-page="hasPreviousPage"
+          :has-next-page="hasNextPage"
+          :disabled="articlesLoading"
+          @prev-page="prevPage"
+          @next-page="nextPage"
+      />
+    </main>
+  </div>
 </template>
 
 <script setup lang="ts">
 import { computed, onMounted, watch } from 'vue';
 import { storeToRefs } from 'pinia';
-import { useRouter, useRoute } from 'vue-router';
-// @ts-ignore: Vue SFC default export typing
-import ArticleList from '../components/ArticleList.vue';
+import { useRoute, useRouter } from 'vue-router';
 import { useArticlesStore } from '../stores/articles';
 import { useCollectionsStore } from '../stores/collections';
 import { useSubscriptionsStore } from '../stores/subscriptions';
 
-// 使用 articles store 提供的 fetchInsights
 const router = useRouter();
 const route = useRoute();
 const articlesStore = useArticlesStore();
@@ -90,175 +98,139 @@ const collectionsStore = useCollectionsStore();
 const subscriptionsStore = useSubscriptionsStore();
 
 const {
-    items,
-    page,
-    hasNextPage,
-    hasPreviousPage,
-    loading: articlesLoading,
-    error: articleError
+  items,
+  hasNextPage,
+  hasPreviousPage,
+  loading: articlesLoading,
+  error: articleError
 } = storeToRefs(articlesStore);
 
 const { insights, insightsLoading } = storeToRefs(articlesStore);
-const { fetchInsights } = articlesStore;
-const topCategories = computed(() => insights.value.categories ?? []);
-const hotTags = computed(() => insights.value.hotTags ?? []);
 
+const topCategories = computed(() => insights.value.categories ?? []);
 const { items: collectionItems } = storeToRefs(collectionsStore);
 const { items: subscriptionItems } = storeToRefs(subscriptionsStore);
 
-const routePage = computed(() => {
-    const raw = Array.isArray(route.query.page) ? route.query.page[0] : route.query.page;
-    const parsed = Number(raw);
-    return Number.isFinite(parsed) && parsed > 0 ? parsed : 1;
+// 当前页码
+const currentPage = computed(() => {
+  const raw = Array.isArray(route.query.page) ? route.query.page[0] : route.query.page;
+  const parsed = Number(raw);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : 1;
 });
 
+// 当前标签
 const activeTag = computed(() => {
-    const raw = Array.isArray(route.query.tags) ? route.query.tags[0] : route.query.tags;
-    if (typeof raw === 'string') {
-        const trimmed = raw.trim();
-        if (trimmed.length > 0) {
-            return trimmed;
-        }
-    }
-    return null;
+  const raw = Array.isArray(route.query.tags) ? route.query.tags[0] : route.query.tags;
+  return typeof raw === 'string' && raw.trim() ? raw.trim() : null;
 });
 
-
-const quickFilters = computed(() => {
-    const filters: Array<{ label: string; value: string | null }> = [{ label: '全部', value: null }];
-    const tagMap = new Map<string, string>();
-    for (const article of items.value) {
-        if (!article || !Array.isArray(article.tags)) {
-            continue;
-        }
-        for (const tag of article.tags) {
-            if (!tag) continue;
-            const normalized = tag.toLowerCase();
-            if (!tagMap.has(normalized)) {
-                tagMap.set(normalized, tag);
-            }
-            if (tagMap.size >= 11) break;
-        }
-        if (tagMap.size >= 11) break;
-    }
-    tagMap.forEach((label, value) => filters.push({ label, value }));
-    return filters;
+// 当前分类
+const currentCategory = computed(() => {
+  const raw = route.query.category as string | undefined;
+  return raw?.toLowerCase() ?? '';
 });
 
-const stats = computed(() => {
-    const savedCount = collectionItems.value.length;
-    const totalGoal = 8;
-    const readGoalPercent = Math.min(100, Math.round((savedCount / totalGoal) * 100));
-    const remaining = Math.max(totalGoal - savedCount, 0);
-    return {
-        savedCount,
-        readGoalPercent,
-        remaining
-    };
-});
-
-const currentPage = computed(() => page.value);
-const hasNext = computed(() => hasNextPage.value);
-const hasPrevious = computed(() => hasPreviousPage.value);
-
+// 构建查询参数
 const buildQuery = (overrides?: { page?: number; tags?: string | null; category?: string | null }) => {
-    const query: Record<string, string> = {};
-    const hasTagOverride = overrides && Object.prototype.hasOwnProperty.call(overrides, 'tags');
-    const tag = hasTagOverride ? overrides?.tags ?? null : activeTag.value;
-    if (tag) query.tags = tag;
-    const hasCategoryOverride = overrides && Object.prototype.hasOwnProperty.call(overrides, 'category');
-    const category = hasCategoryOverride ? overrides?.category ?? null : (route.query.category as string | null);
-    if (category) query.category = category;
-    const nextPage = overrides?.page ?? routePage.value;
-    if (nextPage > 1) query.page = String(nextPage);
-    return query;
+  const query: Record<string, string> = {};
+
+  const tag = overrides?.hasOwnProperty('tags') ? overrides.tags : activeTag.value;
+  if (tag) query.tags = tag;
+
+  const category = overrides?.hasOwnProperty('category') ? overrides.category : currentCategory.value;
+  if (category) query.category = category;
+
+  const page = overrides?.page ?? currentPage.value;
+  if (page > 1) query.page = String(page);
+
+  return query;
 };
 
+// 加载数据
 const loadData = async () => {
-    const tasks: Promise<unknown>[] = [];
-    if (!collectionItems.value.length) tasks.push(collectionsStore.fetchCollections());
-    if (!subscriptionItems.value.length) tasks.push(subscriptionsStore.fetchSubscriptions());
+  const tasks: Promise<unknown>[] = [];
 
-    tasks.push(
-        articlesStore.fetchArticles({
-            size: 20,
-            page: routePage.value,
-            tags: activeTag.value,
-            feedId: null,
-            // 从路由读取 category 传递给 store 请求
-            category: (route.query.category as string | undefined) ?? undefined
-        })
-    );
+  if (!collectionItems.value.length) tasks.push(collectionsStore.fetchCollections());
+  if (!subscriptionItems.value.length) tasks.push(subscriptionsStore.fetchSubscriptions());
 
-    try {
-        await Promise.all(tasks);
-    } catch (err) {
-        console.warn('数据加载失败', err);
-    }
+  tasks.push(
+      articlesStore.fetchArticles({
+        size: 20,
+        page: currentPage.value,
+        tags: activeTag.value,
+        feedId: null,
+        category: currentCategory.value || undefined
+      })
+  );
+
+  try {
+    await Promise.all(tasks);
+  } catch (err) {
+    console.warn('数据加载失败', err);
+  }
 };
 
-// 已移除 SSE / AI 摘要相关代码
+const refresh = () => loadData();
 
-const refresh = async () => {
-    await loadData();
-};
-
+// 页面跳转
 const navigateToPage = (target: number) => {
-    if (target < 1) return;
-    router.push({ name: 'feedsSubscriptions', query: buildQuery({ page: target }) });
+  if (target < 1) return;
+  router.push({ name: 'feedsSubscriptions', query: buildQuery({ page: target }) });
 };
 
 const nextPage = () => {
-    if (!hasNext.value) return;
-    navigateToPage(routePage.value + 1);
+  if (hasNextPage.value) navigateToPage(currentPage.value + 1);
 };
 
 const prevPage = () => {
-    if (!hasPrevious.value) return;
-    navigateToPage(Math.max(1, routePage.value - 1));
+  if (hasPreviousPage.value) navigateToPage(Math.max(1, currentPage.value - 1));
 };
 
+// 文章选择
 const handleSelect = (articleId: string) => {
-    articlesStore.recordHistory(articleId);
-    router.push({ name: 'article-detail', params: { id: articleId } });
+  articlesStore.recordHistory(articleId);
+  router.push({ name: 'article-detail', params: { id: articleId } });
+};
+
+// 标签筛选
+const handleSelectTag = (tag: string) => {
+  if (!tag) return;
+  router.push({
+    name: 'feedsSubscriptions',
+    query: buildQuery({ page: 1, tags: tag.toLowerCase() })
+  });
 };
 
 const clearTagFilter = () => {
-    router.push({ name: 'feedsSubscriptions', query: buildQuery({ tags: null, page: 1 }) });
+  router.push({
+    name: 'feedsSubscriptions',
+    query: buildQuery({ tags: null, page: 1 })
+  });
 };
 
-const handleSelectTag = (tag: string) => {
-    if (!tag) return;
-    router.push({ name: 'feedsSubscriptions', query: buildQuery({ page: 1, tags: tag.toLowerCase() }) });
-};
-
+// 分类筛选
 const handleSelectCategory = (category: string) => {
-    if (!category) return;
-    router.push({ name: 'feedsSubscriptions', query: buildQuery({ page: 1, category: category.toLowerCase(), tags: null }) });
+  if (!category) return;
+  router.push({
+    name: 'feedsSubscriptions',
+    query: buildQuery({ page: 1, category: category.toLowerCase(), tags: null })
+  });
 };
 
 const clearCategoryFilter = () => {
-    router.push({ name: 'feedsSubscriptions', query: buildQuery({ page: 1, category: null }) });
-};
-
-const getFilterClassForCategory = (category: string) => {
-    const current = ((route.query.category as string | undefined) ?? '').toLowerCase();
-    const value = (category ?? '').toLowerCase();
-    const isSelected = (!current && !value) || (current && current === value);
-    return isSelected
-        ? 'bg-primary/5  font-semibold shadow-sm'
-        : 'bg-surface text-text-secondary hover:bg-primary/10 hover:text-primary';
+  router.push({
+    name: 'feedsSubscriptions',
+    query: buildQuery({ page: 1, category: null })
+  });
 };
 
 onMounted(() => {
-    loadData();
-    fetchInsights();
+  loadData();
+  articlesStore.fetchInsights();
 });
 
 watch(
-    () => [routePage.value, activeTag.value, route.query.category],
-    () => {
-        loadData();
-    }
+    () => [currentPage.value, activeTag.value, currentCategory.value],
+    () => loadData()
 );
 </script>

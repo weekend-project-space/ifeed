@@ -1,21 +1,21 @@
 <template>
-  <div class="min-h-screen  dark:bg-gray-900">
-    <div class="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
+  <div class="min-h-screen dark:bg-gray-900">
+    <div class="mx-auto max-w-4xl px-4 py-8 sm:px-6">
       <!-- Loading State -->
       <div v-if="articlesStore.loading" class="flex items-center justify-center py-24">
         <div class="inline-block h-8 w-8 animate-spin rounded-full border-4 border-gray-200 dark:border-gray-700 border-t-secondary-600"></div>
       </div>
 
       <!-- Article Content -->
-      <article v-else-if="article" class="space-y-8">
+      <article v-else-if="article" class="space-y-6">
         <!-- Header -->
-        <header class="space-y-4 border-b border-gray-200 dark:border-gray-800 pb-8">
+        <header class="space-y-3 border-b border-gray-200 dark:border-gray-800 pb-6">
           <!-- Meta Info -->
           <div class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
             <router-link
                 v-if="article.feedId"
                 :to="'/feeds/' + article.feedId"
-                class="font-medium text-secondary-600 dark:text-secondary-400 hover:underline">
+                class="font-medium text-secondary hover:underline">
               {{ article.feedTitle }}
             </router-link>
             <span v-if="article.feedId">·</span>
@@ -23,18 +23,18 @@
           </div>
 
           <!-- Title -->
-          <h1 class="text-3xl sm:text-4xl font-normal text-gray-900 dark:text-gray-100 leading-tight">
+          <h1 class="text-3xl font-normal text-gray-900 dark:text-gray-100 leading-tight">
             {{ article.title }}
           </h1>
 
           <!-- Tags & Actions -->
-          <div class="flex flex-wrap items-center gap-3">
+          <div class="flex flex-wrap items-center gap-2">
             <div v-if="article.tags.length" class="flex flex-wrap gap-2">
               <button
                   v-for="tag in article.tags"
                   :key="tag"
                   type="button"
-                  class="px-3 py-1 text-xs font-medium text-secondary-700 dark:text-secondary-300 bg-secondary-50 dark:bg-secondary-900/30 rounded-full hover:bg-secondary-100 dark:hover:bg-secondary-900/50 transition-colors"
+                  class="px-3 py-1 text-xs font-medium rounded-full bg-secondary/10 text-secondary hover:bg-secondary/20 transition-colors"
                   @click="handleTagClick(tag)">
                 {{ tag }}
               </button>
@@ -42,22 +42,22 @@
             <button
                 class="ml-auto px-4 py-1.5 text-sm font-medium rounded-full transition-colors"
                 :class="isCollected
-                ? 'text-secondary-700 dark:text-secondary-300 bg-secondary-50 dark:bg-secondary-900/30 hover:bg-secondary-100 dark:hover:bg-secondary-900/50'
-                : 'text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700'"
+                ? 'bg-secondary/10 text-secondary hover:bg-secondary/20'
+                : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'"
                 @click="toggleCollection">
               {{ isCollected ? '已收藏' : '收藏' }}
             </button>
           </div>
         </header>
 
-        <div class="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-8 lg:gap-12">
+        <div class="grid grid-cols-1 lg:grid-cols-[1fr_240px] gap-8">
           <!-- Main Content -->
-          <div class="space-y-8 min-w-0">
+          <div class="space-y-6 min-w-0">
             <!-- Summary (mobile) -->
             <section
                 v-if="article.summary"
-                class="lg:hidden p-5 bg-gray-50 dark:bg-gray-800/50 rounded-2xl border border-gray-200 dark:border-gray-700">
-              <h2 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">
+                class="lg:hidden p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700">
+              <h2 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
                 AI 摘要
               </h2>
               <p class="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
@@ -68,8 +68,8 @@
             <!-- TOC (mobile) -->
             <nav
                 v-if="tocItems.length"
-                class="lg:hidden p-5 bg-gray-50 dark:bg-gray-800/50 rounded-2xl border border-gray-200 dark:border-gray-700">
-              <h2 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">
+                class="lg:hidden p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700">
+              <h2 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
                 目录
               </h2>
               <div class="space-y-1">
@@ -77,9 +77,9 @@
                     v-for="item in tocItems"
                     :key="item.id"
                     type="button"
-                    class="block w-full text-left py-2 text-sm rounded-lg transition-colors"
+                    class="block w-full text-left py-1.5 px-2 text-sm rounded transition-colors"
                     :class="activeHeadingId === item.id
-                    ? 'text-secondary-600 dark:text-secondary-400 bg-secondary-50 dark:bg-secondary-900/30 font-medium'
+                    ? 'text-secondary bg-secondary/10 font-medium'
                     : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800'"
                     :style="{ paddingLeft: `${getTocPadding(item.level)}px` }"
                     @click="scrollToHeading(item.id)">
@@ -102,13 +102,13 @@
             </div>
 
             <!-- Footer Links -->
-            <footer class="flex flex-wrap items-center gap-4 pt-6 border-t border-gray-200 dark:border-gray-800 text-sm">
+            <footer class="flex flex-wrap items-center gap-4 pt-4 border-t border-gray-200 dark:border-gray-800 text-sm">
               <a
                   v-if="article.link"
                   :href="article.link"
                   target="_blank"
                   rel="noopener"
-                  class="text-secondary-600 dark:text-secondary-400 hover:underline">
+                  class="text-secondary hover:underline">
                 查看原文
               </a>
               <a
@@ -116,7 +116,7 @@
                   :href="article.enclosure"
                   target="_blank"
                   rel="noopener"
-                  class="text-secondary-600 dark:text-secondary-400 hover:underline">
+                  class="text-secondary hover:underline">
                 查看附件
               </a>
               <span class="text-gray-500 dark:text-gray-400">
@@ -126,13 +126,13 @@
           </div>
 
           <!-- Sidebar (desktop) -->
-          <aside class="hidden lg:block space-y-6">
-            <div class="sticky top-8 space-y-6">
+          <aside class="hidden lg:block">
+            <div class="sticky top-8 space-y-4">
               <!-- Summary -->
               <section
                   v-if="article.summary"
-                  class="p-5 bg-gray-50 dark:bg-gray-800/50 rounded-2xl border border-gray-200 dark:border-gray-700">
-                <h2 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">
+                  class="p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700">
+                <h2 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
                   AI 摘要
                 </h2>
                 <p class="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
@@ -143,8 +143,8 @@
               <!-- TOC -->
               <nav
                   v-if="tocItems.length"
-                  class="p-5 bg-gray-50 dark:bg-gray-800/50 rounded-2xl border border-gray-200 dark:border-gray-700">
-                <h2 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">
+                  class="p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700">
+                <h2 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
                   目录
                 </h2>
                 <div class="space-y-1">
@@ -152,9 +152,9 @@
                       v-for="item in tocItems"
                       :key="item.id"
                       type="button"
-                      class="block w-full text-left py-2 text-sm rounded-lg transition-colors"
+                      class="block w-full text-left py-1.5 px-2 text-sm rounded transition-colors"
                       :class="activeHeadingId === item.id
-                      ? 'text-secondary-600 dark:text-secondary-400 bg-secondary-50 dark:bg-secondary-900/30 font-medium'
+                      ? 'text-secondary bg-secondary/10 font-medium'
                       : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800'"
                       :style="{ paddingLeft: `${getTocPadding(item.level)}px` }"
                       @click="scrollToHeading(item.id)">
@@ -210,11 +210,13 @@ const isCollected = computed(() => {
   }
   return collectionState.value;
 });
+
 watch(collectionState, (value) => {
   if (article.value) {
     article.value.collected = value;
   }
 });
+
 const scrollTracked = ref(false);
 const articleContentRef = ref<HTMLElement | null>(null);
 const tocItems = ref<TocItem[]>([]);
@@ -223,12 +225,12 @@ const activeHeadingId = ref('');
 const HEADING_SCROLL_OFFSET = 128;
 
 const loadArticle = async (articleId: string) => {
-  if (!articleId) {
-    return;
-  }
+  if (!articleId) return;
+
   tocItems.value = [];
   headingElements.value = [];
   activeHeadingId.value = '';
+
   try {
     await articlesStore.fetchArticleById(articleId);
     articlesStore.recordHistory(articleId);
@@ -252,9 +254,7 @@ const toggleCollection = async () => {
 };
 
 const handleTagClick = (tag: string) => {
-  if (!tag) {
-    return;
-  }
+  if (!tag) return;
   router.push({ name: 'feedsSubscriptions', query: { tags: tag.toLowerCase() } });
 };
 
@@ -356,13 +356,9 @@ const updateActiveHeading = () => {
 };
 
 const scrollToHeading = (id: string) => {
-  if (!id) {
-    return;
-  }
+  if (!id) return;
   const target = document.getElementById(id);
-  if (!target) {
-    return;
-  }
+  if (!target) return;
 
   const top = target.getBoundingClientRect().top + window.scrollY - HEADING_SCROLL_OFFSET;
   window.scrollTo({
@@ -373,13 +369,11 @@ const scrollToHeading = (id: string) => {
 
 const handleScroll = () => {
   updateActiveHeading();
-  if (scrollTracked.value) {
-    return;
-  }
+  if (scrollTracked.value) return;
+
   const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
-  if (maxScroll <= 0) {
-    return;
-  }
+  if (maxScroll <= 0) return;
+
   const progress = window.scrollY / maxScroll;
   if (progress > 0.3) {
     scrollTracked.value = true;
