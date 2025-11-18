@@ -115,8 +115,8 @@ export const useCollectionsStore = defineStore('collections', () => {
         }
     };
 
-    const toggleCollection = async (articleId: string, meta?: { title?: string }) => {
-        if (isCollected(articleId)) {
+    const toggleCollection = async (articleId: string, meta?: { title?: string, collected?:boolean }) => {
+        if (meta?.collected) {
             await removeCollection(articleId);
         } else {
             await addCollection(articleId, meta);

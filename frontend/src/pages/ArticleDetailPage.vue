@@ -41,11 +41,11 @@
             </div>
             <button
                 class="ml-auto px-4 py-1.5 text-sm font-medium rounded-full transition-colors"
-                :class="isCollected
+                :class="article.collected
                 ? 'bg-secondary/10 text-secondary hover:bg-secondary/20'
                 : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'"
                 @click="toggleCollection">
-              {{ isCollected ? '已收藏' : '收藏' }}
+              {{ article.collected ? '已收藏' : '收藏' }}
             </button>
           </div>
         </header>
@@ -203,19 +203,7 @@ const { currentArticle } = storeToRefs(articlesStore);
 const { items: collectionItems } = storeToRefs(collectionsStore);
 
 const article = computed(() => currentArticle.value);
-const collectionState = computed(() => collectionsStore.isCollected(props.id));
-const isCollected = computed(() => {
-  if (article.value && typeof article.value.collected === 'boolean') {
-    return article.value.collected;
-  }
-  return collectionState.value;
-});
 
-watch(collectionState, (value) => {
-  if (article.value) {
-    article.value.collected = value;
-  }
-});
 
 const scrollTracked = ref(false);
 const articleContentRef = ref<HTMLElement | null>(null);
@@ -234,9 +222,6 @@ const loadArticle = async (articleId: string) => {
   try {
     await articlesStore.fetchArticleById(articleId);
     articlesStore.recordHistory(articleId);
-    if (!collectionItems.value.length && typeof article.value?.collected !== 'boolean') {
-      await collectionsStore.fetchCollections();
-    }
   } catch (err) {
     console.warn('文章详情加载失败', err);
   }
@@ -244,7 +229,7 @@ const loadArticle = async (articleId: string) => {
 
 const toggleCollection = async () => {
   try {
-    await collectionsStore.toggleCollection(props.id, { title: article.value?.title });
+    await collectionsStore.toggleCollection(props.id, { title: article.value?.title, collected:article.value.collected});
     if (article.value) {
       article.value.collected = !article.value.collected;
     }
