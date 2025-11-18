@@ -19,7 +19,7 @@
           <button
               type="button"
               class="px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-medium transition-colors"
-              :class="searchType === 'keyword' ? 'bg-text text-white' : 'text-text hover:bg-surface'"
+              :class="searchType === 'keyword' ? 'bg-secondary text-secondary-foreground' : 'text-text '"
               @click="setSearchType('keyword')"
           >
             关键词匹配
@@ -27,7 +27,7 @@
           <button
               type="button"
               class="px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-medium transition-colors"
-              :class="searchType === 'semantic' ? 'bg-text text-white' : 'text-text hover:bg-surface'"
+              :class="searchType === 'semantic' ? 'bg-secondary text-secondary-foreground' : 'text-text '"
               @click="setSearchType('semantic')"
           >
             语义匹配
@@ -170,31 +170,16 @@
         </div>
 
         <!-- Pagination -->
-        <nav v-if="searchArticleItems.length > 0" class="flex items-center justify-center gap-2 mt-6 sm:mt-8 pt-4 sm:pt-6 border-t border-outline/10" aria-label="分页导航">
-          <button
-              @click="prevPage"
-              :disabled="!hasPrevious"
-              class="p-2 hover:bg-surface-container rounded-full disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent transition-colors"
-              aria-label="上一页"
-          >
-            <svg class="w-5 h-5 text-text-secondary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <polyline points="15 18 9 12 15 6"/>
-            </svg>
-          </button>
-          <div class="px-3 sm:px-4 py-1 text-xs sm:text-sm text-text-secondary">
-            第 {{ currentPage }} 页
-          </div>
-          <button
-              @click="nextPage"
-              :disabled="!hasNext"
-              class="p-2 hover:bg-surface-container rounded-full disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent transition-colors"
-              aria-label="下一页"
-          >
-            <svg class="w-5 h-5 text-text-secondary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <polyline points="9 18 15 12 9 6"/>
-            </svg>
-          </button>
-        </nav>
+        <pagination
+            v-if="searchArticleItems.length && !loading"
+            :current-page="page"
+            :has-previous-page="hasPreviousPage"
+            :has-next-page="hasNextPage"
+            :disabled="loading"
+            @prev-page="prevPage"
+            @next-page="nextPage"
+        />
+
       </div>
     </div>
   </div>
