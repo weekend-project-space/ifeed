@@ -33,9 +33,10 @@ public class EmbeddingScheduler {
             userRepository.findAll().forEach(user -> {
                 log.info("init user embedding :{}", user.getUsername());
                 try {
-                    evictU2I2ICache(user.getId());
-                    evictU2ICache(user.getId());
-                    userEmbeddingService.rebuildUserEmbedding(user.getId());
+                    userEmbeddingService.rebuildUserEmbedding(user.getId()).ifPresent(userEmbedding -> {
+                        evictU2I2ICache(user.getId());
+                        evictU2ICache(user.getId());
+                    });
                 } catch (RuntimeException e) {
                     log.warn("init user embedding", e);
                 }

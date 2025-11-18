@@ -1,5 +1,4 @@
 <template>
-  <div class="min-h-screen dark:bg-gray-900">
     <div class="mx-auto max-w-4xl px-4 py-8 sm:px-6">
       <!-- Loading State -->
       <div v-if="articlesStore.loading" class="flex items-center justify-center py-24">
@@ -174,7 +173,6 @@
         </p>
       </div>
     </div>
-  </div>
 </template>
 
 <script setup lang="ts">

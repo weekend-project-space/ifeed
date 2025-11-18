@@ -18,7 +18,7 @@ export const useCollectionsStore = defineStore('collections', () => {
     const loading = ref(false);
     const error = ref<string | null>(null);
     const page = ref(1);
-    const size = ref(10);
+    const size = ref(20);
     const total = ref<number | null>(null);
     const totalPages = ref<number | null>(null);
     const ids = computed(() => new Set(items.value.map((item) => item.articleId)));

@@ -6,7 +6,6 @@ import org.bitmagic.ifeed.api.response.FeedDetailResponse;
 import org.bitmagic.ifeed.api.response.SubscriptionSearchResponse;
 import org.bitmagic.ifeed.api.util.IdentifierUtils;
 import org.bitmagic.ifeed.config.security.UserPrincipal;
-import org.bitmagic.ifeed.domain.document.UserBehaviorDocument;
 import org.bitmagic.ifeed.domain.model.Feed;
 import org.bitmagic.ifeed.domain.service.FeedService;
 import org.bitmagic.ifeed.domain.service.SubscriptionService;
@@ -18,11 +17,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.time.Instant;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 @RestController
