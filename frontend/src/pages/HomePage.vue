@@ -42,7 +42,7 @@ import { storeToRefs } from 'pinia';
 import ArticleList from '../components/ArticleList.vue';
 import { useArticlesStore } from '../stores/articles';
 
-const SIZE = 20;
+const SIZE = 60;
 
 const route = useRoute();
 const router = useRouter();

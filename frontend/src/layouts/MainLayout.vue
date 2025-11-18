@@ -633,7 +633,7 @@ const subscriptionNavSection = computed<NavSection>(() => {
   items.push({
     id: 'manage-subscriptions',
     label: '管理订阅',
-    to: { name: 'subscriptions' as const },
+    to: { name: 'feedChannels' as const },
     icon: {
       stroke: true,
       paths: [
@@ -646,7 +646,7 @@ const subscriptionNavSection = computed<NavSection>(() => {
     },
     activeMatch: (current) => {
       const manage = current.query.manage as string | undefined;
-      return current.name === 'subscriptions';
+      return current.name === 'feedChannels';
     }
   });
   // 展开 / 折叠按钮

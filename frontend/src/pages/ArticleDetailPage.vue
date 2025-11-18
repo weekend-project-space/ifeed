@@ -1,111 +1,177 @@
 <template>
-  <div class="flex h-full flex-col gap-4 pb-12 pt-4 sm:gap-6 sm:pb-16 sm:pt-6">
-<!--    <button class="inline-flex items-center text-sm font-medium text-primary transition hover:opacity-80"-->
-<!--      @click="goBack">-->
-<!--      ← 返回列表-->
-<!--    </button>-->
-
-    <div class="flex-1">
-      <div v-if="articlesStore.loading"
-        class="mx-auto w-full max-w-4xl rounded-3xl border border-outline/40 bg-surface-container p-8 text-center text-text-muted sm:p-10 md:p-12">
-        正在加载文章...
+  <div class="min-h-screen  dark:bg-gray-900">
+    <div class="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
+      <!-- Loading State -->
+      <div v-if="articlesStore.loading" class="flex items-center justify-center py-24">
+        <div class="inline-block h-8 w-8 animate-spin rounded-full border-4 border-gray-200 dark:border-gray-700 border-t-secondary-600"></div>
       </div>
 
-      <div v-else-if="article"
-        class="mx-auto w-full max-w-5xl space-y-6 rounded-3xl border border-outline/20 bg-surface p-4 sm:space-y-8 sm:p-6 md:space-y-10 md:p-10">
-        <div class="flex flex-col gap-6 lg:flex-row lg:items-start lg:gap-8 xl:gap-10">
-          <div class="flex-1 space-y-6 lg:max-w-[720px] lg:space-y-8">
-            <header class="space-y-4 sm:space-y-5">
-              <div class="flex flex-wrap items-start justify-between gap-3 sm:gap-4">
-                <div class="space-y-2">
-                  <p class="text-sm text-text-muted">
-                    <router-link v-if="article.feedId" :to="'/feeds/' + article.feedId"
-                      class="font-medium text-primary transition hover:opacity-80">{{ article.feedTitle }}
-                    </router-link> · {{ article.timeAgo }}
-                  </p>
-                  <h1 class="text-3xl font-semibold leading-tight text-text">{{ article.title }}</h1>
-                </div>
-                <button
-                  class="inline-flex items-center gap-2 rounded-full border border-outline/50 px-4 py-1.5 text-sm font-medium transition hover:border-primary/60 hover:text-primary sm:px-5 sm:py-2"
-                  :class="isCollected ? 'border-transparent bg-primary/15 text-primary' : ''" @click="toggleCollection">
-                  <span>{{ isCollected ? '已收藏' : '收藏' }}</span>
-                </button>
-              </div>
-              <div v-if="article.tags.length" class="flex flex-wrap gap-2 text-xs text-primary">
-                <button v-for="tag in article.tags" :key="tag" type="button"
-                  class="rounded-full bg-primary/10 px-3 py-1 transition hover:bg-primary/15"
-                  @click="handleTagClick(tag)">
-                  #{{ tag }}
-                </button>
-              </div>
-            </header>
+      <!-- Article Content -->
+      <article v-else-if="article" class="space-y-8">
+        <!-- Header -->
+        <header class="space-y-4 border-b border-gray-200 dark:border-gray-800 pb-8">
+          <!-- Meta Info -->
+          <div class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+            <router-link
+                v-if="article.feedId"
+                :to="'/feeds/' + article.feedId"
+                class="font-medium text-secondary-600 dark:text-secondary-400 hover:underline">
+              {{ article.feedTitle }}
+            </router-link>
+            <span v-if="article.feedId">·</span>
+            <span>{{ article.timeAgo }}</span>
+          </div>
 
-            <div v-if="tocItems.length"
-              class="toc-container rounded-2xl border border-outline/20 bg-surface p-3 text-sm text-text-secondary sm:p-4 lg:hidden">
-              <div class="toc-header mb-3 flex items-center justify-between text-xs font-semibold text-text-muted">
-                <span class="toc-title">章节导航</span>
-                <span class="toc-hint text-[10px] text-text-disabled">点击跳转</span>
-              </div>
-              <nav class="toc-list">
-                <button v-for="item in tocItems" :key="item.id" type="button"
-                  class="toc-item block w-full rounded-lg py-2 pr-3 text-left text-sm transition"
-                  :class="activeHeadingId === item.id ? 'active bg-primary/10 text-primary font-medium' : 'text-text-secondary hover:bg-primary/5 hover:text-text'"
-                  :style="{ paddingLeft: `${getTocPadding(item.level)}px` }" @click="scrollToHeading(item.id)">
+          <!-- Title -->
+          <h1 class="text-3xl sm:text-4xl font-normal text-gray-900 dark:text-gray-100 leading-tight">
+            {{ article.title }}
+          </h1>
+
+          <!-- Tags & Actions -->
+          <div class="flex flex-wrap items-center gap-3">
+            <div v-if="article.tags.length" class="flex flex-wrap gap-2">
+              <button
+                  v-for="tag in article.tags"
+                  :key="tag"
+                  type="button"
+                  class="px-3 py-1 text-xs font-medium text-secondary-700 dark:text-secondary-300 bg-secondary-50 dark:bg-secondary-900/30 rounded-full hover:bg-secondary-100 dark:hover:bg-secondary-900/50 transition-colors"
+                  @click="handleTagClick(tag)">
+                {{ tag }}
+              </button>
+            </div>
+            <button
+                class="ml-auto px-4 py-1.5 text-sm font-medium rounded-full transition-colors"
+                :class="isCollected
+                ? 'text-secondary-700 dark:text-secondary-300 bg-secondary-50 dark:bg-secondary-900/30 hover:bg-secondary-100 dark:hover:bg-secondary-900/50'
+                : 'text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700'"
+                @click="toggleCollection">
+              {{ isCollected ? '已收藏' : '收藏' }}
+            </button>
+          </div>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-8 lg:gap-12">
+          <!-- Main Content -->
+          <div class="space-y-8 min-w-0">
+            <!-- Summary (mobile) -->
+            <section
+                v-if="article.summary"
+                class="lg:hidden p-5 bg-gray-50 dark:bg-gray-800/50 rounded-2xl border border-gray-200 dark:border-gray-700">
+              <h2 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">
+                AI 摘要
+              </h2>
+              <p class="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
+                {{ article.summary }}
+              </p>
+            </section>
+
+            <!-- TOC (mobile) -->
+            <nav
+                v-if="tocItems.length"
+                class="lg:hidden p-5 bg-gray-50 dark:bg-gray-800/50 rounded-2xl border border-gray-200 dark:border-gray-700">
+              <h2 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">
+                目录
+              </h2>
+              <div class="space-y-1">
+                <button
+                    v-for="item in tocItems"
+                    :key="item.id"
+                    type="button"
+                    class="block w-full text-left py-2 text-sm rounded-lg transition-colors"
+                    :class="activeHeadingId === item.id
+                    ? 'text-secondary-600 dark:text-secondary-400 bg-secondary-50 dark:bg-secondary-900/30 font-medium'
+                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800'"
+                    :style="{ paddingLeft: `${getTocPadding(item.level)}px` }"
+                    @click="scrollToHeading(item.id)">
                   {{ item.text }}
                 </button>
-              </nav>
+              </div>
+            </nav>
+
+            <!-- Article Body -->
+            <div class="prose prose-gray dark:prose-invert max-w-none">
+              <div
+                  v-if="article.content"
+                  ref="articleContentRef"
+                  class="article-content"
+                  v-html="article.content">
+              </div>
+              <p v-else class="text-gray-500 dark:text-gray-400">
+                暂无正文内容。
+              </p>
             </div>
 
-            <section v-if="article.summary"
-              class="rounded-2xl border border-outline/20 bg-surface-variant/60 p-4 leading-relaxed text-text-secondary sm:p-5 lg:hidden">
-              <h2 class="mb-2 text-sm font-semibold uppercase tracking-wide text-text-muted">AI 摘要</h2>
-              <p class="text-base text-text">{{ article.summary }}</p>
-            </section>
-            <section class="space-y-3 text-text sm:space-y-4">
-              <h2 class="text-lg font-semibold">正文内容</h2>
-              <div v-if="article.content" ref="articleContentRef" class="article-content" v-html="article.content">
-              </div>
-              <p v-else class="text-text-muted">暂无正文内容。</p>
-            </section>
-            <footer
-              class="flex flex-wrap items-center gap-3 border-t border-outline/30 pt-3 text-sm text-text-secondary sm:gap-4 sm:pt-4">
-              <a v-if="article.link" :href="article.link" target="_blank" rel="noopener"
-                class="font-medium text-primary transition hover:opacity-80">
-                在原文中打开
+            <!-- Footer Links -->
+            <footer class="flex flex-wrap items-center gap-4 pt-6 border-t border-gray-200 dark:border-gray-800 text-sm">
+              <a
+                  v-if="article.link"
+                  :href="article.link"
+                  target="_blank"
+                  rel="noopener"
+                  class="text-secondary-600 dark:text-secondary-400 hover:underline">
+                查看原文
               </a>
-              <a v-if="article.enclosure" :href="article.enclosure" target="_blank" rel="noopener"
-                class="font-medium text-primary transition hover:opacity-80">
+              <a
+                  v-if="article.enclosure"
+                  :href="article.enclosure"
+                  target="_blank"
+                  rel="noopener"
+                  class="text-secondary-600 dark:text-secondary-400 hover:underline">
                 查看附件
               </a>
-              <span>最后更新：{{ article.timeAgo }}</span>
+              <span class="text-gray-500 dark:text-gray-400">
+                最后更新：{{ article.timeAgo }}
+              </span>
             </footer>
           </div>
-          <aside v-if="article.summary || tocItems.length"
-            class="sticky top-24 hidden w-full max-w-xs shrink-0 space-y-5 lg:block">
-            <div v-if="article.summary"
-              class="rounded-2xl border border-outline/20 bg-surface p-5 text-sm leading-relaxed text-text-secondary">
-              <h2 class="mb-3 text-xs font-semibold uppercase tracking-wide text-text-muted">AI 摘要</h2>
-              <p class="text-base text-text">{{ article.summary }}</p>
-            </div>
-            <div v-if="tocItems.length"
-              class="toc-container space-y-2 rounded-2xl border border-outline/20 bg-surface p-4 text-sm">
-              <div class="toc-header text-xs font-semibold text-text-muted">章节导航</div>
-              <nav class="toc-list">
-                <button v-for="item in tocItems" :key="item.id" type="button"
-                  class="toc-item block w-full rounded-lg py-2 pr-3 text-left text-sm transition"
-                  :class="activeHeadingId === item.id ? 'active bg-primary/10 text-primary font-medium' : 'text-text-secondary hover:bg-primary/5 hover:text-text'"
-                  :style="{ paddingLeft: `${getTocPadding(item.level)}px` }" @click="scrollToHeading(item.id)">
-                  {{ item.text }}
-                </button>
+
+          <!-- Sidebar (desktop) -->
+          <aside class="hidden lg:block space-y-6">
+            <div class="sticky top-8 space-y-6">
+              <!-- Summary -->
+              <section
+                  v-if="article.summary"
+                  class="p-5 bg-gray-50 dark:bg-gray-800/50 rounded-2xl border border-gray-200 dark:border-gray-700">
+                <h2 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">
+                  AI 摘要
+                </h2>
+                <p class="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
+                  {{ article.summary }}
+                </p>
+              </section>
+
+              <!-- TOC -->
+              <nav
+                  v-if="tocItems.length"
+                  class="p-5 bg-gray-50 dark:bg-gray-800/50 rounded-2xl border border-gray-200 dark:border-gray-700">
+                <h2 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">
+                  目录
+                </h2>
+                <div class="space-y-1">
+                  <button
+                      v-for="item in tocItems"
+                      :key="item.id"
+                      type="button"
+                      class="block w-full text-left py-2 text-sm rounded-lg transition-colors"
+                      :class="activeHeadingId === item.id
+                      ? 'text-secondary-600 dark:text-secondary-400 bg-secondary-50 dark:bg-secondary-900/30 font-medium'
+                      : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800'"
+                      :style="{ paddingLeft: `${getTocPadding(item.level)}px` }"
+                      @click="scrollToHeading(item.id)">
+                    {{ item.text }}
+                  </button>
+                </div>
               </nav>
             </div>
           </aside>
         </div>
-      </div>
+      </article>
 
-      <div v-else
-        class="w-full rounded-3xl border border-outline/40 bg-surface-container p-8 text-center text-text-muted sm:p-10 md:p-12">
-        未找到文章或加载失败。
+      <!-- Error State -->
+      <div v-else class="flex items-center justify-center py-24">
+        <p class="text-gray-500 dark:text-gray-400">
+          未找到文章或加载失败。
+        </p>
       </div>
     </div>
   </div>
@@ -185,10 +251,6 @@ const toggleCollection = async () => {
   }
 };
 
-const goBack = () => {
-  router.back();
-};
-
 const handleTagClick = (tag: string) => {
   if (!tag) {
     return;
@@ -198,10 +260,10 @@ const handleTagClick = (tag: string) => {
 
 const createSlug = (text: string, index: number, used: Map<string, number>) => {
   const normalized = text
-    .trim()
-    .toLowerCase()
-    .replace(/\s+/g, '-')
-    .replace(/[^\w\-一-龥]+/g, '');
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, '-')
+      .replace(/[^\w\-一-龥]+/g, '');
   const base = normalized || `section-${index + 1}`;
   const count = used.get(base);
   if (count == null) {
@@ -338,201 +400,92 @@ onBeforeUnmount(() => {
 });
 
 watch(
-  () => props.id,
-  (next) => {
-    scrollTracked.value = false;
-    loadArticle(next);
-  }
+    () => props.id,
+    (next) => {
+      scrollTracked.value = false;
+      loadArticle(next);
+    }
 );
 
 watch(
-  () => article.value?.content,
-  async () => {
-    await refreshHeadingNavigation();
-  }
+    () => article.value?.content,
+    async () => {
+      await refreshHeadingNavigation();
+    }
 );
 </script>
 
-<style lang="scss">
+<style scoped>
 .article-content {
-  font-size: 1rem;
-  line-height: 1.8;
-  color: rgb(var(--md-text));
-
-  p {
-    margin-bottom: 1.25rem;
-    color: inherit;
-
-    &:last-child {
-      margin-bottom: 0;
-    }
-  }
-
-  h1,
-  h2,
-  h3 {
-    font-weight: 600;
-    color: rgb(var(--md-text));
-    margin-top: 2.5rem;
-    margin-bottom: 1rem;
-    scroll-margin-top: 128px;
-  }
-
-  h1 {
-    font-size: 1.875rem;
-  }
-
-  h2 {
-    font-size: 1.5rem;
-  }
-
-  h3 {
-    font-size: 1.25rem;
-  }
-
-  a {
-    color: rgb(var(--md-primary));
-    text-decoration: underline;
-    transition: color 0.2s ease;
-  }
-
-  ul,
-  ol {
-    margin-bottom: 1.5rem;
-    padding-left: 1.5rem;
-  }
-
-  li {
-    margin-bottom: 0.5rem;
-  }
-
-  blockquote {
-    border-left: 3px solid rgb(var(--md-primary) / 0.35);
-    background: rgb(var(--md-primary) / 0.08);
-    padding: 1.25rem 1.5rem;
-    margin: 2rem 0;
-    border-radius: 1rem;
-    color: rgb(var(--md-text));
-  }
-
-  pre {
-    background: rgb(var(--md-outline) / 0.1);
-    padding: 1.1rem 1.4rem;
-    margin: 1.75rem 0;
-    border-radius: 0.75rem;
-    overflow-x: auto;
-    border: 1px solid rgb(var(--md-outline) / 0.25);
-
-    code {
-      background: transparent;
-      color: inherit;
-      padding: 0;
-      border-radius: 0;
-    }
-  }
-
-  code {
-    background: rgb(var(--md-outline) / 0.18);
-    color: rgb(var(--md-text));
-    padding: 0.2rem 0.45rem;
-    border-radius: 0.45rem;
-    font-size: 0.95rem;
-  }
-
-  img {
-    display: block;
-    width: 100%;
-    height: auto;
-    border-radius: 1rem;
-    margin: 2rem 0;
-  }
-
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    margin: 2rem 0;
-    font-size: 0.95rem;
-    border: 1px solid rgb(var(--md-outline) / 0.2);
-  }
-
-  th,
-  td {
-    border: 1px solid rgb(var(--md-outline) / 0.2);
-    padding: 0.75rem 0.9rem;
-    text-align: left;
-  }
-
-  thead th {
-    background: rgb(var(--md-outline) / 0.12);
-    font-weight: 600;
-  }
-
-  hr {
-    border: none;
-    height: 1px;
-    background: rgb(var(--md-outline) / 0.35);
-    margin: 2.5rem 0;
-  }
+  @apply text-base leading-relaxed text-gray-800 dark:text-gray-200;
 }
 
-
-.toc-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
+.article-content :deep(p) {
+  @apply mb-5 last:mb-0;
 }
 
-.toc-item {
-  border-left: 2px solid transparent;
-  background: transparent;
-  color: rgba(var(--md-text), 0.75);
-  transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+.article-content :deep(h1),
+.article-content :deep(h2),
+.article-content :deep(h3) {
+  @apply font-semibold text-gray-900 dark:text-gray-100 mt-8 mb-4;
+  scroll-margin-top: 128px;
 }
 
-.toc-item:hover {
-  border-left-color: rgba(var(--md-outline), 0.35);
-  background: rgba(var(--md-primary), 0.08);
-  color: rgb(var(--md-text));
+.article-content :deep(h1) {
+  @apply text-3xl;
 }
 
-.toc-item.active {
-  border-left-color: rgba(var(--md-primary), 0.65);
-  background: rgba(var(--md-primary), 0.12);
-  color: rgb(var(--md-primary));
-  font-weight: 600;
+.article-content :deep(h2) {
+  @apply text-2xl;
 }
 
-.toc-item:focus-visible {
-  outline: 2px solid rgba(var(--md-primary), 0.35);
-  outline-offset: 2px;
+.article-content :deep(h3) {
+  @apply text-xl;
 }
 
-@media (max-width: 768px) {
-  .article-content {
-    font-size: 0.98rem;
-  }
-
-  .article-content :deep(h1) {
-    font-size: 1.65rem;
-    margin-top: 2rem;
-  }
-
-  .article-content :deep(h2) {
-    font-size: 1.35rem;
-    margin-top: 2rem;
-  }
-
-  .article-content :deep(h3) {
-    font-size: 1.15rem;
-    margin-top: 1.75rem;
-  }
+.article-content :deep(ul),
+.article-content :deep(ol) {
+  @apply mb-6 pl-6;
 }
 
-@media (prefers-reduced-motion: reduce) {
+.article-content :deep(li) {
+  @apply mb-2;
+}
 
-  .toc-container,
-  .toc-item {
-    transition: none;
-  }
+.article-content :deep(blockquote) {
+  @apply border-l-4 border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 px-6 py-4 my-6 rounded-r-lg;
+}
+
+.article-content :deep(pre) {
+  @apply bg-gray-100 dark:bg-gray-800 p-4 my-6 rounded-lg overflow-x-auto border border-gray-200 dark:border-gray-700;
+}
+
+.article-content :deep(pre code) {
+  @apply bg-transparent p-0 rounded-none;
+}
+
+.article-content :deep(code) {
+  @apply bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100 px-1.5 py-0.5 rounded text-sm;
+}
+
+.article-content :deep(img) {
+  @apply w-full h-auto rounded-lg my-8;
+}
+
+.article-content :deep(table) {
+  @apply w-full border-collapse my-8 text-sm border border-gray-200 dark:border-gray-700;
+}
+
+.article-content :deep(th),
+.article-content :deep(td) {
+  @apply border border-gray-200 dark:border-gray-700 px-4 py-2 text-left;
+}
+
+.article-content :deep(thead th) {
+  @apply bg-gray-50 dark:bg-gray-800 font-semibold;
+}
+
+.article-content :deep(hr) {
+  @apply border-0 h-px bg-gray-200 dark:bg-gray-700 my-8;
 }
 </style>

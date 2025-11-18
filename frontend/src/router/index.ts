@@ -1,102 +1,102 @@
-import { createRouter, createWebHistory } from 'vue-router';
+import {createRouter, createWebHistory} from 'vue-router';
 import AuthPage from '../pages/AuthPage.vue';
 // import HomePage from '../pages/HomePage.vue';
 import SearchPage from '../pages/SearchPage.vue';
 import MainLayout from '../layouts/MainLayout.vue';
-import SubscriptionsPage from '../pages/SubscriptionsPage.vue';
+import SubscriptionsAddPage from '../pages/SubscriptionsAddPage.vue';
 import CollectionsPage from '../pages/CollectionsPage.vue';
 import HistoryPage from '../pages/HistoryPage.vue';
 import ArticleDetailPage from '../pages/ArticleDetailPage.vue';
 import FeedPage from '../pages/FeedPage.vue';
 import HomePage from '../pages/HomePage.vue';
-import RecommendationsPage from '../pages/RecommendationsPage.vue';
 import FeedSubscriptionsPage from '../pages/FeedSubscriptionsPage.vue';
-import { useAuthStore } from '../stores/auth';
+import FeedChannelsPage from '../pages/SubscriptionsListPage.vue';
+import {useAuthStore} from '../stores/auth';
 
 const router = createRouter({
-  history: createWebHistory(),
-  routes: [
-    {
-      path: '/auth',
-      name: 'auth',
-      component: AuthPage
-    },
-    {
-      path: '/',
-      component: MainLayout,
-      children: [
+    history: createWebHistory(),
+    routes: [
         {
-          path: '',
-          name: 'home',
-          component: HomePage
+            path: '/auth',
+            name: 'auth',
+            component: AuthPage
         },
         {
-          path: 'search',
-          name: 'search',
-          component: SearchPage
-        },
-        {
-          path: 'subscriptions',
-          name: 'subscriptions',
-          component: SubscriptionsPage
-        },
-        {
-          path: 'collections',
-          name: 'collections',
-          component: CollectionsPage
-        },
-        {
-          path: 'recommendations',
-          name: 'recommendations',
-          component: RecommendationsPage
-        },
-        {
-          path: 'history',
-          name: 'history',
-          component: HistoryPage
-        },
-        {
-          path: 'feeds/subscriptions',
-          name: 'feedsSubscriptions',
-          component: FeedSubscriptionsPage
-        },
-        {
-          path: 'feeds/:feedId',
-          name: 'feed',
-          component: FeedPage,
-          props: true
-        },
-        {
-          path: 'articles/:id',
-          name: 'article-detail',
-          component: ArticleDetailPage,
-          props: true
+            path: '/',
+            component: MainLayout,
+            children: [
+                {
+                    path: '',
+                    name: 'home',
+                    component: HomePage
+                },
+                {
+                    path: 'search',
+                    name: 'search',
+                    component: SearchPage
+                },
+                {
+                    path: 'subscriptions',
+                    name: 'subscriptions',
+                    component: SubscriptionsAddPage
+                },
+                {
+                    path: 'collections',
+                    name: 'collections',
+                    component: CollectionsPage
+                },
+                {
+                    path: 'history',
+                    name: 'history',
+                    component: HistoryPage
+                },
+                {
+                    path: 'feeds/subscriptions',
+                    name: 'feedsSubscriptions',
+                    component: FeedSubscriptionsPage
+                },
+                {
+                    path: 'feeds/channels',
+                    name: 'feedChannels',
+                    component: FeedChannelsPage,
+                },
+                {
+                    path: 'feeds/:feedId',
+                    name: 'feed',
+                    component: FeedPage,
+                    props: true
+                },
+                {
+                    path: 'articles/:id',
+                    name: 'article-detail',
+                    component: ArticleDetailPage,
+                    props: true
+                }
+            ]
         }
-      ]
-    }
-  ]
+    ]
 });
 
 router.beforeEach(async (to: any) => {
-  const auth = useAuthStore();
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-  if (!auth.initialized && auth.token) {
-    try {
-      await auth.fetchUser();
-    } catch (err) {
-      console.warn('用户信息初始化失败', err);
+    const auth = useAuthStore();
+    window.scrollTo({top: 0, behavior: 'smooth'});
+    if (!auth.initialized && auth.token) {
+        try {
+            await auth.fetchUser();
+        } catch (err) {
+            console.warn('用户信息初始化失败', err);
+        }
     }
-  }
 
-  if (to.name !== 'auth' && !auth.isAuthenticated) {
-    return { name: 'auth', query: { redirect: to.fullPath } };
-  }
+    if (to.name !== 'auth' && !auth.isAuthenticated) {
+        return {name: 'auth', query: {redirect: to.fullPath}};
+    }
 
-  if (to.name === 'auth' && auth.isAuthenticated) {
-    return { name: 'home' };
-  }
+    if (to.name === 'auth' && auth.isAuthenticated) {
+        return {name: 'home'};
+    }
 
-  return true;
+    return true;
 });
 
 export default router;
