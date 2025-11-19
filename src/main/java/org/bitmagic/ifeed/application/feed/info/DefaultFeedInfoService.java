@@ -18,6 +18,7 @@ public class DefaultFeedInfoService implements FeedInfoService {
             var normalizedTitle = fetchedTitle.trim();
             if (!normalizedTitle.equals(feed.getTitle())) {
                 feed.setTitle(normalizedTitle);
+                feed.setDescription(syndFeed.getDescription());
                 feed.setSiteUrl(syndFeed.getLink());
             }
             return;

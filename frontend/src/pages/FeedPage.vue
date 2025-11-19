@@ -24,8 +24,8 @@
               <h1 class="text-2xl font-normal text-gray-900 dark:text-gray-100 mb-1">
                 {{ channelTitle }}
               </h1>
-              <p class="text-sm text-gray-600 dark:text-gray-400">
-                最近更新 {{ latestUpdateText }} · 最近抓取 {{ lastFetchedText }}
+              <p class="text-sm text-gray-600 dark:text-gray-400 ">
+                {{ detail?.description}}   最近更新 {{ latestUpdateText }} · 最近抓取 {{ lastFetchedText }}
               </p>
             </div>
 

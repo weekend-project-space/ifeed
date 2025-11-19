@@ -75,6 +75,7 @@ public class FeedController {
         return new FeedDetailResponse(
                 feed.getUid().toString(),
                 feed.getTitle(),
+                feed.getDescription(),
                 feed.getUrl(),
                 feed.getSiteUrl(),
                 "https://favicon.im/%s".formatted(extractHost(feed.getSiteUrl())),

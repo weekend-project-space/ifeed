@@ -5,6 +5,7 @@ import {request} from '../api/client';
 export interface FeedDetail {
     feedId: string;
     title?: string | null;
+    description: string | null;
     url: string;
     siteUrl?: string | null;
     avatar?: string | null;

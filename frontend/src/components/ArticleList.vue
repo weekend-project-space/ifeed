@@ -161,16 +161,8 @@
                   @error="thumbErrorMap[item.id] = true" />
               <div
                   v-else
-                  class="flex h-full w-full items-center justify-center">
-                <div class="flex h-full w-full items-center justify-center bg-primary/10">
-                  <div class="flex items-center gap-2 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-xs text-gray-500 dark:text-gray-400">
-                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
-                      <rect x="3" y="3" width="18" height="14" rx="2" ry="2"></rect>
-                      <path d="M3 17l5-5 4 4 3-3 6 6"></path>
-                    </svg>
-                    缩略图不可用
-                  </div>
-                </div>
+                  class="flex h-full w-full items-center justify-center text-gray-400 dark:text-gray-600 text-xs">
+                无图
               </div>
             </figure>
 

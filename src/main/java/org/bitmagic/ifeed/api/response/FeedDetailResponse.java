@@ -5,11 +5,10 @@ import java.time.Instant;
 public record FeedDetailResponse(
         String feedId,
         String title,
+        String description,
         String url,
         String siteUrl,
-
         String avatar,
-
         Instant lastFetched,
         Instant lastUpdated,
         Instant latestPublishedAt,

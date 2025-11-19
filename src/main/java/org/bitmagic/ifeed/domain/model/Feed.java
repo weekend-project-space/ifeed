@@ -36,6 +36,9 @@ public class Feed {
     @Column(name = "title", length = 255)
     private String title;
 
+    @Column(name = "description", length = 255)
+    private String description;
+
     @Column(name = "last_fetched")
     private Instant lastFetched;
 
