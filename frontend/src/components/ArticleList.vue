@@ -38,15 +38,17 @@
     <!-- Loading skeleton -->
     <section v-if="loading" class="space-y-4">
       <!-- 卡片视图骨架 -->
-      <div v-if="view === 'card'" class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+      <div v-if="view === 'card'" class="grid gap-0 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         <div
             v-for="i in 12"
             :key="`card-skel-${i}`"
-            class="animate-pulse space-y-4 p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
-          <div class="aspect-video w-full bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
+            class="animate-pulse space-y-4 p-4 ">
+          <div class="aspect-video w-full bg-surface-container rounded-lg"></div>
           <div class="space-y-2">
-            <div class="h-4 w-3/4 bg-gray-200 dark:bg-gray-700 rounded"></div>
-            <div class="h-4 w-full bg-gray-200 dark:bg-gray-700 rounded"></div>
+            <div class="h-4 w-3/4 bg-surface-container rounded"></div>
+            <div class="h-3 w-1/4 bg-surface-container rounded"></div>
+            <div class="h-4 w-full bg-surface-container rounded"></div>
+            <div class="h-4 w-3/4 bg-surface-container rounded"></div>
           </div>
         </div>
       </div>
@@ -56,13 +58,14 @@
         <div
             v-for="i in 10"
             :key="`mag-skel-${i}`"
-            class="flex items-start gap-4 animate-pulse p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+            class="flex items-start gap-4 animate-pulse p-4 ">
           <div class="flex-1 space-y-2">
-            <div class="h-5 w-2/3 bg-gray-200 dark:bg-gray-700 rounded"></div>
-            <div class="h-4 w-full bg-gray-200 dark:bg-gray-700 rounded"></div>
-            <div class="h-3 w-1/3 bg-gray-200 dark:bg-gray-700 rounded"></div>
+            <div class="h-5 w-2/3 bg-surface-container rounded"></div>
+            <div class="h-4 w-full bg-surface-container rounded"></div>
+            <div class="h-3 w-1/3 bg-surface-container rounded"></div>
+            <div class="h-3 w-1/4 bg-surface-container rounded"></div>
           </div>
-          <div class="w-28 h-28 bg-gray-200 dark:bg-gray-700 rounded-lg flex-shrink-0"></div>
+          <div class="w-28 h-28 bg-surface-container rounded-lg flex-shrink-0"></div>
         </div>
       </div>
 
@@ -71,9 +74,9 @@
         <div
             v-for="i in 15"
             :key="`title-skel-${i}`"
-            class="flex items-center justify-between p-3 animate-pulse bg-gray-50 dark:bg-gray-800/50 rounded-lg">
-          <div class="h-4 flex-1 bg-gray-200 dark:bg-gray-700 rounded mr-4"></div>
-          <div class="h-3 w-24 bg-gray-200 dark:bg-gray-700 rounded"></div>
+            class="flex items-center justify-between p-3 animate-pulse ">
+          <div class="h-4 flex-1 bg-surface-container rounded mr-4"></div>
+          <div class="h-3 w-24 bg-surface-container rounded"></div>
         </div>
       </div>
     </section>
@@ -145,7 +148,7 @@
           <article
               v-for="item in items"
               :key="item.id"
-              class="group relative flex h-full cursor-pointer flex-col overflow-hidden rounded-xl bg-white dark:bg-gray-800 p-3"
+              class="group relative flex h-full cursor-pointer flex-col overflow-hidden rounded-xl  p-3"
               @click="emit('select', item.id)">
 
             <!-- Hover background effect -->

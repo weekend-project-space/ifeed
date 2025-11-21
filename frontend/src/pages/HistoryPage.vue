@@ -151,16 +151,13 @@ import { useHistoryStore } from '../stores/history';
 import { formatRelativeTime } from '../utils/datetime';
 
 const historyStore = useHistoryStore();
-const { loading, items, page, total, hasNextPage, hasPreviousPage } = storeToRefs(historyStore);
-const error = ref<string | null>(null);
+const { loading, items, page, total, hasNextPage, hasPreviousPage, error} = storeToRefs(historyStore);
 
 const refresh = async () => {
   if (loading.value) return;
   try {
-    error.value = null;
     await historyStore.fetchHistory({ page: 0 });
   } catch (err) {
-    error.value = '刷新失败，请稍后重试';
     console.error('阅读历史刷新失败:', err);
   }
 };
@@ -168,11 +165,9 @@ const refresh = async () => {
 const nextPage = async () => {
   if (!hasNextPage.value || loading.value) return;
   try {
-    error.value = null;
     await historyStore.fetchHistory({ page: page.value + 1 });
     window.scrollTo({ top: 0, behavior: 'smooth' });
   } catch (err) {
-    error.value = '加载失败，请稍后重试';
     console.error('加载下一页失败:', err);
   }
 };
@@ -180,11 +175,9 @@ const nextPage = async () => {
 const prevPage = async () => {
   if (!hasPreviousPage.value || loading.value) return;
   try {
-    error.value = null;
     await historyStore.fetchHistory({ page: Math.max(1, page.value - 1) });
     window.scrollTo({ top: 0, behavior: 'smooth' });
   } catch (err) {
-    error.value = '加载失败，请稍后重试';
     console.error('加载上一页失败:', err);
   }
 };

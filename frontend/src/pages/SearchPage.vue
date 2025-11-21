@@ -8,7 +8,7 @@
           {{ hasQuery ? '搜索结果' : '搜索' }}
         </h1>
         <p v-if="hasQuery" class="text-xs sm:text-sm text-text-secondary">
-          关键词: "{{ searchQuery }}" · {{ searchTotalText }}
+          关键词: "{{ searchQuery }}"
         </p>
       </div>
 
@@ -60,7 +60,7 @@
 
       <!-- Loading State -->
       <div v-else-if="searchLoading" role="status" aria-live="polite" class="space-y-3 sm:space-y-4">
-        <span class="sr-only">正在搜索</span>
+        <div class="text-center sr-only">正在搜索...</div>
         <div v-for="i in 3" :key="i" class="flex flex-col sm:flex-row gap-3 sm:gap-4 animate-pulse">
           <div class="w-full sm:w-52 h-40 sm:h-32 bg-surface-container rounded-lg flex-shrink-0"></div>
           <div class="flex-1 space-y-2 sm:space-y-3 py-1 sm:py-2">

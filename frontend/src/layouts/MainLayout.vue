@@ -4,7 +4,7 @@
 
     <!-- Header -->
     <header class="sticky top-0 z-40 bg-white/95 dark:bg-gray-950/95 backdrop-blur-sm">
-      <div class="flex items-center gap-3 px-4 py-3 lg:px-6">
+      <div class="flex items-center gap-3 px-4 py-3 lg:px-5">
         <!-- Logo & Menu Button -->
         <div class="flex items-center gap-3">
           <button
@@ -256,13 +256,8 @@
                     @click="handleNavItemClick(item)">
                   <span
                       v-if="item.icon"
-                      class="flex h-6 w-6 items-center justify-center rounded-lg"
-                      :class="[
-                      isActiveItem(item)
-                        ? 'bg-primary/20 dark:bg-primary/30 text-primary'
-                        : 'bg-gray-100 dark:bg-gray-800'
-                    ]">
-                    <svg class="h-4 w-4" :viewBox="item.icon.viewBox ?? '0 0 20 20'"
+                      class="flex h-6 w-6 items-center justify-center rounded-lg">
+                    <svg class="h-6 h-6" :viewBox="item.icon.viewBox ?? '0 0 20 20'"
                          :fill="item.icon.stroke ? 'none' : 'currentColor'"
                          :stroke="item.icon.stroke ? 'currentColor' : 'none'"
                          :stroke-width="item.icon.stroke ? 1.6 : undefined"
@@ -338,13 +333,8 @@
                     @click="handleNavItemClick(item)">
                   <span
                       v-if="item.icon"
-                      class="flex h-6 w-6 items-center justify-center rounded-lg"
-                      :class="[
-                      isActiveItem(item)
-                        ? 'bg-primary/20 dark:bg-primary/30 text-primary'
-                        : 'bg-gray-100 dark:bg-gray-800'
-                    ]">
-                    <svg class="h-5 w-5" :viewBox="item.icon.viewBox ?? '0 0 24 24'"
+                      class="flex h-6 w-6 items-center justify-center rounded-lg">
+                    <svg class="h-6 w-6" :viewBox="item.icon.viewBox ?? '0 0 24 24'"
                          :fill="item.icon.stroke ? 'none' : 'currentColor'"
                          :stroke="item.icon.stroke ? 'currentColor' : 'none'"
                          :stroke-width="item.icon.stroke ? 1.5 : undefined"
