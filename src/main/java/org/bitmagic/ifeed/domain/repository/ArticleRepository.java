@@ -115,6 +115,24 @@ public interface ArticleRepository extends JpaRepository<Article, Integer>, JpaS
 
     List<Article> findByUidIn(Iterable<UUID> uids);
 
+    @Query(value = """
+            select new org.bitmagic.ifeed.domain.record.ArticleSummaryView(
+                a.uid,
+                a.id,
+                a.title,
+                a.link,
+                a.summary,
+                f.title,
+                a.publishedAt,
+                a.tags,
+                a.thumbnail,
+                a.enclosure)
+            from Article a
+            left join a.feed f
+            where a.uid in (:uIds)
+            """)
+    List<ArticleSummaryView> listArticleSummaries(@Param("uIds") List<UUID> uIds);
+
     long countByFeed(Feed feed);
 
     Optional<Article> findTopByFeedOrderByPublishedAtDesc(Feed feed);

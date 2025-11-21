@@ -12,6 +12,7 @@ import org.bitmagic.ifeed.domain.model.Feed;
 import org.bitmagic.ifeed.domain.model.FeedFetchStatus;
 import org.bitmagic.ifeed.domain.repository.ArticleRepository;
 import org.bitmagic.ifeed.domain.repository.FeedRepository;
+import org.bitmagic.ifeed.domain.service.ArticleService;
 import org.bitmagic.ifeed.infrastructure.feed.FeedFetcher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,7 +30,7 @@ public class FeedIngestionService {
     private static final int MAX_ERROR_MESSAGE_LENGTH = 2048;
 
     private final FeedRepository feedRepository;
-    private final ArticleRepository articleRepository;
+    private final ArticleService articleService;
     private final FeedFetcher feedFetcher;
     private final ArticleCollector articleCollector;
     private final FeedInfoService feedInfoService;
@@ -60,7 +61,7 @@ public class FeedIngestionService {
     }
 
     private Instant fetchAndProcessFeed(Feed feed) throws IOException, InterruptedException, FeedException {
-        SyndFeed syndFeed = feedFetcher.fetch( feed.getUrl());
+        SyndFeed syndFeed = feedFetcher.fetch(feed.getUrl());
         log.debug("Successfully fetched feed: {}", feed.getUrl());
 
         Instant latestContentUpdate = processEntries(feed, syndFeed.getEntries());
@@ -97,9 +98,8 @@ public class FeedIngestionService {
         if (articles.isEmpty()) {
             return null;
         }
-
         var latest = resolveLatestPublishedAt(articles);
-        articleRepository.saveAllAndFlush(articles);
+        articleService.saveAllAndFlush(articles);
         return latest;
     }
 

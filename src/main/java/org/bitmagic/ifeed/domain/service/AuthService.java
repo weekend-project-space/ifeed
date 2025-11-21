@@ -70,7 +70,9 @@ public class AuthService {
     }
 
     private AuthToken issueToken(User user) {
-        userSessionRepository.deleteByUser(user);
+        userSessionRepository.findByUser(user).ifPresent(session -> {
+            userSessionRepository.deleteByToken(session.getToken());
+        });
 
         var token = generateToken();
         var session = UserSession.builder()

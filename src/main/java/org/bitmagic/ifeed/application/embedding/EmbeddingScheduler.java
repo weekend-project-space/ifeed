@@ -10,6 +10,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import java.util.stream.Stream;
+
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -53,13 +55,15 @@ public class EmbeddingScheduler {
     public void documentEmbedding() {
         log.info("begin init article embedding");
         try {
-            articleRepository.findAll(ArticleSpecs.noEmbeddingSpec(), Pageable.ofSize(100)).stream().parallel().forEach(article -> {
-                try {
-                    log.info("init embedding :{}", article.getTitle());
-                    articleEmbeddingService.buildArticleEmbedding(article);
-                } catch (RuntimeException e) {
-                    log.warn("init article embedding", e);
-                }
+            Stream.iterate(0, i -> i + 1).skip(50).forEach(i -> {
+                articleRepository.findAll(ArticleSpecs.noEmbeddingSpec(), Pageable.ofSize(10)).stream().parallel().forEach(article -> {
+                    try {
+                        articleEmbeddingService.buildArticleEmbedding(article);
+                        log.info("init embedding :{}", article.getTitle());
+                    } catch (RuntimeException e) {
+                        log.warn("init article embedding", e);
+                    }
+                });
             });
         } catch (RuntimeException e) {
             log.warn("article embedding", e);

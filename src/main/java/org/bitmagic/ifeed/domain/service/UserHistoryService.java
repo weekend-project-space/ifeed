@@ -1,10 +1,12 @@
 package org.bitmagic.ifeed.domain.service;
 
 import lombok.RequiredArgsConstructor;
+import org.bitmagic.ifeed.api.response.CollectionItemResponse;
 import org.bitmagic.ifeed.api.response.ReadHistoryItemResponse;
 import org.bitmagic.ifeed.domain.document.UserBehaviorDocument;
 import org.bitmagic.ifeed.domain.model.Article;
 import org.bitmagic.ifeed.domain.model.User;
+import org.bitmagic.ifeed.domain.record.ArticleSummaryView;
 import org.bitmagic.ifeed.domain.repository.ArticleRepository;
 import org.bitmagic.ifeed.domain.repository.UserBehaviorRepository;
 import org.bitmagic.ifeed.exception.ApiException;
@@ -97,16 +99,15 @@ public class UserHistoryService {
                 .map(UUID::fromString)
                 .toList();
 
-        Map<UUID, Article> articles = articleRepository.findByUidIn(articleIds).stream()
-                .collect(Collectors.toMap(Article::getUid, Function.identity()));
+        Map<UUID, ArticleSummaryView> articles = articleRepository.listArticleSummaries(articleIds).stream()
+                .collect(Collectors.toMap(ArticleSummaryView::id , Function.identity()));
 
         var content = pageRefs.stream()
                 .map(item -> {
                     var id = UUID.fromString(item.getArticleId());
                     var article = articles.get(id);
-                    var title = article != null ? article.getTitle() : null;
-                    var feedTitle = article.getFeed() != null ? article.getFeed().getTitle() : null;
-                    return new ReadHistoryItemResponse(item.getArticleId(), title, feedTitle, article.getThumbnail(), article.getSummary(), item.getTimestamp());
+                    var title = article != null ? article.title() : null;
+                    return new ReadHistoryItemResponse(item.getArticleId(), title, article.feedTitle(), article.thumbnail(), article.summary(), item.getTimestamp());
                 })
                 .toList();
 
