@@ -22,4 +22,4 @@ COPY --from=build /build/target/*.jar app.jar
 EXPOSE 8080
 
 # Specify the command to run the application
-CMD ["java", "-jar", "/app/app.jar"]
+CMD ["java", "-jar", "/app/app.jar", "--spring.profiles.active=rel"]

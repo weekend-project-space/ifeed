@@ -36,7 +36,7 @@ public class JpaItemProvider implements ItemProvider {
     public List<ScoredId> ls(UserContext userContext, ScoredLsType type, Integer k) {
         long currentTimeMillis = System.currentTimeMillis();
         PageRequest pageable = ScoredLsType.LATEST.equals(type) ? PageRequest.of(0, k, Sort.by(Sort.Order.desc("id"))) : PageRequest.ofSize(k);
-        Page<ArticleSummaryView> all = articleRepository.searchArticleSummaries("", userContext.getUserId(), pageable);
+        Page<ArticleSummaryView> all = articleRepository.searchArticleSummaries("", null, pageable);
         log.debug("{} time: {}", type.name(), System.currentTimeMillis() - currentTimeMillis);
         List<ScoredId> title = all.stream().map(article -> new ScoredId(article.articleId(), freshnessCalculator.calculate(article.publishedAt()), Map.of("title", article.title()))).toList();
         return title;

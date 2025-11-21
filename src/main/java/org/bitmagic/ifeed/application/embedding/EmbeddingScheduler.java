@@ -59,7 +59,7 @@ public class EmbeddingScheduler {
                 articleRepository.findAll(ArticleSpecs.noEmbeddingSpec(), Pageable.ofSize(10)).stream().parallel().forEach(article -> {
                     try {
                         articleEmbeddingService.buildArticleEmbedding(article);
-                        log.info("init embedding :{}", article.getTitle());
+                        log.debug("init embedding :{}", article.getTitle());
                     } catch (RuntimeException e) {
                         log.warn("init article embedding", e);
                     }

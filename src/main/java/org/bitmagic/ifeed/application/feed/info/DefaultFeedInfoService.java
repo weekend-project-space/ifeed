@@ -22,7 +22,7 @@ public class DefaultFeedInfoService implements FeedInfoService {
                 feed.setSiteUrl(syndFeed.getLink());
             }
             if (syndFeed.getDescription() != null && !syndFeed.getDescription().equals(feed.getDescription())) {
-                feed.setDescription(syndFeed.getDescription());
+                feed.setDescription(syndFeed.getDescription().substring(0, Math.min(syndFeed.getDescription().length(), 200)));
             }
             return;
         }
