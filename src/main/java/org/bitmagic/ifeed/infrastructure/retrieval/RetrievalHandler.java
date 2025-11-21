@@ -1,4 +1,4 @@
-package org.bitmagic.ifeed.application.retrieval;
+package org.bitmagic.ifeed.infrastructure.retrieval;
 
 import java.util.List;
 

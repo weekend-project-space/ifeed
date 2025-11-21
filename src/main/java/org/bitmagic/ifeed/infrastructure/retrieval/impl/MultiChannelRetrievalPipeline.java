@@ -1,12 +1,13 @@
-package org.bitmagic.ifeed.application.retrieval.impl;
+package org.bitmagic.ifeed.infrastructure.retrieval.impl;
 
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.bitmagic.ifeed.application.retrieval.DocScore;
-import org.bitmagic.ifeed.application.retrieval.RetrievalContext;
-import org.bitmagic.ifeed.application.retrieval.RetrievalHandler;
-import org.bitmagic.ifeed.application.retrieval.RetrievalPipeline;
+import org.bitmagic.ifeed.infrastructure.retrieval.DocScore;
+import org.bitmagic.ifeed.infrastructure.retrieval.RetrievalContext;
+import org.bitmagic.ifeed.infrastructure.retrieval.RetrievalHandler;
+import org.bitmagic.ifeed.infrastructure.retrieval.RetrievalPipeline;
+import org.springframework.ai.document.Document;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -66,7 +67,7 @@ public class MultiChannelRetrievalPipeline implements RetrievalPipeline {
 
         ////        移除一样标题的内容
         Collection<DocScore> docScores = adjusted.values().stream().collect(Collectors.toMap(
-                entry -> entry.meta().toString(),    // key: id
+                entry -> entry.meta() instanceof Document ? ((Document) entry.meta()).getMetadata().get("title").toString() : ((Map) entry.meta()).get("title").toString(),    // key: id
                 Function.identity(),     // value: 对象本身
                 (existing, replacement) -> existing  // 冲突时保留第一个
         )).values();
@@ -74,11 +75,6 @@ public class MultiChannelRetrievalPipeline implements RetrievalPipeline {
 
         // 排序：按综合得分降序
         return docScores.stream().sorted((a, b) -> Double.compare(b.score(), a.score())).limit(context.getTopK()).collect(Collectors.toList());
-//        return adjusted.entrySet().stream()
-//                .sorted((a, b) -> Double.compare(b.getValue().score(), a.getValue().score()))
-//                .collect(LinkedHashMap::new,
-//                        (m, e) -> m.put(e.getKey(), e.getValue()),
-//                        Map::putAll);
     }
 
     Map<Long, DocScore> normalizeScores(Map<Long, DocScore> scores) {
@@ -90,14 +86,14 @@ public class MultiChannelRetrievalPipeline implements RetrievalPipeline {
         if (Double.compare(max, min) == 0) {
             Map<Long, DocScore> normalized = new HashMap<>();
             scores.forEach((id, score) -> {
-                normalized.put(id, new DocScore(score.docId(), 1.0, score.pubDate(), score.meta()));
+                normalized.put(id, score);
             });
             return normalized;
         }
 
         double range = max - min;
         Map<Long, DocScore> normalized = new HashMap<>();
-        scores.forEach((id, score) -> normalized.put(id, new DocScore(id, (score.score() - min) / range, score.pubDate(), score.meta())));
+        scores.forEach((id, score) -> normalized.put(id, score.from((score.score() - min) / range)));
         return normalized;
     }
 

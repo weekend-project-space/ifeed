@@ -1,13 +1,13 @@
-package org.bitmagic.ifeed.application.retrieval.impl;
+package org.bitmagic.ifeed.infrastructure.retrieval.impl;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.bitmagic.ifeed.infrastructure.vector.SearchRequestTurbo;
+import org.bitmagic.ifeed.infrastructure.retrieval.DocScore;
+import org.bitmagic.ifeed.infrastructure.retrieval.RetrievalContext;
+import org.bitmagic.ifeed.infrastructure.retrieval.RetrievalHandler;
 import org.bitmagic.ifeed.infrastructure.vector.VectorStoreTurbo;
-import org.bitmagic.ifeed.application.retrieval.DocScore;
-import org.bitmagic.ifeed.application.retrieval.RetrievalContext;
-import org.bitmagic.ifeed.application.retrieval.RetrievalHandler;
 import org.springframework.ai.document.Document;
+import org.springframework.ai.vectorstore.SearchRequest;
 import org.springframework.ai.vectorstore.filter.FilterExpressionBuilder;
 import org.springframework.util.CollectionUtils;
 
@@ -25,26 +25,24 @@ import java.util.List;
 public class VectorRetrievalHandler implements RetrievalHandler {
 
     private final VectorStoreTurbo vectorStore;
-    private final double SimilarityThreshold;
 
     @Override
     public boolean supports(RetrievalContext context) {
-        return context.getEmbedding() != null && context.getEmbedding().length > 0;
+        return context.getQuery() != null && !context.getQuery().isEmpty();
     }
 
     @Override
     public List<DocScore> handle(RetrievalContext context) {
         log.debug("Executing Vector retrieval");
-
-        var builder = SearchRequestTurbo.builder()
-                .embedding(context.getEmbedding())
+        var builder = SearchRequest.builder()
+                .query(context.getQuery())
                 .topK(context.getTopK())
-                .similarityThreshold(SimilarityThreshold);
+                .similarityThreshold(context.getThreshold());
 
         if (!context.isIncludeGlobal() && !CollectionUtils.isEmpty(context.getFeedIds())) {
             builder.filterExpression(
                     new FilterExpressionBuilder()
-                            .in("feedId", (Object) context.getFeedIds().toArray(Integer[]::new))
+                            .in("feedId", context.getFeedIds().toArray(Integer[]::new))
                             .build());
         }
 
@@ -52,6 +50,7 @@ public class VectorRetrievalHandler implements RetrievalHandler {
         if (documents == null || documents.isEmpty()) {
             return Collections.emptyList();
         }
+
 
         List<DocScore> scores = new ArrayList<>();
         for (Document doc : documents) {
@@ -75,7 +74,8 @@ public class VectorRetrievalHandler implements RetrievalHandler {
                         articleId,
                         doc.getScore(),
                         publishedAtSec > 0 ? Instant.ofEpochSecond(publishedAtSec) : null,
-                        String.valueOf(doc.getMetadata().get("title"))
+                        "vector",
+                        doc
                 ));
             } catch (RuntimeException ignored) {
             }

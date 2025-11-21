@@ -12,6 +12,7 @@ public record ArticleDetailResponse(
         String link,
         String thumbnail,
         String enclosure,
+        String enclosureType,
         @JsonProperty("feedId") String feedId,
         @JsonProperty("feedTitle") String feedTitle,
         @JsonProperty("publishedAt") String publishedAt,

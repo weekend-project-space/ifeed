@@ -67,8 +67,8 @@ public class ArticleController {
 
     @GetMapping("/recommendations")
     public ResponseEntity<Page<RecResponse>> rec(@AuthenticationPrincipal UserPrincipal principal,
-                                                                       @RequestParam(defaultValue = "0") Integer page,
-                                                                       @RequestParam(required = false) Integer size) {
+                                                 @RequestParam(defaultValue = "0") Integer page,
+                                                 @RequestParam(required = false) Integer size) {
         return ResponseEntity.ok(recommendationService.recommend(new RecRequest(principal.getId(), "home", Map.of(), Map.of()), page, size));
     }
 
@@ -100,6 +100,7 @@ public class ArticleController {
                 article.getLink(),
                 article.getThumbnail(),
                 article.getEnclosure(),
+                article.getEnclosureType(),
                 article.getFeed().getUid().toString(),
                 resolveFeedTitle(article.getFeed() == null ? null : article.getFeed().getTitle()),
                 formatTimestamp(article.getPublishedAt()),
@@ -120,7 +121,7 @@ public class ArticleController {
                 resolveFeedTitle(article.feedTitle()),
                 formatTimestamp(article.publishedAt()),
                 tags,
-                DateUtils. formatRelativeTime(publishedAt));
+                DateUtils.formatRelativeTime(publishedAt));
     }
 
 

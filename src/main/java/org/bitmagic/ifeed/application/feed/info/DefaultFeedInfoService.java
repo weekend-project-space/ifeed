@@ -21,6 +21,9 @@ public class DefaultFeedInfoService implements FeedInfoService {
                 feed.setDescription(syndFeed.getDescription());
                 feed.setSiteUrl(syndFeed.getLink());
             }
+            if (syndFeed.getDescription() != null && !syndFeed.getDescription().equals(feed.getDescription())) {
+                feed.setDescription(syndFeed.getDescription());
+            }
             return;
         }
 

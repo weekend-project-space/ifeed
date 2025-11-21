@@ -6,6 +6,7 @@ import org.bitmagic.ifeed.application.recommendation.recall.model.UserContext;
 import org.bitmagic.ifeed.application.recommendation.recall.spi.ItemProvider;
 import org.bitmagic.ifeed.application.recommendation.recall.spi.ScoredId;
 import org.bitmagic.ifeed.domain.model.Article;
+import org.bitmagic.ifeed.domain.record.ArticleSummaryView;
 import org.bitmagic.ifeed.domain.repository.ArticleRepository;
 import org.bitmagic.ifeed.infrastructure.FreshnessCalculator;
 import org.springframework.cache.annotation.Cacheable;
@@ -35,9 +36,9 @@ public class JpaItemProvider implements ItemProvider {
     public List<ScoredId> ls(UserContext userContext, ScoredLsType type, Integer k) {
         long currentTimeMillis = System.currentTimeMillis();
         PageRequest pageable = ScoredLsType.LATEST.equals(type) ? PageRequest.of(0, k, Sort.by(Sort.Order.desc("id"))) : PageRequest.ofSize(k);
-        Page<Article> all = articleRepository.findAll(pageable);
+        Page<ArticleSummaryView> all = articleRepository.searchArticleSummaries("", userContext.getUserId(), pageable);
         log.debug("{} time: {}", type.name(), System.currentTimeMillis() - currentTimeMillis);
-        List<ScoredId> title = all.stream().map(article -> new ScoredId(article.getId(), freshnessCalculator.calculate(article.getPublishedAt()), Map.of("title", article.getTitle()))).toList();
+        List<ScoredId> title = all.stream().map(article -> new ScoredId(article.articleId(), freshnessCalculator.calculate(article.publishedAt()), Map.of("title", article.title()))).toList();
         return title;
     }
 }

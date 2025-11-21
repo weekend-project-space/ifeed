@@ -9,6 +9,7 @@ import org.bitmagic.ifeed.api.response.UserSubscriptionInsightResponse;
 import org.bitmagic.ifeed.domain.model.Article;
 import org.bitmagic.ifeed.domain.record.ArticleSummaryView;
 import org.bitmagic.ifeed.domain.repository.ArticleRepository;
+import org.bitmagic.ifeed.domain.repository.ArticleTsvRepository;
 import org.bitmagic.ifeed.exception.ApiException;
 import org.springframework.data.domain.*;
 import org.springframework.http.HttpStatus;
@@ -27,9 +28,17 @@ public class ArticleService {
     private static final int MAX_PAGE_SIZE = 100;
 
     private final ArticleRepository articleRepository;
+    private final ArticleTsvRepository articleTsvRepository;
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
     private static final TypeReference<List<String>> TAGS_TYPE = new TypeReference<>() {
     };
+
+    public void saveAllAndFlush(List<Article> articles) {
+        articleRepository.saveAllAndFlush(articles);
+        articles.forEach(article -> {
+            articleTsvRepository.updateSearchVector(article.getId(), article.getTitle(), article.getTags(), article.getSummary(), article.getAuthor(), article.getContent(), article.getContent());
+        });
+    }
 
     public Page<ArticleSummaryView> listArticles(Integer ownerId,
                                                  UUID feedUid,

@@ -56,6 +56,7 @@ public class DefaultEntryProcessor implements EntryProcessor {
                 .description(Optional.ofNullable(entry.getDescription()).map(SyndContent::getValue).orElse(null))
                 .publishedAt(resolvePublishedAt(entry))
                 .enclosure(resolveEnclosure(entry))
+                .enclosureType(resolveEnclosureType(entry))
                 .thumbnail(thumbnail)
                 .content(cleaned.mdContent())
                 .summary(aiContent.summary())
@@ -96,6 +97,13 @@ public class DefaultEntryProcessor implements EntryProcessor {
             return null;
         }
         return entry.getEnclosures().get(0).getUrl();
+    }
+
+    private String resolveEnclosureType(SyndEntry entry) {
+        if (entry.getEnclosures() == null || entry.getEnclosures().isEmpty()) {
+            return null;
+        }
+        return entry.getEnclosures().get(0).getType();
     }
 
     private String resolveThumbnail(SyndEntry entry, String rawContent) {

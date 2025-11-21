@@ -1,4 +1,4 @@
-package org.bitmagic.ifeed.application.retrieval;
+package org.bitmagic.ifeed.infrastructure.retrieval;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -22,8 +22,10 @@ public class RetrievalContext {
     float[] embedding;
     @Nullable
     Integer userId;
-    boolean includeGlobal;
-    int topK;
     @Nullable
     List<Integer> feedIds;
+    boolean includeGlobal;
+    int topK;
+    double threshold = 0.3;
+
 }

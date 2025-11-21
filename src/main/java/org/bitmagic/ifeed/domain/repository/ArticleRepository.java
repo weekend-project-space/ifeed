@@ -174,12 +174,6 @@ public interface ArticleRepository extends JpaRepository<Article, Integer>, JpaS
             """)
     List<ArticleSummaryView> findArticleSummariesByIds(@Param("ids") Collection<Long> ids);
 
-    @Query("select a.id from Article a where lower(coalesce(a.category, '')) = lower(:category) order by a.publishedAt desc")
-    List<Long> findTopIdsByCategory(@Param("category") String category, Pageable pageable);
-
-    @Query("select a.id from Article a where lower(coalesce(a.author, '')) = lower(:author) order by a.publishedAt desc")
-    List<Long> findTopIdsByAuthor(@Param("author") String author, Pageable pageable);
-
     @Query("select a.id, a.publishedAt from Article a where a.id in (:ids)")
     List<Object[]> findPublishedAtByIdIn(@Param("ids") Collection<Long> ids);
 
