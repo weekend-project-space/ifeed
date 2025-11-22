@@ -1,5 +1,6 @@
 package org.bitmagic.ifeed.application.recommendation.recall.strategies;
 
+import lombok.extern.slf4j.Slf4j;
 import org.bitmagic.ifeed.application.recommendation.recall.core.RecallStrategy;
 import org.bitmagic.ifeed.application.recommendation.recall.model.ItemCandidate;
 import org.bitmagic.ifeed.application.recommendation.recall.model.StrategyId;
@@ -16,6 +17,7 @@ import java.util.List;
 /**
  * 用户到属性再到物品（U2A2I）召回：根据用户偏好属性命中倒排索引。
  */
+@Slf4j
 @Component
 @ConditionalOnBean({UserPreferenceService.class, InvertedIndex.class})
 public class U2A2IRecallStrategy implements RecallStrategy {
@@ -29,7 +31,7 @@ public class U2A2IRecallStrategy implements RecallStrategy {
                                @Value("${recall.u2a2i.attribute-limit:5}") int attributeLimit) {
         this.preferenceService = preferenceService;
         this.invertedIndex = invertedIndex;
-        this.attributeLimit = attributeLimit;
+        this.attributeLimit = Math.max(1, attributeLimit); // 至少为1
     }
 
     @Override
@@ -39,15 +41,27 @@ public class U2A2IRecallStrategy implements RecallStrategy {
 
     @Override
     public List<ItemCandidate> recall(UserContext context, int limit) {
-        List<UserPreferenceService.AttributePreference> attributes = preferenceService.topAttributes(context.userId(), attributeLimit);
+        if (context.userId() == null || limit <= 0) {
+            return List.of();
+        }
+
+        List<UserPreferenceService.AttributePreference> attributes =
+                preferenceService.topAttributes(context.userId(), attributeLimit);
+
+        log.debug("U2A2I top attributes for user {}: {}", context.userId(), attributes);
+
         if (attributes.isEmpty()) {
             return List.of();
         }
 
-        // 将属性得分映射到倒排索引，快速筛出候选物品
-        List<ScoredId> hits = invertedIndex.query(attributes, limit);
-        return hits.stream()
-                .map(hit -> ItemCandidate.of(hit.id(), hit.score(), id()))
-                .toList();
+        try {
+            List<ScoredId> hits = invertedIndex.query(attributes, limit);
+            return hits.stream()
+                    .map(hit -> ItemCandidate.of(hit.id(), hit.score(), id()))
+                    .toList();
+        } catch (Exception e) {
+            log.warn("U2A2I recall failed for user {}: {}", context.userId(), e.getMessage());
+            return List.of();
+        }
     }
 }

@@ -1,6 +1,7 @@
 package org.bitmagic.ifeed.infrastructure.util;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
@@ -27,6 +28,14 @@ public final class JSON {
         try {
             return mapper.readValue(json, clazz);
         } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static <T> T fromJson(String json, TypeReference<T> typeReference) {
+        try {
+            return mapper.readValue(json,typeReference);
+        }catch (JsonProcessingException e){
             throw new RuntimeException(e);
         }
     }

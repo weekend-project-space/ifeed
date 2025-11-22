@@ -15,6 +15,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -31,14 +32,15 @@ public class JpaItemProvider implements ItemProvider {
 
     private final FreshnessCalculator freshnessCalculator;
 
-    @Cacheable(cacheNames = "ITEMS", key = "#type.name()", unless = "#result == null")
+    @Cacheable(cacheNames = "ITEMS", key = "#userContext.userId() + '_' + #type.name() + '_' + #k", unless = "#result == null")
     @Override
     public List<ScoredId> ls(UserContext userContext, ScoredLsType type, Integer k) {
         long currentTimeMillis = System.currentTimeMillis();
-        PageRequest pageable = ScoredLsType.LATEST.equals(type) ? PageRequest.of(0, k, Sort.by(Sort.Order.desc("id"))) : PageRequest.ofSize(k);
-        Page<ArticleSummaryView> all = articleRepository.searchArticleSummaries("", userContext.getUserId(), pageable);
+        PageRequest pageable = ScoredLsType.LATEST.equals(type) ? PageRequest.of(0, k, Sort.by(Sort.Order.desc("id"))) : PageRequest.ofSize(k / 2);
+        List<ArticleSummaryView> all = new ArrayList<>(articleRepository.searchArticleSummaries("", null, pageable).getContent());
+        all.addAll(articleRepository.searchArticleSummaries("", userContext.getUserId(), pageable).getContent());
         log.debug("{} time: {}", type.name(), System.currentTimeMillis() - currentTimeMillis);
-        List<ScoredId> title = all.stream().map(article -> new ScoredId(article.articleId(), freshnessCalculator.calculate(article.publishedAt()), Map.of("title", article.title()))).toList();
-        return title;
+        List<ScoredId> scoredIds = all.stream().map(article -> new ScoredId(article.articleId(), freshnessCalculator.calculate(article.publishedAt()), Map.of("title", article.title()))).toList();
+        return scoredIds;
     }
 }
