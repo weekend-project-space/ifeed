@@ -1,6 +1,6 @@
 <!-- components/MediaAttachment.vue -->
 <template>
-  <section v-if="url && isSupported" class="my-4">
+  <section v-if="url && isSupported" >
     <!-- 媒体卡片 - Google Material Design 风格 -->
     <div class="rounded-lg bg-secondary/5 hover:bg-secondary/10  overflow-hidden transition-colors duration-200">
 

@@ -13,8 +13,11 @@
     <div v-else-if="errorMessage" class="py-12">
       <div class="rounded-lg border border-red-200 bg-red-50 dark:bg-red-900/20 dark:border-red-800 p-6">
         <div class="flex items-start gap-3">
-          <svg class="w-6 h-6 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+          <svg class="w-6 h-6 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" fill="currentColor"
+               viewBox="0 0 20 20">
+            <path fill-rule="evenodd"
+                  d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                  clip-rule="evenodd"/>
           </svg>
           <div class="flex-1">
             <p class="text-sm font-medium text-red-800 dark:text-red-200">{{ errorMessage }}</p>
@@ -30,9 +33,9 @@
     </div>
 
     <!-- Article Content -->
-    <article v-else-if="article" class="space-y-6">
+    <article v-else-if="article">
       <!-- Header -->
-      <header class="space-y-3 border-b border-secondary/10 pb-6">
+      <header class="space-y-3 border-b border-secondary/10 pb-6 mb-6">
         <!-- Meta Info -->
         <div class="flex items-center gap-2 text-sm text-secondary/60">
           <router-link
@@ -73,43 +76,26 @@
         </div>
       </header>
 
-      <div class="grid grid-cols-1 lg:grid-cols-[1fr_240px] gap-8">
+      <div class="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-8">
         <!-- Main Content -->
-        <div class="space-y-6 min-w-0">
+        <div class="min-w-0">
           <!-- Summary (mobile) -->
-          <section
-              v-if="article.summary"
-              class="lg:hidden p-4 bg-secondary/5 rounded-lg border border-secondary/10">
-            <h2 class="text-xs font-semibold text-secondary/60 uppercase tracking-wide mb-2">
-              AI 摘要
-            </h2>
-            <p class="text-sm text-secondary/80 leading-relaxed">
-              {{ article.summary }}
+          <aside-section
+              v-if="showSummary"
+              title="AI 摘要"
+              class="lg:hidden mb-6">
+            <p class="text-sm text-secondary/80 leading-relaxed" v-text="article.summary">
             </p>
-          </section>
+          </aside-section>
 
           <!-- TOC (mobile) -->
-          <nav
-              v-if="tocItems.length"
-              class="lg:hidden p-4 bg-secondary/5 rounded-lg border border-secondary/10">
-            <h2 class="text-xs font-semibold text-secondary/60 uppercase tracking-wide mb-2">
-              目录
-            </h2>
-            <div class="space-y-1">
-              <button
-                  v-for="item in tocItems"
-                  :key="item.id"
-                  type="button"
-                  class="block w-full text-left py-1.5 px-2 text-sm rounded transition-colors"
-                  :class="activeHeadingId === item.id
-                  ? 'text-secondary bg-secondary/10 font-medium'
-                  : 'text-secondary/70 hover:text-secondary hover:bg-secondary/5'"
-                  :style="{ paddingLeft: `${getTocPadding(item.level)}px` }"
-                  @click="scrollToHeading(item.id)">
-                {{ item.text }}
-              </button>
-            </div>
-          </nav>
+          <toc-section
+              v-if="showToc"
+              :items="tocItems"
+              :active-id="activeHeadingId"
+              class="lg:hidden mb-6"
+              @navigate="scrollToHeading"
+          />
 
           <!-- Media Attachment -->
           <media-attachment
@@ -118,11 +104,12 @@
               :type="article.enclosureType"
               :title="article.title"
               :artist="article.feedTitle || article.author"
-              :cover-image="article.thumbnail "
+              :cover-image="article.thumbnail"
+              class="mb-6"
           />
 
           <!-- Article Body -->
-          <div class="prose prose-gray dark:prose-invert max-w-none">
+          <div class="prose prose-gray dark:prose-invert max-w-none mb-6">
             <div
                 v-if="article.content"
                 ref="articleContentRef"
@@ -151,42 +138,25 @@
         </div>
 
         <!-- Sidebar (desktop) -->
-        <aside class="hidden lg:block">
-          <div class="sticky top-8 space-y-4">
-            <!-- Summary -->
-            <section
-                v-if="article.summary"
-                class="p-4 bg-secondary/5 rounded-lg border border-secondary/10">
-              <h2 class="text-xs font-semibold text-secondary/60 uppercase tracking-wide mb-2">
-                AI 摘要
-              </h2>
-              <p class="text-sm text-secondary/80 leading-relaxed">
-                {{ article.summary }}
+        <aside class="hidden lg:block ">
+          <!-- Summary -->
+          <div v-if="showSummary" class="mb-4">
+            <aside-section title="AI 摘要">
+              <p class="text-sm text-secondary/80 leading-relaxed" v-text="article.summary">
               </p>
-            </section>
+            </aside-section>
+          </div>
 
-            <!-- TOC -->
-            <nav
-                v-if="tocItems.length"
-                class="p-4 bg-secondary/5 rounded-lg border border-secondary/10">
-              <h2 class="text-xs font-semibold text-secondary/60 uppercase tracking-wide mb-2">
-                目录
-              </h2>
-              <div class="space-y-1">
-                <button
-                    v-for="item in tocItems"
-                    :key="item.id"
-                    type="button"
-                    class="block w-full text-left py-1.5 px-2 text-sm rounded transition-colors"
-                    :class="activeHeadingId === item.id
-                    ? 'text-secondary bg-secondary/10 font-medium'
-                    : 'text-secondary/70 hover:text-secondary hover:bg-secondary/5'"
-                    :style="{ paddingLeft: `${getTocPadding(item.level)}px` }"
-                    @click="scrollToHeading(item.id)">
-                  {{ item.text }}
-                </button>
-              </div>
-            </nav>
+          <!-- TOC (Sticky) -->
+          <div
+              v-if="showToc"
+              class="sticky top-20"
+          >
+            <toc-section
+                :items="tocItems"
+                :active-id="activeHeadingId"
+                @navigate="scrollToHeading"
+            />
           </div>
         </aside>
       </div>
@@ -201,16 +171,37 @@
   </div>
 </template>
 
-<script setup lang="ts">
-import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
-import { storeToRefs } from 'pinia';
-import { useRouter } from 'vue-router';
-import { useArticlesStore } from '../stores/articles';
-import { useCollectionsStore } from '../stores/collections';
-import MediaAttachment from "../components/MediaAttachment.vue";
 
+<script setup lang="ts">
+import {computed, nextTick, onBeforeUnmount, onMounted, ref, watch} from 'vue';
+import {storeToRefs} from 'pinia';
+import {useRouter} from 'vue-router';
+import {useArticlesStore} from '../stores/articles';
+import {useCollectionsStore} from '../stores/collections';
+import MediaAttachment from "../components/MediaAttachment.vue";
+import AsideSection from "../components/AsideSection.vue";
+import TocSection from "../components/TocSection.vue";
+
+// ==================== Types ====================
 interface Props {
   id: string;
+}
+
+interface Article {
+  id: string;
+  title: string;
+  content?: string;
+  summary?: string;
+  feedId?: string;
+  feedTitle?: string;
+  timeAgo: string;
+  tags?: string[];
+  collected: boolean;
+  link?: string;
+  enclosure?: string;
+  enclosureType?: string;
+  thumbnail?: string;
+  author?: string;
 }
 
 interface TocItem {
@@ -219,49 +210,58 @@ interface TocItem {
   level: number;
 }
 
+// ==================== Props & Stores ====================
 const props = defineProps<Props>();
 
 const router = useRouter();
 const articlesStore = useArticlesStore();
 const collectionsStore = useCollectionsStore();
-const { currentArticle } = storeToRefs(articlesStore);
+const {currentArticle} = storeToRefs(articlesStore);
 
-// State
-const localArticle = ref<any | null>(null);
-const article = computed(() => localArticle.value);
+// ==================== State ====================
+const localArticle = ref<Article | null>(null);
 const errorMessage = ref('');
-
 const scrollTracked = ref(false);
 const articleContentRef = ref<HTMLElement | null>(null);
 const tocItems = ref<TocItem[]>([]);
 const headingElements = ref<HTMLElement[]>([]);
 const activeHeadingId = ref('');
 const imageCleanupFns = ref<Array<() => void>>([]);
+const abortControllerRef = ref<AbortController | null>(null);
+const isInitialLoad = ref(true);
 
-const HEADING_SCROLL_OFFSET = 128;
+let refreshTimer: ReturnType<typeof setTimeout> | null = null;
 
-// Utilities
-function throttle(fn: (...args: any[]) => void, wait = 100) {
+// ==================== Constants ====================
+const HEADING_SCROLL_OFFSET = 80;
+const SCROLL_PROGRESS_THRESHOLD = 0.3;
+
+// ==================== Computed ====================
+const article = computed(() => localArticle.value);
+const showSummary = computed(() => !!article.value?.summary);
+const showToc = computed(() => tocItems.value.length > 0);
+
+// ==================== Utility Functions ====================
+function throttle<T extends (...args: any[]) => void>(fn: T, wait = 100): T {
   let last = 0;
-  return function (...args: any[]) {
+  return function (this: any, ...args: any[]) {
     const now = Date.now();
     if (now - last >= wait) {
       last = now;
-      fn(...args);
+      fn.apply(this, args);
     }
-  };
+  } as T;
 }
 
-function debounce(fn: (...args: any[]) => void, wait = 200) {
+function debounce<T extends (...args: any[]) => void>(fn: T, wait = 200): T {
   let t: ReturnType<typeof setTimeout> | null = null;
-  return function (...args: any[]) {
+  return function (this: any, ...args: any[]) {
     if (t) clearTimeout(t);
-    t = setTimeout(() => fn(...args), wait);
-  };
+    t = setTimeout(() => fn.apply(this, args), wait);
+  } as T;
 }
 
-// Simplified slug creator
-const createSlug = (text: string, index: number) => {
+const createSlug = (text: string, index: number): string => {
   const base = text
       .trim()
       .toLowerCase()
@@ -272,9 +272,11 @@ const createSlug = (text: string, index: number) => {
   return base ? `${base}-${index}` : `section-${index}`;
 };
 
-const getTocPadding = (level: number) => 12 + Math.max(0, level - 1) * 12;
+const getScrollTop = (): number => {
+  return window.scrollY ?? document.documentElement.scrollTop ?? document.body.scrollTop ?? 0;
+};
 
-// Heading navigation
+// ==================== Heading Navigation ====================
 const refreshHeadingNavigation = async () => {
   await nextTick();
   const container = articleContentRef.value;
@@ -309,16 +311,17 @@ const refreshHeadingNavigation = async () => {
   headingElements.value = headings;
 
   if (typeof window !== 'undefined' && typeof window.requestAnimationFrame === 'function') {
-    window.requestAnimationFrame(() => {
-      updateActiveHeading();
-    });
+    window.requestAnimationFrame(updateActiveHeading);
   } else {
     updateActiveHeading();
   }
 };
 
-const getScrollTop = () => {
-  return window.scrollY ?? document.documentElement.scrollTop ?? document.body.scrollTop ?? 0;
+const debouncedRefreshHeadingNavigation = () => {
+  if (refreshTimer) clearTimeout(refreshTimer);
+  refreshTimer = setTimeout(() => {
+    refreshHeadingNavigation();
+  }, 100);
 };
 
 const updateActiveHeading = () => {
@@ -327,7 +330,7 @@ const updateActiveHeading = () => {
     return;
   }
 
-  const scrollPosition = getScrollTop() + HEADING_SCROLL_OFFSET;
+  const scrollPosition = getScrollTop() + HEADING_SCROLL_OFFSET + 30
   let currentId = headingElements.value[0].id || '';
 
   for (const heading of headingElements.value) {
@@ -349,22 +352,29 @@ const scrollToHeading = (id: string) => {
 
   const top = target.getBoundingClientRect().top + getScrollTop() - HEADING_SCROLL_OFFSET;
   window.scrollTo({
-    top: top < 0 ? 0 : top,
+    top: Math.max(0, top),
     behavior: 'smooth',
   });
 };
 
-// Scroll handling
+// ==================== Scroll Handling ====================
 const handleScrollInternal = () => {
   updateActiveHeading();
 
-  if (scrollTracked.value) return;
+  if (scrollTracked.value || !article.value) return;
 
   const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
-  if (maxScroll <= 0) return;
+  if (maxScroll <= 0) {
+    // 内容不够滚动,直接标记为已读
+    scrollTracked.value = true;
+    articlesStore.recordHistory(props.id).catch(err => {
+      console.warn('recordHistory failed', err);
+    });
+    return;
+  }
 
   const progress = getScrollTop() / maxScroll;
-  if (progress > 0.3) {
+  if (progress > SCROLL_PROGRESS_THRESHOLD) {
     scrollTracked.value = true;
     articlesStore.recordHistory(props.id).catch(err => {
       console.warn('recordHistory failed', err);
@@ -377,7 +387,7 @@ const handleResize = debounce(() => {
   refreshHeadingNavigation();
 }, 150);
 
-// Image load listeners with cleanup
+// ==================== Image Load Listeners ====================
 const attachImageLoadListeners = () => {
   // Cleanup old listeners
   imageCleanupFns.value.forEach(fn => fn());
@@ -391,10 +401,10 @@ const attachImageLoadListeners = () => {
     if (img.complete) return;
 
     const onLoad = () => {
-      nextTick().then(() => refreshHeadingNavigation());
+      debouncedRefreshHeadingNavigation();
     };
 
-    img.addEventListener('load', onLoad, { once: true });
+    img.addEventListener('load', onLoad, {once: true});
 
     imageCleanupFns.value.push(() => {
       img.removeEventListener('load', onLoad);
@@ -402,9 +412,17 @@ const attachImageLoadListeners = () => {
   });
 };
 
-// Load article
+// ==================== Article Loading ====================
 const loadArticle = async (articleId: string) => {
   if (!articleId) return;
+
+  // Cancel previous request
+  if (abortControllerRef.value) {
+    abortControllerRef.value.abort();
+  }
+
+  abortControllerRef.value = new AbortController();
+  const currentController = abortControllerRef.value;
 
   // Reset state
   errorMessage.value = '';
@@ -415,92 +433,116 @@ const loadArticle = async (articleId: string) => {
   try {
     await articlesStore.fetchArticleById(articleId);
 
-    // Shallow copy instead of deep copy
-    localArticle.value = currentArticle.value ? { ...currentArticle.value } : null;
+    // Check if request was cancelled
+    if (currentController.signal.aborted) return;
 
-    // Scroll to top first, then reset tracking
-    window.scrollTo({ top: 0, behavior: 'instant' });
+    localArticle.value = currentArticle.value ? {...currentArticle.value} : null;
+
+    // Scroll to top
+    window.scrollTo({top: 0, behavior: 'instant'});
     await nextTick();
+
+    // Reset scroll tracking and record history
     scrollTracked.value = false;
+    articlesStore.recordHistory(props.id).catch(err => {
+      console.warn('recordHistory failed', err);
+    });
 
     await nextTick();
     await refreshHeadingNavigation();
     attachImageLoadListeners();
+
+    isInitialLoad.value = false;
   } catch (err) {
+    if (currentController.signal.aborted) return;
     console.error('文章详情加载失败', err);
-    errorMessage.value = '文章加载失败，请稍后重试';
+    errorMessage.value = '文章加载失败,请稍后重试';
     localArticle.value = null;
   }
 };
 
-// Collection toggle
+// ==================== Actions ====================
 const toggleCollection = async () => {
-  if (!props.id) return;
+  if (!props.id || !localArticle.value) return;
+
   try {
     await collectionsStore.toggleCollection(props.id, {
-      title: localArticle.value?.title,
-      collected: !!localArticle.value?.collected,
+      title: localArticle.value.title,
+      collected: localArticle.value.collected,
     });
 
-    await loadArticle(props.id);
+    // Update local state
+    if (localArticle.value) {
+      localArticle.value.collected = !localArticle.value.collected;
+    }
   } catch (err) {
     console.warn('收藏操作失败', err);
   }
 };
 
-// Tag click
 const handleTagClick = (tag: string) => {
   if (!tag) return;
-  router.push({ name: 'feedsSubscriptions', query: { tags: tag.toLowerCase() } });
+  router.push({name: 'feedsSubscriptions', query: {tags: tag.toLowerCase()}});
 };
 
-// Lifecycle
+// ==================== Lifecycle ====================
 onMounted(async () => {
   await loadArticle(props.id);
-  window.addEventListener('scroll', handleScroll, { passive: true });
-  window.addEventListener('resize', handleResize, { passive: true });
+  window.addEventListener('scroll', handleScroll, {passive: true});
+  window.addEventListener('resize', handleResize, {passive: true});
 });
 
 onBeforeUnmount(() => {
+  // Cancel pending requests
+  if (abortControllerRef.value) {
+    abortControllerRef.value.abort();
+  }
+
   // Cleanup image listeners
   imageCleanupFns.value.forEach(fn => fn());
   imageCleanupFns.value = [];
 
+  // Remove event listeners
   window.removeEventListener('scroll', handleScroll);
   window.removeEventListener('resize', handleResize);
+
+  // Clear timers
+  if (refreshTimer) {
+    clearTimeout(refreshTimer);
+    refreshTimer = null;
+  }
 });
 
-// Watch for id changes
+// ==================== Watchers ====================
 watch(
     () => props.id,
-    async (next) => {
+    async (newId) => {
+      if (!newId) return;
       scrollTracked.value = false;
-      await loadArticle(next);
+      isInitialLoad.value = true;
+      await loadArticle(newId);
     }
 );
 
-// Watch for store updates
 watch(
     () => currentArticle.value,
     (next) => {
-      if (next && !errorMessage.value) {
-        localArticle.value = { ...next };
+      if (next && !errorMessage.value && !isInitialLoad.value) {
+        localArticle.value = {...next};
         nextTick().then(() => {
           refreshHeadingNavigation();
           attachImageLoadListeners();
         });
       }
-    },
-    { immediate: true }
+    }
 );
 
-// Watch for content changes
 watch(
     () => article.value?.content,
     async () => {
-      if (errorMessage.value) return;
+      if (errorMessage.value || isInitialLoad.value) return;
       await nextTick();
-      await refreshHeadingNavigation();
+      debouncedRefreshHeadingNavigation();
       attachImageLoadListeners();
     }
 );
