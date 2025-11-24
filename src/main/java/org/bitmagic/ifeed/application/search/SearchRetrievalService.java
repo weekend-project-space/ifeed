@@ -1,21 +1,19 @@
 package org.bitmagic.ifeed.application.search;
 
 import lombok.extern.slf4j.Slf4j;
-import org.bitmagic.ifeed.infrastructure.retrieval.DocScore;
 import org.bitmagic.ifeed.config.properties.SearchRetrievalProperties;
-import org.bitmagic.ifeed.infrastructure.vector.VectorStoreTurbo;
 import org.bitmagic.ifeed.domain.record.ArticleSummaryView;
 import org.bitmagic.ifeed.domain.repository.UserSubscriptionRepository;
 import org.bitmagic.ifeed.domain.service.ArticleService;
+import org.bitmagic.ifeed.infrastructure.retrieval.DocScore;
 import org.bitmagic.ifeed.infrastructure.retrieval.RetrievalContext;
 import org.bitmagic.ifeed.infrastructure.retrieval.RetrievalPipeline;
 import org.bitmagic.ifeed.infrastructure.retrieval.impl.Bm25RetrievalHandler;
 import org.bitmagic.ifeed.infrastructure.retrieval.impl.MultiChannelRetrievalPipeline;
 import org.bitmagic.ifeed.infrastructure.retrieval.impl.VectorRetrievalHandler;
+import org.bitmagic.ifeed.infrastructure.vector.VectorStoreTurbo;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
@@ -36,12 +34,12 @@ public class SearchRetrievalService {
     private final SearchRetrievalProperties properties;
     private final RetrievalPipeline retrievalPipeline;
 
-    public SearchRetrievalService(VectorStoreTurbo vectorStore, UserSubscriptionRepository userSubscriptionRepository, ArticleService articleService, NamedParameterJdbcTemplate jdbcTemplate, SearchRetrievalProperties properties) {
+    public SearchRetrievalService(VectorStoreTurbo vectorStore, UserSubscriptionRepository userSubscriptionRepository, ArticleService articleService, Bm25RetrievalHandler bm25RetrievalHandler, SearchRetrievalProperties properties) {
         this.userSubscriptionRepository = userSubscriptionRepository;
         this.articleService = articleService;
         this.properties = properties;
         this.retrievalPipeline = new MultiChannelRetrievalPipeline(properties.getFreshnessTimeWeight(), properties.getFreshnessLambda()).
-                addHandler(new Bm25RetrievalHandler(jdbcTemplate), properties.getBm25Weight())
+                addHandler(bm25RetrievalHandler, properties.getBm25Weight())
                 .addHandler(new VectorRetrievalHandler(vectorStore), properties.getVectorWeight());
     }
 

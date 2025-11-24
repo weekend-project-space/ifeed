@@ -11,6 +11,7 @@ import org.springframework.stereotype.Repository;
  * @author yangrd
  * @date 2025/11/19
  **/
+@Deprecated
 @Repository
 @Slf4j
 @RequiredArgsConstructor

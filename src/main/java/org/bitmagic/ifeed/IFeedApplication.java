@@ -2,6 +2,8 @@ package org.bitmagic.ifeed;
 
 import org.bitmagic.ifeed.config.properties.RssFetcherProperties;
 import org.bitmagic.ifeed.infrastructure.FreshnessCalculator;
+import org.bitmagic.ifeed.infrastructure.retrieval.impl.Bm25RetrievalHandler;
+import org.bitmagic.ifeed.infrastructure.text.search.pg.PgTextSearchStore;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.boot.SpringApplication;
@@ -9,6 +11,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.SchedulingConfigurer;
@@ -64,6 +67,16 @@ public class IFeedApplication {
     }
 
     @Bean
+    public PgTextSearchStore textSearchStore(JdbcTemplate jdbcTemplate) {
+        return new PgTextSearchStore(jdbcTemplate, "article_tsv_store", null);
+    }
+
+    @Bean
+    public Bm25RetrievalHandler bm25RetrievalHandler(PgTextSearchStore pgTextSearchStore) {
+        return new Bm25RetrievalHandler(pgTextSearchStore);
+    }
+
+    @Bean
     public HttpClient rssHttpClient(RssFetcherProperties properties) {
         return HttpClient.newBuilder()
                 .connectTimeout(properties.getConnectTimeout())
@@ -72,7 +85,7 @@ public class IFeedApplication {
     }
 
     @Bean
-    FreshnessCalculator freshnessCalculator(){
+    FreshnessCalculator freshnessCalculator() {
         return new FreshnessCalculator(3, FreshnessCalculator.TimeUnit.DAYS);
     }
 

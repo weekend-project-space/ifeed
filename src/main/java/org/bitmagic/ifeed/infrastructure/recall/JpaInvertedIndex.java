@@ -10,9 +10,7 @@ import org.bitmagic.ifeed.infrastructure.retrieval.RetrievalContext;
 import org.bitmagic.ifeed.infrastructure.retrieval.RetrievalPipeline;
 import org.bitmagic.ifeed.infrastructure.retrieval.impl.Bm25RetrievalHandler;
 import org.bitmagic.ifeed.infrastructure.retrieval.impl.MultiChannelRetrievalPipeline;
-import org.bitmagic.ifeed.infrastructure.vector.VectorStoreTurbo;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -30,10 +28,9 @@ public class JpaInvertedIndex implements InvertedIndex {
 
 
     @Autowired
-    public JpaInvertedIndex(VectorStoreTurbo vectorStore, NamedParameterJdbcTemplate  jdbcTemplate, SearchRetrievalProperties properties) {
+    public JpaInvertedIndex(Bm25RetrievalHandler  bm25RetrievalHandler, SearchRetrievalProperties properties) {
         this.retrievalPipeline = new MultiChannelRetrievalPipeline(properties.getFreshnessTimeWeight(), properties.getFreshnessLambda())
-                .addHandler(new Bm25RetrievalHandler(jdbcTemplate), properties.getBm25Weight());
-//        .addHandler(new VectorRetrievalHandler(vectorStore, properties.getSimilarityThreshold()), properties.getVectorWeight());
+                .addHandler(bm25RetrievalHandler, 1);
     }
 
     @Override

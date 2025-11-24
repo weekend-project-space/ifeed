@@ -6,9 +6,10 @@ import org.bitmagic.ifeed.infrastructure.TermUtils;
 import org.bitmagic.ifeed.infrastructure.retrieval.DocScore;
 import org.bitmagic.ifeed.infrastructure.retrieval.RetrievalContext;
 import org.bitmagic.ifeed.infrastructure.retrieval.RetrievalHandler;
+import org.bitmagic.ifeed.infrastructure.text.search.pg.PgTextSearchStore;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
-import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 
@@ -22,34 +23,35 @@ import java.util.Map;
 @Slf4j
 public class Bm25RetrievalHandler implements RetrievalHandler {
 
-    private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
+
+    private final PgTextSearchStore pgTextSearchStore;
 
     // 使用中文分词配置
-    private static final String CHINESE_SEARCH_SQL = """
-            WITH query AS (
-                SELECT websearch_to_tsquery('simple', :query) AS q
-            )
-            SELECT a.id,
-                   ts_rank_cd(a.tsv, query.q, 33) AS score,
-                   a.title,
-                   a.summary,
-                   a.pub_date AS pubDate
-            FROM articles a
-            CROSS JOIN query
-            WHERE query.q @@ a.tsv
-              AND (
-                :includeGlobal = TRUE 
-                OR EXISTS (
-                    SELECT 1
-                    FROM user_subscriptions us
-                    WHERE us.feed_id = a.feed_id
-                      AND us.user_id = :userId
-                      AND us.is_active = TRUE
-                )
-              )
-            ORDER BY score DESC
-            LIMIT :topK
-            """;
+//    private static final String CHINESE_SEARCH_SQL = """
+//            WITH query AS (
+//                SELECT websearch_to_tsquery('simple', :query) AS q
+//            )
+//            SELECT a.id,
+//                   ts_rank_cd(a.tsv, query.q, 33) AS score,
+//                   a.title,
+//                   a.summary,
+//                   a.pub_date AS pubDate
+//            FROM articles a
+//            CROSS JOIN query
+//            WHERE query.q @@ a.tsv
+//              AND (
+//                :includeGlobal = TRUE
+//                OR EXISTS (
+//                    SELECT 1
+//                    FROM user_subscriptions us
+//                    WHERE us.feed_id = a.feed_id
+//                      AND us.user_id = :userId
+//                      AND us.is_active = TRUE
+//                )
+//              )
+//            ORDER BY score DESC
+//            LIMIT :topK
+//            """;
 
     @Override
     public boolean supports(RetrievalContext context) {
@@ -71,22 +73,10 @@ public class Bm25RetrievalHandler implements RetrievalHandler {
                     .addValue("includeGlobal", context.isIncludeGlobal())
                     .addValue("userId", context.getUserId())
                     .addValue("topK", context.getTopK());
-
-            List<DocScore> results = namedParameterJdbcTemplate.query(
-                    CHINESE_SEARCH_SQL,
-                    params,
-                    (rs, rowNum) -> new DocScore(
-                            rs.getLong("id"),
-                            rs.getDouble("score"),
-                            rs.getTimestamp("pubDate").toInstant(),
-                            "bm25_chinese",
-                            Map.of(
-                                    "title", rs.getString("title"),
-                                    "summary", rs.getString("summary"),
-                                    "pubDate", rs.getTimestamp("pubDate").getTime()
-                            )
-                    )
-            );
+            List<DocScore> results = pgTextSearchStore.searchWithFilter(buildChineseQuery(context.getQuery()), context.getTopK(), context.getUserId(), context.isIncludeGlobal()).stream().map(doc -> {
+                Map<String, Object> metadata = doc.document().metadata();
+                return new DocScore(doc.document().id(), doc.score(), Instant.ofEpochSecond((Integer) metadata.get("pubDate")), "bm25_chinese", metadata);
+            }).toList();
 
             long duration = System.currentTimeMillis() - startTime;
             log.info("Chinese BM25 retrieval completed: {} results in {}ms",
