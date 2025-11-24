@@ -41,18 +41,10 @@ public class DefaultRecallPlanner implements RecallPlanner {
 
     private static @NotNull Map<StrategyId, Integer> getStrategyQuotas(Collection<StrategyId> availableStrategies, int topK) {
         // 平均分配每个策略的召回配额，并对剩余的名额做一次补偿
-        int recallTotal = topK * 3;
+        int recallTotal = topK * 2;
         int perStrategy = Math.max(1, recallTotal / availableStrategies.size());
         Map<StrategyId, Integer> quotas = new EnumMap<>(StrategyId.class);
         availableStrategies.forEach(id -> quotas.put(id, perStrategy));
-//
-//        int remaining = Math.max(0, recallTotal - perStrategy * availableStrategies.size());
-//        var iterator = availableStrategies.iterator();
-//        while (remaining > 0 && iterator.hasNext()) {
-//            StrategyId next = iterator.next();
-//            quotas.computeIfPresent(next, (k, v) -> v + 1);
-//            remaining--;
-//        }
         return quotas;
     }
 
