@@ -5,6 +5,7 @@ import org.bitmagic.ifeed.api.response.CollectionItemResponse;
 import org.bitmagic.ifeed.domain.document.UserBehaviorDocument;
 import org.bitmagic.ifeed.domain.model.Article;
 import org.bitmagic.ifeed.domain.model.User;
+import org.bitmagic.ifeed.domain.record.ArticleSummary;
 import org.bitmagic.ifeed.domain.record.ArticleSummaryView;
 import org.bitmagic.ifeed.domain.repository.ArticleRepository;
 import org.bitmagic.ifeed.domain.repository.UserBehaviorRepository;
@@ -103,8 +104,8 @@ public class UserCollectionService {
                 .map(UUID::fromString)
                 .toList();
 
-        Map<UUID, ArticleSummaryView> articles = articleRepository.listArticleSummaries(articleIds).stream()
-                .collect(Collectors.toMap(ArticleSummaryView::id , Function.identity()));
+        Map<UUID, ArticleSummary> articles = articleRepository.listArticleSummaries(articleIds).stream()
+                .collect(Collectors.toMap(ArticleSummary::id , Function.identity()));
 
         var content = pageRefs.stream()
                 .map(item -> {

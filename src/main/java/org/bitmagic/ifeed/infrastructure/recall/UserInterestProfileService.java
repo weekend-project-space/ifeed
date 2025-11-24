@@ -5,35 +5,35 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.bitmagic.ifeed.application.recommendation.recall.spi.UserPreferenceService;
 import org.bitmagic.ifeed.domain.document.UserBehaviorDocument;
-import org.bitmagic.ifeed.domain.record.ArticleSummaryView;
+import org.bitmagic.ifeed.domain.record.ArticleSummary;
 import org.bitmagic.ifeed.domain.repository.ArticleRepository;
-import org.bitmagic.ifeed.domain.repository.UserBehaviorRepository;
+import org.bitmagic.ifeed.infrastructure.recall.data.UserBehaviorDataAccessor;
 import org.bitmagic.ifeed.infrastructure.util.JSON;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import java.time.Duration;
-import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
 
 /**
  * 用户兴趣画像服务
- * 基于阅读历史和收藏行为，提取用户对 feedId、category、tag 的偏好权重
+ * 基于阅读历史和收藏行为，提取用户对 feedTitle、tag 的偏好权重
  */
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class UserInterestProfileService implements UserPreferenceService {
 
-    private final UserBehaviorRepository userBehaviorRepository;
+    private final UserBehaviorDataAccessor dataAccessor;
     private final ArticleRepository articleRepository;
 
-    private static final TypeReference<List<String>> TAGS_TYPE = new TypeReference<>() {
-    };
+    private static final TypeReference<List<String>> TAGS_TYPE = new TypeReference<>() {};
 
-    @Value("${recall.preference.window-days:30}")
-    private int windowDays;
+    @Value("${recall.preference.read-window-days:30}")
+    private int readWindowDays;
+
+    @Value("${recall.preference.collection-window-days:90}")
+    private int collectionWindowDays;
 
     @Value("${recall.preference.lookback:200}")
     private int lookback;
@@ -41,99 +41,94 @@ public class UserInterestProfileService implements UserPreferenceService {
     @Value("${recall.preference.collection-bonus:2.0}")
     private double collectionBonus;
 
+    @Value("${recall.preference.min-total-score:0.1}")
+    private double minTotalScore;
+
     @Override
     public List<AttributePreference> topAttributes(Integer userId, int limit) {
         if (userId == null || limit <= 0) {
             return List.of();
         }
 
-        return userBehaviorRepository.findById(userId.toString())
+        return dataAccessor.getUserBehavior(userId)
                 .map(doc -> computeTopPreferences(doc, limit))
-                .orElse(List.of());
+                .orElseGet(() -> {
+                    log.debug("No user behavior found for userId: {}", userId);
+                    return List.of();
+                });
     }
 
-    private List<AttributePreference> computeTopPreferences(UserBehaviorDocument document, int limit) {
-        Instant cutoff = resolveCutoff();
-        int fetchLimit = Math.max(Math.max(limit, lookback), limit * 5);
+    private List<AttributePreference> computeTopPreferences(
+            UserBehaviorDocument document, int limit) {
 
-        // 获取阅读历史
-        List<UserBehaviorDocument.ArticleRef> readHistory = filterAndSort(
-                document.getReadHistory(), cutoff, fetchLimit);
+        // 使用共享的过滤和排序逻辑
+        List<UserBehaviorDocument.ArticleRef> readHistory =
+                dataAccessor.filterAndSortRefs(
+                        document.getReadHistory(),
+                        readWindowDays,
+                        lookback);
 
-        // 获取收藏历史
-        List<UserBehaviorDocument.ArticleRef> collections = filterAndSort(
-                document.getCollections(), cutoff, fetchLimit);
+        List<UserBehaviorDocument.ArticleRef> collections =
+                dataAccessor.filterAndSortRefs(
+                        document.getCollections(),
+                        collectionWindowDays,
+                        lookback);
 
         if (readHistory.isEmpty() && collections.isEmpty()) {
+            log.debug("No valid read history or collections for user {}", document.getId());
             return List.of();
         }
 
-        // 收集所有文章ID
-        Set<UUID> allIds = new HashSet<>();
-        readHistory.stream()
-                .map(ref -> safeUuid(ref.getArticleId()))
-                .filter(Objects::nonNull)
-                .forEach(allIds::add);
-        collections.stream()
-                .map(ref -> safeUuid(ref.getArticleId()))
-                .filter(Objects::nonNull)
-                .forEach(allIds::add);
+        // 收集所有文章 UUID
+        Set<String> allArticleIds = new HashSet<>();
+        allArticleIds.addAll(dataAccessor.extractArticleIds(readHistory));
+        allArticleIds.addAll(dataAccessor.extractArticleIds(collections));
 
-        if (allIds.isEmpty()) {
+        if (allArticleIds.isEmpty()) {
+            log.debug("No valid article IDs found for user {}", document.getId());
             return List.of();
         }
 
-        // 收藏的文章ID集合，用于加权
-        Set<UUID> collectedIds = collections.stream()
-                .map(ref -> safeUuid(ref.getArticleId()))
+        // 转换为 UUID 列表
+        List<UUID> uuids = allArticleIds.stream()
+                .map(dataAccessor::safeUuid)
                 .filter(Objects::nonNull)
-                .collect(Collectors.toSet());
+                .toList();
 
-        // 查询文章（带 fetch join）
-        Map<UUID, ArticleSummaryView> articleMap = articleRepository
-                .listArticleSummaries(new ArrayList<>(allIds)).stream()
-                .collect(Collectors.toMap(ArticleSummaryView::id, a -> a));
+        if (uuids.isEmpty()) {
+            log.warn("No valid UUIDs parsed for user {}", document.getId());
+            return List.of();
+        }
+
+        // 直接用 UUID 查询文章详情并建立映射
+        Map<UUID, ArticleSummary> articleMap = articleRepository
+                .listArticleSummaries(uuids).stream()
+                .collect(Collectors.toMap(ArticleSummary::id, a -> a));
+
+        if (articleMap.isEmpty()) {
+            log.warn("No articles found in repository for user {} with {} UUIDs",
+                    document.getId(), uuids.size());
+            return List.of();
+        }
+
+        // 收藏的文章ID集合
+        Set<String> collectedIds = dataAccessor.extractArticleIds(collections);
 
         // 统计各维度权重
         Map<String, Double> feedScores = new HashMap<>();
         Map<String, Double> tagScores = new HashMap<>();
+        Set<String> processedIds = new HashSet<>();
 
         // 处理阅读历史
-        for (UserBehaviorDocument.ArticleRef ref : readHistory) {
-            UUID uuid = safeUuid(ref.getArticleId());
-            if (uuid == null) continue;
+        processArticleRefs(readHistory, articleMap, collectedIds,
+                feedScores, tagScores, processedIds);
 
-            ArticleSummaryView article = articleMap.get(uuid);
-            if (article == null) continue;
-
-            // 基础分数 1.0，收藏额外加分
-            double score = collectedIds.contains(uuid) ? 1.0 + collectionBonus : 1.0;
-
-            accumulateFeedScore(feedScores, article, score);
-            accumulateTagScores(tagScores, article, score);
-        }
-
-        // 处理仅收藏但未在阅读历史中的文章
-        for (UserBehaviorDocument.ArticleRef ref : collections) {
-            UUID uuid = safeUuid(ref.getArticleId());
-            if (uuid == null) continue;
-
-            // 已在阅读历史中处理过，跳过
-            boolean inReadHistory = readHistory.stream()
-                    .anyMatch(r -> uuid.toString().equals(r.getArticleId()));
-            if (inReadHistory) continue;
-
-            ArticleSummaryView article = articleMap.get(uuid);
-            if (article == null) continue;
-
-            // 收藏但未阅读，给予收藏加成分数
-            double score = 1.0 + collectionBonus;
-
-            accumulateFeedScore(feedScores, article, score);
-            accumulateTagScores(tagScores, article, score);
-        }
+        // 处理仅收藏但未阅读的文章
+        processCollectionOnlyRefs(collections, articleMap, processedIds,
+                feedScores, tagScores);
 
         if (feedScores.isEmpty() && tagScores.isEmpty()) {
+            log.debug("No valid scores computed for user {}", document.getId());
             return List.of();
         }
 
@@ -142,79 +137,146 @@ public class UserInterestProfileService implements UserPreferenceService {
         result.addAll(normalizeAndConvert(feedScores, "feedTitle"));
         result.addAll(normalizeAndConvert(tagScores, "tag"));
 
+        log.info("Computed {} attribute preferences for user {} (read:{}, collection:{})",
+                result.size(), document.getId(), readHistory.size(), collections.size());
+
         return result.stream()
                 .sorted(Comparator.comparingDouble(AttributePreference::weight).reversed())
                 .limit(limit)
                 .toList();
     }
 
-    private List<UserBehaviorDocument.ArticleRef> filterAndSort(
-            List<UserBehaviorDocument.ArticleRef> refs, Instant cutoff, int limit) {
-        if (refs == null || refs.isEmpty()) {
-            return List.of();
-        }
+    /**
+     * 处理阅读历史中的文章
+     */
+    private void processArticleRefs(
+            List<UserBehaviorDocument.ArticleRef> refs,
+            Map<UUID, ArticleSummary> articleMap,
+            Set<String> collectedIds,
+            Map<String, Double> feedScores,
+            Map<String, Double> tagScores,
+            Set<String> processedIds) {
 
-        return refs.stream()
-                .filter(ref -> ref.getArticleId() != null)
-                .filter(ref -> cutoff == null || ref.getTimestamp() == null
-                        || !ref.getTimestamp().isBefore(cutoff))
-                .sorted(Comparator.comparing(
-                        UserBehaviorDocument.ArticleRef::getTimestamp,
-                        Comparator.nullsLast(Comparator.naturalOrder())).reversed())
-                .limit(limit)
-                .toList();
+        for (UserBehaviorDocument.ArticleRef ref : refs) {
+            String articleId = ref.getArticleId();
+            if (articleId == null) continue;
+
+            UUID uuid = dataAccessor.safeUuid(articleId);
+            if (uuid == null) continue;
+
+            ArticleSummary article = articleMap.get(uuid);
+            if (article == null) continue;
+
+            // 基础分数 1.0，如果被收藏则额外加分
+            double score = collectedIds.contains(articleId)
+                    ? 1.0 + collectionBonus
+                    : 1.0;
+
+            accumulateFeedScore(feedScores, article, score);
+            accumulateTagScores(tagScores, article, score);
+
+            processedIds.add(articleId);
+        }
     }
 
-    private void accumulateFeedScore(Map<String, Double> scores, ArticleSummaryView article, double score) {
-        if (article.feedTitle() != null) {
+    /**
+     * 处理仅收藏但未阅读的文章
+     */
+    private void processCollectionOnlyRefs(
+            List<UserBehaviorDocument.ArticleRef> collections,
+            Map<UUID, ArticleSummary> articleMap,
+            Set<String> processedIds,
+            Map<String, Double> feedScores,
+            Map<String, Double> tagScores) {
+
+        for (UserBehaviorDocument.ArticleRef ref : collections) {
+            String articleId = ref.getArticleId();
+
+            // 已在阅读历史中处理过，跳过
+            if (articleId == null || processedIds.contains(articleId)) {
+                continue;
+            }
+
+            UUID uuid = dataAccessor.safeUuid(articleId);
+            if (uuid == null) continue;
+
+            ArticleSummary article = articleMap.get(uuid);
+            if (article == null) continue;
+
+            // 收藏但未阅读，给予收藏加成分数
+            double score = 1.0 + collectionBonus;
+
+            accumulateFeedScore(feedScores, article, score);
+            accumulateTagScores(tagScores, article, score);
+        }
+    }
+
+    /**
+     * 累加 Feed 分数
+     */
+    private void accumulateFeedScore(
+            Map<String, Double> scores,
+            ArticleSummary article,
+            double score) {
+
+        if (article.feedTitle() != null && !article.feedTitle().isBlank()) {
             scores.merge(article.feedTitle(), score, Double::sum);
         }
     }
 
-    private void accumulateTagScores(Map<String, Double> scores, ArticleSummaryView article, double score) {
+    /**
+     * 累加 Tag 分数
+     */
+    private void accumulateTagScores(
+            Map<String, Double> scores,
+            ArticleSummary article,
+            double score) {
+
         String tags = article.tags();
         if (tags == null || tags.isBlank()) {
             return;
         }
-        JSON.fromJson(tags, TAGS_TYPE).stream()
-                .filter(tag -> !tag.isEmpty())
-                .forEach(tag -> scores.merge(tag, score, Double::sum));
+
+        try {
+            List<String> tagList = JSON.fromJson(tags, TAGS_TYPE);
+            if (tagList != null) {
+                tagList.stream()
+                        .filter(tag -> tag != null && !tag.isEmpty())
+                        .forEach(tag -> scores.merge(tag, score, Double::sum));
+            }
+        } catch (Exception e) {
+            log.debug("Failed to parse tags for article {}: {}",
+                    article.id(), e.getMessage());
+        }
     }
 
     /**
      * 归一化：将原始分数转换为 0-1 的比例权重
+     * 如果总分太低，保留原始分数以避免信息丢失
      */
-    private List<AttributePreference> normalizeAndConvert(Map<String, Double> scores, String attrKey) {
+    private List<AttributePreference> normalizeAndConvert(
+            Map<String, Double> scores,
+            String attrKey) {
+
         if (scores.isEmpty()) {
             return List.of();
         }
 
-        double total = scores.values().stream().mapToDouble(Double::doubleValue).sum();
+        double total = scores.values().stream()
+                .mapToDouble(Double::doubleValue)
+                .sum();
+
         if (total <= 0) {
             return List.of();
         }
 
+        boolean shouldNormalize = total >= minTotalScore;
+
         return scores.entrySet().stream()
-                .map(e -> new AttributePreference(attrKey, e.getKey(), e.getValue() / total))
+                .map(e -> {
+                    double weight = shouldNormalize ? e.getValue() / total : e.getValue();
+                    return new AttributePreference(attrKey, e.getKey(), weight);
+                })
                 .toList();
-    }
-
-    private Instant resolveCutoff() {
-        if (windowDays <= 0) {
-            return null;
-        }
-        return Instant.now().minus(Duration.ofDays(windowDays));
-    }
-
-    private UUID safeUuid(String value) {
-        if (value == null) {
-            return null;
-        }
-        try {
-            return UUID.fromString(value);
-        } catch (Exception ex) {
-            log.debug("Ignore invalid articleId {} in read history", value);
-            return null;
-        }
     }
 }

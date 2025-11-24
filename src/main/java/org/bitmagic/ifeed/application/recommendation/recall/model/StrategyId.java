@@ -11,5 +11,6 @@ public enum StrategyId {
     U2A2I,
     LATEST,
     HOT,
-    RANDOM_I2I
+    RANDOM_I2I,
+    MIX
 }

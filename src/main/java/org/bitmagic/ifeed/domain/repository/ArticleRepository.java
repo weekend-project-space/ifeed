@@ -3,6 +3,7 @@ package org.bitmagic.ifeed.domain.repository;
 import org.bitmagic.ifeed.domain.model.Article;
 import org.bitmagic.ifeed.domain.model.Feed;
 import org.bitmagic.ifeed.domain.record.ArticleIdPair;
+import org.bitmagic.ifeed.domain.record.ArticleSummary;
 import org.bitmagic.ifeed.domain.record.ArticleSummaryView;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -113,25 +114,22 @@ public interface ArticleRepository extends JpaRepository<Article, Integer>, JpaS
                                                     @Param("ownerId") Integer ownerId,
                                                     Pageable pageable);
 
-    List<Article> findByUidIn(Iterable<UUID> uids);
-
     @Query(value = """
-            select new org.bitmagic.ifeed.domain.record.ArticleSummaryView(
+            select new org.bitmagic.ifeed.domain.record.ArticleSummary(
                 a.uid,
                 a.id,
                 a.title,
-                a.link,
                 a.summary,
+                a.thumbnail,
                 f.title,
                 a.publishedAt,
                 a.tags,
-                a.thumbnail,
-                a.enclosure)
+                a.category)
             from Article a
             left join a.feed f
             where a.uid in (:uIds)
             """)
-    List<ArticleSummaryView> listArticleSummaries(@Param("uIds") List<UUID> uIds);
+    List<ArticleSummary> listArticleSummaries(@Param("uIds") List<UUID> uIds);
 
     long countByFeed(Feed feed);
 
