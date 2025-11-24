@@ -2,7 +2,7 @@ package org.bitmagic.ifeed;
 
 import org.bitmagic.ifeed.config.properties.RssFetcherProperties;
 import org.bitmagic.ifeed.infrastructure.FreshnessCalculator;
-import org.bitmagic.ifeed.infrastructure.retrieval.impl.Bm25RetrievalHandler;
+import org.bitmagic.ifeed.infrastructure.retrieval.impl.TextSearchRetrievalHandler;
 import org.bitmagic.ifeed.infrastructure.text.search.pg.PgTextSearchStore;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.model.ChatModel;
@@ -72,8 +72,8 @@ public class IFeedApplication {
     }
 
     @Bean
-    public Bm25RetrievalHandler bm25RetrievalHandler(PgTextSearchStore pgTextSearchStore) {
-        return new Bm25RetrievalHandler(pgTextSearchStore);
+    public TextSearchRetrievalHandler bm25RetrievalHandler(PgTextSearchStore pgTextSearchStore) {
+        return new TextSearchRetrievalHandler(pgTextSearchStore);
     }
 
     @Bean

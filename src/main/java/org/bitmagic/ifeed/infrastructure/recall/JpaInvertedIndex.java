@@ -8,7 +8,7 @@ import org.bitmagic.ifeed.config.properties.SearchRetrievalProperties;
 import org.bitmagic.ifeed.infrastructure.retrieval.DocScore;
 import org.bitmagic.ifeed.infrastructure.retrieval.RetrievalContext;
 import org.bitmagic.ifeed.infrastructure.retrieval.RetrievalPipeline;
-import org.bitmagic.ifeed.infrastructure.retrieval.impl.Bm25RetrievalHandler;
+import org.bitmagic.ifeed.infrastructure.retrieval.impl.TextSearchRetrievalHandler;
 import org.bitmagic.ifeed.infrastructure.retrieval.impl.MultiChannelRetrievalPipeline;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -28,9 +28,9 @@ public class JpaInvertedIndex implements InvertedIndex {
 
 
     @Autowired
-    public JpaInvertedIndex(Bm25RetrievalHandler  bm25RetrievalHandler, SearchRetrievalProperties properties) {
+    public JpaInvertedIndex(TextSearchRetrievalHandler textSearchRetrievalHandler, SearchRetrievalProperties properties) {
         this.retrievalPipeline = new MultiChannelRetrievalPipeline(properties.getFreshnessTimeWeight(), properties.getFreshnessLambda())
-                .addHandler(bm25RetrievalHandler, 1);
+                .addHandler(textSearchRetrievalHandler, 1);
     }
 
     @Override

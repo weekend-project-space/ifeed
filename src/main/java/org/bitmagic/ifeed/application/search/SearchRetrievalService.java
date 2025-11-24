@@ -8,7 +8,7 @@ import org.bitmagic.ifeed.domain.service.ArticleService;
 import org.bitmagic.ifeed.infrastructure.retrieval.DocScore;
 import org.bitmagic.ifeed.infrastructure.retrieval.RetrievalContext;
 import org.bitmagic.ifeed.infrastructure.retrieval.RetrievalPipeline;
-import org.bitmagic.ifeed.infrastructure.retrieval.impl.Bm25RetrievalHandler;
+import org.bitmagic.ifeed.infrastructure.retrieval.impl.TextSearchRetrievalHandler;
 import org.bitmagic.ifeed.infrastructure.retrieval.impl.MultiChannelRetrievalPipeline;
 import org.bitmagic.ifeed.infrastructure.retrieval.impl.VectorRetrievalHandler;
 import org.bitmagic.ifeed.infrastructure.vector.VectorStoreTurbo;
@@ -34,12 +34,12 @@ public class SearchRetrievalService {
     private final SearchRetrievalProperties properties;
     private final RetrievalPipeline retrievalPipeline;
 
-    public SearchRetrievalService(VectorStoreTurbo vectorStore, UserSubscriptionRepository userSubscriptionRepository, ArticleService articleService, Bm25RetrievalHandler bm25RetrievalHandler, SearchRetrievalProperties properties) {
+    public SearchRetrievalService(VectorStoreTurbo vectorStore, UserSubscriptionRepository userSubscriptionRepository, ArticleService articleService, TextSearchRetrievalHandler textSearchRetrievalHandler, SearchRetrievalProperties properties) {
         this.userSubscriptionRepository = userSubscriptionRepository;
         this.articleService = articleService;
         this.properties = properties;
         this.retrievalPipeline = new MultiChannelRetrievalPipeline(properties.getFreshnessTimeWeight(), properties.getFreshnessLambda()).
-                addHandler(bm25RetrievalHandler, properties.getBm25Weight())
+                addHandler(textSearchRetrievalHandler, properties.getBm25Weight())
                 .addHandler(new VectorRetrievalHandler(vectorStore), properties.getVectorWeight());
     }
 

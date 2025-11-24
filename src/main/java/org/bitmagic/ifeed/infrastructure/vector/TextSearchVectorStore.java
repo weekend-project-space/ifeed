@@ -20,7 +20,7 @@ import java.util.Map;
  * @date 2025/11/19
  **/
 @RequiredArgsConstructor
-public class Bm25VectorStore implements VectorStore {
+public class TextSearchVectorStore implements VectorStore {
     @Delegate
     final VectorStore vectorStore;
 
