@@ -9,6 +9,6 @@ public interface UserPreferenceService {
 
     List<AttributePreference> topAttributes(Integer userId, int limit);
 
-    record AttributePreference(String attributeKey, String attributeValue, double score) {
+    record AttributePreference(String attributeKey, String attributeValue, double weight) {
     }
 }
