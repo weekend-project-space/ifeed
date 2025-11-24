@@ -37,7 +37,7 @@ public class TextSearchRetrievalHandler implements RetrievalHandler {
 
         validateContext(context);
 
-        log.debug("Executing Chinese BM25 retrieval: query='{}', userId={}, topK={}",
+        log.debug("Executing Chinese Text Search retrieval: query='{}', userId={}, topK={}",
                 context.getQuery(), context.getUserId(), context.getTopK());
 
         try {
@@ -50,13 +50,13 @@ public class TextSearchRetrievalHandler implements RetrievalHandler {
             }
 
             long duration = System.currentTimeMillis() - startTime;
-            log.info("Chinese BM25 retrieval completed: {} results in {}ms",
+            log.info("Chinese Text Search retrieval completed: {} results in {}ms",
                     results.size(), duration);
 
             return results;
 
         } catch (Exception e) {
-            log.error("Chinese BM25 retrieval failed for query: {}", context.getQuery(), e);
+            log.error("Chinese Text Search retrieval failed for query: {}", context.getQuery(), e);
             throw new RuntimeException("Chinese full-text search failed", e);
         }
     }

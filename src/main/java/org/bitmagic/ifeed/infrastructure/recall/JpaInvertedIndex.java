@@ -66,7 +66,7 @@ public class JpaInvertedIndex implements InvertedIndex {
 
             for (DocScore score : scores) {
                 // 加权累加分数
-                double weightedScore = score.score() * attr.weight() * normalizationFactor;
+                double weightedScore = score.score() * Math.max(attr.weight(), 0.1) * normalizationFactor;
                 weightedScores.merge(score.docId(), weightedScore, Double::sum);
 
                 // 保存元数据
