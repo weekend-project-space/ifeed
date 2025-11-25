@@ -19,7 +19,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @Slf4j
-//@Component
+@Component
 @RequiredArgsConstructor
 public class FeedIngestionScheduler {
 
