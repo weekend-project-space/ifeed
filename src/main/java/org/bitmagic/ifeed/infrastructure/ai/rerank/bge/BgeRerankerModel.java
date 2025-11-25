@@ -14,7 +14,7 @@ public class BgeRerankerModel extends AbstractRerankerModel {
     private final RestClient restClient;
 
     public BgeRerankerModel(
-            @Value("${ai.provider.reranker.base-url:http://localhost:8080}") String baseUrl) {
+            @Value("${app.ai.provider.reranker.base-url:http://localhost:8080}") String baseUrl) {
         this.restClient = RestClient.builder()
                 .baseUrl(baseUrl)
                 .defaultHeader("Content-Type", "application/json")

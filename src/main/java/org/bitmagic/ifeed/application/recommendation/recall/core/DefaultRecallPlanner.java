@@ -6,6 +6,8 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collection;
 import java.util.EnumMap;
 import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * 默认召回计划器，将topK在可用策略之间平均分配，并支持请求级的多样化开关。
@@ -31,12 +33,7 @@ public class DefaultRecallPlanner implements RecallPlanner {
     }
 
     private static @NotNull Map<StrategyId, Double> getStrategyWeight(Collection<StrategyId> availableStrategies) {
-        Map<StrategyId, Double> weights = new EnumMap<>(StrategyId.class);
-        availableStrategies.forEach(id -> {
-            double weight = id.equals(StrategyId.U2A2I) ? 1 : (id.name().contains("U2") ? 0.7 : (id.equals(StrategyId.I2I) ? 0.5 : (id.equals(StrategyId.RANDOM_I2I) ? 0.3 : 0.1)));
-            weights.put(id, weight);
-        });
-        return weights;
+        return availableStrategies.stream().collect(Collectors.toMap(Function.identity(), StrategyId::getDefaultWeight));
     }
 
     private static @NotNull Map<StrategyId, Integer> getStrategyQuotas(Collection<StrategyId> availableStrategies, int topK) {
