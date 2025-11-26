@@ -209,12 +209,12 @@
 
             <!-- Left: Title + Summary -->
             <div class="flex-1 min-w-0 flex items-center gap-4">
-              <h3 class="flex-shrink-0 text-sm font-medium text-gray-900 dark:text-gray-100 whitespace-nowrap">
+              <h3 class="max-w-[100%] flex-shrink-0 text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
                 {{ item.title }}
               </h3>
               <p
                   v-if="item.summary"
-                  class="flex-1 text-sm text-gray-600 dark:text-gray-400 line-clamp-1 min-w-0">
+                  class="hidden md:block flex-1 text-sm text-gray-600 dark:text-gray-400 line-clamp-1 min-w-0">
                 {{ item.summary }}
               </p>
             </div>
