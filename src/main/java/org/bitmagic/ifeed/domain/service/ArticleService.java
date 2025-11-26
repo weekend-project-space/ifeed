@@ -13,12 +13,14 @@ import org.bitmagic.ifeed.domain.repository.ArticleRepository;
 import org.bitmagic.ifeed.domain.repository.FeedRepository;
 import org.bitmagic.ifeed.exception.ApiException;
 import org.bitmagic.ifeed.infrastructure.text.search.TextSearchStore;
-import org.springframework.ai.document.Document;
 import org.springframework.data.domain.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -26,9 +28,6 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class ArticleService {
-
-    private static final int DEFAULT_PAGE_SIZE = 10;
-    private static final int MAX_PAGE_SIZE = 100;
 
     private final ArticleRepository articleRepository;
     private final FeedRepository feedRepository;
@@ -59,13 +58,17 @@ public class ArticleService {
                                                  UUID feedUid,
                                                  Set<String> tags,
                                                  String category,
-                                                 boolean includeGlobal, Integer page,
-                                                 Integer size,
-                                                 String sort) {
-        var pageable = buildPageable(page, size, sort);
+                                                 boolean includeGlobal, Pageable pageable) {
         var tagPattern = buildTagPattern(tags);
         var scopeOwnerId = Objects.nonNull(feedUid) || includeGlobal ? null : ownerId;
-        return articleRepository.findArticleSummaries(feedUid, tagPattern, category, scopeOwnerId, pageable);
+        Instant start = Instant.ofEpochSecond(0);
+        if (Strings.isNotEmpty(category)) {
+            if (category.equals("今日")) {
+                category = null;
+                start = LocalDate.now().atStartOfDay().atZone(ZoneOffset.UTC).toInstant();
+            }
+        }
+        return articleRepository.findArticleSummaries(feedUid, tagPattern, category, scopeOwnerId, start, pageable);
     }
 
 
@@ -108,24 +111,16 @@ public class ArticleService {
     public Page<ArticleSummaryView> searchArticles(Integer ownerId,
                                                    String query,
                                                    boolean includeGlobal,
-                                                   Integer page,
-                                                   Integer size) {
+                                                   Pageable pageable) {
         if (query == null || query.isBlank()) {
             throw new ApiException(HttpStatus.BAD_REQUEST, "Query must not be blank");
         }
-        var pageable = buildPageable(page, size, "publishedAt,desc");
+
         var term = "%" + query.trim().toLowerCase() + "%";
         var scopeOwnerId = includeGlobal ? null : ownerId;
         return articleRepository.searchArticleSummaries(term, scopeOwnerId, pageable);
     }
 
-    private Pageable buildPageable(Integer page, Integer size, String sort) {
-        int pageNumber = page == null || page < 0 ? 0 : page;
-        int pageSize = size == null || size <= 0 ? DEFAULT_PAGE_SIZE : Math.min(size, MAX_PAGE_SIZE);
-
-        Sort sortObject = parseSort(sort);
-        return PageRequest.of(pageNumber, pageSize, sortObject);
-    }
 
     private Sort parseSort(String sort) {
         if (sort == null || sort.isBlank()) {

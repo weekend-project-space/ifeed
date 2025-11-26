@@ -30,9 +30,6 @@ public class RecallRecommendationService implements RecommendationService {
     private final RecallEngine recallEngine;
     private final ArticleService articleService;
     private final Map<Integer, List<ItemCandidate>> user2Items = new ConcurrentHashMap<>();
-    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
-    private static final TypeReference<List<String>> TAGS_TYPE = new TypeReference<>() {
-    };
 
     @Override
     public Page<RecResponse> recommend(RecRequest request, int page, int size) {

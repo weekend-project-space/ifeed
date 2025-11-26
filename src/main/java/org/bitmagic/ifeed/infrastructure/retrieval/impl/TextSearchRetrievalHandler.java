@@ -43,7 +43,7 @@ public class TextSearchRetrievalHandler implements RetrievalHandler {
         try {
             List<DocScore> results = Collections.emptyList();
             if (Strings.isNotBlank(context.getQuery())) {
-                results = pgTextSearchStore.searchWithFilter(buildChineseQuery(context.getQuery()), context.getTopK(), context.getUserId(), context.isIncludeGlobal()).stream().map(doc -> {
+                results = pgTextSearchStore.searchWithFilter(buildChineseQuery(context.getQuery()), context.getTopK(), context.getUserId(), context.isIncludeGlobal(), context.getThreshold()).stream().map(doc -> {
                     Map<String, Object> metadata = doc.document().metadata();
                     return new DocScore(doc.document().id(), doc.score(), Instant.ofEpochSecond((Integer) metadata.get("pubDate")), "bm25_chinese", metadata);
                 }).toList();
@@ -52,7 +52,6 @@ public class TextSearchRetrievalHandler implements RetrievalHandler {
             long duration = System.currentTimeMillis() - startTime;
             log.info("Chinese Text Search retrieval completed: {} results in {}ms",
                     results.size(), duration);
-
             return results;
 
         } catch (Exception e) {

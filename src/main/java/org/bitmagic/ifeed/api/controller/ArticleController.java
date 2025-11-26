@@ -17,6 +17,9 @@ import org.bitmagic.ifeed.domain.service.UserCollectionService;
 import org.bitmagic.ifeed.exception.ApiException;
 import org.bitmagic.ifeed.infrastructure.util.DateUtils;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -46,20 +49,17 @@ public class ArticleController {
 
     @GetMapping
     public ResponseEntity<Page<ArticleSummaryResponse>> listArticles(@AuthenticationPrincipal UserPrincipal principal,
-                                                                     @RequestParam(required = false) Integer page,
-                                                                     @RequestParam(required = false) Integer size,
-                                                                     @RequestParam(required = false) String sort,
                                                                      @RequestParam(required = false) String feedId,
                                                                      @RequestParam(required = false, name = "tags") String tags,
                                                                      @RequestParam(required = false, name = "category") String category,
-                                                                     @RequestParam(required = false, defaultValue = SOURCE_OWNER) String source) {
+                                                                     @RequestParam(required = false, defaultValue = SOURCE_OWNER) String source,@PageableDefault(sort = "publishedAt", direction= Sort.Direction.DESC) Pageable pageable) {
         ensureAuthenticated(principal);
         var normalizedTags = parseTags(tags);
         var normalizedCategory = normalizeCategory(category);
         var normalizedSource = normalizeSource(source);
         var includeGlobal = SOURCE_GLOBAL.equals(normalizedSource);
         var articlePage = articleService.listArticles(principal.getId(),
-                        parseFeedId(feedId), normalizedTags, normalizedCategory, includeGlobal, page, size, sort)
+                        parseFeedId(feedId), normalizedTags, normalizedCategory, includeGlobal, pageable)
                 .map(this::toSummaryResponse);
         return ResponseEntity.ok(articlePage);
     }

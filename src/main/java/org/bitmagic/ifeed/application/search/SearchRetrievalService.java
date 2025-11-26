@@ -8,8 +8,8 @@ import org.bitmagic.ifeed.domain.service.ArticleService;
 import org.bitmagic.ifeed.infrastructure.retrieval.DocScore;
 import org.bitmagic.ifeed.infrastructure.retrieval.RetrievalContext;
 import org.bitmagic.ifeed.infrastructure.retrieval.RetrievalPipeline;
-import org.bitmagic.ifeed.infrastructure.retrieval.impl.TextSearchRetrievalHandler;
 import org.bitmagic.ifeed.infrastructure.retrieval.impl.MultiChannelRetrievalPipeline;
+import org.bitmagic.ifeed.infrastructure.retrieval.impl.TextSearchRetrievalHandler;
 import org.bitmagic.ifeed.infrastructure.retrieval.impl.VectorRetrievalHandler;
 import org.bitmagic.ifeed.infrastructure.vector.VectorStoreTurbo;
 import org.springframework.data.domain.Page;
@@ -40,7 +40,7 @@ public class SearchRetrievalService {
         this.properties = properties;
         this.retrievalPipeline = new MultiChannelRetrievalPipeline(properties.getFreshnessTimeWeight(), properties.getFreshnessLambda()).
                 addHandler(textSearchRetrievalHandler, properties.getBm25Weight())
-                .addHandler(new VectorRetrievalHandler(vectorStore), properties.getVectorWeight());
+                .addHandler(new VectorRetrievalHandler(vectorStore, userSubscriptionRepository), properties.getVectorWeight());
     }
 
     public Page<ArticleSummaryView> hybridSearch(Integer userId,
@@ -81,7 +81,7 @@ public class SearchRetrievalService {
         if (!includeGlobal && CollectionUtils.isEmpty(feedIds)) {
             return Collections.emptyList();
         }
-        List<DocScore> docScores = retrievalPipeline.execute(RetrievalContext.builder().query(normalizedQuery).embedding(queryEmbedding).threshold(properties.getSimilarityThreshold()).userId(userId).topK(desired).feedIds(feedIds).build());
+        List<DocScore> docScores = retrievalPipeline.execute(RetrievalContext.builder().query(normalizedQuery).embedding(queryEmbedding).threshold(properties.getSimilarityThreshold()).userId(userId).topK(desired).build());
         log.debug("Hybrid search(IDs) complete: user={}, query='{}', returnCount={}", userId, normalizedQuery, docScores.size());
         return docScores;
     }

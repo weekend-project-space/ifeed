@@ -203,7 +203,7 @@ public class PgTextSearchStore implements TextSearchStore {
      * 带用户订阅过滤的搜索
      */
     public List<ScoredDocument> searchWithFilter(
-            String query, int topK, Integer userId, boolean includeGlobal) {
+            String query, int topK, Integer userId, boolean includeGlobal, double threshold) {
 
         String sql = String.format("""
                 WITH query AS (
@@ -215,6 +215,7 @@ public class PgTextSearchStore implements TextSearchStore {
                 FROM %s d
                 CROSS JOIN query
                 WHERE query.q @@ d.tsv
+                  AND ts_rank_cd(d.tsv, query.q, 33) > :scoreThreshold
                   AND (:includeGlobal = TRUE
                     OR EXISTS (
                         SELECT 1 FROM user_subscriptions us
@@ -228,7 +229,8 @@ public class PgTextSearchStore implements TextSearchStore {
                 .addValue("query", TermUtils.segmentStr(query))
                 .addValue("topK", topK)
                 .addValue("userId", userId)
-                .addValue("includeGlobal", includeGlobal);
+                .addValue("includeGlobal", includeGlobal)
+                .addValue("scoreThreshold", threshold);
 
         return namedJdbcTemplate.query(sql, params, this::mapScoredDocument);
     }

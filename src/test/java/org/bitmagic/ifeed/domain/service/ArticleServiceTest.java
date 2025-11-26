@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 
 import java.util.stream.Stream;
 
@@ -25,8 +26,8 @@ class ArticleServiceTest {
     @Test
     void saveAllAndFlush() {
 
-        Stream.iterate(0, i -> i + 1).limit(50).forEach(i -> {
-            articleService.saveAllAndFlush(articleRepository.findAll(PageRequest.of(i, 10)).getContent());
+        Stream.iterate(0, i -> i + 1).limit(1000).forEach(i -> {
+            articleService.saveAllAndFlush(articleRepository.findAll(PageRequest.of(i, 10, Sort.by(Sort.Direction.DESC, "id"))).getContent());
             log.info("save all and flush");
         });
     }

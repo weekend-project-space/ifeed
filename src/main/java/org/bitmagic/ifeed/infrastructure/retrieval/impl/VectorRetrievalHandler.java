@@ -2,6 +2,7 @@ package org.bitmagic.ifeed.infrastructure.retrieval.impl;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.bitmagic.ifeed.domain.repository.UserSubscriptionRepository;
 import org.bitmagic.ifeed.infrastructure.retrieval.DocScore;
 import org.bitmagic.ifeed.infrastructure.retrieval.RetrievalContext;
 import org.bitmagic.ifeed.infrastructure.retrieval.RetrievalHandler;
@@ -15,6 +16,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * @author yangrd
@@ -25,6 +27,8 @@ import java.util.List;
 public class VectorRetrievalHandler implements RetrievalHandler {
 
     private final VectorStoreTurbo vectorStore;
+
+    private final UserSubscriptionRepository subscriptionRepository;
 
     @Override
     public boolean supports(RetrievalContext context) {
@@ -39,10 +43,11 @@ public class VectorRetrievalHandler implements RetrievalHandler {
                 .topK(context.getTopK())
                 .similarityThreshold(context.getThreshold());
 
-        if (!context.isIncludeGlobal() && !CollectionUtils.isEmpty(context.getFeedIds())) {
+        if (!context.isIncludeGlobal() && Objects.nonNull(context.getUserId())) {
+            List<Integer> feedIds = subscriptionRepository.findActiveFeedIdsByUserId(context.getUserId());
             builder.filterExpression(
                     new FilterExpressionBuilder()
-                            .in("feedId", context.getFeedIds().toArray(Integer[]::new))
+                            .in("feedId", feedIds.toArray(Integer[]::new))
                             .build());
         }
 

@@ -7,6 +7,7 @@ import org.bitmagic.ifeed.config.security.UserPrincipal;
 import org.bitmagic.ifeed.domain.service.ArticleService;
 import org.bitmagic.ifeed.application.search.SearchRetrievalService;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -36,9 +37,8 @@ public class SearchController {
     public ResponseEntity<Page<SearchResultResponse>> search(@AuthenticationPrincipal UserPrincipal principal,
                                                              @RequestParam String query,
                                                              @RequestParam(required = false, defaultValue = TYPE_KEYWORD) String type,
-                                                             @RequestParam(required = false) Integer page,
-                                                             @RequestParam(required = false) Integer size,
-                                                             @RequestParam(required = false, defaultValue = SOURCE_OWNER) String source) {
+
+                                                             @RequestParam(required = false, defaultValue = SOURCE_OWNER) String source, Pageable pageable) {
         ensureAuthenticated(principal);
         if (query == null || query.isBlank()) {
             throw new ApiException(HttpStatus.BAD_REQUEST, "Query must not be blank");
@@ -52,8 +52,8 @@ public class SearchController {
         if (!SOURCE_OWNER.equals(normalizedSource) && !SOURCE_GLOBAL.equals(normalizedSource)) {
             throw new ApiException(HttpStatus.BAD_REQUEST, "Unsupported source type");
         }
-        var pageNumber = page == null || page < 0 ? 0 : page;
-        var pageSize = size == null || size <= 0 ? 10 : Math.min(size, 100);
+        var pageNumber = pageable.getPageNumber();
+        var pageSize = pageable.getPageSize();
         var includeGlobal = SOURCE_GLOBAL.equals(normalizedSource);
 
         if (TYPE_SEMANTIC.equals(normalizedType)) {
@@ -68,7 +68,7 @@ public class SearchController {
             )));
         }
 
-        var articlePage = articleService.searchArticles(principal.getId(), query, includeGlobal, pageNumber, pageSize)
+        var articlePage = articleService.searchArticles(principal.getId(), query, includeGlobal, pageable)
                 .map(article -> new SearchResultResponse(
                         article.id().toString(),
                         article.title(),

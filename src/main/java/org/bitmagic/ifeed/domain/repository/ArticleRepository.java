@@ -1,5 +1,6 @@
 package org.bitmagic.ifeed.domain.repository;
 
+import jakarta.persistence.TemporalType;
 import org.bitmagic.ifeed.domain.model.Article;
 import org.bitmagic.ifeed.domain.model.Feed;
 import org.bitmagic.ifeed.domain.record.ArticleIdPair;
@@ -10,9 +11,11 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.jpa.repository.Temporal;
 import org.springframework.data.repository.query.Param;
 
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -39,6 +42,7 @@ public interface ArticleRepository extends JpaRepository<Article, Integer>, JpaS
             where (:feedUid is null or f.uid = :feedUid)
               and (:tagPattern is null or lower(coalesce(a.tags, '')) like :tagPattern)
               and (:category is null or lower(coalesce(a.category, '')) = :category)
+              and ( a.publishedAt > :start)
               and (:ownerId is null or exists (
                     select 1
                     from UserSubscription us
@@ -54,6 +58,7 @@ public interface ArticleRepository extends JpaRepository<Article, Integer>, JpaS
                     where (:feedUid is null or f.uid = :feedUid)
                       and (:tagPattern is null or lower(coalesce(a.tags, '')) like :tagPattern)
                       and (:category is null or lower(coalesce(a.category, '')) = :category)
+                      and (a.publishedAt > :start)
                       and (:ownerId is null or exists (
                             select 1
                             from UserSubscription us
@@ -66,6 +71,7 @@ public interface ArticleRepository extends JpaRepository<Article, Integer>, JpaS
                                                   @Param("tagPattern") String tagPattern,
                                                   @Param("category") String category,
                                                   @Param("ownerId") Integer ownerId,
+                                                  @Param("start")  Instant start,
                                                   Pageable pageable);
 
     @Query(value = """

@@ -5,8 +5,6 @@ import lombok.Builder;
 import lombok.Data;
 import org.springframework.lang.Nullable;
 
-import java.util.List;
-
 /**
  * @author yangrd
  * @date 2025/11/3
@@ -22,8 +20,6 @@ public class RetrievalContext {
     float[] embedding;
     @Nullable
     Integer userId;
-    @Nullable
-    List<Integer> feedIds;
     boolean includeGlobal;
     int topK;
     double threshold = 0.3;
