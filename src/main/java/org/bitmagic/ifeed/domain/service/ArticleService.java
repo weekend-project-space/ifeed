@@ -62,7 +62,7 @@ public class ArticleService {
         var scopeOwnerId = Objects.nonNull(feedUid) || includeGlobal ? null : ownerId;
         Instant start = Instant.ofEpochSecond(0);
         if (Strings.isNotEmpty(category)) {
-            if (category.equals("Today")) {
+            if (category.equals("today")) {
                 category = null;
                 start = LocalDate.now().atStartOfDay().atZone(ZoneOffset.UTC).toInstant();
             }
