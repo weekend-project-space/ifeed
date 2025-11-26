@@ -1,7 +1,5 @@
 package org.bitmagic.ifeed.application.feed.process;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rometools.rome.feed.synd.SyndContent;
 import com.rometools.rome.feed.synd.SyndEnclosure;
 import com.rometools.rome.feed.synd.SyndEntry;
@@ -12,6 +10,7 @@ import org.bitmagic.ifeed.domain.model.Feed;
 import org.bitmagic.ifeed.domain.repository.ArticleRepository;
 import org.bitmagic.ifeed.infrastructure.ai.AiContentService;
 import org.bitmagic.ifeed.infrastructure.util.ContentCleaner;
+import org.bitmagic.ifeed.infrastructure.util.JSON;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Element;
 import org.springframework.stereotype.Component;
@@ -29,7 +28,6 @@ public class DefaultEntryProcessor implements EntryProcessor {
 
     private final ArticleRepository articleRepository;
     private final AiContentService aiContentService;
-    private final ObjectMapper objectMapper;
 
     @Override
     public Optional<Article> process(Feed feed, SyndEntry entry) {
@@ -174,14 +172,6 @@ public class DefaultEntryProcessor implements EntryProcessor {
     }
 
     private String writeJson(List<?> values) {
-        if (values == null || values.isEmpty()) {
-            return null;
-        }
-        try {
-            return objectMapper.writeValueAsString(new TreeSet<>(values));
-        } catch (JsonProcessingException e) {
-            log.warn("Failed to serialize AI payload", e);
-            return null;
-        }
+        return JSON.toJson(new TreeSet<>(values));
     }
 }

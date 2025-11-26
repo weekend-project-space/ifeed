@@ -15,7 +15,7 @@ public class AiProviderProperties {
     /**
      * Full endpoint URL of the AI service.
      */
-    private String endpoint;
+    private String baseUrl;
 
     /**
      * API key or bearer token used for authentication.
@@ -34,12 +34,12 @@ public class AiProviderProperties {
         this.enabled = enabled;
     }
 
-    public String getEndpoint() {
-        return endpoint;
+    public String getBaseUrl() {
+        return baseUrl;
     }
 
-    public void setEndpoint(String endpoint) {
-        this.endpoint = endpoint;
+    public void setBaseUrl(String baseUrl) {
+        this.baseUrl = baseUrl;
     }
 
     public String getApiKey() {

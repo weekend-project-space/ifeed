@@ -12,7 +12,9 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Component;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * 用户到物品（U2I）召回：利用用户向量在ANN索引中直接检索高相似度物品。
@@ -34,10 +36,11 @@ public class U2IRecallStrategy implements RecallStrategy {
     @Override
     public List<ItemCandidate> recall(UserContext context, int limit) {
         // 用户无向量时返回空集合，防止影响召回效率
+        Set<Long> history = new HashSet<>(context.recentItemIds());
         return embeddingStore.getUserVector(context.userId())
                 .map(vector -> annIndex.query(vector, limit, context.attributes()))
                 .map(results -> results.stream()
-                        .map(this::toCandidate)
+                        .map(this::toCandidate).filter(candidate -> !history.contains(candidate.itemId()))
                         .toList())
                 .orElse(List.of());
     }

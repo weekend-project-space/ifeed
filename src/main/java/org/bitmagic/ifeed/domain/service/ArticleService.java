@@ -49,7 +49,6 @@ public class ArticleService {
             metadata.put("tags", a.getTags() != null ? a.getTags() : "");
             metadata.put("summary", a.getSummary() != null ? a.getSummary() : "");
             metadata.put("pubDate", a.getPublishedAt() != null ? a.getPublishedAt().getEpochSecond() : 0L);
-
             return new org.bitmagic.ifeed.infrastructure.text.search.Document(a.getId(), a.getFeed().getId(), a.getContent(), metadata);
         }).collect(Collectors.toList()));
     }
@@ -63,7 +62,7 @@ public class ArticleService {
         var scopeOwnerId = Objects.nonNull(feedUid) || includeGlobal ? null : ownerId;
         Instant start = Instant.ofEpochSecond(0);
         if (Strings.isNotEmpty(category)) {
-            if (category.equals("今日")) {
+            if (category.equals("Today")) {
                 category = null;
                 start = LocalDate.now().atStartOfDay().atZone(ZoneOffset.UTC).toInstant();
             }
@@ -122,38 +121,6 @@ public class ArticleService {
     }
 
 
-    private Sort parseSort(String sort) {
-        if (sort == null || sort.isBlank()) {
-            return Sort.by(Sort.Direction.DESC, "publishedAt");
-        }
-
-        var normalized = sort.trim();
-        if (!normalized.contains(",")) {
-            return switch (normalized.toLowerCase()) {
-                case "oldest" -> Sort.by(Sort.Direction.ASC, "publishedAt");
-                case "title" -> Sort.by(Sort.Direction.ASC, "title");
-                default -> Sort.by(Sort.Direction.DESC, "publishedAt");
-            };
-        }
-
-        var parts = normalized.split(",");
-        var property = parts[0].trim();
-        if (property.isEmpty()) {
-            property = "publishedAt";
-        }
-
-        Sort.Direction direction = Sort.Direction.DESC;
-        if (parts.length > 1) {
-            try {
-                direction = Sort.Direction.fromString(parts[1].trim());
-            } catch (IllegalArgumentException ignored) {
-                direction = Sort.Direction.DESC;
-            }
-        }
-
-        return Sort.by(direction, property);
-    }
-
     private String buildTagPattern(Set<String> tags) {
         if (tags == null || tags.isEmpty()) {
             return null;
@@ -180,6 +147,7 @@ public class ArticleService {
                                                     Integer topN) {
         var rows = articleRepository.countCategoriesForOwnerWithin(ownerId, fromTs, toTs);
         var categories = new ArrayList<UserSubscriptionInsightResponse.CategoryCount>();
+        categories.add(new UserSubscriptionInsightResponse.CategoryCount("Today", 0));
         for (var row : rows) {
             var category = (String) row[0];
             var cnt = (Long) row[1];
