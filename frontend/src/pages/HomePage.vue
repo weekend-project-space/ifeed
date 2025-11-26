@@ -106,7 +106,12 @@ const prevPage = () => {
 onMounted(() => {
   watch(
       () => currentPage.value,
-      (page) => loadRecommendations(page),
+      (page) =>{
+        if(!sessionStorage.getItem('origin')){
+          loadRecommendations(page);
+        }
+        sessionStorage.removeItem('origin')
+      } ,
       { immediate: true }
   );
 });

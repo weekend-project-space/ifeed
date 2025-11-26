@@ -88,14 +88,10 @@ import { computed, onMounted, watch } from 'vue';
 import { storeToRefs } from 'pinia';
 import { useRoute, useRouter } from 'vue-router';
 import { useArticlesStore } from '../stores/articles';
-import { useCollectionsStore } from '../stores/collections';
-import { useSubscriptionsStore } from '../stores/subscriptions';
 
 const router = useRouter();
 const route = useRoute();
 const articlesStore = useArticlesStore();
-const collectionsStore = useCollectionsStore();
-const subscriptionsStore = useSubscriptionsStore();
 
 const {
   items,
@@ -108,8 +104,6 @@ const {
 const { insights, insightsLoading } = storeToRefs(articlesStore);
 
 const topCategories = computed(() => insights.value.categories ?? []);
-const { items: collectionItems } = storeToRefs(collectionsStore);
-const { items: subscriptionItems } = storeToRefs(subscriptionsStore);
 
 // 当前页码
 const currentPage = computed(() => {
@@ -149,9 +143,6 @@ const buildQuery = (overrides?: { page?: number; tags?: string | null; category?
 // 加载数据
 const loadData = async () => {
   const tasks: Promise<unknown>[] = [];
-
-  if (!collectionItems.value.length) tasks.push(collectionsStore.fetchCollections());
-  if (!subscriptionItems.value.length) tasks.push(subscriptionsStore.fetchSubscriptions());
 
   tasks.push(
       articlesStore.fetchArticles({
@@ -225,8 +216,11 @@ const clearCategoryFilter = () => {
 };
 
 onMounted(() => {
-  loadData();
-  articlesStore.fetchInsights();
+  if(!sessionStorage.getItem('origin')){
+    loadData();
+    articlesStore.fetchInsights();
+  }
+  sessionStorage.removeItem('origin')
 });
 
 watch(

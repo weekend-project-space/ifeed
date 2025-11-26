@@ -488,6 +488,7 @@ const handleTagClick = (tag: string) => {
 // ==================== Lifecycle ====================
 onMounted(async () => {
   await loadArticle(props.id);
+  sessionStorage.setItem('origin', 'details')
   window.addEventListener('scroll', handleScroll, {passive: true});
   window.addEventListener('resize', handleResize, {passive: true});
 });
@@ -505,7 +506,6 @@ onBeforeUnmount(() => {
   // Remove event listeners
   window.removeEventListener('scroll', handleScroll);
   window.removeEventListener('resize', handleResize);
-
   // Clear timers
   if (refreshTimer) {
     clearTimeout(refreshTimer);
@@ -546,6 +546,7 @@ watch(
       attachImageLoadListeners();
     }
 );
+
 </script>
 
 <style scoped>

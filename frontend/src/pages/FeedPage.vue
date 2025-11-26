@@ -273,16 +273,6 @@ const fetchArticles = async (targetPage = 1) => {
   }
 };
 
-const ensureSubscriptions = async () => {
-  if (subscriptionItems.value.length) return;
-
-  try {
-    await subscriptionsStore.fetchSubscriptions();
-  } catch (err) {
-    console.warn('订阅列表加载失败', err);
-  }
-};
-
 const loadFeed = async () => {
   const feedId = currentFeedId.value;
   if (!feedId) {
@@ -295,27 +285,21 @@ const loadFeed = async () => {
   } catch (err) {
     return;
   }
-
-  setTimeout(async () => {
-    await ensureSubscriptions();
-    if (!(subscriptionItems.value.find((sub) => sub.feedId === feedId)?.isRead)) {
-      readFeedStore.recordFeedRead(feedId)
-          .then(() => subscriptionsStore.fetchSubscriptions())
-          .catch((err) => console.warn('记录订阅已读失败', err));
-    }
-  }, 1000);
 };
 
-onMounted(() => {
-  watch(currentFeedId, async () => {
-    await loadFeed();
-  }, { immediate: true });
+onMounted(async () => {
+    console.log(sessionStorage.getItem('origin'))
+    if(!sessionStorage.getItem('origin')){
+      await loadFeed();
+      await fetchArticles(0);
+    }
+    sessionStorage.removeItem('origin')
 });
 
 watch([currentFeedId, routePage, normalizedTag], async ([feedId, page]) => {
   if (!feedId) return;
   await fetchArticles(page || 1);
-}, { immediate: true });
+}, { immediate: false });
 
 const refreshArticles = async () => {
   const targetPage = routePage.value || 1;
