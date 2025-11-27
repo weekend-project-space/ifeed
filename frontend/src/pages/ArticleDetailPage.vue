@@ -150,7 +150,7 @@
           <!-- TOC (Sticky) -->
           <div
               v-if="showToc"
-              class="sticky top-20"
+              class="sticky top-28"
           >
             <toc-section
                 :items="tocItems"

@@ -357,7 +357,7 @@
       </aside>
 
       <!-- Main Content -->
-      <main class="flex-1 min-w-0  bg-surface-variant/30 px-3 pb-10 pt-5 sm:px-6 sm:pb-12 sm:pt-6">
+      <main class="flex-1 min-w-0 min-h-[calc(100vh-5em)]  bg-surface-variant/30 px-3 pb-10 pt-5 sm:px-6 sm:pb-12 sm:pt-6">
         <router-view />
       </main>
     </div>
