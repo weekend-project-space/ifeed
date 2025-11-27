@@ -1,6 +1,6 @@
 package org.bitmagic.ifeed.domain.spec;
 
-import org.bitmagic.ifeed.domain.model.UserSubscription;
+import org.bitmagic.ifeed.domain.model.value.UserSubscription;
 import org.bitmagic.ifeed.infrastructure.spec.Spec;
 import org.springframework.data.jpa.domain.Specification;
 

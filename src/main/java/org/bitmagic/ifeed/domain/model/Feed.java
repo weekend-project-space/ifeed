@@ -6,6 +6,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.bitmagic.ifeed.domain.model.value.FeedFetchStatus;
 
 import java.time.Instant;
 import java.util.UUID;

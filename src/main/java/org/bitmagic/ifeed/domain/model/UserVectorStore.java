@@ -19,7 +19,7 @@ import java.time.Instant;
 @AllArgsConstructor
 @Entity
 @Table(name = "user_embeddings")
-public class UserEmbedding {
+public class UserVectorStore {
 
     @Id
     @Column(name = "user_id", nullable = false, updatable = false)

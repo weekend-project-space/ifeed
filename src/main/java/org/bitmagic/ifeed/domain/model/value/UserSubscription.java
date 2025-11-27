@@ -1,4 +1,4 @@
-package org.bitmagic.ifeed.domain.model;
+package org.bitmagic.ifeed.domain.model.value;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.EmbeddedId;
@@ -14,6 +14,9 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.bitmagic.ifeed.domain.model.Feed;
+import org.bitmagic.ifeed.domain.model.User;
+import org.bitmagic.ifeed.domain.model.UserSubscriptionId;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.Instant;

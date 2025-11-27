@@ -15,7 +15,7 @@ import org.bitmagic.ifeed.config.security.UserPrincipal;
 import org.bitmagic.ifeed.domain.document.UserBehaviorDocument;
 import org.bitmagic.ifeed.domain.model.Feed;
 import org.bitmagic.ifeed.domain.model.User;
-import org.bitmagic.ifeed.domain.model.UserSubscription;
+import org.bitmagic.ifeed.domain.model.value.UserSubscription;
 import org.bitmagic.ifeed.domain.model.UserSubscriptionId;
 import org.bitmagic.ifeed.domain.repository.FeedRepository;
 import org.bitmagic.ifeed.domain.repository.UserBehaviorRepository;

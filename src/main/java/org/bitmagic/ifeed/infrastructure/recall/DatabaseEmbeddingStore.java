@@ -2,13 +2,12 @@ package org.bitmagic.ifeed.infrastructure.recall;
 
 import lombok.RequiredArgsConstructor;
 import org.bitmagic.ifeed.application.recommendation.recall.spi.EmbeddingStore;
-import org.bitmagic.ifeed.domain.model.UserEmbedding;
+import org.bitmagic.ifeed.domain.model.UserVectorStore;
 import org.bitmagic.ifeed.domain.record.ArticleEmbeddingRecord;
 import org.bitmagic.ifeed.domain.repository.ArticleEmbeddingRepository;
-import org.bitmagic.ifeed.domain.repository.UserEmbeddingRepository;
+import org.bitmagic.ifeed.domain.repository.UserVectorRepository;
 import org.springframework.stereotype.Component;
 
-import java.util.List;
 import java.util.Optional;
 
 /**
@@ -18,7 +17,7 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class DatabaseEmbeddingStore implements EmbeddingStore {
 
-    private final UserEmbeddingRepository userEmbeddingRepository;
+    private final UserVectorRepository userVectorRepository;
     private final ArticleEmbeddingRepository articleEmbeddingRepository;
 
     @Override
@@ -26,8 +25,8 @@ public class DatabaseEmbeddingStore implements EmbeddingStore {
         if (userId == null) {
             return Optional.empty();
         }
-        return userEmbeddingRepository.findById(userId)
-                .map(UserEmbedding::getEmbedding)
+        return userVectorRepository.findById(userId)
+                .map(UserVectorStore::getEmbedding)
                 .filter(vec -> vec.length > 0);
     }
 

@@ -5,8 +5,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.bitmagic.ifeed.application.recommendation.recall.spi.ScoredId;
 import org.bitmagic.ifeed.application.recommendation.recall.spi.SequenceStore;
 import org.bitmagic.ifeed.application.recommendation.recall.spi.UserNeighborFinder;
-import org.bitmagic.ifeed.domain.model.UserEmbedding;
-import org.bitmagic.ifeed.domain.repository.UserEmbeddingRepository;
+import org.bitmagic.ifeed.domain.model.UserVectorStore;
+import org.bitmagic.ifeed.domain.repository.UserVectorRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -25,7 +25,7 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class EmbeddingUserNeighborFinder implements UserNeighborFinder {
 
-    private final UserEmbeddingRepository userEmbeddingRepository;
+    private final UserVectorRepository userVectorRepository;
     private final SequenceStore sequenceStore;
 
     @Value("${recall.u2u.neighbor-items:30}")
@@ -38,7 +38,7 @@ public class EmbeddingUserNeighborFinder implements UserNeighborFinder {
             return List.of();
         }
 
-        Optional<UserEmbedding> targetOpt = userEmbeddingRepository.findById(userId);
+        Optional<UserVectorStore> targetOpt = userVectorRepository.findById(userId);
         if (targetOpt.isEmpty() || targetOpt.get().getEmbedding() == null) {
             return List.of();
         }
@@ -50,7 +50,7 @@ public class EmbeddingUserNeighborFinder implements UserNeighborFinder {
         }
 
         List<UserNeighbor> neighbors = new ArrayList<>();
-        for (UserEmbedding candidate : userEmbeddingRepository.findAll()) {
+        for (UserVectorStore candidate : userVectorRepository.findAll()) {
             if (candidate.getUserId().equals(userId)) {
                 continue;
             }

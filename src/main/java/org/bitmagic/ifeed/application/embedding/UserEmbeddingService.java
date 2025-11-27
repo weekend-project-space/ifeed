@@ -6,11 +6,11 @@ import org.bitmagic.ifeed.application.recommendation.recall.spi.SequenceStore;
 import org.bitmagic.ifeed.config.properties.AiProviderProperties;
 import org.bitmagic.ifeed.config.properties.RecommendationProperties;
 import org.bitmagic.ifeed.domain.model.Article;
-import org.bitmagic.ifeed.domain.model.UserEmbedding;
+import org.bitmagic.ifeed.domain.model.UserVectorStore;
 import org.bitmagic.ifeed.domain.record.ArticleEmbeddingRecord;
 import org.bitmagic.ifeed.domain.repository.ArticleEmbeddingRepository;
 import org.bitmagic.ifeed.domain.repository.ArticleRepository;
-import org.bitmagic.ifeed.domain.repository.UserEmbeddingRepository;
+import org.bitmagic.ifeed.domain.repository.UserVectorRepository;
 import org.bitmagic.ifeed.infrastructure.util.DateUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -38,7 +38,7 @@ public class UserEmbeddingService {
     private final SequenceStore sequenceStore;
     private final ArticleEmbeddingRepository articleEmbeddingRepository;
     private final ArticleRepository articleRepository;
-    private final UserEmbeddingRepository userEmbeddingRepository;
+    private final UserVectorRepository userVectorRepository;
     private final RecommendationProperties recommendationProperties;
     private final AiProviderProperties aiProviderProperties;
 
@@ -49,7 +49,7 @@ public class UserEmbeddingService {
      * @return 新构建的用户向量，如果无法构建则返回 empty
      */
     @Transactional
-    public Optional<UserEmbedding> rebuildUserEmbedding(Integer userId) {
+    public Optional<UserVectorStore> rebuildUserEmbedding(Integer userId) {
         // 1. 前置检查
         if (!aiProviderProperties.isEnabled()) {
             log.debug("AI provider is disabled, skip user embedding rebuild");
@@ -63,7 +63,7 @@ public class UserEmbeddingService {
 
         try {
             // 2. 检查是否需要重建
-            Optional<UserEmbedding> existingOpt = userEmbeddingRepository.findById(userId);
+            Optional<UserVectorStore> existingOpt = userVectorRepository.findById(userId);
 
             // 3. 获取用户交互数据
             int behaviorLimit = Math.max(1, recommendationProperties.getRecentBehaviorLimit());
@@ -72,7 +72,7 @@ public class UserEmbeddingService {
 
             if (interactions.isEmpty()) {
                 log.debug("No interactions found for user {}, removing existing embedding", userId);
-                existingOpt.ifPresent(e -> userEmbeddingRepository.delete(e));
+                existingOpt.ifPresent(e -> userVectorRepository.delete(e));
                 return Optional.empty();
             }
 
@@ -102,7 +102,7 @@ public class UserEmbeddingService {
 
             if (embeddingById.isEmpty()) {
                 log.info("No article embeddings found for user {}, removing existing embedding", userId);
-                existingOpt.ifPresent(e -> userEmbeddingRepository.delete(e));
+                existingOpt.ifPresent(e -> userVectorRepository.delete(e));
                 return Optional.empty();
             }
 
@@ -116,7 +116,7 @@ public class UserEmbeddingService {
 
             if (aggregationResult == null || aggregationResult.totalWeight == 0.0) {
                 log.debug("User {} interactions produced no usable weight, removing existing embedding", userId);
-                existingOpt.ifPresent(e -> userEmbeddingRepository.delete(e));
+                existingOpt.ifPresent(e -> userVectorRepository.delete(e));
                 return Optional.empty();
             }
 
@@ -124,7 +124,7 @@ public class UserEmbeddingService {
             float[] normalizedVector = normalizeVector(aggregationResult.aggregatedVector);
             if (normalizedVector == null) {
                 log.warn("Failed to normalize vector for user {}", userId);
-                existingOpt.ifPresent(e -> userEmbeddingRepository.delete(e));
+                existingOpt.ifPresent(e -> userVectorRepository.delete(e));
                 return Optional.empty();
             }
 
@@ -137,7 +137,7 @@ public class UserEmbeddingService {
             }
 
             // 10. 保存或更新
-            UserEmbedding embedding = existingOpt.orElseGet(() -> UserEmbedding.builder()
+            UserVectorStore embedding = existingOpt.orElseGet(() -> UserVectorStore.builder()
                     .userId(userId)
                     .build());
 
@@ -145,7 +145,7 @@ public class UserEmbeddingService {
             embedding.setContent(profileText);
             embedding.setUpdatedAt(now);
 
-            UserEmbedding saved = userEmbeddingRepository.save(embedding);
+            UserVectorStore saved = userVectorRepository.save(embedding);
             log.info("Successfully rebuilt user embedding for user {} with {} interactions",
                     userId, interactions.size());
 
