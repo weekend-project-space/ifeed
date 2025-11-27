@@ -36,17 +36,18 @@ export interface RequestOptions extends RequestInit {
     query?: QueryParams;
     skipAuth?: boolean;
     json?: unknown;
+    // signal 已经包含在 RequestInit 中,这里只是为了类型提示更明确
+    signal?: AbortSignal;
 }
 
 export async function request<T = unknown>(path: string, options: RequestOptions = {}): Promise<T> {
-    const { query, skipAuth, json, headers, body, ...rest } = options;
+    const { query, skipAuth, json, headers, body, signal, ...rest } = options;
     const url = buildUrl(path, query);
 
     const finalHeaders = new Headers(headers ?? {});
 
     const isJsonPayload = json !== undefined;
     const payload = isJsonPayload ? json : body;
-
 
     if (authToken && !skipAuth) {
         finalHeaders.set('Authorization', `Bearer ${authToken}`);
@@ -56,10 +57,12 @@ export async function request<T = unknown>(path: string, options: RequestOptions
         finalHeaders.set('Content-Type', 'application/json');
     }
 
+    // ✅ 将 signal 传递给 fetch
     const response = await fetch(url, {
         ...rest,
         body: isJsonPayload ? JSON.stringify(json) : (payload as BodyInit | null | undefined),
-        headers: finalHeaders
+        headers: finalHeaders,
+        signal // 传递 AbortSignal
     });
 
     const contentType = response.headers.get('content-type') ?? '';
@@ -81,6 +84,7 @@ export async function request<T = unknown>(path: string, options: RequestOptions
     return (data as T) ?? (undefined as T);
 }
 
+// ✅ 便捷方法都支持 signal
 export const get = <T = unknown>(path: string, options: RequestOptions = {}) =>
     request<T>(path, { ...options, method: options.method ?? 'GET' });
 

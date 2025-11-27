@@ -200,7 +200,7 @@
         </div>
 
         <!-- Title only view -->
-        <div v-else key="view-only-title" class="space-y-1">
+        <div v-else key="view-only-title" class="space-y-1 ">
           <article
               v-for="item in items"
               :key="item.id"
@@ -214,7 +214,7 @@
               </h3>
               <p
                   v-if="item.summary"
-                  class="hidden md:block flex-1 text-sm text-gray-600 dark:text-gray-400 line-clamp-1 min-w-0">
+                  class=" flex-1 text-sm text-gray-600 dark:text-gray-400 line-clamp-1 min-w-0">
                 {{ item.summary }}
               </p>
             </div>

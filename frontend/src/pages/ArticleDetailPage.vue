@@ -431,7 +431,9 @@ const loadArticle = async (articleId: string) => {
   activeHeadingId.value = '';
 
   try {
-    await articlesStore.fetchArticleById(articleId);
+    await articlesStore.fetchArticleById(articleId, {
+      signal: currentController.signal
+    });
 
     // Check if request was cancelled
     if (currentController.signal.aborted) return;

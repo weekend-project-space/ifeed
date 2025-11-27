@@ -298,6 +298,7 @@ onMounted(async () => {
 
 watch([currentFeedId, routePage, normalizedTag], async ([feedId, page]) => {
   if (!feedId) return;
+  await loadFeed();
   await fetchArticles(page || 1);
 }, { immediate: false });
 
