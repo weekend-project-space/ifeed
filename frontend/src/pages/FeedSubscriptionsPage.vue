@@ -1,5 +1,5 @@
 <template>
-  <div class=" mx-auto ">
+  <div class="mx-auto">
     <!-- 分类筛选 -->
     <header class="mb-6">
       <div class="flex items-center gap-1.5 overflow-x-auto pb-2">
@@ -62,12 +62,9 @@
           title="最新"
           :items="items"
           :loading="articlesLoading"
-          @select="handleSelect"
           @select-tag="handleSelectTag"
           @refresh="refresh"
       />
-
-
 
       <!-- 分页 -->
       <pagination
@@ -84,14 +81,14 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, watch } from 'vue';
-import { storeToRefs } from 'pinia';
-import { useRoute, useRouter } from 'vue-router';
-import { useArticlesStore } from '../stores/articles';
+import {computed, onMounted, watch} from 'vue';
+import {storeToRefs} from 'pinia';
+import {useRoute, useRouter} from 'vue-router';
+import {useSubscriptionArticlesStore} from '../stores/articles/subscriptionArticles';
 
 const router = useRouter();
 const route = useRoute();
-const articlesStore = useArticlesStore();
+const subscriptionStore = useSubscriptionArticlesStore();
 
 const {
   items,
@@ -99,9 +96,9 @@ const {
   hasPreviousPage,
   loading: articlesLoading,
   error: articleError
-} = storeToRefs(articlesStore);
+} = storeToRefs(subscriptionStore);
 
-const { insights, insightsLoading } = storeToRefs(articlesStore);
+const { insights, insightsLoading } = storeToRefs(subscriptionStore);
 
 const topCategories = computed(() => insights.value.categories ?? []);
 
@@ -142,22 +139,15 @@ const buildQuery = (overrides?: { page?: number; tags?: string | null; category?
 
 // 加载数据
 const loadData = async () => {
-  const tasks: Promise<unknown>[] = [];
-
-  tasks.push(
-      articlesStore.fetchArticles({
-        size: 20,
-        page: currentPage.value,
-        tags: activeTag.value,
-        feedId: null,
-        category: currentCategory.value || undefined
-      })
-  );
-
   try {
-    await Promise.all(tasks);
+    await subscriptionStore.fetchArticles({
+      size: 20,
+      page: currentPage.value,
+      tags: activeTag.value,
+      category: currentCategory.value || undefined
+    });
   } catch (err) {
-    console.warn('数据加载失败', err);
+    console.warn('订阅数据加载失败', err);
   }
 };
 
@@ -177,11 +167,6 @@ const prevPage = () => {
   if (hasPreviousPage.value) navigateToPage(Math.max(1, currentPage.value - 1));
 };
 
-// 文章选择
-const handleSelect = (articleId: string) => {
-  articlesStore.recordHistory(articleId);
-  router.push({ name: 'article-detail', params: { id: articleId } });
-};
 
 // 标签筛选
 const handleSelectTag = (tag: string) => {
@@ -216,11 +201,11 @@ const clearCategoryFilter = () => {
 };
 
 onMounted(() => {
-  if(!sessionStorage.getItem('origin')){
+  if(sessionStorage.getItem('origin-list')!=route.path){
     loadData();
-    articlesStore.fetchInsights();
+    subscriptionStore.fetchInsights();
   }
-  sessionStorage.removeItem('origin')
+  sessionStorage.removeItem('origin-list')
 });
 
 watch(

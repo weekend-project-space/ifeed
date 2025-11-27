@@ -103,7 +103,6 @@
           <article v-for="item in searchArticleItems" :key="item.id">
             <router-link
                 :to="`/articles/${item.id}`"
-                @click="recordHistory(item.id)"
                 class="group flex flex-col sm:flex-row gap-3 sm:gap-4 hover:bg-surface-container/50 -mx-2 px-2 py-2 rounded-lg transition-colors"
             >
               <!-- Thumbnail -->
@@ -189,12 +188,10 @@
 import { computed, onMounted, watch } from 'vue';
 import { storeToRefs } from 'pinia';
 import { useRoute, useRouter } from 'vue-router';
-import { useArticlesStore } from '../stores/articles';
 import { useSearchStore, type SearchType } from '../stores/search';
 
 const router = useRouter();
 const route = useRoute();
-const articlesStore = useArticlesStore();
 const searchStore = useSearchStore();
 
 const {
@@ -236,7 +233,6 @@ const searchArticleItems = computed(() =>
     }))
 );
 
-const currentPage = computed(() => page.value);
 const hasNext = computed(() => hasNextPage.value);
 const hasPrevious = computed(() => hasPreviousPage.value);
 const searchTotalText = computed(() => `${total.value ?? 0} 条结果`);
@@ -316,10 +312,6 @@ const goBackToHome = () => {
   if (category) query.category = category;
 
   router.push({ name: 'home', query });
-};
-
-const recordHistory = (articleId: string) => {
-  articlesStore.recordHistory(articleId);
 };
 
 const handleMenuClick = (item: any) => {

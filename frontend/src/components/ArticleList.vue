@@ -88,7 +88,8 @@
           v-if="!items.length"
           class="flex flex-col items-center justify-center gap-3 py-16 text-center">
         <svg class="h-12 w-12 text-gray-400 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
         </svg>
         <span class="text-sm text-gray-600 dark:text-gray-400 max-w-xs">{{ emptyMessage }}</span>
       </div>
@@ -101,7 +102,7 @@
               v-for="item in items"
               :key="item.id"
               class="flex items-start gap-4 p-4 transition cursor-pointer rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/50"
-              @click="emit('select', item.id)">
+              @click="onSelect(item.id)">
             <div class="flex-1 min-w-0 space-y-2">
               <h3 class="text-base font-medium text-gray-900 dark:text-gray-100 line-clamp-2">
                 {{ item.title }}
@@ -130,7 +131,7 @@
                   :alt="item.title"
                   class="w-full h-full object-cover"
                   loading="lazy"
-                  @error="thumbErrorMap[item.id] = true" />
+                  @error="thumbErrorMap[item.id] = true"/>
               <div
                   v-else
                   class="flex items-center justify-center w-full h-full text-gray-400 dark:text-gray-600 text-xs">
@@ -149,10 +150,11 @@
               v-for="item in items"
               :key="item.id"
               class="group relative flex h-full cursor-pointer flex-col overflow-hidden rounded-xl  p-3"
-              @click="emit('select', item.id)">
+              @click="onSelect( item.id)">
 
             <!-- Hover background effect -->
-            <span class="pointer-events-none absolute inset-0 origin-center scale-50 rounded-xl h-1/5 bg-primary/5 transition-transform duration-200 ease-out group-hover:scale-[1.02] group-hover:h-full"></span>
+            <span
+                class="pointer-events-none absolute inset-0 origin-center scale-50 rounded-xl h-1/5 bg-primary/5 transition-transform duration-200 ease-out group-hover:scale-[1.02] group-hover:h-full"></span>
 
             <figure class="relative aspect-video w-full overflow-hidden bg-gray-100 dark:bg-gray-800 rounded-xl">
               <img
@@ -161,7 +163,7 @@
                   alt="文章缩略图"
                   loading="lazy"
                   class="h-full w-full object-cover transition duration-300 group-hover:scale-[1.02]"
-                  @error="thumbErrorMap[item.id] = true" />
+                  @error="thumbErrorMap[item.id] = true"/>
               <div
                   v-else
                   class="flex h-full w-full items-center justify-center text-gray-400 dark:text-gray-600 text-xs">
@@ -185,7 +187,8 @@
                 {{ item.summary }}
               </p>
 
-              <footer v-if="item.tags?.length" class="flex flex-wrap gap-3 mt-auto text-xs text-gray-500 dark:text-gray-500">
+              <footer v-if="item.tags?.length"
+                      class="flex flex-wrap gap-3 mt-auto text-xs text-gray-500 dark:text-gray-500">
                 <button
                     v-for="tag in item.tags"
                     :key="tag"
@@ -205,7 +208,7 @@
               v-for="item in items"
               :key="item.id"
               class="flex items-center gap-4 px-4 py-3 transition cursor-pointer rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/50"
-              @click="emit('select', item.id)">
+              @click="onSelect(item.id)">
 
             <!-- Left: Title + Summary -->
             <div class="flex-1 min-w-0 flex items-center gap-4">
@@ -220,7 +223,8 @@
             </div>
 
             <!-- Right: Source · Time -->
-            <div class="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-500 flex-shrink-0 whitespace-nowrap">
+            <div
+                class="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-500 flex-shrink-0 whitespace-nowrap">
               <span class="max-w-32 truncate">{{ item.feedTitle }}</span>
               <span>·</span>
               <span>{{ item.timeAgo }}</span>
@@ -233,7 +237,11 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, ref, watch } from 'vue';
+import {reactive, ref, watch} from 'vue';
+import {useRouter, useRoute} from 'vue-router'
+
+const router = useRouter();
+const route = useRoute();
 
 export interface ArticleListItemProps {
   id: string;
@@ -271,7 +279,8 @@ function setView(v: ViewMode) {
   view.value = v;
   try {
     localStorage.setItem(STORAGE_KEY, v);
-  } catch { }
+  } catch {
+  }
 }
 
 function btnClass(active: boolean) {
@@ -280,6 +289,12 @@ function btnClass(active: boolean) {
     active
         ? 'bg-secondary text-secondary-foreground' : 'bg-secondary/5 text-secondary hover:bg-secondary/20'
   ].join(' ');
+}
+
+function onSelect(id: string) {
+  emit('select', id)
+  sessionStorage.setItem('origin-list', route.path)
+  router.push({name: 'article-detail', params: {id}});
 }
 
 const thumbErrorMap = reactive<Record<string, boolean>>({});

@@ -1,5 +1,5 @@
 <template>
-  <div class=" mx-auto  ">
+  <div class="mx-auto">
     <!-- 错误提示 -->
     <div v-if="articleError" class="mb-6 p-4 rounded-lg bg-red-50 border border-red-200">
       <p class="text-sm text-red-800 font-medium mb-2">推荐请求出错：{{ articleError }}</p>
@@ -19,8 +19,6 @@
         :items="items"
         :loading="articlesLoading"
         empty-message="暂无推荐结果，尝试刷新或多收藏一些文章吧。"
-        @select="handleSelect"
-        @select-tag="handleSelectTag"
         @refresh="refresh"
     />
 
@@ -38,16 +36,16 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, watch } from 'vue';
-import { useRouter, useRoute } from 'vue-router';
-import { storeToRefs } from 'pinia';
-import { useArticlesStore } from '../stores/articles';
+import {computed, onMounted, watch} from 'vue';
+import {useRouter, useRoute} from 'vue-router';
+import {storeToRefs} from 'pinia';
+import {useRecommendArticlesStore} from '../stores/articles/recommendArticles';
 
 const SIZE = 60;
 
 const route = useRoute();
 const router = useRouter();
-const articlesStore = useArticlesStore();
+const recommendStore = useRecommendArticlesStore();
 
 const {
   items,
@@ -55,7 +53,7 @@ const {
   error: articleError,
   hasNextPage,
   hasPreviousPage
-} = storeToRefs(articlesStore);
+} = storeToRefs(recommendStore);
 
 const currentPage = computed(() => {
   const raw = Array.isArray(route.query.page) ? route.query.page[0] : route.query.page;
@@ -67,7 +65,7 @@ const loadRecommendations = async (targetPage = 1) => {
   if (targetPage < 1) targetPage = 1;
 
   try {
-    await articlesStore.fetchRecommendArticles({
+    await recommendStore.fetchArticles({
       page: targetPage,
       size: SIZE
     });
@@ -78,19 +76,11 @@ const loadRecommendations = async (targetPage = 1) => {
 
 const refresh = () => loadRecommendations(currentPage.value);
 
-const handleSelect = (articleId: string) => {
-  router.push({ name: 'article-detail', params: { id: articleId } });
-};
-
-const handleSelectTag = (tag: string) => {
-  if (!tag) return;
-  router.push({ name: 'home', query: { tags: tag.toLowerCase() } });
-};
 
 const nextPage = () => {
   if (hasNextPage.value) {
     router.push({
-      query: { ...route.query, page: String(currentPage.value + 1) }
+      query: {...route.query, page: String(currentPage.value + 1)}
     });
   }
 };
@@ -98,21 +88,20 @@ const nextPage = () => {
 const prevPage = () => {
   if (hasPreviousPage.value) {
     router.push({
-      query: { ...route.query, page: String(Math.max(1, currentPage.value - 1)) }
+      query: {...route.query, page: String(Math.max(1, currentPage.value - 1))}
     });
   }
 };
 
 onMounted(() => {
-  watch(
-      () => currentPage.value,
-      (page) =>{
-        if(!sessionStorage.getItem('origin')){
-          loadRecommendations(page);
-        }
-        sessionStorage.removeItem('origin')
-      } ,
-      { immediate: true }
-  );
+  if (sessionStorage.getItem('origin-list') != route.path) {
+    loadRecommendations(currentPage.value);
+  }
+  sessionStorage.removeItem('origin-list')
 });
+
+watch(
+    () => currentPage.value,
+    (page) => loadRecommendations(page)
+);
 </script>

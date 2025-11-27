@@ -7,7 +7,7 @@ import SubscriptionsAddPage from '../pages/SubscriptionsAddPage.vue';
 import CollectionsPage from '../pages/CollectionsPage.vue';
 import HistoryPage from '../pages/HistoryPage.vue';
 import ArticleDetailPage from '../pages/ArticleDetailPage.vue';
-import FeedPage from '../pages/FeedPage.vue';
+import FeedDetailPage from '../pages/FeedDetailPage.vue';
 import HomePage from '../pages/HomePage.vue';
 import FeedSubscriptionsPage from '../pages/FeedSubscriptionsPage.vue';
 import FeedChannelsPage from '../pages/SubscriptionsListPage.vue';
@@ -63,7 +63,7 @@ const router = createRouter({
                 {
                     path: 'feeds/:feedId',
                     name: 'feed',
-                    component: FeedPage,
+                    component: FeedDetailPage,
                     props: true
                 },
                 {

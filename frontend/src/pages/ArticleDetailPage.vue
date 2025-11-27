@@ -171,12 +171,11 @@
   </div>
 </template>
 
-
 <script setup lang="ts">
 import {computed, nextTick, onBeforeUnmount, onMounted, ref, watch} from 'vue';
 import {storeToRefs} from 'pinia';
 import {useRouter} from 'vue-router';
-import {useArticlesStore} from '../stores/articles';
+import {useArticlesStore} from '../stores/articles/articles';
 import {useCollectionsStore} from '../stores/collections';
 import MediaAttachment from "../components/MediaAttachment.vue";
 import AsideSection from "../components/AsideSection.vue";
@@ -185,23 +184,6 @@ import TocSection from "../components/TocSection.vue";
 // ==================== Types ====================
 interface Props {
   id: string;
-}
-
-interface Article {
-  id: string;
-  title: string;
-  content?: string;
-  summary?: string;
-  feedId?: string;
-  feedTitle?: string;
-  timeAgo: string;
-  tags?: string[];
-  collected: boolean;
-  link?: string;
-  enclosure?: string;
-  enclosureType?: string;
-  thumbnail?: string;
-  author?: string;
 }
 
 interface TocItem {
@@ -219,7 +201,6 @@ const collectionsStore = useCollectionsStore();
 const {currentArticle} = storeToRefs(articlesStore);
 
 // ==================== State ====================
-const localArticle = ref<Article | null>(null);
 const errorMessage = ref('');
 const scrollTracked = ref(false);
 const articleContentRef = ref<HTMLElement | null>(null);
@@ -228,7 +209,6 @@ const headingElements = ref<HTMLElement[]>([]);
 const activeHeadingId = ref('');
 const imageCleanupFns = ref<Array<() => void>>([]);
 const abortControllerRef = ref<AbortController | null>(null);
-const isInitialLoad = ref(true);
 
 let refreshTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -237,7 +217,7 @@ const HEADING_SCROLL_OFFSET = 80;
 const SCROLL_PROGRESS_THRESHOLD = 0.3;
 
 // ==================== Computed ====================
-const article = computed(() => localArticle.value);
+const article = computed(() => currentArticle.value);
 const showSummary = computed(() => !!article.value?.summary);
 const showToc = computed(() => tocItems.value.length > 0);
 
@@ -365,7 +345,6 @@ const handleScrollInternal = () => {
 
   const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
   if (maxScroll <= 0) {
-    // 内容不够滚动,直接标记为已读
     scrollTracked.value = true;
     articlesStore.recordHistory(props.id).catch(err => {
       console.warn('recordHistory failed', err);
@@ -389,7 +368,6 @@ const handleResize = debounce(() => {
 
 // ==================== Image Load Listeners ====================
 const attachImageLoadListeners = () => {
-  // Cleanup old listeners
   imageCleanupFns.value.forEach(fn => fn());
   imageCleanupFns.value = [];
 
@@ -416,7 +394,6 @@ const attachImageLoadListeners = () => {
 const loadArticle = async (articleId: string) => {
   if (!articleId) return;
 
-  // Cancel previous request
   if (abortControllerRef.value) {
     abortControllerRef.value.abort();
   }
@@ -424,7 +401,6 @@ const loadArticle = async (articleId: string) => {
   abortControllerRef.value = new AbortController();
   const currentController = abortControllerRef.value;
 
-  // Reset state
   errorMessage.value = '';
   tocItems.value = [];
   headingElements.value = [];
@@ -435,16 +411,11 @@ const loadArticle = async (articleId: string) => {
       signal: currentController.signal
     });
 
-    // Check if request was cancelled
     if (currentController.signal.aborted) return;
 
-    localArticle.value = currentArticle.value ? {...currentArticle.value} : null;
-
-    // Scroll to top
     window.scrollTo({top: 0, behavior: 'instant'});
     await nextTick();
 
-    // Reset scroll tracking and record history
     scrollTracked.value = false;
     articlesStore.recordHistory(props.id).catch(err => {
       console.warn('recordHistory failed', err);
@@ -453,30 +424,25 @@ const loadArticle = async (articleId: string) => {
     await nextTick();
     await refreshHeadingNavigation();
     attachImageLoadListeners();
-
-    isInitialLoad.value = false;
   } catch (err) {
     if (currentController.signal.aborted) return;
     console.error('文章详情加载失败', err);
     errorMessage.value = '文章加载失败,请稍后重试';
-    localArticle.value = null;
   }
 };
 
 // ==================== Actions ====================
 const toggleCollection = async () => {
-  if (!props.id || !localArticle.value) return;
+  if (!props.id || !article.value) return;
 
   try {
     await collectionsStore.toggleCollection(props.id, {
-      title: localArticle.value.title,
-      collected: localArticle.value.collected,
+      title: article.value.title,
+      collected: article.value.collected,
     });
 
-    // Update local state
-    if (localArticle.value) {
-      localArticle.value.collected = !localArticle.value.collected;
-    }
+    // Refresh article to get updated collection status
+    await articlesStore.fetchArticleById(props.id);
   } catch (err) {
     console.warn('收藏操作失败', err);
   }
@@ -490,25 +456,21 @@ const handleTagClick = (tag: string) => {
 // ==================== Lifecycle ====================
 onMounted(async () => {
   await loadArticle(props.id);
-  sessionStorage.setItem('origin', 'details')
   window.addEventListener('scroll', handleScroll, {passive: true});
   window.addEventListener('resize', handleResize, {passive: true});
 });
 
 onBeforeUnmount(() => {
-  // Cancel pending requests
   if (abortControllerRef.value) {
     abortControllerRef.value.abort();
   }
 
-  // Cleanup image listeners
   imageCleanupFns.value.forEach(fn => fn());
   imageCleanupFns.value = [];
 
-  // Remove event listeners
   window.removeEventListener('scroll', handleScroll);
   window.removeEventListener('resize', handleResize);
-  // Clear timers
+
   if (refreshTimer) {
     clearTimeout(refreshTimer);
     refreshTimer = null;
@@ -521,34 +483,19 @@ watch(
     async (newId) => {
       if (!newId) return;
       scrollTracked.value = false;
-      isInitialLoad.value = true;
       await loadArticle(newId);
-    }
-);
-
-watch(
-    () => currentArticle.value,
-    (next) => {
-      if (next && !errorMessage.value && !isInitialLoad.value) {
-        localArticle.value = {...next};
-        nextTick().then(() => {
-          refreshHeadingNavigation();
-          attachImageLoadListeners();
-        });
-      }
     }
 );
 
 watch(
     () => article.value?.content,
     async () => {
-      if (errorMessage.value || isInitialLoad.value) return;
+      if (errorMessage.value) return;
       await nextTick();
       debouncedRefreshHeadingNavigation();
       attachImageLoadListeners();
     }
 );
-
 </script>
 
 <style scoped>
