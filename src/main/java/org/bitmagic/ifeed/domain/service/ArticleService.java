@@ -17,10 +17,7 @@ import org.springframework.data.domain.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
-import java.time.Instant;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
+import java.time.*;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -64,7 +61,7 @@ public class ArticleService {
         if (Strings.isNotEmpty(category)) {
             if (category.equals("today")) {
                 category = null;
-                start = LocalDate.now().atStartOfDay().atZone(ZoneOffset.UTC).toInstant();
+                start = LocalDate.now().atStartOfDay().atZone(ZoneId.systemDefault()).toInstant();
             }
         }
         return articleRepository.findArticleSummaries(feedUid, tagPattern, category, scopeOwnerId, start, pageable);

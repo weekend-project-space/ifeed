@@ -45,7 +45,7 @@ public class Article {
     @Column(name = "enclosure", columnDefinition = "text")
     private String enclosure;
 
-    @Column(name = "enclosure_type", length = 16)
+    @Column(name = "enclosure_type", length = 32)
     private String enclosureType;
 
     @Column(name = "thumbnail", columnDefinition = "text")
