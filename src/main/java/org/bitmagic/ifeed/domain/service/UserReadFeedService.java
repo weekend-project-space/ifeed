@@ -23,9 +23,8 @@ public class UserReadFeedService {
 
     // Record that user read a feed at current time. Upsert latest timestamp per feed.
     @Transactional
-    public void recordFeedRead(Integer  userId, UUID feedUid) {
-        Feed feed = feedRepository.findByUid(feedUid)
-                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Feed not found"));
+    public void recordFeedRead(Integer userId, UUID feedUid) {
+
 
         var document = userBehaviorRepository.findById(userId.toString())
                 .orElseGet(() -> UserBehaviorDocument.builder()
@@ -36,7 +35,7 @@ public class UserReadFeedService {
             document.setReadFeedHistory(new java.util.ArrayList<>());
         }
 
-        var feedIdValue = feed.getUid().toString();
+        var feedIdValue = feedUid.toString();
         var now = Instant.now();
 
         var existing = document.getReadFeedHistory().stream()

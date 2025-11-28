@@ -47,6 +47,23 @@
               </span>
           </div>
 
+          <!-- Sources (for MixFeed) -->
+          <div v-if="detail?.sources && detail.sources.length > 0" class="space-y-2">
+            <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300">来源订阅 ({{ detail.sources.length }})</h3>
+            <div class="flex flex-wrap gap-2">
+              <span
+                  v-for="sourceId in detail.sources"
+                  :key="sourceId"
+                  class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 rounded-full"
+              >
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/>
+                </svg>
+                {{ sourceId }}
+              </span>
+            </div>
+          </div>
+
           <!-- Actions -->
           <div class="flex flex-wrap gap-2">
             <button
@@ -149,6 +166,7 @@ import {storeToRefs} from 'pinia';
 import {useFeedArticlesStore} from '../stores/articles/feedArticles';
 import {useFeedStore} from '../stores/feeds';
 import {useSubscriptionsStore} from '../stores/subscriptions';
+import {useReadFeedStore} from '../stores/readfeed'
 import {formatRelativeTime} from '../utils/datetime';
 
 const route = useRoute();
@@ -156,6 +174,7 @@ const router = useRouter();
 const feedStore = useFeedStore();
 const feedArticlesStore = useFeedArticlesStore();
 const subscriptionsStore = useSubscriptionsStore();
+const readFeedStore = useReadFeedStore();
 
 const {detail, loading: feedLoading, error: feedError} = storeToRefs(feedStore);
 const {
@@ -283,13 +302,14 @@ const loadFeed = async () => {
 
   try {
     await feedStore.fetchById(feedId);
+    await readFeed();
   } catch (err) {
     return;
   }
 };
 
 onMounted(async () => {
-  if(currentFeedId.value!=storeFeedId.value){
+  if (currentFeedId.value != storeFeedId.value) {
     await loadFeed();
     await fetchArticles(routePage.value);
   }
@@ -298,7 +318,9 @@ onMounted(async () => {
 
 watch([currentFeedId, routePage, normalizedTag], async ([feedId, page]) => {
   if (!feedId) return;
-  await loadFeed();
+  if (currentFeedId.value != storeFeedId.value) {
+    await loadFeed();
+  }
   await fetchArticles(page || 1);
 }, {immediate: false});
 
@@ -350,16 +372,26 @@ const prevPage = () => {
 
 const toggleSubscription = async () => {
   if (!detail.value || !currentFeedId.value) return;
-
+  console.log(detail.value.subscribed)
   try {
     if (detail.value.subscribed) {
       await subscriptionsStore.removeSubscription(detail.value.feedId);
     } else {
-      await subscriptionsStore.addSubscription(detail.value.url);
+      await subscriptionsStore.addSubscription(detail.value.url, detail.value.feedId);
     }
     await feedStore.fetchById(detail.value.feedId);
   } catch (err) {
     console.warn('订阅操作失败', err);
   }
 };
+
+const readFeed=async ()=>{
+  const canRead = subscriptionsStore.items.filter(item=>!item.isRead&&item.feedId==currentFeedId.value).length
+  if(canRead>0){
+    await readFeedStore.recordFeedRead(currentFeedId.value);
+    await subscriptionsStore.fetchSubscriptions();
+  }
+
+}
 </script>
+

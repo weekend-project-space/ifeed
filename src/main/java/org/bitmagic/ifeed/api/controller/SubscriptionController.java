@@ -14,10 +14,12 @@ import org.bitmagic.ifeed.api.util.IdentifierUtils;
 import org.bitmagic.ifeed.config.security.UserPrincipal;
 import org.bitmagic.ifeed.domain.document.UserBehaviorDocument;
 import org.bitmagic.ifeed.domain.model.Feed;
+import org.bitmagic.ifeed.domain.model.MixFeed;
+import org.bitmagic.ifeed.domain.model.SourceType;
 import org.bitmagic.ifeed.domain.model.User;
 import org.bitmagic.ifeed.domain.model.value.UserSubscription;
-import org.bitmagic.ifeed.domain.model.UserSubscriptionId;
 import org.bitmagic.ifeed.domain.repository.FeedRepository;
+import org.bitmagic.ifeed.domain.repository.MixFeedRepository;
 import org.bitmagic.ifeed.domain.repository.UserBehaviorRepository;
 import org.bitmagic.ifeed.domain.service.AuthService;
 import org.bitmagic.ifeed.domain.service.OpmlImportService;
@@ -32,12 +34,10 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.Instant;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Slf4j
 @RestController
@@ -50,11 +50,12 @@ public class SubscriptionController {
 
     private final UserBehaviorRepository userBehaviorRepository;
     private final FeedRepository feedRepository;
+    private final MixFeedRepository mixFeedRepository;
     private final OpmlImportService opmlImportService;
 
     @PostMapping
     public ResponseEntity<MessageResponse> subscribe(@AuthenticationPrincipal UserPrincipal principal,
-                                                     @Valid @RequestBody SubscriptionRequest request) {
+            @Valid @RequestBody SubscriptionRequest request) {
         var user = resolveUser(principal);
         subscriptionService.subscribe(user, request);
         return ResponseEntity.status(HttpStatus.CREATED).body(new MessageResponse("Subscription added."));
@@ -62,33 +63,70 @@ public class SubscriptionController {
 
     @GetMapping
     public ResponseEntity<List<SubscriptionResponse>> list(@AuthenticationPrincipal UserPrincipal principal) {
-        UserBehaviorDocument userBehaviorDocument = userBehaviorRepository.findById(principal.getId().toString()).orElse(null);
-        Map<String, Instant> feedReadTimes = Objects.nonNull(userBehaviorDocument) ? userBehaviorDocument.getReadFeedHistory().stream().collect(Collectors.toMap(UserBehaviorDocument.FeedRef::getFeedId, UserBehaviorDocument.FeedRef::getTimestamp)) : new HashMap<>();
+        UserBehaviorDocument userBehaviorDocument = userBehaviorRepository.findById(principal.getId().toString())
+                .orElse(null);
+        Map<String, Instant> feedReadTimes = Objects.nonNull(userBehaviorDocument)
+                ? userBehaviorDocument.getReadFeedHistory().stream().collect(Collectors
+                        .toMap(UserBehaviorDocument.FeedRef::getFeedId, UserBehaviorDocument.FeedRef::getTimestamp))
+                : new HashMap<>();
+
         List<UserSubscription> userSubscriptions = subscriptionService.getActiveSubscriptions(principal.getId());
-        Map<Integer, Feed> id2Feed = feedRepository.findAll(FeedSpecs.idIn(userSubscriptions.stream().map(UserSubscription::getId).map(UserSubscriptionId::getFeedId).collect(Collectors.toSet()))).stream().collect(Collectors.toMap(Feed::getId, Function.identity()));
-        var subscriptions = userSubscriptions.stream()
-                .map(subscription -> {
-                    var feed = id2Feed.get(subscription.getId().getFeedId());
-                    return SubscriptionViewConverter.toResponse(feed,
-                            feedReadTimes,
-                            false);
+
+        // Separate IDs by type
+        Set<Integer> feedIds = new HashSet<>();
+        Set<Integer> mixFeedIds = new HashSet<>();
+
+        for (UserSubscription sub : userSubscriptions) {
+            if (sub.getSourceType() == SourceType.FEED) {
+                feedIds.add(sub.getSourceId());
+            } else if (sub.getSourceType() == SourceType.MIX_FEED) {
+                mixFeedIds.add(sub.getSourceId());
+            }
+        }
+
+        // Fetch Feeds
+        Map<Integer, Feed> id2Feed = feedIds.isEmpty() ? Map.of()
+                : feedRepository.findAll(FeedSpecs.idIn(feedIds)).stream()
+                        .collect(Collectors.toMap(Feed::getId, Function.identity()));
+
+        // Fetch MixFeeds
+        Map<Integer, MixFeed> id2MixFeed = mixFeedIds.isEmpty() ? Map.of()
+                : mixFeedRepository.findAllById(mixFeedIds).stream()
+                        .collect(Collectors.toMap(MixFeed::getId, Function.identity()));
+
+        // Map to response
+        List<SubscriptionResponse> responses = userSubscriptions.stream()
+                .flatMap(sub -> {
+                    if (sub.getSourceType() == SourceType.FEED) {
+                        Feed feed = id2Feed.get(sub.getSourceId());
+                        if (feed != null) {
+                            return Stream.of(SubscriptionViewConverter.toResponse(feed, feedReadTimes, false));
+                        }
+                    } else if (sub.getSourceType() == SourceType.MIX_FEED) {
+                        MixFeed mixFeed = id2MixFeed.get(sub.getSourceId());
+                        if (mixFeed != null) {
+                            return Stream.of(SubscriptionViewConverter.toResponse(mixFeed, feedReadTimes, false));
+                        }
+                    }
+                    return Stream.empty();
                 })
                 .toList();
-        return ResponseEntity.ok(subscriptions);
+
+        return ResponseEntity.ok(responses);
     }
 
-
-    @DeleteMapping("/{feedId}")
+    @DeleteMapping("/{id}")
     public ResponseEntity<MessageResponse> unsubscribe(@AuthenticationPrincipal UserPrincipal principal,
-                                                       @PathVariable String feedId) {
+            @PathVariable String id) {
         var user = resolveUser(principal);
-        subscriptionService.unsubscribe(user, IdentifierUtils.parseUuid(feedId, "feed id"));
+        // id is UUID string
+        subscriptionService.unsubscribe(user, id);
         return ResponseEntity.ok(new MessageResponse("Subscription removed."));
     }
 
     @PostMapping(value = "/opml/preview", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<OpmlPreviewResponse> previewOpml(@AuthenticationPrincipal UserPrincipal principal,
-                                                           @RequestParam("file") MultipartFile file) {
+            @RequestParam("file") MultipartFile file) {
         var user = resolveUser(principal);
         var response = opmlImportService.generatePreview(user, file);
         return ResponseEntity.ok(response);
@@ -96,7 +134,7 @@ public class SubscriptionController {
 
     @PostMapping(value = "/opml/confirm", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<OpmlImportConfirmResponse> confirmOpml(@AuthenticationPrincipal UserPrincipal principal,
-                                                                 @Valid @RequestBody OpmlImportConfirmRequest request) {
+            @Valid @RequestBody OpmlImportConfirmRequest request) {
         var user = resolveUser(principal);
         var response = opmlImportService.confirm(user, request);
         return ResponseEntity.ok(response);

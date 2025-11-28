@@ -3,7 +3,7 @@
        :class="{ 'overflow-hidden': mobileNavOpen }">
 
     <!-- Header -->
-    <header class="sticky top-0 z-40 bg-white/95 dark:bg-gray-950/95 backdrop-blur-sm">
+    <header class="sticky top-0 z-40  border-b border-outline/30 bg-white/95 dark:bg-gray-950/95 backdrop-blur-sm">
       <div class="flex items-center gap-3 px-4 py-3 lg:px-5">
         <!-- Logo & Menu Button -->
         <div class="flex items-center gap-3">
@@ -303,7 +303,7 @@
       <!-- Desktop Sidebar -->
       <aside
           :class="[
-          'fixed left-0 top-[73px] bottom-0 z-30 hidden lg:block bg-white dark:bg-gray-950 transition-all duration-200',
+          'fixed left-0 top-[73px] border-r border-outline/30 bottom-0 z-30 hidden lg:block bg-white dark:bg-gray-950 transition-all duration-200',
           isSidebarCollapsed ? 'w-20' : 'w-72'
         ]">
         <div class="flex h-full flex-col overflow-hidden py-4">

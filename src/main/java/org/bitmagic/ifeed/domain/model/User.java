@@ -34,5 +34,6 @@ public class User {
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
-    // no-op
+    @Column(length = 64)
+    private String linuxDoUserId;
 }

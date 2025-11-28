@@ -2,6 +2,7 @@ package org.bitmagic.ifeed.domain.service;
 
 import lombok.RequiredArgsConstructor;
 import org.bitmagic.ifeed.domain.model.Feed;
+import org.bitmagic.ifeed.domain.model.SourceType;
 import org.bitmagic.ifeed.domain.repository.ArticleRepository;
 import org.bitmagic.ifeed.domain.repository.FeedRepository;
 import org.bitmagic.ifeed.domain.repository.UserSubscriptionRepository;
@@ -53,7 +54,8 @@ public class FeedService {
 
     private FeedDetail buildDetail(Feed feed) {
         var articleCount = articleRepository.countByFeed(feed);
-        var subscriberCount = userSubscriptionRepository.countByFeedAndActiveTrue(feed);
+        var subscriberCount = userSubscriptionRepository.countBySourceTypeAndSourceIdAndActiveTrue(SourceType.FEED,
+                feed.getId());
         var latestPublishedAt = articleRepository.findTopByFeedOrderByPublishedAtDesc(feed)
                 .map(article -> article.getPublishedAt())
                 .orElse(feed.getLastUpdated());
@@ -65,7 +67,8 @@ public class FeedService {
         if (userId == null || feed == null) {
             return false;
         }
-        return userSubscriptionRepository.existsByUser_IdAndFeedAndActiveTrue(userId, feed);
+        return userSubscriptionRepository.existsByUserIdAndSourceTypeAndSourceIdAndActiveTrue(userId, SourceType.FEED,
+                feed.getId());
     }
 
     public record FeedDetail(Feed feed, long articleCount, long subscriberCount, Instant latestPublishedAt) {

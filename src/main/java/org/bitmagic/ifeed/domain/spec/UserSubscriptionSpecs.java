@@ -1,5 +1,6 @@
 package org.bitmagic.ifeed.domain.spec;
 
+import org.bitmagic.ifeed.domain.model.SourceType;
 import org.bitmagic.ifeed.domain.model.value.UserSubscription;
 import org.bitmagic.ifeed.infrastructure.spec.Spec;
 import org.springframework.data.jpa.domain.Specification;
@@ -13,10 +14,12 @@ import java.util.Objects;
  **/
 public interface UserSubscriptionSpecs {
 
-    static Specification<UserSubscription> userAndFeedIdsActive(Integer userId, Collection<Integer> feedIds) {
+    static Specification<UserSubscription> userAndSourceTypeAndSourceIdsActive(Integer userId, SourceType sourceType,
+            Collection<Integer> sourceIds) {
         return Spec.<UserSubscription>on()
                 .when(Objects.nonNull(userId), b -> b.join("user").eq("id", userId))
-                .when(Objects.nonNull(feedIds) && !feedIds.isEmpty(), b -> b.join("feed").in("id", feedIds))
-                .isTrue("active").build(); // 永远加 active
+                .eq("sourceType", sourceType)
+                .when(Objects.nonNull(sourceIds) && !sourceIds.isEmpty(), b -> b.in("sourceId", sourceIds))
+                .isTrue("active").build();
     }
 }

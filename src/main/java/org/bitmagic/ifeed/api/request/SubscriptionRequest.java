@@ -1,10 +1,13 @@
 package org.bitmagic.ifeed.api.request;
 
-import jakarta.validation.constraints.NotBlank;
-
 public record SubscriptionRequest(
-        @NotBlank String feedUrl,
+        String feedUrl,
         String siteUrl,
-        String title
+        String title,
+        String feedId // UUID for Feed or MixFeed
 ) {
+
+    public static SubscriptionRequest of(String feedId) {
+        return new SubscriptionRequest(null, null, null, feedId);
+    }
 }

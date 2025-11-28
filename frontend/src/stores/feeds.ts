@@ -1,6 +1,6 @@
-import {ref} from 'vue';
-import {defineStore} from 'pinia';
-import {request} from '../api/client';
+import { ref } from 'vue';
+import { defineStore } from 'pinia';
+import { request } from '../api/client';
 
 export interface FeedDetail {
     feedId: string;
@@ -17,6 +17,7 @@ export interface FeedDetail {
     subscribed: boolean;
     failureCount?: number;
     fetchError?: string | null;
+    sources: string[] | null;
 }
 
 export const useFeedStore = defineStore('feed', () => {

@@ -46,33 +46,34 @@ public interface ArticleRepository extends JpaRepository<Article, Integer>, JpaS
               and (:ownerId is null or exists (
                     select 1
                     from UserSubscription us
-                    where us.feed = f
+                    where us.sourceType = 'FEED'
+                      and us.sourceId = f.id
                       and us.user.id = :ownerId
                       and us.active = true
               ))
-            """,
-            countQuery = """
-                    select count(a)
-                    from Article a
-                    left join a.feed f
-                    where (:feedUid is null or f.uid = :feedUid)
-                      and (:tagPattern is null or lower(coalesce(a.tags, '')) like :tagPattern)
-                      and (:category is null or lower(coalesce(a.category, '')) = :category)
-                      and (a.publishedAt > :start)
-                      and (:ownerId is null or exists (
-                            select 1
-                            from UserSubscription us
-                            where us.feed = f
-                              and us.user.id = :ownerId
-                              and us.active = true
-                      ))
-                    """)
+            """, countQuery = """
+            select count(a)
+            from Article a
+            left join a.feed f
+            where (:feedUid is null or f.uid = :feedUid)
+              and (:tagPattern is null or lower(coalesce(a.tags, '')) like :tagPattern)
+              and (:category is null or lower(coalesce(a.category, '')) = :category)
+              and (a.publishedAt > :start)
+              and (:ownerId is null or exists (
+                    select 1
+                    from UserSubscription us
+                    where us.sourceType = 'FEED'
+                      and us.sourceId = f.id
+                      and us.user.id = :ownerId
+                      and us.active = true
+              ))
+            """)
     Page<ArticleSummaryView> findArticleSummaries(@Param("feedUid") UUID feedUid,
-                                                  @Param("tagPattern") String tagPattern,
-                                                  @Param("category") String category,
-                                                  @Param("ownerId") Integer ownerId,
-                                                  @Param("start")  Instant start,
-                                                  Pageable pageable);
+            @Param("tagPattern") String tagPattern,
+            @Param("category") String category,
+            @Param("ownerId") Integer ownerId,
+            @Param("start") Instant start,
+            Pageable pageable);
 
     @Query(value = """
             select new org.bitmagic.ifeed.domain.record.ArticleSummaryView(
@@ -96,29 +97,30 @@ public interface ArticleRepository extends JpaRepository<Article, Integer>, JpaS
               and (:ownerId is null or exists (
                     select 1
                     from UserSubscription us
-                    where us.feed = f
+                    where us.sourceType = 'FEED'
+                      and us.sourceId = f.id
                       and us.user.id = :ownerId
                       and us.active = true
               ))
-            """,
-            countQuery = """
-                    select count(a)
-                    from Article a
-                    where (lower(a.title) like :term
-                       or lower(a.summary) like :term
-                       or lower(a.category) like :term
-                       or lower(a.tags) like :term)
-                      and (:ownerId is null or exists (
-                            select 1
-                            from UserSubscription us
-                            where us.feed = a.feed
-                              and us.user.id = :ownerId
-                              and us.active = true
-                      ))
-                    """)
+            """, countQuery = """
+            select count(a)
+            from Article a
+            where (lower(a.title) like :term
+               or lower(a.summary) like :term
+               or lower(a.category) like :term
+               or lower(a.tags) like :term)
+              and (:ownerId is null or exists (
+                    select 1
+                    from UserSubscription us
+                    where us.sourceType = 'FEED'
+                      and us.sourceId = a.feed.id
+                      and us.user.id = :ownerId
+                      and us.active = true
+              ))
+            """)
     Page<ArticleSummaryView> searchArticleSummaries(@Param("term") String term,
-                                                    @Param("ownerId") Integer ownerId,
-                                                    Pageable pageable);
+            @Param("ownerId") Integer ownerId,
+            Pageable pageable);
 
     @Query(value = """
             select new org.bitmagic.ifeed.domain.record.ArticleSummary(
@@ -142,7 +144,8 @@ public interface ArticleRepository extends JpaRepository<Article, Integer>, JpaS
     Optional<Article> findTopByFeedOrderByPublishedAtDesc(Feed feed);
 
     /**
-     * Count categories for articles visible to the owner (their active subscriptions), within time window.
+     * Count categories for articles visible to the owner (their active
+     * subscriptions), within time window.
      */
     @Query("""
             select a.category as category, count(a) as cnt
@@ -150,18 +153,19 @@ public interface ArticleRepository extends JpaRepository<Article, Integer>, JpaS
             where a.publishedAt between :fromTs and :toTs
               and (:ownerId is null or exists (
                     select 1 from UserSubscription us
-                    where us.feed = a.feed and us.user.id = :ownerId and us.active = true
+                    where us.sourceType = 'FEED' and us.sourceId = a.feed.id and us.user.id = :ownerId and us.active = true
               ))
               and (coalesce(a.category, '') <> '')
             group by a.category
             order by cnt desc
             """)
     List<Object[]> countCategoriesForOwnerWithin(@Param("ownerId") Integer ownerId,
-                                                 @Param("fromTs") Instant fromTs,
-                                                 @Param("toTs") Instant toTs);
+            @Param("fromTs") Instant fromTs,
+            @Param("toTs") Instant toTs);
 
     /**
-     * Fetch raw tag JSON strings for later in-memory aggregation, for articles visible to owner within window.
+     * Fetch raw tag JSON strings for later in-memory aggregation, for articles
+     * visible to owner within window.
      */
     @Query("""
             select a.tags
@@ -169,14 +173,13 @@ public interface ArticleRepository extends JpaRepository<Article, Integer>, JpaS
             where a.publishedAt between :fromTs and :toTs
               and (:ownerId is null or exists (
                     select 1 from UserSubscription us
-                    where us.feed = a.feed and us.user.id = :ownerId and us.active = true
+                    where us.sourceType = 'FEED' and us.sourceId = a.feed.id and us.user.id = :ownerId and us.active = true
               ))
               and (coalesce(a.tags, '') <> '')
             """)
     List<String> findTagJsonForOwnerWithin(@Param("ownerId") Integer ownerId,
-                                           @Param("fromTs") Instant fromTs,
-                                           @Param("toTs") Instant toTs);
-
+            @Param("fromTs") Instant fromTs,
+            @Param("toTs") Instant toTs);
 
     @Query(value = """
             select new org.bitmagic.ifeed.domain.record.ArticleSummaryView(
@@ -199,7 +202,7 @@ public interface ArticleRepository extends JpaRepository<Article, Integer>, JpaS
     @Query("select a.id, a.publishedAt from Article a where a.id in (:ids)")
     List<Object[]> findPublishedAtByIdIn(@Param("ids") Collection<Long> ids);
 
-
     @Query("select new org.bitmagic.ifeed.domain.record.ArticleIdPair(a.uid, a.id) from Article a where a.uid in (:ids)")
     List<ArticleIdPair> findIdByUIdIn(@Param("ids") Collection<UUID> ids);
+
 }

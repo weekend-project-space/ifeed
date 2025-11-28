@@ -6,7 +6,7 @@ import org.bitmagic.ifeed.domain.model.UserSession;
 import org.bitmagic.ifeed.domain.repository.UserRepository;
 import org.bitmagic.ifeed.domain.repository.UserSessionRepository;
 import org.bitmagic.ifeed.exception.ApiException;
-import org.hibernate.annotations.Cache;
+import org.bitmagic.ifeed.infrastructure.spec.Spec;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -16,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.security.SecureRandom;
 import java.util.Base64;
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -52,6 +53,20 @@ public class AuthService {
             throw new ApiException(HttpStatus.UNAUTHORIZED, "Invalid credentials");
         }
 
+        return issueToken(user);
+    }
+
+    @Transactional
+    public AuthToken authLogin(String id, String username) {
+        var user = userRepository.findOne(Spec.<User>on().eq("linuxDoUserId", id).build()).orElseGet(() -> {
+            String username0 = username;
+            if (userRepository.findByUsername(username).isPresent()) {
+//                TODO
+                username0 = UUID.randomUUID().toString();
+            }
+            User u = User.builder().linuxDoUserId(id).username(username0).passwordHash("linuxDo" + username0).build();
+            return userRepository.save(u);
+        });
         return issueToken(user);
     }
 

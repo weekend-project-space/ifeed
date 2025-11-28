@@ -18,20 +18,9 @@ class RerankerModelTest {
     void call(){
         long start = System.currentTimeMillis();
         List<String> docs = List.of(
-                "Parallels Desktop 26.2.0-57329 是一款强大的Mac虚拟机解决方案，允许用户同时运行Windows和macOS应用程序，实现文件拖放、手势共享和云端共享。它提供无缝对接、安全便捷的新建向导，并支持7.1环绕立体声和加速3D图形，能够流畅运行高要求的Windows程序。该版本支持Windows 10和OS X El Capitan，简化了Windows打印流程。更新日志显示性能大幅提升，启动和关机速度提升50%，任务处理速度提升20%。同时改进了文件关联，并引入了OS X El Capitan的新功能，如拆分视图、Share On服务、OS X手势在Windows中的应用，以及实时定位功能。安装方面，Mojave系统下可能需要参考特定方法进行安装。",
-                "Gemini 3 还没影子，GPT 5.1 已经在路上。7 号深夜，OpenRouter 平台上线了一个全新的隐名模型。已经有眼尖动作快的网友尝鲜体验，并且认为这就是披着马甲的 GPT 5.1，暂名：Polaris Alpha。\n" +
-                        "\n" +
-                        "\n" +
-                        "\n" +
-                        "目前提供 API 调用（包括 OpenRouter），知识库截止时间为 2024 年 10 月，不支持推理模式。最大 context 容量 256K，单次最大输出 128K。\n" +
-                        "\n" +
-                        "开发商信息保密，但是在网友的不懈努力下，成功「越狱」，让 Polaris Alpha 自曝了家门。\n",
-                "我们来试一试吧",
-                "我们一起学猫叫",
-                "我和Faker五五开",
-                "明天预计下雨，不能出去玩了"
+                "在我上一篇文章《我妈妈被电信诈骗95万元的全过程》发布后，很多网友留言对于如此大金额的银行转账为什么没有触发银行的风险控制感到疑惑，我一开始也百思不得其解，我于是在另一台手机上安装并登录了中国银行的手机银行APP，通过对手机银行日志的分析，我才终于明白——骗子并不是“暴力盗钱”，而是在几天的时间里，精确地绕过了银行的风险控制机制。 一、时间线回顾 7月底，骗子冒充警察打我妈妈的电话，声称她的身份证被人冒用，涉嫌一宗300万元的诈骗大案，要求她配合“资金核查”，并套取了支付宝密码、银行卡号和密码。 7月30日，骗子以“配合公安调查、进行视频签到”为由，让我妈妈购买了一部新手机——华为畅享80S。..."
         );
-        rerankerModel.rerankDocumentsResult("ai 相关文章", docs, RerankOptions.create()
+        rerankerModel.rerankDocumentsResult("给这篇文章的信息密度打分", docs, RerankOptions.create()
                 .withTopN(3)
                 .withMinScore(-5.0)).forEach(System.out::println);
         log.info("{} ms", System.currentTimeMillis() - start);

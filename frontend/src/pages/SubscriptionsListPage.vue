@@ -4,10 +4,30 @@
       <!-- Header -->
       <div class="mb-6">
         <h1 class="text-2xl font-normal text-gray-900 dark:text-gray-100 mb-4">
-          所有订阅频道
+          订阅管理
         </h1>
 
-        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <!-- Tabs -->
+        <div class="border-b border-gray-200 dark:border-gray-700 mb-6">
+          <nav class="-mb-px flex space-x-8" aria-label="Tabs">
+            <button
+                v-for="tab in tabs"
+                :key="tab.key"
+                @click="currentTab = tab.key"
+                :class="[
+                currentTab === tab.key
+                  ? 'border-secondary text-secondary'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300',
+                'whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors'
+              ]"
+            >
+              {{ tab.name }}
+            </button>
+          </nav>
+        </div>
+
+        <!-- Toolbar (Only for Subscriptions Tab) -->
+        <div v-if="currentTab === 'subscriptions'" class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <!-- 排序选择器 -->
           <div class="relative flex-shrink-0">
             <select
@@ -55,126 +75,134 @@
         </div>
       </div>
 
-      <!-- Loading State -->
-      <div v-if="subscriptionsStore.loading && !items.length" class="space-y-3">
-        <div v-for="i in 3" :key="i" class="flex items-start gap-4 p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg animate-pulse">
-          <div class="w-14 h-14 bg-gray-200 dark:bg-gray-700 rounded-full"></div>
-          <div class="flex-1 space-y-2 py-1">
-            <div class="h-5 bg-gray-200 dark:bg-gray-700 rounded w-2/3"></div>
-            <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/2"></div>
-            <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4"></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Empty State -->
-      <div v-else-if="!items.length" class="text-center py-16">
-        <div class="w-16 h-16 mx-auto mb-4 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center">
-          <svg class="w-8 h-8 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-            <path d="M12 6.5a5.5 5.5 0 1 1 0 11 5.5 5.5 0 0 1 0-11Z"/>
-            <path d="M12 4v2m0 12v2M7.5 7.5l-1.5-1.5m11.5 1.5 1.5-1.5m-13 8-1.5 1.5m11.5-1.5 1.5 1.5M2 12h2m16 0h2"/>
-          </svg>
-        </div>
-        <h2 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">还没有订阅</h2>
-        <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">添加你感兴趣的订阅源开始使用</p>
-        <router-link
-            to="/subscriptions"
-            class="inline-flex items-center gap-2 px-5 py-2 text-sm font-medium text-white bg-secondary hover:bg-secondary/90 rounded-full transition-colors"
-        >
-          添加订阅
-        </router-link>
-      </div>
-
-      <!-- Subscription List -->
-      <div v-else class="space-y-0">
-        <article
-            v-for="item in sortedItems"
-            :key="item.feedId"
-            class="group flex items-start gap-4 px-4 py-4 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
-        >
-          <!-- Avatar -->
-          <router-link :to="`/feeds/${item.feedId}`" class="flex-shrink-0">
-            <img
-                :src="getFaviconUrl(item)"
-                :alt="displayTitle(item)"
-                class="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-800 object-cover"
-                @error="handleImageError"
-            />
-          </router-link>
-
-          <!-- Content -->
-          <div class="flex-1 min-w-0">
-            <div class="flex items-start justify-between gap-3 mb-1.5">
-              <router-link :to="`/feeds/${item.feedId}`" class="flex-1 min-w-0">
-                <h3 class="text-base font-medium text-gray-900 dark:text-gray-100 line-clamp-1 group-hover:text-secondary transition-colors">
-                  {{ displayTitle(item) }}
-                </h3>
-              </router-link>
-
-              <!-- Action Buttons -->
-              <div class="flex items-center gap-1.5 flex-shrink-0">
-                <button
-                    class="relative p-1"
-                    @click.stop="toggleDropdown(item.feedId)"
-                    :aria-expanded="activeDropdown === item.feedId"
-                >
-                  <svg class="w-5 h-5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <circle cx="12" cy="12" r="1" fill="currentColor"/>
-                    <circle cx="12" cy="5" r="1" fill="currentColor"/>
-                    <circle cx="12" cy="19" r="1" fill="currentColor"/>
-                  </svg>
-                  <!-- Dropdown Menu -->
-                  <div
-                      v-if="activeDropdown === item.feedId"
-                      class="absolute right-0 top-full mt-1 w-36 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-1 z-10"
-                  >
-                    <router-link :to="`/feeds/${item.feedId}`" class="sm:hidden block w-full px-4 py-2 text-left text-sm text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700" @click="activeDropdown = null">
-                      查看详情
-                    </router-link>
-                    <button
-                        @click.stop="confirmRemove(item)"
-                        :disabled="subscriptionsStore.submitting"
-                        class="w-full px-4 py-2 text-left text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 disabled:opacity-50"
-                    >
-                      取消订阅
-                    </button>
-                  </div>
-                </button>
-              </div>
+      <!-- Subscriptions Content -->
+      <div v-if="currentTab === 'subscriptions'">
+        <!-- Loading State -->
+        <div v-if="subscriptionsStore.loading && !items.length" class="space-y-3">
+          <div v-for="i in 3" :key="i" class="flex items-start gap-4 p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg animate-pulse">
+            <div class="w-14 h-14 bg-gray-200 dark:bg-gray-700 rounded-full"></div>
+            <div class="flex-1 space-y-2 py-1">
+              <div class="h-5 bg-gray-200 dark:bg-gray-700 rounded w-2/3"></div>
+              <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/2"></div>
+              <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4"></div>
             </div>
-
-            <router-link :to="`/feeds/${item.feedId}`" class="block">
-              <div class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 mb-1.5">
-                <span class="truncate max-w-[200px]">@{{ getUsername(item) }}</span>
-                <span>•</span>
-                <span class="truncate">{{ getSubscriberCount(item) }}</span>
-              </div>
-
-              <p class="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 mb-2">
-                {{ getDescription(item) }}
-              </p>
-
-              <!-- Status -->
-              <div v-if="hasIssue(item)" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-red-50 dark:bg-red-900/20 text-xs text-red-700 dark:text-red-400">
-                <svg class="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor">
-                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z"/>
-                </svg>
-                <span>抓取异常</span>
-              </div>
-              <span v-else class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-green-50 dark:bg-green-900/20 text-xs text-green-700 dark:text-green-400">
-                <svg class="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor">
-                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z"/>
-                </svg>
-                <span>已订阅</span>
-              </span>
-            </router-link>
           </div>
-        </article>
+        </div>
+
+        <!-- Empty State -->
+        <div v-else-if="!items.length" class="text-center py-16">
+          <div class="w-16 h-16 mx-auto mb-4 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center">
+            <svg class="w-8 h-8 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M12 6.5a5.5 5.5 0 1 1 0 11 5.5 5.5 0 0 1 0-11Z"/>
+              <path d="M12 4v2m0 12v2M7.5 7.5l-1.5-1.5m11.5 1.5 1.5-1.5m-13 8-1.5 1.5m11.5-1.5 1.5 1.5M2 12h2m16 0h2"/>
+            </svg>
+          </div>
+          <h2 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">还没有订阅</h2>
+          <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">添加你感兴趣的订阅源开始使用</p>
+          <router-link
+              to="/subscriptions"
+              class="inline-flex items-center gap-2 px-5 py-2 text-sm font-medium text-white bg-secondary hover:bg-secondary/90 rounded-full transition-colors"
+          >
+            添加订阅
+          </router-link>
+        </div>
+
+        <!-- Subscription List -->
+        <div v-else class="space-y-0">
+          <article
+              v-for="item in sortedItems"
+              :key="item.feedId"
+              class="group flex items-start gap-4 px-4 py-4 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
+          >
+            <!-- Avatar -->
+            <router-link :to="`/feeds/${item.feedId}`" class="flex-shrink-0">
+              <img
+                  :src="getFaviconUrl(item)"
+                  :alt="displayTitle(item)"
+                  class="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-800 object-cover"
+                  @error="handleImageError"
+              />
+            </router-link>
+
+            <!-- Content -->
+            <div class="flex-1 min-w-0">
+              <div class="flex items-start justify-between gap-3 mb-1.5">
+                <router-link :to="`/feeds/${item.feedId}`" class="flex-1 min-w-0">
+                  <h3 class="text-base font-medium text-gray-900 dark:text-gray-100 line-clamp-1 group-hover:text-secondary transition-colors">
+                    {{ displayTitle(item) }}
+                  </h3>
+                </router-link>
+
+                <!-- Action Buttons -->
+                <div class="flex items-center gap-1.5 flex-shrink-0">
+                  <button
+                      class="relative p-1"
+                      @click.stop="toggleDropdown(item.feedId)"
+                      :aria-expanded="activeDropdown === item.feedId"
+                  >
+                    <svg class="w-5 h-5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <circle cx="12" cy="12" r="1" fill="currentColor"/>
+                      <circle cx="12" cy="5" r="1" fill="currentColor"/>
+                      <circle cx="12" cy="19" r="1" fill="currentColor"/>
+                    </svg>
+                    <!-- Dropdown Menu -->
+                    <div
+                        v-if="activeDropdown === item.feedId"
+                        class="absolute right-0 top-full mt-1 w-36 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-1 z-10"
+                    >
+                      <router-link :to="`/feeds/${item.feedId}`" class="sm:hidden block w-full px-4 py-2 text-left text-sm text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700" @click="activeDropdown = null">
+                        查看详情
+                      </router-link>
+                      <button
+                          @click.stop="confirmRemove(item)"
+                          :disabled="subscriptionsStore.submitting"
+                          class="w-full px-4 py-2 text-left text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 disabled:opacity-50"
+                      >
+                        取消订阅
+                      </button>
+                    </div>
+                  </button>
+                </div>
+              </div>
+
+              <router-link :to="`/feeds/${item.feedId}`" class="block">
+                <div class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 mb-1.5">
+                  <span class="truncate max-w-[200px]">@{{ getUsername(item) }}</span>
+                  <span>•</span>
+                  <span class="truncate">{{ getSubscriberCount(item) }}</span>
+                </div>
+
+                <p class="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 mb-2">
+                  {{ getDescription(item) }}
+                </p>
+
+                <!-- Status -->
+                <div v-if="hasIssue(item)" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-red-50 dark:bg-red-900/20 text-xs text-red-700 dark:text-red-400">
+                  <svg class="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z"/>
+                  </svg>
+                  <span>抓取异常</span>
+                </div>
+                <span v-else class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-green-50 dark:bg-green-900/20 text-xs text-green-700 dark:text-green-400">
+                  <svg class="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z"/>
+                  </svg>
+                  <span>已订阅</span>
+                </span>
+              </router-link>
+            </div>
+          </article>
+        </div>
+
+        <!-- Footer -->
+        <div v-if="items.length" class="mt-6 text-center text-sm text-gray-600 dark:text-gray-400">
+          共 {{ items.length }} 个订阅源
+        </div>
       </div>
 
-      <!-- Footer -->
-      <div v-if="items.length" class="mt-6 text-center text-sm text-gray-600 dark:text-gray-400">
-        共 {{ items.length }} 个订阅源
+      <!-- Mix Feeds Content -->
+      <div v-else-if="currentTab === 'mix-feeds'">
+        <MixFeedManager />
       </div>
     </div>
 
@@ -214,6 +242,7 @@ import { computed, onMounted, ref } from 'vue';
 import { storeToRefs } from 'pinia';
 import { useSubscriptionsStore, type SubscriptionListItemDto } from '../stores/subscriptions';
 import { formatRelativeTime } from '../utils/datetime';
+import MixFeedManager from './components/MixFeedManager.vue';
 
 const subscriptionsStore = useSubscriptionsStore();
 const { items } = storeToRefs(subscriptionsStore);
@@ -221,6 +250,13 @@ const activeDropdown = ref<string | null>(null);
 const sortBy = ref<'relevance' | 'lastUpdated' | 'subscribeTime'>('relevance');
 const isRefreshing = ref(false);
 const itemToRemove = ref<SubscriptionListItemDto | null>(null);
+
+const tabs = [
+  { key: 'subscriptions', name: '所有订阅' },
+  { key: 'mix-feeds', name: '混合订阅' }
+] as const;
+
+const currentTab = ref(tabs[0].key);
 
 const sortedItems = computed(() => {
   const list = [...items.value];
