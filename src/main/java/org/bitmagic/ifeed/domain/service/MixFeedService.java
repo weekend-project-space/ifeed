@@ -3,6 +3,7 @@ package org.bitmagic.ifeed.domain.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import org.bitmagic.ifeed.domain.model.Article;
 import org.bitmagic.ifeed.domain.model.MixFeed;
 import org.bitmagic.ifeed.domain.model.SourceType;
 import org.bitmagic.ifeed.domain.model.User;
@@ -11,11 +12,14 @@ import org.bitmagic.ifeed.domain.record.ArticleSummaryView;
 import org.bitmagic.ifeed.domain.repository.ArticleRepository;
 import org.bitmagic.ifeed.domain.repository.MixFeedRepository;
 import org.bitmagic.ifeed.domain.repository.UserSubscriptionRepository;
+import org.bitmagic.ifeed.domain.spec.MixFeedSpecs;
 import org.bitmagic.ifeed.exception.ApiException;
 import org.bitmagic.ifeed.infrastructure.util.JSON;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -166,7 +170,7 @@ public class MixFeedService {
             throw new ApiException(HttpStatus.FORBIDDEN, "Access denied to private MixFeed");
         }
 
-        MixFeedFilterConfig config = deserializeFilterConfig(mixFeed.getFilterConfig());
+        MixFeedFilterConfig config = mixFeed.config();
 
         // Extract filter parameters
         Set<UUID> sourceFeedIds = null;
@@ -175,56 +179,18 @@ public class MixFeedService {
                     .map(UUID::fromString)
                     .collect(java.util.stream.Collectors.toSet());
         }
-        List<String> includeKeywords = config.getKeywords() != null ? config.getKeywords().getInclude() : null;
-        List<String> excludeKeywords = config.getKeywords() != null ? config.getKeywords().getExclude() : null;
+        List<String> includeKeywords = config.getKeywords().getInclude();
+        List<String> excludeKeywords = config.getKeywords().getExclude();
         Instant fromDate = config.getDateRange() != null ? config.getDateRange().getFrom() : null;
         Instant toDate = config.getDateRange() != null ? config.getDateRange().getTo() : null;
 
         // Build Specification
-        Set<UUID> finalSourceFeedIds = sourceFeedIds;
-        org.springframework.data.jpa.domain.Specification<org.bitmagic.ifeed.domain.model.Article> spec = (root, query,
-                                                                                                           cb) -> {
-            java.util.List<jakarta.persistence.criteria.Predicate> predicates = new java.util.ArrayList<>();
-
-            // Filter by source feeds
-            if (finalSourceFeedIds != null && !finalSourceFeedIds.isEmpty()) {
-                predicates.add(root.get("feed").get("uid").in(finalSourceFeedIds));
-            }
-
-            // Filter by date range
-            if (fromDate != null) {
-                predicates.add(cb.greaterThanOrEqualTo(root.get("publishedAt"), fromDate));
-            }
-            if (toDate != null) {
-                predicates.add(cb.lessThanOrEqualTo(root.get("publishedAt"), toDate));
-            }
-
-            // Filter by include keywords (OR logic)
-            if (includeKeywords != null && !includeKeywords.isEmpty()) {
-                java.util.List<jakarta.persistence.criteria.Predicate> keywordPredicates = new java.util.ArrayList<>();
-                for (String keyword : includeKeywords) {
-                    String pattern = "%" + keyword.toLowerCase() + "%";
-                    keywordPredicates.add(cb.like(cb.lower(root.get("title")), pattern));
-                    keywordPredicates.add(cb.like(cb.lower(root.get("content")), pattern));
-                }
-                predicates.add(cb.or(keywordPredicates.toArray(new jakarta.persistence.criteria.Predicate[0])));
-            }
-
-            // Filter by exclude keywords (AND NOT logic)
-            if (excludeKeywords != null && !excludeKeywords.isEmpty()) {
-                for (String keyword : excludeKeywords) {
-                    String pattern = "%" + keyword.toLowerCase() + "%";
-                    predicates.add(cb.notLike(cb.lower(root.get("title")), pattern));
-                    predicates.add(cb.notLike(cb.lower(root.get("content")), pattern));
-                }
-            }
-
-            return cb.and(predicates.toArray(new jakarta.persistence.criteria.Predicate[0]));
-        };
+        Specification<Article> spec = MixFeedSpecs.mixFeedArticles(sourceFeedIds, fromDate, toDate, includeKeywords, excludeKeywords);
 
         // Execute query and map results
         return articleRepository.findAll(spec, pageable).map(this::toSummaryView);
     }
+
 
     private ArticleSummaryView toSummaryView(org.bitmagic.ifeed.domain.model.Article article) {
         return new ArticleSummaryView(

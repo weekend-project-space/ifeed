@@ -50,7 +50,7 @@ public class TextSearchRetrievalHandler implements RetrievalHandler {
             }
 
             long duration = System.currentTimeMillis() - startTime;
-            log.info("Chinese Text Search retrieval completed: {} results in {}ms",
+            log.info("Chinese Text Search {} retrieval completed: {} results in {}ms", context.getQuery(),
                     results.size(), duration);
             return results;
 

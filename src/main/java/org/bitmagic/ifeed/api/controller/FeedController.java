@@ -153,7 +153,7 @@ public class FeedController {
                 null, // MixFeed doesn't have siteUrl
                 mixFeed.getIcon(),
                 mixFeed.getLastFetched(), // MixFeed doesn't have lastFetched
-                mixFeed.getUpdatedAt(),
+                mixFeed.getLastUpdated(),
                 detail.articleCount(),
                 detail.subscriberCount(),
                 subscribed,

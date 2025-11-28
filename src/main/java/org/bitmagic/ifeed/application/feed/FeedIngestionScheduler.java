@@ -4,19 +4,32 @@ import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.bitmagic.ifeed.config.properties.RssFetcherProperties;
+import org.bitmagic.ifeed.domain.model.Article;
+import org.bitmagic.ifeed.domain.model.value.MixFeedFilterConfig;
+import org.bitmagic.ifeed.domain.repository.ArticleRepository;
+import org.bitmagic.ifeed.domain.repository.MixFeedRepository;
+import org.bitmagic.ifeed.domain.spec.ArticleSpecs;
+import org.bitmagic.ifeed.domain.spec.MixFeedSpecs;
 import org.bitmagic.ifeed.infrastructure.util.TaskUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.CacheManager;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Stream;
 
 @Slf4j
 @Component
@@ -25,6 +38,10 @@ public class FeedIngestionScheduler {
 
     private final FeedIngestionService ingestionService;
 
+    private final MixFeedRepository mixFeedRepository;
+
+    private final ArticleRepository articleRepository;
+
     private final ExecutorService executor;
 
     private final RssFetcherProperties properties;
@@ -32,7 +49,7 @@ public class FeedIngestionScheduler {
     private final CacheManager cacheManager;
 
     @Autowired
-    public FeedIngestionScheduler(FeedIngestionService ingestionService,
+    public FeedIngestionScheduler(FeedIngestionService ingestionService, MixFeedRepository mixFeedRepository, ArticleRepository articleRepository,
                                   RssFetcherProperties properties, CacheManager cacheManager) {
         this.ingestionService = ingestionService;
         AtomicInteger counter = new AtomicInteger(0);
@@ -42,6 +59,8 @@ public class FeedIngestionScheduler {
             return t;
         });
         this.properties = properties;
+        this.mixFeedRepository = mixFeedRepository;
+        this.articleRepository = articleRepository;
         this.cacheManager = cacheManager;
     }
 
@@ -84,6 +103,45 @@ public class FeedIngestionScheduler {
         long duration = (System.currentTimeMillis() - start) / 1000;
         log.info("Feed refresh completed: {} success, {} failed, {}s",
                 success.get(), failed.get(), duration);
+        refreshMixFeeds();
+    }
+
+
+    public void refreshMixFeeds() {
+        log.info("start refreshMixFeeds...");
+        long limit = mixFeedRepository.count() / 10 + 1;
+        Stream.iterate(0, i -> i + 1).limit(limit).forEach(i -> {
+            mixFeedRepository.findAll(PageRequest.of(i, 10)).stream().parallel().forEach(mixFeed -> {
+                try {
+                    MixFeedFilterConfig config = mixFeed.config();
+                    // Extract filter parameters
+                    Set<UUID> sourceFeedIds = null;
+                    if (config.getSourceFeeds() != null && !config.getSourceFeeds().isEmpty()) {
+                        sourceFeedIds = config.getSourceFeeds().keySet().stream()
+                                .map(UUID::fromString)
+                                .collect(java.util.stream.Collectors.toSet());
+                    }
+                    List<String> includeKeywords = config.getKeywords().getInclude();
+                    List<String> excludeKeywords = config.getKeywords().getExclude();
+                    Instant fromDate = config.getDateRange() != null ? config.getDateRange().getFrom() : null;
+                    Instant toDate = config.getDateRange() != null ? config.getDateRange().getTo() : null;
+
+                    // Build Specification
+                    Specification<Article> spec = MixFeedSpecs.mixFeedArticles(sourceFeedIds, fromDate, toDate, includeKeywords, excludeKeywords);
+                    List<Article> articles = articleRepository.findAll(spec, PageRequest.of(0, 1, Sort.by(Sort.Order.desc("publishedAt")))).getContent();
+                    if (!articles.isEmpty()) {
+                        mixFeed.setLastFetched(Instant.now());
+                        mixFeed.setLastUpdated(articles.iterator().next().getPublishedAt());
+                    }
+                    mixFeedRepository.save(mixFeed);
+                    log.debug("refresh MixFeed :{}", mixFeed.getName());
+                } catch (RuntimeException e) {
+                    log.warn("refresh MixFeed", e);
+                }
+            });
+        });
+
+        log.info("end refreshMixFeeds...");
     }
 
     /**
