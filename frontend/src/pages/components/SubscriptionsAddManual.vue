@@ -15,7 +15,7 @@
             type="submit"
             class="px-6 py-2.5 text-sm font-medium text-white bg-secondary rounded-full hover:bg-secondary/90 disabled:bg-gray-300 dark:disabled:bg-gray-700 disabled:text-gray-500 disabled:cursor-not-allowed transition-all"
             :disabled="subscriptionsStore.submitting">
-          {{ subscriptionsStore.submitting ? '添加中...' : '添加订阅' }}
+-          {{ subscriptionsStore.submitting ? '添加中...' : '添加' }}
         </button>
       </div>
     </form>

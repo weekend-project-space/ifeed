@@ -3,7 +3,7 @@
     <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
       上传 OPML 文件批量导入订阅，文件大小建议不超过 2 MB
     </p>
-    <div class="p-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg mb-3 hover:shadow-sm transition-all">
+    <div class=" bg-white dark:bg-gray-800  dark:border-gray-700  mb-3 hover:shadow-sm transition-all space-y-5">
       <div class="flex items-center gap-4">
         <div class="w-10 h-10 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center flex-shrink-0">
           <svg class="w-5 h-5 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -14,20 +14,21 @@
           <p class="text-sm font-medium text-gray-900 dark:text-gray-100 mb-0.5">选择 OPML 文件</p>
           <p class="text-xs text-gray-600 dark:text-gray-400">支持 .opml 和 .xml 格式</p>
         </div>
-        <div class="flex items-center gap-2 flex-shrink-0">
-          <input
-              ref="opmlFileInput"
-              type="file"
-              accept=".opml,.xml"
-              class="text-xs text-gray-600 dark:text-gray-400 file:mr-2 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-medium file:bg-gray-100 dark:file:bg-gray-700 file:text-gray-900 dark:file:text-gray-100 hover:file:bg-gray-200 dark:hover:file:bg-gray-600 file:cursor-pointer cursor-pointer file:transition-all"
-              @change="handleOpmlFileChange" />
-          <button
-              class="px-5 py-2 text-sm font-medium text-white bg-secondary rounded-full hover:bg-secondary/90 disabled:bg-gray-300 dark:disabled:bg-gray-700 disabled:text-gray-500 disabled:cursor-not-allowed transition-all"
-              :disabled="opmlPreviewLoading || !opmlFile"
-              @click="handlePreviewOpml">
-            {{ opmlPreviewLoading ? '解析中...' : '解析' }}
-          </button>
-        </div>
+
+      </div>
+      <div class="flex items-center gap-2 flex-shrink-0">
+        <input
+            ref="opmlFileInput"
+            type="file"
+            accept=".opml,.xml"
+            class="text-xs text-gray-600 dark:text-gray-400 file:mr-2 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-medium file:bg-gray-100 dark:file:bg-gray-700 file:text-gray-900 dark:file:text-gray-100 hover:file:bg-gray-200 dark:hover:file:bg-gray-600 file:cursor-pointer cursor-pointer file:transition-all"
+            @change="handleOpmlFileChange" />
+        <button
+            class="px-5 py-2 text-sm font-medium text-white bg-secondary rounded-full hover:bg-secondary/90 disabled:bg-gray-300 dark:disabled:bg-gray-700 disabled:text-gray-500 disabled:cursor-not-allowed transition-all"
+            :disabled="opmlPreviewLoading || !opmlFile"
+            @click="handlePreviewOpml">
+          {{ opmlPreviewLoading ? '解析中...' : '解析' }}
+        </button>
       </div>
     </div>
     <p v-if="opmlError" class="px-4 py-2.5 text-sm text-red-700 dark:text-red-400 bg-red-50 dark:bg-red-900/20 rounded-lg">
