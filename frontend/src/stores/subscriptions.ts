@@ -20,7 +20,6 @@ export interface SubscriptionListItemDto extends SubscriptionBaseDto {
 }
 
 export interface SubscriptionSearchResultDto extends SubscriptionBaseDto {
-    latestPublishedAt?: string;
     subscriberCount: number;
     subscribed: boolean;
 }

@@ -1,5 +1,8 @@
 <template>
-  <div class="max-w-4xl mx-auto ">
+  <div>
+    <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+      输入关键词或网址进行搜索
+    </p>
     <!-- Search Header -->
     <div class="mb-6">
       <form @submit.prevent="handleSearch" class="relative">

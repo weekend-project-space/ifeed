@@ -12,7 +12,6 @@ public record FeedDetailResponse(
         String avatar,
         Instant lastFetched,
         Instant lastUpdated,
-        Instant latestPublishedAt,
         long articleCount,
         long subscriberCount,
         boolean subscribed,

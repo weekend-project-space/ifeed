@@ -11,7 +11,6 @@ export interface FeedDetail {
     avatar?: string | null;
     lastFetched?: string | null;
     lastUpdated?: string | null;
-    latestPublishedAt?: string | null;
     articleCount: number;
     subscriberCount: number;
     subscribed: boolean;

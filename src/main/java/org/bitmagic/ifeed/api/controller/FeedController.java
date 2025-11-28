@@ -135,7 +135,6 @@ public class FeedController {
                 "https://favicon.im/%s".formatted(host),
                 feed.getLastFetched(),
                 feed.getLastUpdated(),
-                detail.latestPublishedAt(),
                 detail.articleCount(),
                 detail.subscriberCount(),
                 subscribed,
@@ -153,9 +152,8 @@ public class FeedController {
                 null, // MixFeed doesn't have URL
                 null, // MixFeed doesn't have siteUrl
                 mixFeed.getIcon(),
-                null, // MixFeed doesn't have lastFetched
+                mixFeed.getLastFetched(), // MixFeed doesn't have lastFetched
                 mixFeed.getUpdatedAt(),
-                null, // latestPublishedAt not applicable for MixFeed
                 detail.articleCount(),
                 detail.subscriberCount(),
                 subscribed,
