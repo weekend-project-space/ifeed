@@ -59,6 +59,8 @@ export const useMixFeedsStore = defineStore('mixFeeds', () => {
     const loading = ref(false);
     const error = ref<string | null>(null);
 
+    const clearMyMixFeeds = ()=>myMixFeeds.value=[]
+
     const fetchMyMixFeeds = async () => {
         loading.value = true;
         error.value = null;
@@ -160,6 +162,7 @@ export const useMixFeedsStore = defineStore('mixFeeds', () => {
         loading,
         error,
         fetchMyMixFeeds,
+        clearMyMixFeeds,
         createMixFeed,
         fetchMixFeedDetail,
         updateMixFeed,

@@ -64,7 +64,26 @@
           :loading="articlesLoading"
           @select-tag="handleSelectTag"
           @refresh="refresh"
-      />
+      >
+        <template #action>
+          <router-link class="p-2 text-sm text-primary font-medium rounded-lg transition-colors  hover:bg-surface-container" to="/feeds/channels">管理</router-link>
+        </template>
+        <template #empty>
+            <div class="w-16 h-16 mx-auto mb-4 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center">
+              <svg class="w-8 h-8 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+              </svg>
+            </div>
+            <h2 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">还没有订阅</h2>
+            <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">添加你感兴趣的订阅源开始使用</p>
+          <router-link
+              to="/subscriptions"
+              class="inline-flex items-center gap-2 px-5 py-2 text-sm font-medium text-white bg-secondary hover:bg-secondary/90 rounded-full transition-colors"
+          >
+            添加订阅
+          </router-link>
+        </template>
+      </article-list>
 
       <!-- 分页 -->
       <pagination

@@ -12,7 +12,7 @@
               class="flex h-10 w-10 items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition lg:hidden"
               @click="mobileNavOpen = true">
             <svg class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" :d="icons.menu" />
+              <path stroke-linecap="round" stroke-linejoin="round" :d="icons.menu"/>
             </svg>
           </button>
 
@@ -21,13 +21,13 @@
               class="hidden lg:flex h-10 w-10 items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition"
               @click="toggleSidebar">
             <svg class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" :d="icons.menu" />
+              <path stroke-linecap="round" stroke-linejoin="round" :d="icons.menu"/>
             </svg>
           </button>
 
           <RouterLink :to="{ name: 'home' }" class="flex items-center gap-2 text-lg font-semibold">
-            <img class="h-9 w-9 rounded-2xl" src="https://ifeed.cc/logo.svg" alt="iFeed" />
-            <span>iFeed</span>
+            <img class="h-9 w-9 rounded-2xl" src="https://ifeed.cc/logo.svg" alt="iFeed"/>
+            <span>IFeed</span>
           </RouterLink>
         </div>
 
@@ -46,14 +46,14 @@
               ]"
                 @focus="searchFocused = true"
                 @blur="searchFocused = false"
-                @keyup.enter="handleSearch" />
+                @keyup.enter="handleSearch"/>
 
             <!-- Search Icon -->
             <div class="absolute left-5 top-1/2 -translate-y-1/2">
               <svg class="h-5 w-5 transition-colors duration-200"
                    :class="searchFocused ? 'text-primary' : 'text-gray-400'"
                    fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" :d="icons.search" />
+                <path stroke-linecap="round" stroke-linejoin="round" :d="icons.search"/>
               </svg>
             </div>
 
@@ -64,7 +64,7 @@
                 class="absolute right-16 top-1/2 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition text-gray-500"
                 @click="search = ''">
               <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" :d="icons.close" />
+                <path stroke-linecap="round" stroke-linejoin="round" :d="icons.close"/>
               </svg>
             </button>
 
@@ -75,7 +75,7 @@
                 :class="search ? 'bg-primary text-primary-foreground hover:bg-primary/90' : 'text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'"
                 @click="handleSearch">
               <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" :d="icons.search" />
+                <path stroke-linecap="round" stroke-linejoin="round" :d="icons.search"/>
               </svg>
             </button>
           </div>
@@ -89,10 +89,12 @@
               class="flex h-10 w-10 items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition"
               @click="toggleTheme">
             <svg v-if="isDark" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z" />
+              <path stroke-linecap="round" stroke-linejoin="round"
+                    d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z"/>
             </svg>
             <svg v-else class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z" />
+              <path stroke-linecap="round" stroke-linejoin="round"
+                    d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z"/>
             </svg>
           </button>
 
@@ -108,22 +110,25 @@
               :to="{ name: 'subscriptions' }"
               class="flex sm:hidden h-10 w-10 items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition">
             <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
             </svg>
           </RouterLink>
 
           <!-- User Menu (YouTube Style - Pure CSS Hover) -->
           <div class="relative group hidden md:block">
-            <div class="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-semibold cursor-pointer group-hover:ring-2 group-hover:ring-primary/30 transition-all">
+            <div
+                class="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-semibold cursor-pointer group-hover:ring-2 group-hover:ring-primary/30 transition-all">
               {{ userInitials }}
             </div>
 
             <!-- Dropdown Menu -->
-            <div class="absolute right-0 mt-2 w-64 origin-top-right rounded-xl bg-white dark:bg-gray-900 shadow-lg ring-1 ring-black ring-opacity-5 overflow-hidden z-50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 transform scale-95 group-hover:scale-100">
+            <div
+                class="absolute right-0 mt-2 w-64 origin-top-right rounded-xl bg-white dark:bg-gray-900 shadow-lg ring-1 ring-black ring-opacity-5 overflow-hidden z-50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 transform scale-95 group-hover:scale-100">
               <!-- User Info Section -->
               <div class="px-4 py-3 border-b border-gray-200 dark:border-gray-800">
                 <div class="flex items-center gap-3">
-                  <div class="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-semibold">
+                  <div
+                      class="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-semibold">
                     {{ userInitials }}
                   </div>
                   <div class="flex-1 min-w-0">
@@ -139,21 +144,22 @@
 
               <!-- Menu Items -->
               <div class="py-1">
-<!--                <RouterLink-->
-<!--                    to="/profile"-->
-<!--                    class="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition">-->
-<!--                  <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">-->
-<!--                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />-->
-<!--                  </svg>-->
-<!--                  个人资料-->
-<!--                </RouterLink>-->
+                <!--                <RouterLink-->
+                <!--                    to="/profile"-->
+                <!--                    class="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition">-->
+                <!--                  <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">-->
+                <!--                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />-->
+                <!--                  </svg>-->
+                <!--                  个人资料-->
+                <!--                </RouterLink>-->
 
                 <RouterLink
                     to="/feeds/channels"
                     class="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition">
                   <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 010 .255c-.007.378.138.75.43.99l1.005.828c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 010-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.281z" />
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                          d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 010 .255c-.007.378.138.75.43.99l1.005.828c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 010-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.281z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
                   </svg>
                   管理订阅
                 </RouterLink>
@@ -166,7 +172,8 @@
                     class="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 dark:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 transition"
                     @click="handleLogout">
                   <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75" />
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                          d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75"/>
                   </svg>
                   退出登录
                 </button>
@@ -184,16 +191,19 @@
               type="search"
               placeholder="搜索文章、标签、订阅..."
               class="w-full h-11 pl-12 pr-12 rounded-full border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition"
-              @keyup.enter="handleSearch" />
-          <svg class="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+              @keyup.enter="handleSearch"/>
+          <svg class="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" fill="none" stroke="currentColor"
+               stroke-width="1.5" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round"
+                  d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"/>
           </svg>
           <button
               type="button"
               class="absolute right-2 top-1/2 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition"
               @click="handleSearch">
             <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+              <path stroke-linecap="round" stroke-linejoin="round"
+                    d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"/>
             </svg>
           </button>
         </div>
@@ -205,7 +215,7 @@
       <div
           v-if="mobileNavOpen"
           class="fixed inset-0 z-30 bg-black/40 backdrop-blur-sm lg:hidden"
-          @click="mobileNavOpen = false" />
+          @click="mobileNavOpen = false"/>
     </transition>
 
     <!-- Mobile Sidebar -->
@@ -220,15 +230,15 @@
                 :to="{ name: 'home' }"
                 class="flex items-center gap-2 text-base font-semibold"
                 @click="mobileNavOpen = false">
-              <img class="h-9 w-9 rounded-2xl" src="https://ifeed.cc/logo.svg" alt="iFeed" />
-              <span>iFeed</span>
+              <img class="h-9 w-9 rounded-2xl" src="https://ifeed.cc/logo.svg" alt="iFeed"/>
+              <span>IFeed</span>
             </RouterLink>
             <button
                 type="button"
                 class="flex h-9 w-9 items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition"
                 @click="mobileNavOpen = false">
               <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
               </svg>
             </button>
           </div>
@@ -236,7 +246,8 @@
           <!-- Mobile Nav -->
           <nav class="flex-1 overflow-y-auto p-2">
             <div v-for="(section, index) in navSections" :key="section.id" class="mb-6">
-              <div v-if="section.title" class="px-3 mb-2 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+              <div v-if="section.title"
+                   class="px-3 mb-2 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                 {{ section.title }}
               </div>
               <div class="space-y-1">
@@ -263,15 +274,17 @@
                          :stroke-width="item.icon.stroke ? 1.6 : undefined"
                          :stroke-linecap="item.icon.stroke ? 'round' : undefined"
                          :stroke-linejoin="item.icon.stroke ? 'round' : undefined">
-                      <path v-for="path in item.icon.paths" :key="path" :d="path" />
+                      <path v-for="path in item.icon.paths" :key="path" :d="path"/>
                     </svg>
                   </span>
-                  <img v-else-if="item.avatar" :src="item.avatar" class="h-6 w-6 rounded-full" />
-                  <span v-else-if="item.avatarText" class="flex h-6 w-6 items-center justify-center rounded-full text-xs font-semibold" :class="item.accent ?? 'bg-primary text-primary-foreground'">
+                  <img v-else-if="item.avatar" :src="item.avatar" class="h-6 w-6 rounded-full"/>
+                  <span v-else-if="item.avatarText"
+                        class="flex h-6 w-6 items-center justify-center rounded-full text-xs font-semibold"
+                        :class="item.accent ?? 'bg-primary text-primary-foreground'">
                     {{ item.avatarText }}
                   </span>
                   <span class="flex-1 truncate">{{ item.label }}</span>
-                  <span v-if="item.badge" class="flex h-1.5 w-1.5 rounded-full bg-primary" />
+                  <span v-if="item.badge" class="flex h-1.5 w-1.5 rounded-full bg-primary"/>
                 </component>
               </div>
             </div>
@@ -280,7 +293,8 @@
           <!-- Mobile User Section -->
           <div class="p-4 border-t border-gray-200 dark:border-gray-800">
             <div class="flex items-center gap-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-900">
-              <div class="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-semibold">
+              <div
+                  class="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-semibold">
                 {{ userInitials }}
               </div>
               <div class="flex-1 min-w-0">
@@ -340,15 +354,17 @@
                          :stroke-width="item.icon.stroke ? 1.5 : undefined"
                          :stroke-linecap="item.icon.stroke ? 'round' : undefined"
                          :stroke-linejoin="item.icon.stroke ? 'round' : undefined">
-                      <path v-for="path in item.icon.paths" :key="path" :d="path" />
+                      <path v-for="path in item.icon.paths" :key="path" :d="path"/>
                     </svg>
                   </span>
-                  <img v-else-if="item.avatar" :src="item.avatar" class="h-6 w-6 rounded-full" />
-                  <span v-else-if="item.avatarText" class="flex h-6 w-6 items-center justify-center rounded-full text-xs font-semibold" :class="item.accent ?? 'bg-primary text-primary-foreground'">
+                  <img v-else-if="item.avatar" :src="item.avatar" class="h-6 w-6 rounded-full"/>
+                  <span v-else-if="item.avatarText"
+                        class="flex h-6 w-6 items-center justify-center rounded-full text-xs font-semibold"
+                        :class="item.accent ?? 'bg-primary text-primary-foreground'">
                     {{ item.avatarText }}
                   </span>
-                  <span v-if="!isSidebarCollapsed" class="flex-1 truncate">{{ item.label }}</span>
-                  <span v-if="item.badge && !isSidebarCollapsed" class="flex h-1 w-1 rounded-full bg-primary" />
+                  <span v-if="!isSidebarCollapsed" class=" truncate">{{ item.label }}</span>
+                  <span v-if="item.badge && !isSidebarCollapsed" class="flex h-1 w-1 rounded-full bg-primary"/>
                 </component>
               </div>
             </div>
@@ -357,21 +373,23 @@
       </aside>
 
       <!-- Main Content -->
-      <main class="flex-1 min-w-0 min-h-[calc(100vh-5em)]  bg-surface-variant/30 px-3 pb-10 pt-5 sm:px-6 sm:pb-12 sm:pt-6">
-        <router-view />
+      <main
+          class="flex-1 min-w-0 min-h-[calc(100vh-5em)]  bg-surface-variant/30 px-3 pb-10 pt-5 sm:px-6 sm:pb-12 sm:pt-6">
+        <router-view/>
       </main>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
-import type { RouteLocationNormalizedLoaded, RouteLocationRaw } from 'vue-router';
-import { storeToRefs } from 'pinia';
-import { useAuthStore } from '../stores/auth';
-import { useThemeStore } from '../stores/theme';
-import { useSubscriptionsStore } from '../stores/subscriptions';
+import {computed, onMounted, ref, watch} from 'vue';
+import {useRoute, useRouter} from 'vue-router';
+import type {RouteLocationNormalizedLoaded, RouteLocationRaw} from 'vue-router';
+import {storeToRefs} from 'pinia';
+import {useAuthStore} from '../stores/auth';
+import {useThemeStore} from '../stores/theme';
+import {useSubscriptionsStore} from '../stores/subscriptions';
+import {useMixFeedsStore} from "../stores/mixFeeds";
 
 // Icon Components
 const icons = {
@@ -395,9 +413,10 @@ const router = useRouter();
 const authStore = useAuthStore();
 const themeStore = useThemeStore();
 const subscriptionsStore = useSubscriptionsStore();
+const mixFeedStore = useMixFeedsStore();
 
-const { user } = storeToRefs(authStore);
-const { isDark, label: themeLabel } = storeToRefs(themeStore);
+const {user} = storeToRefs(authStore);
+const {isDark, label: themeLabel} = storeToRefs(themeStore);
 
 const mobileNavOpen = ref(false);
 const isSidebarCollapsed = ref(localStorage.getItem('sidebar-collapsed') === 'true');
@@ -437,7 +456,7 @@ const baseNavSections: NavSection[] = [
       {
         id: 'home',
         label: '首页',
-        to: { name: 'home' as const },
+        to: {name: 'home' as const},
         icon: {
           stroke: true,
           paths: [icons.home],
@@ -452,7 +471,7 @@ const baseNavSections: NavSection[] = [
       {
         id: 'feedsSubscriptions',
         label: '订阅',
-        to: { name: 'feedsSubscriptions' as const },
+        to: {name: 'feedsSubscriptions' as const},
         icon: {
           stroke: true,
           paths: [icons.inbox],
@@ -462,37 +481,7 @@ const baseNavSections: NavSection[] = [
       }
     ]
   },
-  {
-    id: 'you',
-    title: '我',
-    items: [
-      {
-        id: 'history',
-        label: '历史记录',
-        to: { name: 'history' as const },
-        icon: {
-          stroke: true,
-          paths: [icons.clock],
-          viewBox: '0 0 24 24'
-        },
-        activeMatch: (current) => current.name === 'history'
-      },
-      {
-        id: 'library',
-        label: '收藏夹',
-        to: { name: 'collections' as const },
-        icon: {
-          stroke: true,
-          paths: [icons.bookmark],
-          viewBox: '0 0 24 24'
-        },
-        activeMatch: (current) => {
-          const tab = current.query.tab as string | undefined;
-          return current.name === 'collections' && !tab;
-        }
-      }
-    ]
-  }
+
 ];
 
 const showAllSubscriptions = ref(false);
@@ -528,7 +517,7 @@ const subscriptionNavSection = computed<NavSection>(() => {
 
     const danger = Boolean((s.failureCount ?? 0) > 0 || s.fetchError?.trim());
 
-    return { subscription: s, label, initials, danger };
+    return {subscription: s, label, initials, danger};
   });
 
   entries.sort((a, b) => {
@@ -547,7 +536,7 @@ const subscriptionNavSection = computed<NavSection>(() => {
     return {
       id: `sub-${s.feedId}`,
       label: meta.label,
-      to: { name: 'feed' as const, params: { feedId: s.feedId } },
+      to: {name: 'feed' as const, params: {feedId: s.feedId}},
       avatar: s.avatar,
       avatarText: meta.initials,
       accent,
@@ -560,22 +549,22 @@ const subscriptionNavSection = computed<NavSection>(() => {
     };
   });
 
-  items.push({
-    id: 'manage-subscriptions',
-    label: '管理订阅',
-    to: { name: 'feedChannels' as const },
-    icon: {
-      stroke: true,
-      paths: [icons.adjustments],
-      viewBox: '0 0 24 24'
-    },
-    activeMatch: (current) => current.name === 'feedChannels'
-  });
+  // items.push({
+  //   id: 'manage-subscriptions',
+  //   label: '管理订阅',
+  //   to: {name: 'feedChannels' as const},
+  //   icon: {
+  //     stroke: true,
+  //     paths: [icons.adjustments],
+  //     viewBox: '0 0 24 24'
+  //   },
+  //   activeMatch: (current) => current.name === 'feedChannels'
+  // });
 
   if (entries.length > 9) {
     items.push({
       id: 'toggle-subscriptions',
-      label: showAllSubscriptions.value ? '折叠' : `展开全部（${entries.length}）`,
+      label: showAllSubscriptions.value ? '折叠' : `展开（${entries.length}）`,
       action: () => {
         showAllSubscriptions.value = !showAllSubscriptions.value;
       },
@@ -595,7 +584,37 @@ const subscriptionNavSection = computed<NavSection>(() => {
 });
 
 const navSections = computed<NavSection[]>(() => {
-  return [...baseNavSections, subscriptionNavSection.value];
+  return [...baseNavSections, subscriptionNavSection.value ,{
+    id: 'you',
+    title: '我',
+    items: [
+      {
+        id: 'history',
+        label: '历史记录',
+        to: {name: 'history' as const},
+        icon: {
+          stroke: true,
+          paths: [icons.clock],
+          viewBox: '0 0 24 24'
+        },
+        activeMatch: (current) => current.name === 'history'
+      },
+      {
+        id: 'library',
+        label: '收藏夹',
+        to: {name: 'collections' as const},
+        icon: {
+          stroke: true,
+          paths: [icons.bookmark],
+          viewBox: '0 0 24 24'
+        },
+        activeMatch: (current) => {
+          const tab = current.query.tab as string | undefined;
+          return current.name === 'collections' && !tab;
+        }
+      }
+    ]
+  }];
 });
 
 const handleNavItemClick = (item: NavItem) => {
@@ -645,21 +664,21 @@ const handleSearch = () => {
     if (feedId) query.feedId = feedId;
     if (tag) query.tags = tag;
     if (category) query.category = category;
-    router.push({ name: 'home', query });
+    router.push({name: 'home', query});
     return;
   }
 
-  const query: Record<string, string> = { q: keyword };
+  const query: Record<string, string> = {q: keyword};
   if (currentType === 'semantic') query.type = currentType;
   if (feedId) query.feedId = feedId;
   if (tag) query.tags = tag;
   if (category) query.category = category;
-  router.push({ name: 'search', query });
+  router.push({name: 'search', query});
 };
 
 const handleLogout = async () => {
   await authStore.logout();
-  router.replace({ name: 'auth' });
+  router.replace({name: 'auth'});
 };
 
 const toggleTheme = () => {
@@ -676,11 +695,12 @@ watch(
     (value) => {
       search.value = typeof value === 'string' ? value : '';
     },
-    { immediate: true }
+    {immediate: true}
 );
 
 onMounted(async () => {
   await subscriptionsStore.fetchSubscriptions();
+  mixFeedStore.clearMyMixFeeds();
 });
 </script>
 

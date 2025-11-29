@@ -95,6 +95,12 @@ app:
       freshness-time-weight: 0.3
       freshness-lambda: 0.5
       similarity-threshold: 0.3
+  # OAuth 集成
+  oauth:
+    linux-do:
+      client-id: ${OAUTH_LINUX_DO_CLIENT_ID:xxx}
+      client-secret: ${OAUTH_LINUX_DO_CLIENT_SECRET:xxx}
+      redirect-uri: ${OAUTH_LINUX_DO_REDIRECT_URI:https://www.ifeed.cc/auth}
 management:
   endpoints:
     web:

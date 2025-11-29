@@ -309,11 +309,10 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref, computed } from 'vue';
-import { storeToRefs } from 'pinia';
-import { useMixFeedsStore, type MixFeedListResponse, type MixFeedRequest } from '../../stores/mixFeeds';
-import { useSubscriptionsStore } from '../../stores/subscriptions';
-import { formatRelativeTime } from '../../utils/datetime';
+import {computed, onMounted, ref} from 'vue';
+import {type MixFeedListResponse, type MixFeedRequest, useMixFeedsStore} from '../../stores/mixFeeds';
+import {useSubscriptionsStore} from '../../stores/subscriptions';
+import {formatRelativeTime} from '../../utils/datetime';
 
 const mixFeedsStore = useMixFeedsStore();
 const subscriptionsStore = useSubscriptionsStore();

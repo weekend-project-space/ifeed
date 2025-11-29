@@ -132,12 +132,12 @@ public class PgTextSearchStore implements TextSearchStore {
                         return new MapSqlParameterSource()
                                 .addValue("id", doc.id())
                                 .addValue("content", TermUtils.segmentStr(doc.content()))
-                                .addValue("title", TermUtils.segmentStr(truncate(getMetadataString(doc, "title"), 500)))
-                                .addValue("category", TermUtils.segmentStr(truncate(getMetadataString(doc, "category"), 100)))
+                                .addValue("title", truncate(TermUtils.segmentStr(getMetadataString(doc, "title")), 500))
+                                .addValue("category", truncate(TermUtils.segmentStr(getMetadataString(doc, "category")), 100))
                                 .addValue("feedId", doc.feedId())
-                                .addValue("feedTitle", TermUtils.segmentStr(truncate(getMetadataString(doc, "feedTitle"), 200)))
-                                .addValue("tags", TermUtils.segmentStr(truncate(getMetadataString(doc, "tags"), 200)))
-                                .addValue("summary", TermUtils.segmentStr(truncate(getMetadataString(doc, "summary"), 300)))
+                                .addValue("feedTitle", truncate(TermUtils.segmentStr(getMetadataString(doc, "feedTitle")), 200))
+                                .addValue("tags", truncate(TermUtils.segmentStr(getMetadataString(doc, "tags")), 200))
+                                .addValue("summary", truncate(TermUtils.segmentStr(getMetadataString(doc, "summary")), 300))
                                 .addValue("metadata", toJson(doc.metadata()));
                     } catch (Exception e) {
                         throw new RuntimeException("Error processing document id: " + doc.id(), e);

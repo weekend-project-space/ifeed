@@ -50,7 +50,7 @@ public class SubscriptionViewConverter {
             boolean hasUnread) {
 
         var readTime = readTimes.getOrDefault(mixFeed.getUid().toString(), EPOCH);
-        var lastUpdated = mixFeed.getUpdatedAt() != null ? mixFeed.getUpdatedAt() : EPOCH;
+        var lastUpdated = mixFeed.getLastUpdated() != null ? mixFeed.getLastUpdated() : EPOCH;
 
         return new SubscriptionResponse(
                 mixFeed.getUid().toString(),

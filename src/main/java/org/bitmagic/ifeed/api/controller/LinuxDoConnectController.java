@@ -1,9 +1,10 @@
 package org.bitmagic.ifeed.api.controller;
 
 import lombok.RequiredArgsConstructor;
+import org.bitmagic.ifeed.api.response.AuthResponse;
 import org.bitmagic.ifeed.domain.service.AuthService;
 import org.bitmagic.ifeed.domain.service.AuthToken;
-import org.bitmagic.ifeed.infrastructure.oauth.liunxdo.LinuxDoConnectService;
+import org.bitmagic.ifeed.infrastructure.oauth.liunxdo.LinuxDoConnectClient;
 import org.bitmagic.ifeed.infrastructure.oauth.liunxdo.UserInfo;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -22,7 +23,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/auth/linuxdo")
 public class LinuxDoConnectController {
 
-    private final LinuxDoConnectService linuxDoConnectService;
+    private final LinuxDoConnectClient linuxDoConnectClient;
 
     private final AuthService authService;
 
@@ -33,7 +34,7 @@ public class LinuxDoConnectController {
      */
     @GetMapping
     public String startAuth() {
-        String authUrl = linuxDoConnectService.generateAuthUrl();
+        String authUrl = linuxDoConnectClient.generateAuthUrl();
         return authUrl;
     }
 
@@ -46,15 +47,15 @@ public class LinuxDoConnectController {
     public ResponseEntity<?> handleCallback(@RequestParam("code") String code) {
         try {
             // 换取 Token
-            String accessToken = linuxDoConnectService.getAccessToken(code).getAccessToken();
+            String accessToken = linuxDoConnectClient.getAccessToken(code).getAccessToken();
 
             // 获取用户信息
-            UserInfo userInfo = linuxDoConnectService.getUserInfo(accessToken);
+            UserInfo userInfo = linuxDoConnectClient.getUserInfo(accessToken);
             AuthToken token = authService.authLogin(userInfo.getSub(), userInfo.getUsername());
 
             // 示例：返回成功信息和用户信息
             return ResponseEntity.ok(
-                    token
+                    new AuthResponse(token.token(), token.user().getId().toString())
             );
 
         } catch (Exception e) {

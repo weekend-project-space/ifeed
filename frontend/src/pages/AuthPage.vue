@@ -1,130 +1,143 @@
 <template>
   <div class="min-h-screen w-full bg-surface text-text transition-colors duration-300 flex flex-col items-center justify-center p-4">
+    
+    <!-- 左上角 Logo -->
+    <div class="fixed top-6 left-6 z-50 flex items-center gap-3">
 
-    <div class="w-full max-w-[400px] flex flex-col items-center">
-
-      <div class="mb-10 text-center">
-        <h1 class="text-3xl font-bold text-text mb-2 tracking-tight">欢迎使用 iFeed</h1>
-        <p class="text-text-secondary text-sm">AI 驱动的 RSS 阅读体验</p>
+      <h2 class="text-xl font-bold text-text tracking-tight">IFeed</h2>
+    </div>
+    
+    <div class="w-full max-w-[360px] flex flex-col items-center">
+      
+      <!-- 标题区域 -->
+      <div class="mb-8 text-center">
+        <h1 class="text-[32px] font-semibold text-text mb-3 tracking-tight">登录或注册</h1>
+        <p class="text-text-secondary text-[15px] leading-relaxed">
+          智能聚合，精准阅读
+        </p>
       </div>
 
-      <div class="w-full space-y-3 mb-8">
-        <button type="button" class="social-btn">
-          <span class="icon-wrapper text-red-500">
-             <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M12.48 10.92v3.28h7.84c-.24 1.84-.853 3.187-1.787 4.133-1.147 1.147-2.933 2.4-6.053 2.4-4.827 0-8.6-3.893-8.6-8.72s3.773-8.72 8.6-8.72c2.6 0 4.507 1.027 5.907 2.347l2.307-2.307C18.747 1.44 16.133 0 12.48 0 5.867 0 .533 5.333.533 12S5.867 24 12.48 24c3.44 0 6.053-1.147 8.213-3.307 2.2-2.187 3.053-5.227 3.053-7.573 0-.747-.067-1.48-.187-2.2h-11.08z"/></svg>
-          </span>
-          <span>使用 Google 继续</span>
-        </button>
-
-        <button type="button" class="social-btn">
-          <span class="icon-wrapper text-text">
-             <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M17.05 20.28c-.98.95-2.05.88-3.08.4-.35-.16-1.07-.16-1.42 0-1.03.48-2.1.55-3.08-.4-.97-.98-1.56-2.58-1.56-4.13 0-2.92 2.32-4.43 4.67-4.43 1.25 0 2.27.46 2.87.46.6 0 1.76-.5 2.92-.5 1.05 0 2.15.5 2.87 1.34-2.58 1.25-2.16 4.38.25 5.38-.45 1.15-1.07 2.1-1.63 2.68l-.81.2zM15.15 7.63c.65-1.08 1.13-2.53.95-3.83-1.35.1-2.95.83-3.73 1.93-.65 1.03-1.05 2.43-.88 3.73 1.35.03 2.9-.68 3.66-1.83z"/></svg>
-          </span>
-          <span>使用 Apple 继续</span>
-        </button>
-
-        <button type="button" class="social-btn">
-          <span class="icon-wrapper text-[#00A4EF]">
-             <svg class="w-5 h-5" viewBox="0 0 23 23" fill="currentColor"><path d="M0 0h11v11H0zM12 0h11v11H12zM0 12h11v11H0zM12 12h11v11H12z"/></svg>
-          </span>
-          <span>使用 LiunxDo 继续</span>
+      <!-- OAuth 登录按钮 -->
+      <div class="w-full space-y-2 mb-4">
+        <button type="button" class="oauth-btn" @click="handleLinuxDoLogin" :disabled="submitting">
+          <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <clipPath id="circle-clip">
+                <circle cx="12" cy="12" r="9"/>
+              </clipPath>
+            </defs>
+            <!-- 整个圆形作为容器 -->
+            <g clip-path="url(#circle-clip)">
+              <rect x="3" y="3" width="18" height="6" fill="#000000"/>
+              <rect x="3" y="9" width="18" height="6" fill="#FFFFFF"/>
+              <rect x="3" y="15" width="18" height="6" fill="#FFA500"/>
+            </g>
+            <!-- 圆形边框 -->
+            <circle cx="12" cy="12" r="9" fill="none" stroke="#E5E7EB" stroke-width="0.5"/>
+          </svg>
+          <span>继续使用 Linux DO 登录</span>
         </button>
       </div>
 
-      <div class="relative w-full mb-8 text-center">
+      <!-- 分隔线 -->
+      <div class="relative w-full my-6 text-center">
         <div class="absolute inset-0 flex items-center">
-          <div class="w-full border-t border-outline/30"></div>
+          <div class="w-full border-t border-outline/20"></div>
         </div>
-        <div class="relative inline-flex bg-surface px-4 text-xs text-text-muted uppercase tracking-wider">
+        <div class="relative inline-flex bg-surface px-3 text-xs text-text-muted">
           或
         </div>
       </div>
 
-      <form class="w-full space-y-5" @submit.prevent="handleSubmit">
-        <transition name="fade">
-          <div v-if="errorMessage" class="flex items-center gap-2 text-danger text-sm bg-danger/5 px-4 py-3 rounded-2xl border border-danger/10">
-            <svg class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-            {{ errorMessage }}
-          </div>
-        </transition>
+      <!-- 错误提示 -->
+      <transition name="fade">
+        <div v-if="errorMessage" class="w-full flex items-start gap-2 text-danger text-sm bg-danger/5 px-4 py-3 rounded-xl border border-danger/10 mb-4">
+          <svg class="w-4 h-4 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <span>{{ errorMessage }}</span>
+        </div>
+      </transition>
 
+      <!-- 登录表单 -->
+      <form class="w-full space-y-3" @submit.prevent="handleSubmit">
+        <!-- 邮箱/用户名输入 -->
         <div>
-          <div class="relative group">
-            <input
-                v-model.trim="form.username"
-                type="text"
-                required
-                class="peer block w-full rounded-full border border-outline/40 bg-surface px-6 py-4 text-text placeholder-transparent focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/10 transition-all"
-                placeholder="电子邮箱地址"
-                id="email_input"
-            />
-            <label for="email_input" class="absolute left-6 top-4 z-10 origin-[0] -translate-y-2.5 scale-75 transform text-sm text-text-muted duration-200 peer-placeholder-shown:translate-y-0 peer-placeholder-shown:scale-100 peer-focus:-translate-y-2.5 peer-focus:scale-75 cursor-text bg-surface px-1">
-              电子邮箱地址 / 用户名
-            </label>
-          </div>
+          <input
+            v-model.trim="form.username"
+            type="text"
+            required
+            class="input-field"
+            placeholder="电子邮箱地址"
+            id="email_input"
+          />
         </div>
 
+        <!-- 密码输入 - 登录和注册都显示 -->
         <div>
-          <div class="relative group">
-            <input
-                v-model="form.password"
-                type="password"
-                required
-                class="peer block w-full rounded-full border border-outline/40 bg-surface px-6 py-4 text-text placeholder-transparent focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/10 transition-all"
-                placeholder="密码"
-                id="password_input"
-            />
-            <label for="password_input" class="absolute left-6 top-4 z-10 origin-[0] -translate-y-2.5 scale-75 transform text-sm text-text-muted duration-200 peer-placeholder-shown:translate-y-0 peer-placeholder-shown:scale-100 peer-focus:-translate-y-2.5 peer-focus:scale-75 cursor-text bg-surface px-1">
-              密码
-            </label>
-          </div>
+          <input
+            v-model="form.password"
+            type="password"
+            required
+            class="input-field"
+            placeholder="密码"
+            id="password_input"
+          />
         </div>
 
+        <!-- 注册模式的确认密码 -->
         <transition name="fade">
           <div v-if="mode === 'register'">
-            <div class="relative group">
-              <input
-                  v-model="form.confirmPassword"
-                  type="password"
-                  required
-                  class="peer block w-full rounded-full border border-outline/40 bg-surface px-6 py-4 text-text placeholder-transparent focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/10 transition-all"
-                  placeholder="确认密码"
-                  id="confirm_input"
-              />
-              <label for="confirm_input" class="absolute left-6 top-4 z-10 origin-[0] -translate-y-2.5 scale-75 transform text-sm text-text-muted duration-200 peer-placeholder-shown:translate-y-0 peer-placeholder-shown:scale-100 peer-focus:-translate-y-2.5 peer-focus:scale-75 cursor-text bg-surface px-1">
-                确认密码
-              </label>
-            </div>
+            <input
+              v-model="form.confirmPassword"
+              type="password"
+              required
+              class="input-field"
+              placeholder="确认密码"
+              id="confirm_input"
+            />
           </div>
         </transition>
 
-        <button type="submit"
-                class="w-full rounded-full bg-text text-surface py-4 text-base font-medium transition-transform active:scale-[0.98] hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60 mt-4 shadow-sm"
-                :disabled="submitting">
+        <!-- 提交按钮 -->
+        <button 
+          type="submit"
+          class="submit-btn"
+          :disabled="submitting"
+        >
           <span v-if="submitting" class="flex items-center justify-center gap-2">
             <svg class="h-5 w-5 animate-spin" viewBox="0 0 24 24" fill="none">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 0 1 8-8v4a4 4 0 0 0-4 4H4z" />
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 0 1 8-8v4a4 4 0 0 0-4 4H4z" />
             </svg>
             处理中...
           </span>
-          <span v-else>{{ mode === 'login' ? '继续' : '创建账户' }}</span>
+          <span v-else>继续</span>
         </button>
       </form>
 
-      <p class="mt-8 text-sm text-text-muted">
-        {{ mode === 'login' ? '还没有账号？' : '已有账号？' }}
-        <button type="button" class="font-medium text-primary hover:text-primary/80 hover:underline transition ml-1" @click="toggleMode">
+      <!-- 底部切换链接 -->
+      <div class="mt-6 text-center text-sm">
+        <span class="text-text-muted">{{ mode === 'login' ? '还没有账号？' : '已有账号？' }}</span>
+        <button 
+          type="button" 
+          class="text-primary hover:underline ml-1 font-medium"
+          @click="toggleMode"
+        >
           {{ mode === 'login' ? '注册' : '登录' }}
         </button>
-      </p>
+      </div>
 
     </div>
 
+    <!-- 主题切换按钮 -->
     <div class="fixed bottom-6 right-6 z-50">
-      <button type="button"
-              class="flex h-12 w-12 items-center justify-center rounded-full bg-surface-container border border-outline/10 text-text shadow-lg hover:shadow-xl hover:bg-surface-variant transition-all duration-300"
-              :aria-label="`切换主题，当前${themeLabel}`" @click="toggleTheme">
+      <button 
+        type="button"
+        class="flex h-11 w-11 items-center justify-center rounded-full bg-surface-container border border-outline/10 text-text shadow-md hover:shadow-lg hover:bg-surface-variant transition-all duration-200"
+        :aria-label="`切换主题，当前${themeLabel}`" 
+        @click="toggleTheme"
+      >
         <svg v-if="isDark" class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
           <path d="M21 12.79A9 9 0 1 1 11.21 3a7 7 0 0 0 9.79 9.79z" />
         </svg>
@@ -137,7 +150,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, reactive, ref, watch } from 'vue';
+import { computed, onMounted, reactive, ref, watch } from 'vue';
 import { storeToRefs } from 'pinia';
 import { useRouter, useRoute } from 'vue-router';
 import { useAuthStore } from '../stores/auth';
@@ -211,6 +224,38 @@ const toggleTheme = () => {
   themeStore.toggle();
 };
 
+const handleLinuxDoLogin = async () => {
+  try {
+    submitting.value = true;
+    localError.value = '';
+    const authUrl = await authStore.getLinuxDoAuthUrl();
+    // 重定向到 Linux.do 授权页面
+    window.location.href = authUrl;
+  } catch (err) {
+    const message = err instanceof Error && err.message ? err.message : error.value || '获取授权地址失败';
+    localError.value = message;
+    submitting.value = false;
+  }
+};
+
+// 处理 OAuth 回调
+onMounted(async () => {
+  const code = route.query.code as string | undefined;
+  if (code) {
+    try {
+      submitting.value = true;
+      localError.value = '';
+      await authStore.linuxDoLogin(code);
+      // 清除 URL 中的 code 参数并跳转
+      await redirectToTarget();
+    } catch (err) {
+      const message = err instanceof Error && err.message ? err.message : error.value || 'Linux.do 登录失败';
+      localError.value = message;
+      submitting.value = false;
+    }
+  }
+});
+
 watch(
     () => isAuthenticated.value,
     (isAuthed) => {
@@ -225,18 +270,26 @@ const errorMessage = computed(() => localError.value || error.value || '');
 </script>
 
 <style scoped>
-/* Social Button 样式
-   改为 rounded-full (胶囊形)
-*/
-.social-btn {
-  @apply flex w-full items-center justify-start gap-3 rounded-full border border-outline/30 bg-surface px-6 py-3.5 text-sm font-medium text-text transition-colors hover:bg-surface-variant/50 relative overflow-hidden;
+/* OAuth 按钮样式 - 圆角胶囊形 */
+.oauth-btn {
+  @apply flex w-full items-center justify-start gap-3 rounded-full border border-outline/30 bg-surface px-4 py-3 text-[15px] font-medium text-text transition-all hover:bg-surface-variant/50 disabled:opacity-50 disabled:cursor-not-allowed;
+}
+
+/* 输入框样式 - 圆角胶囊形 */
+.input-field {
+  @apply block w-full rounded-full border border-outline/30 bg-surface px-5 py-3 text-[15px] text-text placeholder:text-text-muted/60 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/20 transition-all;
+}
+
+/* 提交按钮样式 - 圆角胶囊形 */
+.submit-btn {
+  @apply w-full rounded-full bg-text text-surface py-3 text-[15px] font-semibold transition-all hover:opacity-90 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 mt-2;
 }
 
 /* 渐变过渡动画 */
 .fade-enter-active,
 .fade-leave-active {
-  transition: all 0.3s ease;
-  max-height: 100px;
+  transition: all 0.2s ease;
+  max-height: 200px;
   opacity: 1;
 }
 
@@ -244,7 +297,6 @@ const errorMessage = computed(() => localError.value || error.value || '');
 .fade-leave-to {
   max-height: 0;
   opacity: 0;
-  margin-top: 0;
   overflow: hidden;
 }
 </style>

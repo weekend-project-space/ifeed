@@ -2,35 +2,51 @@
   <div class="space-y-6">
     <!-- Header -->
     <header class="flex flex-wrap items-center justify-between gap-4 px-4">
-      <div>
+      <div class="flex items-center gap-3">
         <h1 class="text-xl font-normal text-gray-900 dark:text-gray-100" v-text="title"></h1>
-        <p class="text-sm text-gray-600 dark:text-gray-400" v-text="subtitle"></p>
-      </div>
-      <div class="flex items-center gap-2">
         <button
             type="button"
-            class="px-3 py-1.5 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors disabled:opacity-50"
+            class="p-2 hover:bg-surface-container rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             @click="emit('refresh')"
-            :disabled="loading">
-          {{ loading ? '刷新中…' : '刷新' }}
+            :disabled="loading"
+            title="刷新">
+          <svg v-if="loading" class="animate-spin h-5 w-5 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          <svg v-else class="w-5 h-5 text-gray-500 transition-transform" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"></path>
+          </svg>
         </button>
+      </div>
+      <div class="flex items-center gap-2">
+        <slot name="action"></slot>
+
         <button
             @click="setView('magazine')"
             :class="btnClass(view === 'magazine')"
             title="杂志视图">
-          杂志
+          <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h8m-8 4h5m-5 5h8m-8 4h5" />
+            <rect x="15" y="4" width="5" height="5" rx="1" stroke-width="2" />
+            <rect x="15" y="14" width="5" height="5" rx="1" stroke-width="2" />
+          </svg>
         </button>
         <button
             @click="setView('card')"
             :class="btnClass(view === 'card')"
             title="卡片视图">
-          卡片
+          <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+          </svg>
         </button>
         <button
             @click="setView('only-title')"
             :class="btnClass(view === 'only-title')"
             title="仅标题视图">
-          仅标题
+          <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16" />
+          </svg>
         </button>
       </div>
     </header>
@@ -87,11 +103,14 @@
       <div
           v-if="!items.length"
           class="flex flex-col items-center justify-center gap-3 py-16 text-center">
-        <svg class="h-12 w-12 text-gray-400 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-        </svg>
-        <span class="text-sm text-gray-600 dark:text-gray-400 max-w-xs">{{ emptyMessage }}</span>
+        <slot name="empty">
+          <svg class="h-12 w-12 text-gray-400 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+          </svg>
+          <span class="text-sm text-gray-600 dark:text-gray-400 max-w-xs">{{ emptyMessage }}</span>
+        </slot>
+
       </div>
 
       <!-- View switcher -->
@@ -285,9 +304,9 @@ function setView(v: ViewMode) {
 
 function btnClass(active: boolean) {
   return [
-    'px-3 py-1 text-sm font-medium rounded-lg transition-colors whitespace-nowrap',
+    'p-2 text-sm font-medium rounded-full transition-colors whitespace-nowrap hover:bg-surface-container',
     active
-        ? 'bg-secondary text-secondary-foreground' : 'bg-secondary/5 text-secondary hover:bg-secondary/20'
+        ? 'text-secondary' : 'text-gray-500'
   ].join(' ');
 }
 

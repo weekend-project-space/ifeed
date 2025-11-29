@@ -1,8 +1,8 @@
 package org.bitmagic.ifeed.infrastructure.oauth.liunxdo;
 
-
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 
 import java.net.URI;
 import java.net.URLEncoder;
@@ -15,13 +15,18 @@ import java.nio.charset.StandardCharsets;
  * @author yangrd
  * @date 2025/11/27
  **/
-@Service
-public class LinuxDoConnectService {
+@Component
+public class LinuxDoConnectClient {
 
-    // 配置信息 (通常来自 application.properties 或 @Value 注解)
-    private static final String CLIENT_ID = "PeXlJCOmunsYupcKmvTx86Bcxg00y5oe";
-    private static final String CLIENT_SECRET = "w8x4nqkPJZvfVg228rdU1VRW5pwKkRKh";
-    private static final String REDIRECT_URI = "https://www.ifeed.cc/auth/";
+    // 从配置文件读取
+    @Value("${app.oauth.linux-do.client-id}")
+    private String clientId;
+
+    @Value("${app.oauth.linux-do.client-secret}")
+    private String clientSecret;
+
+    @Value("${app.oauth.linux-do.redirect-uri}")
+    private String redirectUri;
 
     private static final String AUTH_URL = "https://connect.linux.do/oauth2/authorize";
     private static final String TOKEN_URL = "https://connect.linux.do/oauth2/token";
@@ -38,9 +43,8 @@ public class LinuxDoConnectService {
     public String generateAuthUrl() {
         String params = String.format(
                 "client_id=%s&redirect_uri=%s&response_type=code&scope=user",
-                urlEncode(CLIENT_ID),
-                urlEncode(REDIRECT_URI)
-        );
+                urlEncode(clientId),
+                urlEncode(redirectUri));
         return AUTH_URL + "?" + params;
     }
 
@@ -51,11 +55,10 @@ public class LinuxDoConnectService {
     public TokenResponse getAccessToken(String code) throws Exception {
         String requestBody = String.format(
                 "client_id=%s&client_secret=%s&code=%s&redirect_uri=%s&grant_type=authorization_code",
-                urlEncode(CLIENT_ID),
-                urlEncode(CLIENT_SECRET),
+                urlEncode(clientId),
+                urlEncode(clientSecret),
                 urlEncode(code),
-                urlEncode(REDIRECT_URI)
-        );
+                urlEncode(redirectUri));
 
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(TOKEN_URL))

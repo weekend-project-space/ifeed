@@ -58,15 +58,24 @@ public class AuthService {
 
     @Transactional
     public AuthToken authLogin(String id, String username) {
-        var user = userRepository.findOne(Spec.<User>on().eq("linuxDoUserId", id).build()).orElseGet(() -> {
-            String username0 = username;
-            if (userRepository.findByUsername(username).isPresent()) {
-//                TODO
-                username0 = UUID.randomUUID().toString();
-            }
-            User u = User.builder().linuxDoUserId(id).username(username0).passwordHash("linuxDo" + username0).build();
-            return userRepository.save(u);
-        });
+        var user = userRepository.findOne(Spec.<User>on().eq("linuxDoUserId", id).build())
+                .orElseGet(() -> {
+                    String finalUsername = username;
+
+                    // 如果用户名冲突，使用 username_linuxdo{id} 格式
+                    if (userRepository.findByUsername(username).isPresent()) {
+                        finalUsername = username + "_linux_do" + id;
+                    }
+
+                    User u = User.builder()
+                            .linuxDoUserId(id)
+                            .username(finalUsername)
+                            .passwordHash(null)
+                            .build();
+
+                    return userRepository.save(u);
+                });
+
         return issueToken(user);
     }
 

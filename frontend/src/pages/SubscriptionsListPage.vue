@@ -93,8 +93,7 @@
         <div v-else-if="!items.length" class="text-center py-16">
           <div class="w-16 h-16 mx-auto mb-4 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center">
             <svg class="w-8 h-8 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-              <path d="M12 6.5a5.5 5.5 0 1 1 0 11 5.5 5.5 0 0 1 0-11Z"/>
-              <path d="M12 4v2m0 12v2M7.5 7.5l-1.5-1.5m11.5 1.5 1.5-1.5m-13 8-1.5 1.5m11.5-1.5 1.5 1.5M2 12h2m16 0h2"/>
+              <path d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
             </svg>
           </div>
           <h2 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">还没有订阅</h2>
@@ -253,7 +252,7 @@ const itemToRemove = ref<SubscriptionListItemDto | null>(null);
 
 const tabs = [
   { key: 'subscriptions', name: '所有订阅' },
-  { key: 'mix-feeds', name: '混合订阅' }
+  { key: 'mix-feeds', name: '聚合源订阅' }
 ] as const;
 
 const currentTab = ref(tabs[0].key);
