@@ -3,7 +3,7 @@
        :class="{ 'overflow-hidden': mobileNavOpen }">
 
     <!-- Header -->
-    <header class="sticky top-0 z-40  border-b border-outline/30 bg-white/95 dark:bg-gray-950/95 backdrop-blur-sm">
+    <header :class="isSidebarCollapsed ? 'lg:pl-20' : 'lg:pl-72'" class="sticky top-0 z-30  bg-white/95 dark:bg-gray-950/95 backdrop-blur-sm">
       <div class="flex items-center gap-3 px-4 py-3 lg:px-5">
         <!-- Logo & Menu Button -->
         <div class="flex items-center gap-3">
@@ -25,10 +25,6 @@
             </svg>
           </button>
 
-          <RouterLink :to="{ name: 'home' }" class="flex items-center gap-2 text-lg font-semibold">
-            <img class="h-9 w-9 rounded-2xl" src="https://ifeed.cc/logo.svg" alt="iFeed"/>
-            <span>IFeed</span>
-          </RouterLink>
         </div>
 
         <!-- Search Bar (Desktop) -->
@@ -317,10 +313,15 @@
       <!-- Desktop Sidebar -->
       <aside
           :class="[
-          'fixed left-0 top-[73px] border-r border-outline/30 bottom-0 z-30 hidden lg:block bg-white dark:bg-gray-950 transition-all duration-200',
+          'fixed left-0 top-[0px] bottom-0 z-30 hidden lg:block bg-gray-100 dark:bg-gray-950 transition-all duration-200',
           isSidebarCollapsed ? 'w-20' : 'w-72'
         ]">
         <div class="flex h-full flex-col overflow-hidden py-4">
+
+          <RouterLink :to="{ name: 'home' }" class="flex items-center gap-2 text-lg font-semibold px-4 pt-2 pb-5" :class=" isSidebarCollapsed ? 'justify-center px-2' : 'gap-3 px-3'">
+            <img class="h-7 w-7 rounded-2xl" src="https://ifeed.cc/logo.svg" alt="iFeed"/>
+            <span v-if="!isSidebarCollapsed">IFeed</span>
+          </RouterLink>
           <nav class="flex-1 overflow-y-auto px-2" :class="{ 'space-y-1': isSidebarCollapsed }">
             <div v-for="(section, index) in navSections" :key="section.id" class="mb-6">
               <div
