@@ -1,13 +1,10 @@
 package org.bitmagic.ifeed.infrastructure.ai;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.hankcs.hanlp.HanLP;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.logging.log4j.util.Strings;
 import org.bitmagic.ifeed.config.properties.AiProviderProperties;
 import org.bitmagic.ifeed.exception.ApiException;
+import org.bitmagic.ifeed.infrastructure.TermUtils;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -139,7 +136,7 @@ public class DefaultAiContentService implements AiContentService {
                 "tech", "technology", "software", "hardware", "code", "programming", "framework",
                 "api", "database", "server", "network", "cloud", "devops", "开发", "技术",
                 "编程", "软件", "硬件", "代码", "框架", "服务", "系统", "应用", "平台",
-                "架构", "设计", "工具",  "界面"
+                "架构", "设计", "工具", "界面"
         ));
 
         keywords.put("AI", Set.of(
@@ -516,7 +513,7 @@ public class DefaultAiContentService implements AiContentService {
             String cleaned = CLEAN_PATTERN.matcher(content).replaceAll(" ");
             int target = calculateTargetTagCount(content.length());
 
-            List<String> keywords = HanLP.extractKeyword(cleaned,
+            List<String> keywords = TermUtils.keywords(cleaned,
                     target * KEYWORD_BUFFER_MULTIPLIER);
 
             return keywords.stream()
