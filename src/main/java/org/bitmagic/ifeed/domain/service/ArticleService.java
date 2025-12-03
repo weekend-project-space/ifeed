@@ -12,6 +12,7 @@ import org.bitmagic.ifeed.domain.record.ArticleSummaryView;
 import org.bitmagic.ifeed.domain.repository.ArticleRepository;
 import org.bitmagic.ifeed.domain.repository.FeedRepository;
 import org.bitmagic.ifeed.exception.ApiException;
+import org.bitmagic.ifeed.infrastructure.text.search.Document;
 import org.bitmagic.ifeed.infrastructure.text.search.TextSearchStore;
 import org.springframework.data.domain.*;
 import org.springframework.http.HttpStatus;
@@ -46,7 +47,7 @@ public class ArticleService {
             metadata.put("tags", a.getTags() != null ? a.getTags() : "");
             metadata.put("summary", a.getSummary() != null ? a.getSummary() : "");
             metadata.put("pubDate", a.getPublishedAt() != null ? a.getPublishedAt().getEpochSecond() : 0L);
-            return new org.bitmagic.ifeed.infrastructure.text.search.Document(a.getId(), a.getFeed().getId(), a.getContent(), metadata);
+            return new Document(a.getId(), a.getFeed().getId(), a.getContent(), metadata);
         }).collect(Collectors.toList()));
     }
 
