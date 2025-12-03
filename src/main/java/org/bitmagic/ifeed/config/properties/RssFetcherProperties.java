@@ -5,6 +5,8 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
 
 @Data
 @Configuration
@@ -16,6 +18,7 @@ public class RssFetcherProperties {
     private int threadPoolSize = 10;
     private int maxItems = 500;
     private int maxRetries = 2;
+    private List<String> rsshubList = new ArrayList<String>();
     private Cache cache = new Cache();
 
     @Data
