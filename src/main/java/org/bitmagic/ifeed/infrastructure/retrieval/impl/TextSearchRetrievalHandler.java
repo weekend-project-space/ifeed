@@ -45,7 +45,11 @@ public class TextSearchRetrievalHandler implements RetrievalHandler {
             if (Strings.isNotBlank(context.getQuery())) {
                 results = pgTextSearchStore.searchWithFilter(buildChineseQuery(context.getQuery()), context.getTopK(), context.getUserId(), context.isIncludeGlobal(), context.getThreshold()).stream().map(doc -> {
                     Map<String, Object> metadata = doc.document().metadata();
-                    return new DocScore(doc.document().id(), doc.score(), Instant.ofEpochSecond((Integer) metadata.get("pubDate")), "bm25_chinese", metadata);
+                    Object pubDate = metadata.get("pubDate");
+                    if(pubDate instanceof Integer){
+                        pubDate = ((Integer) pubDate).longValue();
+                    }
+                    return new DocScore(doc.document().id(), doc.score(), Instant.ofEpochSecond((Long) pubDate), "bm25_chinese", metadata);
                 }).toList();
             }
 

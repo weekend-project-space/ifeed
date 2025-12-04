@@ -55,6 +55,13 @@ app:
       read-timeout: 30s
       max-items: 500
       max-retries: 1
+      rsshub-list:
+        - https://rsshub.rssforever.com
+        - https://hub.slarker.me
+        - https://rss.owo.nz
+        - https://rsshub.umzzz.com
+        - https://rss.wudifeixue.com
+        - https://rsshub.isrss.com
       cache:
         expire-after-write: 30m
         maximum-size: 1000

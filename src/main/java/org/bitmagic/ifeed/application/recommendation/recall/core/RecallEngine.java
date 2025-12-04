@@ -35,18 +35,6 @@ public class RecallEngine {
     private final ArticleRepository articleRepository;
     private final AdaptiveScoreMapper adaptiveScoreMapper = new AdaptiveScoreMapper();
 
-//    public RecallEngine(StrategyRegistry registry,
-//                        RecallPlanner planner,
-//                        RecallFusion fusion,
-//                        UserContextFactory contextFactory,
-//                        Executor executor) {
-//        this.registry = registry;
-//        this.planner = planner;
-//        this.fusion = fusion;
-//        this.contextFactory = contextFactory;
-//        this.executor = executor;
-//    }
-
     public RecallResponse recall(RecallRequest request) {
         long start = System.nanoTime();
 

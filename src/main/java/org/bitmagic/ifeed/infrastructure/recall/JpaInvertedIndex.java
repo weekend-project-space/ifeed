@@ -59,11 +59,13 @@ public class JpaInvertedIndex implements InvertedIndex {
         Map<Long, Double> weightedScores = new HashMap<>();
         Map<Long, Map<String, Object>> metadataMap = new HashMap<>();
 
+        int topK = ((Double) (k / attributes.size() * 1.5)).intValue();
+
         for (UserPreferenceService.AttributePreference attr : sorted) {
             RetrievalContext context = RetrievalContext.builder()
                     .includeGlobal(true)
                     .query(attr.attributeValue())
-                    .topK(k)
+                    .topK(topK)
                     .build();
 
             List<DocScore> scores = retrievalPipeline.execute(context);

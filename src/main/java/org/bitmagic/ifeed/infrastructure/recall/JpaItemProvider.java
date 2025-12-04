@@ -40,7 +40,7 @@ public class JpaItemProvider implements ItemProvider {
         List<ArticleSummaryView> all = new ArrayList<>(articleRepository.searchArticleSummaries("", null, pageable).getContent());
         all.addAll(articleRepository.searchArticleSummaries("", userContext.getUserId(), pageable).getContent());
         log.debug("{} time: {}", type.name(), System.currentTimeMillis() - currentTimeMillis);
-        List<ScoredId> scoredIds = all.stream().map(article -> new ScoredId(article.articleId(), freshnessCalculator.calculate(article.publishedAt()), Map.of("title", article.title()))).toList();
+        List<ScoredId> scoredIds = all.stream().map(article -> new ScoredId(article.articleId(), 0.1 + 0.1 * freshnessCalculator.calculate(article.publishedAt()), Map.of("title", article.title()))).toList();
         return scoredIds;
     }
 }

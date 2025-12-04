@@ -42,7 +42,6 @@ public class FeedController {
     private final SubscriptionService subscriptionService;
     private final FeedRepository feedRepository;
     private final MixFeedRepository mixFeedRepository;
-    private final UserBehaviorRepository userBehaviorRepository;
 
     @GetMapping("/{feedId}")
     public ResponseEntity<FeedDetailResponse> getFeed(
