@@ -28,7 +28,7 @@ public class U2A2IRecallStrategy implements RecallStrategy {
 
     public U2A2IRecallStrategy(UserPreferenceService preferenceService,
                                InvertedIndex invertedIndex,
-                               @Value("${recall.u2a2i.attribute-limit:20}") int attributeLimit) {
+                               @Value("${recall.u2a2i.attribute-limit:30}") int attributeLimit) {
         this.preferenceService = preferenceService;
         this.invertedIndex = invertedIndex;
         this.attributeLimit = Math.max(1, attributeLimit); // 至少为1

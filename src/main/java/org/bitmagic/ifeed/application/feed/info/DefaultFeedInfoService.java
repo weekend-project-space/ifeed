@@ -1,6 +1,7 @@
 package org.bitmagic.ifeed.application.feed.info;
 
 import com.rometools.rome.feed.synd.SyndFeed;
+import com.rometools.utils.Strings;
 import org.bitmagic.ifeed.domain.model.Feed;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
@@ -15,20 +16,20 @@ public class DefaultFeedInfoService implements FeedInfoService {
     public void update(Feed feed, SyndFeed syndFeed) {
         var fetchedTitle = syndFeed != null ? syndFeed.getTitle() : null;
         if (StringUtils.hasText(fetchedTitle)) {
-            var normalizedTitle = fetchedTitle.trim();
+            var normalizedTitle = truncate(fetchedTitle.trim(), 255);
             if (!normalizedTitle.equals(feed.getTitle())) {
                 feed.setTitle(normalizedTitle);
-                feed.setDescription(syndFeed.getDescription());
-                feed.setSiteUrl(syndFeed.getLink());
+                feed.setDescription(truncate(syndFeed.getDescription(), 255));
+                feed.setSiteUrl(Strings.isBlank(syndFeed.getLink()) ? "" : truncate(syndFeed.getLink(), 255));
             }
             if (syndFeed.getDescription() != null && !syndFeed.getDescription().equals(feed.getDescription())) {
-                feed.setDescription(syndFeed.getDescription().substring(0, Math.min(syndFeed.getDescription().length(), 200)));
+                feed.setDescription(truncate(syndFeed.getDescription(), 255));
             }
             return;
         }
 
         if (!StringUtils.hasText(feed.getTitle())) {
-            feed.setTitle(resolveFallbackTitle(feed));
+            feed.setTitle(truncate(resolveFallbackTitle(feed), 255));
         }
     }
 
@@ -66,5 +67,12 @@ public class DefaultFeedInfoService implements FeedInfoService {
         }
 
         return trimmed;
+    }
+
+    private String truncate(String value, int maxLength) {
+        if (value == null || value.length() <= maxLength) {
+            return value;
+        }
+        return value.substring(0, maxLength);
     }
 }

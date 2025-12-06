@@ -39,4 +39,10 @@ public record UserContext(Integer userId,
                 .map(SequenceStore.UserInteraction::itemId)
                 .collect(Collectors.toSet());
     }
+
+    public Set<String> recentItemTitles() {
+        return interactions.stream()
+                .map(SequenceStore.UserInteraction::itemTitle)
+                .collect(Collectors.toSet());
+    }
 }

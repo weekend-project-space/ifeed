@@ -17,7 +17,7 @@ import java.util.stream.Collectors;
 
 /**
  * 用户兴趣画像服务
- * 基于阅读历史和收藏行为，提取用户对 feedTitle、tag 的偏好权重
+ * 基于阅读历史和收藏行为，提取用户对 feedTitle、tag、category、keyword、entity 的偏好权重
  */
 @Slf4j
 @Component
@@ -26,8 +26,10 @@ public class UserInterestProfileService implements UserPreferenceService {
 
     private final UserBehaviorDataAccessor dataAccessor;
     private final ArticleRepository articleRepository;
+    private final KeywordExtractor keywordExtractor;
 
-    private static final TypeReference<List<String>> TAGS_TYPE = new TypeReference<>() {};
+    private static final TypeReference<List<String>> TAGS_TYPE = new TypeReference<>() {
+    };
 
     @Value("${recall.preference.read-window-days:30}")
     private int readWindowDays;
@@ -43,6 +45,12 @@ public class UserInterestProfileService implements UserPreferenceService {
 
     @Value("${recall.preference.min-total-score:0.1}")
     private double minTotalScore;
+
+    @Value("${recall.preference.extract-keywords:true}")
+    private boolean extractKeywords;
+
+    @Value("${recall.preference.extract-entities:true}")
+    private boolean extractEntities;
 
     @Override
     public List<AttributePreference> topAttributes(Integer userId, int limit) {
@@ -62,17 +70,15 @@ public class UserInterestProfileService implements UserPreferenceService {
             UserBehaviorDocument document, int limit) {
 
         // 使用共享的过滤和排序逻辑
-        List<UserBehaviorDocument.ArticleRef> readHistory =
-                dataAccessor.filterAndSortRefs(
-                        document.getReadHistory(),
-                        readWindowDays,
-                        lookback);
+        List<UserBehaviorDocument.ArticleRef> readHistory = dataAccessor.filterAndSortRefs(
+                document.getReadHistory(),
+                readWindowDays,
+                lookback);
 
-        List<UserBehaviorDocument.ArticleRef> collections =
-                dataAccessor.filterAndSortRefs(
-                        document.getCollections(),
-                        collectionWindowDays,
-                        lookback);
+        List<UserBehaviorDocument.ArticleRef> collections = dataAccessor.filterAndSortRefs(
+                document.getCollections(),
+                collectionWindowDays,
+                lookback);
 
         if (readHistory.isEmpty() && collections.isEmpty()) {
             log.debug("No valid read history or collections for user {}", document.getId());
@@ -117,17 +123,21 @@ public class UserInterestProfileService implements UserPreferenceService {
         // 统计各维度权重
         Map<String, Double> feedScores = new HashMap<>();
         Map<String, Double> tagScores = new HashMap<>();
+        Map<String, Double> categoryScores = new HashMap<>();
+        Map<String, Double> keywordScores = new HashMap<>();
+        Map<String, Double> entityScores = new HashMap<>();
         Set<String> processedIds = new HashSet<>();
 
         // 处理阅读历史
         processArticleRefs(readHistory, articleMap, collectedIds,
-                feedScores, tagScores, processedIds);
+                feedScores, tagScores, categoryScores, keywordScores, entityScores, processedIds);
 
         // 处理仅收藏但未阅读的文章
         processCollectionOnlyRefs(collections, articleMap, processedIds,
-                feedScores, tagScores);
+                feedScores, tagScores, categoryScores, keywordScores, entityScores);
 
-        if (feedScores.isEmpty() && tagScores.isEmpty()) {
+        if (feedScores.isEmpty() && tagScores.isEmpty() && categoryScores.isEmpty()
+                && keywordScores.isEmpty() && entityScores.isEmpty()) {
             log.debug("No valid scores computed for user {}", document.getId());
             return List.of();
         }
@@ -136,6 +146,9 @@ public class UserInterestProfileService implements UserPreferenceService {
         List<AttributePreference> result = new ArrayList<>();
         result.addAll(normalizeAndConvert(feedScores, "feedTitle"));
         result.addAll(normalizeAndConvert(tagScores, "tag"));
+        result.addAll(normalizeAndConvert(categoryScores, "category"));
+        result.addAll(normalizeAndConvert(keywordScores, "keyword"));
+        result.addAll(normalizeAndConvert(entityScores, "entity"));
 
         log.info("Computed {} attribute preferences for user {} (read:{}, collection:{})",
                 result.size(), document.getId(), readHistory.size(), collections.size());
@@ -155,17 +168,23 @@ public class UserInterestProfileService implements UserPreferenceService {
             Set<String> collectedIds,
             Map<String, Double> feedScores,
             Map<String, Double> tagScores,
+            Map<String, Double> categoryScores,
+            Map<String, Double> keywordScores,
+            Map<String, Double> entityScores,
             Set<String> processedIds) {
 
         for (UserBehaviorDocument.ArticleRef ref : refs) {
             String articleId = ref.getArticleId();
-            if (articleId == null) continue;
+            if (articleId == null)
+                continue;
 
             UUID uuid = dataAccessor.safeUuid(articleId);
-            if (uuid == null) continue;
+            if (uuid == null)
+                continue;
 
             ArticleSummary article = articleMap.get(uuid);
-            if (article == null) continue;
+            if (article == null)
+                continue;
 
             // 基础分数 1.0，如果被收藏则额外加分
             double score = collectedIds.contains(articleId)
@@ -174,6 +193,9 @@ public class UserInterestProfileService implements UserPreferenceService {
 
             accumulateFeedScore(feedScores, article, score);
             accumulateTagScores(tagScores, article, score);
+            accumulateCategoryScore(categoryScores, article, score);
+            accumulateKeywordScores(keywordScores, article, score);
+            accumulateEntityScores(entityScores, article, score);
 
             processedIds.add(articleId);
         }
@@ -187,7 +209,10 @@ public class UserInterestProfileService implements UserPreferenceService {
             Map<UUID, ArticleSummary> articleMap,
             Set<String> processedIds,
             Map<String, Double> feedScores,
-            Map<String, Double> tagScores) {
+            Map<String, Double> tagScores,
+            Map<String, Double> categoryScores,
+            Map<String, Double> keywordScores,
+            Map<String, Double> entityScores) {
 
         for (UserBehaviorDocument.ArticleRef ref : collections) {
             String articleId = ref.getArticleId();
@@ -198,16 +223,19 @@ public class UserInterestProfileService implements UserPreferenceService {
             }
 
             UUID uuid = dataAccessor.safeUuid(articleId);
-            if (uuid == null) continue;
+            if (uuid == null)
+                continue;
 
             ArticleSummary article = articleMap.get(uuid);
-            if (article == null) continue;
+            if (article == null)
+                continue;
 
             // 收藏但未阅读，给予收藏加成分数
             double score = 1.0 + collectionBonus;
 
             accumulateFeedScore(feedScores, article, score);
             accumulateTagScores(tagScores, article, score);
+            accumulateCategoryScore(categoryScores, article, score);
         }
     }
 
@@ -246,6 +274,73 @@ public class UserInterestProfileService implements UserPreferenceService {
             }
         } catch (Exception e) {
             log.debug("Failed to parse tags for article {}: {}",
+                    article.id(), e.getMessage());
+        }
+    }
+
+    /**
+     * 累加 Category 分数
+     */
+    private void accumulateCategoryScore(
+            Map<String, Double> scores,
+            ArticleSummary article,
+            double score) {
+
+        if (article.category() != null && !article.category().isBlank()) {
+            scores.merge(article.category(), score, Double::sum);
+        }
+    }
+
+    /**
+     * 累加 Keyword 分数
+     */
+    private void accumulateKeywordScores(
+            Map<String, Double> scores,
+            ArticleSummary article,
+            double score) {
+
+        if (!extractKeywords) {
+            return;
+        }
+
+        try {
+            List<String> keywords = keywordExtractor.extractKeywords(
+                    article.title(), article.summary());
+
+            for (String keyword : keywords) {
+                if (keyword != null && !keyword.isBlank()) {
+                    scores.merge(keyword, score, Double::sum);
+                }
+            }
+        } catch (Exception e) {
+            log.debug("Failed to extract keywords for article {}: {}",
+                    article.id(), e.getMessage());
+        }
+    }
+
+    /**
+     * 累加 Entity 分数
+     */
+    private void accumulateEntityScores(
+            Map<String, Double> scores,
+            ArticleSummary article,
+            double score) {
+
+        if (!extractEntities) {
+            return;
+        }
+
+        try {
+            List<String> entities = keywordExtractor.extractEntities(
+                    article.title(), article.summary());
+
+            for (String entity : entities) {
+                if (entity != null && !entity.isBlank()) {
+                    scores.merge(entity, score, Double::sum);
+                }
+            }
+        } catch (Exception e) {
+            log.debug("Failed to extract entities for article {}: {}",
                     article.id(), e.getMessage());
         }
     }

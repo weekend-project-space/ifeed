@@ -16,10 +16,8 @@ import org.bitmagic.ifeed.infrastructure.retrieval.impl.TextSearchRetrievalHandl
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * 基于 JPA 的倒排索引实现，支持按类目或作者获取最新文章集合。
@@ -48,9 +46,11 @@ public class JpaInvertedIndex implements InvertedIndex {
         if (attributes == null || attributes.isEmpty()) {
             return List.of();
         }
-
+        long start = System.currentTimeMillis();
+        // 移除相同value 值的，保留高权重（靠前的）
+        List<UserPreferenceService.AttributePreference> attrs = attributes.stream().collect(Collectors.groupingBy(UserPreferenceService.AttributePreference::attributeValue)).values().stream().map(vs -> vs.stream().max(Comparator.comparingDouble(UserPreferenceService.AttributePreference::weight)).orElse(null)).filter(Objects::nonNull).toList();
         // 按权重排序，权重高的优先
-        List<UserPreferenceService.AttributePreference> sorted = attributes.stream()
+        List<UserPreferenceService.AttributePreference> sorted = attrs.stream()
                 .sorted(Comparator.comparingDouble(UserPreferenceService.AttributePreference::weight).reversed())
                 .toList();
 
@@ -59,26 +59,31 @@ public class JpaInvertedIndex implements InvertedIndex {
         Map<Long, Double> weightedScores = new HashMap<>();
         Map<Long, Map<String, Object>> metadataMap = new HashMap<>();
 
-        int topK = ((Double) (k / attributes.size() * 1.5)).intValue();
+        int topK = ((Double) (k / sorted.size() * 1.5)).intValue();
 
         for (UserPreferenceService.AttributePreference attr : sorted) {
+
             RetrievalContext context = RetrievalContext.builder()
                     .includeGlobal(true)
                     .query(attr.attributeValue())
                     .topK(topK)
+                    .threshold(0.12)
                     .build();
 
             List<DocScore> scores = retrievalPipeline.execute(context);
 
             for (DocScore score : scores) {
-                double wa = attr.attributeKey().equals("feedTitle") ? 0.5 : 0.1;
+                double wa = attr.attributeKey().equals("feedTitle") ? 0.4 : 0.1;
                 // 加权累加分数
-                double weightedScore = freshnessCalculator.calculate(score.pubDate()) * wa + (score.score() * adaptiveScoreMapper.map(Math.max(attr.weight(), 0.1))) * (1 - wa);
+                double weightedScore = score.score() * adaptiveScoreMapper.map(Math.max(attr.weight(), 0.1));
+                weightedScore = freshnessCalculator.calculate(score.pubDate()) * wa + weightedScore * (1 - wa);
+
                 weightedScores.merge(score.docId(), weightedScore, Double::sum);
                 log.debug("atrr:{} doc:{} score:{} ", attr.attributeValue(), score.docId(), weightedScore);
                 // 保存元数据
                 metadataMap.putIfAbsent(score.docId(), Map.of("source", attr, "docScore", score));
             }
+            log.info("search {} time {}ms", attr.attributeValue(), System.currentTimeMillis() - start);
         }
 
         // 排序并返回 top-k

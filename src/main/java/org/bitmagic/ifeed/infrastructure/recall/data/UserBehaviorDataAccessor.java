@@ -3,7 +3,7 @@ package org.bitmagic.ifeed.infrastructure.recall.data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.bitmagic.ifeed.domain.document.UserBehaviorDocument;
-import org.bitmagic.ifeed.domain.record.ArticleIdPair;
+import org.bitmagic.ifeed.domain.record.ArticleTitle;
 import org.bitmagic.ifeed.domain.repository.ArticleRepository;
 import org.bitmagic.ifeed.domain.repository.UserBehaviorRepository;
 import org.springframework.stereotype.Component;
@@ -11,6 +11,7 @@ import org.springframework.stereotype.Component;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -73,7 +74,7 @@ public class UserBehaviorDataAccessor {
      * @param articleIds UUID字符串列表
      * @return UUID到数据库ID的映射
      */
-    public Map<UUID, Long> batchMapArticleIds(List<String> articleIds) {
+    public Map<UUID, ArticleTitle> batchMapArticleIds(List<String> articleIds) {
         if (articleIds == null || articleIds.isEmpty()) {
             return Map.of();
         }
@@ -90,7 +91,7 @@ public class UserBehaviorDataAccessor {
 
         try {
             return articleRepository.findIdByUIdIn(uuids).stream()
-                    .collect(Collectors.toMap(ArticleIdPair::uid, ArticleIdPair::id));
+                    .collect(Collectors.toMap(ArticleTitle::uid, Function.identity()));
         } catch (Exception e) {
             log.error("Failed to batch map article IDs", e);
             return Map.of();

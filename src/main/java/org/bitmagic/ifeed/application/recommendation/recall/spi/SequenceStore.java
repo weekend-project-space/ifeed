@@ -11,6 +11,7 @@ public interface SequenceStore {
     List<UserInteraction> recentInteractions(Integer userId, int limit);
 
     record UserInteraction(long itemId,
+                           String itemTitle,
                            double durationSeconds,
                            double weight,
                            Instant timestamp) {

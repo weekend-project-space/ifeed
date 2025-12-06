@@ -9,6 +9,7 @@ import org.bitmagic.ifeed.domain.model.Article;
 import org.bitmagic.ifeed.domain.record.ArticleSummaryView;
 import org.bitmagic.ifeed.domain.repository.ArticleRepository;
 import org.bitmagic.ifeed.infrastructure.FreshnessCalculator;
+import org.bitmagic.ifeed.infrastructure.QualityScorer;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -30,7 +31,7 @@ public class JpaItemProvider implements ItemProvider {
 
     private final ArticleRepository articleRepository;
 
-    private final FreshnessCalculator freshnessCalculator;
+    private final QualityScorer qualityScorer = new QualityScorer();
 
     @Cacheable(cacheNames = "ITEMS", key = "#userContext.userId() + '_' + #type.name() + '_' + #k", unless = "#result == null")
     @Override
@@ -40,7 +41,7 @@ public class JpaItemProvider implements ItemProvider {
         List<ArticleSummaryView> all = new ArrayList<>(articleRepository.searchArticleSummaries("", null, pageable).getContent());
         all.addAll(articleRepository.searchArticleSummaries("", userContext.getUserId(), pageable).getContent());
         log.debug("{} time: {}", type.name(), System.currentTimeMillis() - currentTimeMillis);
-        List<ScoredId> scoredIds = all.stream().map(article -> new ScoredId(article.articleId(), 0.1 + 0.1 * freshnessCalculator.calculate(article.publishedAt()), Map.of("title", article.title()))).toList();
+        List<ScoredId> scoredIds = all.stream().map(article -> new ScoredId(article.articleId(), qualityScorer.score(article.summary(), null), Map.of("title", article.title()))).toList();
         return scoredIds;
     }
 }

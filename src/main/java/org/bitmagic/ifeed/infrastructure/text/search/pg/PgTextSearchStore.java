@@ -14,6 +14,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -50,6 +52,7 @@ public class PgTextSearchStore implements TextSearchStore {
         jdbcTemplate.execute(String.format("""
                 CREATE TABLE IF NOT EXISTS %s (
                     id BIGINT PRIMARY KEY,
+                    pub_date TIMESTAMP WITH TIME ZONE NOT NULL,
                     content TEXT NOT NULL,
                     title VARCHAR(500),
                     category VARCHAR(100),
@@ -77,8 +80,11 @@ public class PgTextSearchStore implements TextSearchStore {
         jdbcTemplate.execute(String.format(
                 "CREATE INDEX IF NOT EXISTS %s_feed_id_idx ON %s(feed_id)",
                 tableName, tableName));
-
+        jdbcTemplate.execute(String.format(
+                "CREATE INDEX IF NOT EXISTS %s_pub_date_idx ON %s(pub_date DESC)",
+                tableName, tableName));
         createTrigger();
+        createFilteredTsvIndex();
     }
 
     /**
@@ -86,58 +92,91 @@ public class PgTextSearchStore implements TextSearchStore {
      */
     private void createTrigger() {
         jdbcTemplate.execute(String.format("""
-                        CREATE OR REPLACE FUNCTION %s_tsv_trigger() RETURNS trigger AS $$
-                        BEGIN
-                            NEW.tsv := 
-                                setweight(to_tsvector('%s', COALESCE(NEW.title, '')), 'A') ||
-                                setweight(to_tsvector('%s', COALESCE(NEW.category, '')), 'A') ||
-                                setweight(to_tsvector('%s', COALESCE(NEW.feed_title, '')), 'A') ||
-                                setweight(to_tsvector('%s', COALESCE(NEW.tags, '')), 'B') ||
-                                setweight(to_tsvector('%s', COALESCE(NEW.summary, '')), 'C') ||
-                                setweight(to_tsvector('%s', COALESCE(NEW.content, '')), 'C');
-                            NEW.updated_at := CURRENT_TIMESTAMP;
-                            RETURN NEW;
-                        END
-                        $$ LANGUAGE plpgsql;
-                        
-                        DROP TRIGGER IF EXISTS %s_tsv_update ON %s;
-                        CREATE TRIGGER %s_tsv_update 
-                        BEFORE INSERT OR UPDATE ON %s
-                        FOR EACH ROW EXECUTE FUNCTION %s_tsv_trigger();
-                        """, tableName, textSearchConfig, textSearchConfig, textSearchConfig,
+                CREATE OR REPLACE FUNCTION %s_tsv_trigger() RETURNS trigger AS $$
+                BEGIN
+                    NEW.tsv :=
+                        setweight(to_tsvector('%s', COALESCE(NEW.title, '')), 'A') ||
+                        setweight(to_tsvector('%s', COALESCE(NEW.category, '')), 'A') ||
+                        setweight(to_tsvector('%s', COALESCE(NEW.feed_title, '')), 'A') ||
+                        setweight(to_tsvector('%s', COALESCE(NEW.tags, '')), 'B') ||
+                        setweight(to_tsvector('%s', COALESCE(NEW.summary, '')), 'C') ||
+                        setweight(to_tsvector('%s', COALESCE(NEW.content, '')), 'C');
+                    NEW.updated_at := CURRENT_TIMESTAMP;
+                    RETURN NEW;
+                END
+                $$ LANGUAGE plpgsql;
+
+                DROP TRIGGER IF EXISTS %s_tsv_update ON %s;
+                CREATE TRIGGER %s_tsv_update
+                BEFORE INSERT OR UPDATE ON %s
+                FOR EACH ROW EXECUTE FUNCTION %s_tsv_trigger();
+                """, tableName, textSearchConfig, textSearchConfig, textSearchConfig,
                 textSearchConfig, textSearchConfig, textSearchConfig,
                 tableName, tableName, tableName, tableName, tableName));
+    }
+
+    /**
+     * 为 feed_title, category, tags 三个字段创建组合 GIN 索引
+     */
+    private void createFilteredTsvIndex() {
+        // 添加一个生成列用于存储这三个字段的 tsvector
+        jdbcTemplate.execute(String.format("""
+                DO $$
+                BEGIN
+                    IF NOT EXISTS (
+                        SELECT 1 FROM information_schema.columns
+                        WHERE table_name = '%s' AND column_name = 'catalog_tsv'
+                    ) THEN
+                        ALTER TABLE %s ADD COLUMN catalog_tsv TSVECTOR
+                        GENERATED ALWAYS AS (
+                            setweight(to_tsvector('%s', COALESCE(title, '')), 'A') ||
+                            setweight(to_tsvector('%s', COALESCE(feed_title, '')), 'A') ||
+                            setweight(to_tsvector('%s', COALESCE(category, '')), 'A') ||
+                            setweight(to_tsvector('%s', COALESCE(tags, '')), 'B')
+                        ) STORED;
+                    END IF;
+                END $$;
+                """, tableName, tableName, textSearchConfig, textSearchConfig, textSearchConfig, textSearchConfig));
+
+        // 为这个生成列创建 GIN 索引
+        jdbcTemplate.execute(String.format(
+                "CREATE INDEX IF NOT EXISTS %s_catalog_tsv_idx ON %s USING GIN(catalog_tsv)",
+                tableName, tableName));
     }
 
     @Override
     @Transactional
     public void add(List<Document> documents) {
-        String sql = String.format("""
-                INSERT INTO %s (id, content, title, category, feed_id, feed_title, tags, summary, metadata)
-                VALUES (:id, :content, :title, :category, :feedId, :feedTitle, :tags, :summary, :metadata::jsonb)
-                ON CONFLICT (id) DO UPDATE SET
-                    content = EXCLUDED.content,
-                    title = EXCLUDED.title,
-                    category = EXCLUDED.category,
-                    feed_id = EXCLUDED.feed_id,
-                    feed_title = EXCLUDED.feed_title,
-                    tags = EXCLUDED.tags,
-                    summary = EXCLUDED.summary,
-                    metadata = EXCLUDED.metadata
-                """, tableName);
+        String sql = String.format(
+                """
+                        INSERT INTO %s (id, pub_date, content, title, category, feed_id, feed_title, tags, summary, metadata)
+                        VALUES (:id, :pubDate, :content, :title, :category, :feedId, :feedTitle, :tags, :summary, :metadata::jsonb)
+                        ON CONFLICT (id) DO UPDATE SET
+                            content = EXCLUDED.content,
+                            pub_date = EXCLUDED.pub_date,
+                            title = EXCLUDED.title,
+                            category = EXCLUDED.category,
+                            feed_id = EXCLUDED.feed_id,
+                            feed_title = EXCLUDED.feed_title,
+                            tags = EXCLUDED.tags,
+                            summary = EXCLUDED.summary,
+                            metadata = EXCLUDED.metadata
+                        """,
+                tableName);
 
         MapSqlParameterSource[] batchParams = documents.stream()
                 .map(doc -> {
                     try {
                         return new MapSqlParameterSource()
                                 .addValue("id", doc.id())
+                                .addValue("pubDate", Timestamp.from(getMetadataInstant(doc, "pubDate")))
                                 .addValue("content", TermUtils.segmentStr(doc.content()))
-                                .addValue("title", truncate(TermUtils.segmentStr(getMetadataString(doc, "title")), 500))
-                                .addValue("category", truncate(TermUtils.segmentStr(getMetadataString(doc, "category")), 100))
+                                .addValue("title", truncate(getMetadataString(doc, "title"), 500))
+                                .addValue("category", truncate(getMetadataString(doc, "category"), 100))
                                 .addValue("feedId", doc.feedId())
-                                .addValue("feedTitle", truncate(TermUtils.segmentStr(getMetadataString(doc, "feedTitle")), 200))
-                                .addValue("tags", truncate(TermUtils.segmentStr(getMetadataString(doc, "tags")), 200))
-                                .addValue("summary", truncate(TermUtils.segmentStr(getMetadataString(doc, "summary")), 300))
+                                .addValue("feedTitle", truncate(getMetadataString(doc, "feedTitle"), 200))
+                                .addValue("tags", truncate(getMetadataString(doc, "tags"), 200))
+                                .addValue("summary", truncate(getMetadataString(doc, "summary"), 300))
                                 .addValue("metadata", toJson(doc.metadata()));
                     } catch (Exception e) {
                         throw new RuntimeException("Error processing document id: " + doc.id(), e);
@@ -147,7 +186,6 @@ public class PgTextSearchStore implements TextSearchStore {
 
         namedJdbcTemplate.batchUpdate(sql, batchParams);
     }
-
 
     @Override
     @Transactional
@@ -175,7 +213,7 @@ public class PgTextSearchStore implements TextSearchStore {
                 WITH query AS (
                     SELECT websearch_to_tsquery('%s', :query) AS q
                 )
-                SELECT 
+                SELECT
                     d.id, d.content, d.feed_id, d.metadata,
                     ts_rank_cd(d.tsv, query.q, 32) AS score
                 FROM %s d
@@ -200,7 +238,9 @@ public class PgTextSearchStore implements TextSearchStore {
     }
 
     /**
-     * 带用户订阅过滤的搜索
+     * 带用户订阅过滤的搜索 - 仅搜索 feedTitle, category, tags 字段
+     * 使用预先构建的 catalog_tsv 索引提升性能
+     * 集成时间衰减因子,优先返回较新的文档
      */
     public List<ScoredDocument> searchWithFilter(
             String query, int topK, Integer userId, boolean includeGlobal, double threshold) {
@@ -208,19 +248,35 @@ public class PgTextSearchStore implements TextSearchStore {
         String sql = String.format("""
                 WITH query AS (
                     SELECT websearch_to_tsquery('%s', :query) AS q
+                ),
+                scored_articles AS (
+                    SELECT
+                        d.id,
+                        d.content,
+                        d.feed_id,
+                        d.metadata,
+                        d.pub_date,
+                        ts_rank_cd(d.catalog_tsv, query.q, 33) AS text_score,
+                        EXTRACT(EPOCH FROM (NOW() - d.pub_date)) / 86400.0 AS days_ago
+                    FROM %s d
+                    CROSS JOIN query
+                    WHERE query.q @@ d.catalog_tsv
+                      AND d.pub_date > NOW() - INTERVAL '90 days'
+                      AND d.pub_date IS NOT NULL
+                      AND (:includeGlobal = TRUE
+                        OR EXISTS (
+                            SELECT 1 FROM user_subscriptions us
+                            WHERE us.feed_id = d.feed_id AND us.user_id = :userId AND us.is_active = TRUE
+                        ))
                 )
                 SELECT
-                    d.id, d.content, d.feed_id,  d.metadata,
-                    ts_rank_cd(d.tsv, query.q, 33) AS score
-                FROM %s d
-                CROSS JOIN query
-                WHERE query.q @@ d.tsv
-                  AND ts_rank_cd(d.tsv, query.q, 33) > :scoreThreshold
-                  AND (:includeGlobal = TRUE
-                    OR EXISTS (
-                        SELECT 1 FROM user_subscriptions us
-                        WHERE us.feed_id = d.feed_id AND us.user_id = :userId AND us.is_active = TRUE
-                    ))
+                    id,
+                    content,
+                    feed_id,
+                    metadata,
+                    text_score * EXP(-0.02 * days_ago) AS score
+                FROM scored_articles
+                WHERE text_score > :scoreThreshold
                 ORDER BY score DESC
                 LIMIT :topK
                 """, textSearchConfig, tableName);
@@ -234,30 +290,110 @@ public class PgTextSearchStore implements TextSearchStore {
 
         return namedJdbcTemplate.query(sql, params, this::mapScoredDocument);
     }
-//
-//    /**
-//     * 带高亮的搜索
-//     */
-//    public List<HighlightedResult> searchWithHighlight(String query, int topK) {
-//        String sql = String.format("""
-//                WITH query AS (
-//                    SELECT websearch_to_tsquery('%s', :query) AS q
-//                )
-//                SELECT
-//                    d.id, d.content, d.title, d.category, d.feed_title, d.tags, d.summary, d.metadata,
-//                    ts_rank_cd(d.tsv, query.q, 32) AS score,
-//                    ts_headline('%s', d.content, query.q, 'MaxWords=50,MinWords=15') AS headline
-//                FROM %s d
-//                CROSS JOIN query
-//                WHERE query.q @@ d.tsv
-//                ORDER BY score DESC
-//                LIMIT :topK
-//                """, textSearchConfig, textSearchConfig, tableName);
-//
-//        return namedJdbcTemplate.query(sql,
-//                new MapSqlParameterSource("query", query).addValue("topK", topK),
-//                this::mapHighlightedResult);
-//    }
+
+    // /**
+    // * 带用户订阅过滤的搜索 - 仅搜索 feedTitle, category, tags 字段
+    // * 使用预先构建的 catalog_tsv 索引提升性能
+    // */
+    // public List<ScoredDocument> searchWithFilter(
+    // String query, int topK, Integer userId, boolean includeGlobal, double
+    // threshold) {
+    //
+    // String sql = String.format("""
+    // WITH query AS (
+    // SELECT websearch_to_tsquery('%s', :query) AS q
+    // )
+    // SELECT
+    // d.id,
+    // d.content,
+    // d.feed_id,
+    // d.metadata,
+    // ts_rank_cd(d.catalog_tsv, query.q, 33) AS score
+    // FROM %s d
+    // CROSS JOIN query
+    // WHERE query.q @@ d.catalog_tsv
+    // AND ts_rank_cd(d.catalog_tsv, query.q, 33) > :scoreThreshold
+    // AND (:includeGlobal = TRUE
+    // OR EXISTS (
+    // SELECT 1 FROM user_subscriptions us
+    // WHERE us.feed_id = d.feed_id AND us.user_id = :userId AND us.is_active = TRUE
+    // ))
+    // ORDER BY score DESC
+    // LIMIT :topK
+    // """, textSearchConfig, tableName);
+    //
+    // MapSqlParameterSource params = new MapSqlParameterSource()
+    // .addValue("query", TermUtils.segmentStr(query))
+    // .addValue("topK", topK)
+    // .addValue("userId", userId)
+    // .addValue("includeGlobal", includeGlobal)
+    // .addValue("scoreThreshold", threshold);
+    //
+    // return namedJdbcTemplate.query(sql, params, this::mapScoredDocument);
+    // }
+
+    // /**
+    // * 带用户订阅过滤的搜索
+    // */
+    // public List<ScoredDocument> searchWithFilter(
+    // String query, int topK, Integer userId, boolean includeGlobal, double
+    // threshold) {
+    //
+    // String sql = String.format("""
+    // WITH query AS (
+    // SELECT websearch_to_tsquery('%s', :query) AS q
+    // )
+    // SELECT
+    // d.id, d.content, d.feed_id, d.metadata,
+    // ts_rank_cd(d.tsv, query.q, 33) AS score
+    // FROM %s d
+    // CROSS JOIN query
+    // WHERE query.q @@ d.tsv
+    // AND ts_rank_cd(d.tsv, query.q, 33) > :scoreThreshold
+    // AND (:includeGlobal = TRUE
+    // OR EXISTS (
+    // SELECT 1 FROM user_subscriptions us
+    // WHERE us.feed_id = d.feed_id AND us.user_id = :userId AND us.is_active = TRUE
+    // ))
+    // ORDER BY score DESC
+    // LIMIT :topK
+    // """, textSearchConfig, tableName);
+    //
+    // MapSqlParameterSource params = new MapSqlParameterSource()
+    // .addValue("query", TermUtils.segmentStr(query))
+    // .addValue("topK", topK)
+    // .addValue("userId", userId)
+    // .addValue("includeGlobal", includeGlobal)
+    // .addValue("scoreThreshold", threshold);
+    //
+    // return namedJdbcTemplate.query(sql, params, this::mapScoredDocument);
+    // }
+
+    //
+    // /**
+    // * 带高亮的搜索
+    // */
+    // public List<HighlightedResult> searchWithHighlight(String query, int topK) {
+    // String sql = String.format("""
+    // WITH query AS (
+    // SELECT websearch_to_tsquery('%s', :query) AS q
+    // )
+    // SELECT
+    // d.id, d.content, d.title, d.category, d.feed_title, d.tags, d.summary,
+    // d.metadata,
+    // ts_rank_cd(d.tsv, query.q, 32) AS score,
+    // ts_headline('%s', d.content, query.q, 'MaxWords=50,MinWords=15') AS headline
+    // FROM %s d
+    // CROSS JOIN query
+    // WHERE query.q @@ d.tsv
+    // ORDER BY score DESC
+    // LIMIT :topK
+    // """, textSearchConfig, textSearchConfig, tableName);
+    //
+    // return namedJdbcTemplate.query(sql,
+    // new MapSqlParameterSource("query", query).addValue("topK", topK),
+    // this::mapHighlightedResult);
+    // }
 
     /**
      * 手动更新 TSVector
@@ -265,15 +401,15 @@ public class PgTextSearchStore implements TextSearchStore {
     @Transactional
     public void updateTSVector(Long id, Map<String, String> fields) {
         String sql = String.format("""
-                        UPDATE %s SET tsv =
-                            setweight(to_tsvector('%s', COALESCE(:title, '')), 'A') ||
-                            setweight(to_tsvector('%s', COALESCE(:category, '')), 'A') ||
-                            setweight(to_tsvector('%s', COALESCE(:feedTitle, '')), 'A') ||
-                            setweight(to_tsvector('%s', COALESCE(:tags, '')), 'B') ||
-                            setweight(to_tsvector('%s', COALESCE(:summary, '')), 'C') ||
-                            setweight(to_tsvector('%s', COALESCE(:content, '')), 'C')
-                        WHERE id = :id
-                        """, tableName, textSearchConfig, textSearchConfig, textSearchConfig,
+                UPDATE %s SET tsv =
+                    setweight(to_tsvector('%s', COALESCE(:title, '')), 'A') ||
+                    setweight(to_tsvector('%s', COALESCE(:category, '')), 'A') ||
+                    setweight(to_tsvector('%s', COALESCE(:feedTitle, '')), 'A') ||
+                    setweight(to_tsvector('%s', COALESCE(:tags, '')), 'B') ||
+                    setweight(to_tsvector('%s', COALESCE(:summary, '')), 'C') ||
+                    setweight(to_tsvector('%s', COALESCE(:content, '')), 'C')
+                WHERE id = :id
+                """, tableName, textSearchConfig, textSearchConfig, textSearchConfig,
                 textSearchConfig, textSearchConfig, textSearchConfig);
 
         MapSqlParameterSource params = new MapSqlParameterSource("id", id);
@@ -287,14 +423,14 @@ public class PgTextSearchStore implements TextSearchStore {
     @Transactional
     public int rebuildAllTSVectors() {
         return jdbcTemplate.update(String.format("""
-                        UPDATE %s SET tsv =
-                            setweight(to_tsvector('%s', COALESCE(title, '')), 'A') ||
-                            setweight(to_tsvector('%s', COALESCE(category, '')), 'A') ||
-                            setweight(to_tsvector('%s', COALESCE(feed_title, '')), 'A') ||
-                            setweight(to_tsvector('%s', COALESCE(tags, '')), 'B') ||
-                            setweight(to_tsvector('%s', COALESCE(summary, '')), 'C') ||
-                            setweight(to_tsvector('%s', COALESCE(content, '')), 'C')
-                        """, tableName, textSearchConfig, textSearchConfig, textSearchConfig,
+                UPDATE %s SET tsv =
+                    setweight(to_tsvector('%s', COALESCE(title, '')), 'A') ||
+                    setweight(to_tsvector('%s', COALESCE(category, '')), 'A') ||
+                    setweight(to_tsvector('%s', COALESCE(feed_title, '')), 'A') ||
+                    setweight(to_tsvector('%s', COALESCE(tags, '')), 'B') ||
+                    setweight(to_tsvector('%s', COALESCE(summary, '')), 'C') ||
+                    setweight(to_tsvector('%s', COALESCE(content, '')), 'C')
+                """, tableName, textSearchConfig, textSearchConfig, textSearchConfig,
                 textSearchConfig, textSearchConfig, textSearchConfig));
     }
 
@@ -303,7 +439,7 @@ public class PgTextSearchStore implements TextSearchStore {
      */
     public SearchStats getStats() {
         String sql = String.format("""
-                SELECT 
+                SELECT
                     COUNT(*) as total,
                     AVG(LENGTH(content)) as avg_length,
                     SUM(pg_column_size(tsv)) as index_size,
@@ -311,14 +447,11 @@ public class PgTextSearchStore implements TextSearchStore {
                 FROM %s
                 """, tableName);
 
-        return jdbcTemplate.queryForObject(sql, (rs, rowNum) ->
-                new SearchStats(
-                        rs.getLong("total"),
-                        rs.getDouble("avg_length"),
-                        rs.getLong("index_size"),
-                        rs.getTimestamp("last_updated").toLocalDateTime()
-                )
-        );
+        return jdbcTemplate.queryForObject(sql, (rs, rowNum) -> new SearchStats(
+                rs.getLong("total"),
+                rs.getDouble("avg_length"),
+                rs.getLong("index_size"),
+                rs.getTimestamp("last_updated").toLocalDateTime()));
     }
 
     private String getMetadataString(Document doc, String key) {
@@ -330,6 +463,17 @@ public class PgTextSearchStore implements TextSearchStore {
             return "";
         }
         return TermUtils.segmentStr(value.toString());
+    }
+
+    private Instant getMetadataInstant(Document doc, String key) {
+        if (doc.metadata() == null || !doc.metadata().containsKey(key)) {
+            return Instant.now();
+        }
+        Object value = doc.metadata().get(key);
+        if (value == null) {
+            return Instant.now();
+        }
+        return Instant.ofEpochSecond((Long) value);
     }
 
     private String truncate(String value, int maxLength) {
@@ -345,13 +489,14 @@ public class PgTextSearchStore implements TextSearchStore {
         return new ScoredDocument(mapDocument(rs), rs.getDouble("score"));
     }
 
-//    private HighlightedResult mapHighlightedResult(ResultSet rs, int rowNum) throws SQLException {
-//        return new HighlightedResult(
-//                mapDocument(rs),
-//                rs.getDouble("score"),
-//                rs.getString("headline")
-//        );
-//    }
+    // private HighlightedResult mapHighlightedResult(ResultSet rs, int rowNum)
+    // throws SQLException {
+    // return new HighlightedResult(
+    // mapDocument(rs),
+    // rs.getDouble("score"),
+    // rs.getString("headline")
+    // );
+    // }
 
     private Document mapDocument(ResultSet rs) throws SQLException {
         Map<String, Object> metadata = fromJson(rs.getString("metadata"));
@@ -368,7 +513,8 @@ public class PgTextSearchStore implements TextSearchStore {
     }
 
     private Map<String, Object> fromJson(String json) {
-        if (json == null || json.isBlank()) return Map.of();
+        if (json == null || json.isBlank())
+            return Map.of();
         try {
             return objectMapper.readValue(json, Map.class);
         } catch (JsonProcessingException e) {

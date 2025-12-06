@@ -10,6 +10,7 @@ import java.util.Objects;
  */
 public record RecallResponse(List<ItemCandidate> items,
                              Map<StrategyId, List<ItemCandidate>> channelResults,
+                             UserContext userContext,
                              Duration latency,
                              Map<String, Object> debugInfo) {
 
@@ -21,7 +22,7 @@ public record RecallResponse(List<ItemCandidate> items,
     }
 
     public static RecallResponse empty() {
-        return new RecallResponse(List.of(), Map.of(), Duration.ZERO, Map.of());
+        return new RecallResponse(List.of(), Map.of(), null, Duration.ZERO, Map.of());
     }
 
     public RecallResponse withDebug(Map<String, Object> extra) {
@@ -30,6 +31,6 @@ public record RecallResponse(List<ItemCandidate> items,
         }
         Map<String, Object> merged = new java.util.HashMap<>(debugInfo);
         merged.putAll(extra);
-        return new RecallResponse(items, channelResults, latency, Map.copyOf(merged));
+        return new RecallResponse(items, channelResults, userContext, latency, Map.copyOf(merged));
     }
 }

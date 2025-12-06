@@ -162,17 +162,7 @@ public class UserEmbeddingService {
      * 处理 Long 到 Integer 的安全转换
      */
     private Map<Long, Article> queryArticles(Set<Long> articleIds) {
-        List<Integer> articleIdInts = articleIds.stream()
-                .filter(id -> id <= Integer.MAX_VALUE && id >= Integer.MIN_VALUE)
-                .map(Long::intValue)
-                .toList();
-
-        if (articleIdInts.size() < articleIds.size()) {
-            log.warn("Some article IDs are out of Integer range: {} total, {} valid",
-                    articleIds.size(), articleIdInts.size());
-        }
-
-        return articleRepository.findAllById(articleIdInts).stream()
+        return articleRepository.findAllById(articleIds).stream()
                 .collect(Collectors.toMap(Article::getId, Function.identity()));
     }
 

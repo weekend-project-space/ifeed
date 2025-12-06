@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.bitmagic.ifeed.application.recommendation.recall.spi.SequenceStore;
 import org.bitmagic.ifeed.domain.document.UserBehaviorDocument;
+import org.bitmagic.ifeed.domain.record.ArticleTitle;
 import org.bitmagic.ifeed.infrastructure.recall.data.UserBehaviorDataAccessor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -95,7 +96,7 @@ public class MongoUserSequenceStore implements SequenceStore {
 
         // 【关键步骤】批量映射 UUID → Long (数据库主键)
         // 这一步是必需的，因为 UserInteraction 需要 Long articleId
-        Map<UUID, Long> idMapping = dataAccessor.batchMapArticleIds(articleIds);
+        Map<UUID, ArticleTitle> idMapping = dataAccessor.batchMapArticleIds(articleIds);
 
         if (idMapping.isEmpty()) {
             log.warn("No article ID mappings found for user {} with {} UUIDs",
@@ -120,15 +121,15 @@ public class MongoUserSequenceStore implements SequenceStore {
     /**
      * 构建用户交互列表
      *
-     * @param refs 已排序的文章引用列表
-     * @param idMapping UUID到数据库ID的映射（必需）
+     * @param refs              已排序的文章引用列表
+     * @param idMapping         UUID到数据库ID的映射（必需）
      * @param interactionCounts 互动次数映射
-     * @param limit 返回数量限制
+     * @param limit             返回数量限制
      * @return 用户交互列表
      */
     private List<UserInteraction> buildUserInteractions(
             List<UserBehaviorDocument.ArticleRef> refs,
-            Map<UUID, Long> idMapping,
+            Map<UUID, ArticleTitle> idMapping,
             Map<String, Long> interactionCounts,
             int limit) {
 
@@ -145,8 +146,8 @@ public class MongoUserSequenceStore implements SequenceStore {
             }
 
             // 【关键】通过 idMapping 获取数据库主键
-            Long dbArticleId = idMapping.get(uuid);
-            if (dbArticleId == null) {
+            ArticleTitle dbArticle = idMapping.get(uuid);
+            if (dbArticle == null) {
                 // UUID 在数据库中不存在（可能已删除）
                 continue;
             }
@@ -171,7 +172,7 @@ public class MongoUserSequenceStore implements SequenceStore {
             Instant timestamp = ref.getTimestamp();
 
             // 创建 UserInteraction（需要 Long articleId）
-            results.add(new UserInteraction(dbArticleId, duration, weight, timestamp));
+            results.add(new UserInteraction(dbArticle.id(), dbArticle.title(), duration, weight, timestamp));
             index++;
 
             if (results.size() >= limit) {
@@ -184,17 +185,17 @@ public class MongoUserSequenceStore implements SequenceStore {
 
     /**
      * 计算互动权重
-     *
+     * <p>
      * 支持两种策略：
      * 1. 对数衰减：适合互动次数差异大的场景，防止极端值主导
-     *    - 1次互动 → weight ≈ 0.069 (log(2) * 0.1)
-     *    - 10次互动 → weight ≈ 0.240 (log(11) * 0.1)
-     *    - 100次互动 → weight ≈ 0.461 (log(101) * 0.1)
-     *
+     * - 1次互动 → weight ≈ 0.069 (log(2) * 0.1)
+     * - 10次互动 → weight ≈ 0.240 (log(11) * 0.1)
+     * - 100次互动 → weight ≈ 0.461 (log(101) * 0.1)
+     * <p>
      * 2. 线性权重：适合互动次数分布均匀的场景
-     *    - 1次互动 → weight = 0.1
-     *    - 10次互动 → weight = 1.0
-     *    - 100次互动 → weight = 10.0
+     * - 1次互动 → weight = 0.1
+     * - 10次互动 → weight = 1.0
+     * - 100次互动 → weight = 10.0
      *
      * @param interactionCount 互动次数
      * @return 互动权重

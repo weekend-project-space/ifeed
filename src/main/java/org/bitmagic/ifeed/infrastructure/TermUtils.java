@@ -33,7 +33,6 @@ public class TermUtils {
 
 
     public static List<String> keywords(String content, int topK) {
-
         return extract(content, topK);
     }
 
@@ -51,12 +50,12 @@ public class TermUtils {
      * @param text 待分词文本
      */
     private static List<String> segment(String text) {
-        List<String> tokens = segmenter.sentenceProcess(text);
-        return tokens;
+//        List<SegToken> tokens = ;
+        return segmenter.sentenceProcess(text); //tokens.stream().map(segToken -> segToken.word).toList();
     }
 
 
-    public static List<String> extract(String text, int topK) {
+    private static List<String> extract(String text, int topK) {
 
         // 1. 分词
         List<String> words = segmenter.process(text, JiebaSegmenter.SegMode.SEARCH)
@@ -84,4 +83,5 @@ public class TermUtils {
                 .map(Map.Entry::getKey)
                 .toList();
     }
+
 }

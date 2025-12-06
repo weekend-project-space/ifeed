@@ -1,12 +1,12 @@
 package org.bitmagic.ifeed.application.recommendation;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.bitmagic.ifeed.application.recommendation.recall.core.RecallEngine;
 import org.bitmagic.ifeed.application.recommendation.recall.model.ItemCandidate;
 import org.bitmagic.ifeed.application.recommendation.recall.model.RecallRequest;
+import org.bitmagic.ifeed.application.recommendation.recall.model.RecallResponse;
+import org.bitmagic.ifeed.application.recommendation.reranker.ReRankerService;
 import org.bitmagic.ifeed.domain.service.ArticleService;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
@@ -28,24 +28,28 @@ import java.util.stream.Collectors;
 @Service
 public class RecallRecommendationService implements RecommendationService {
     private final RecallEngine recallEngine;
+    private final ReRankerService reRankerService;
     private final ArticleService articleService;
     private final Map<Integer, List<ItemCandidate>> user2Items = new ConcurrentHashMap<>();
 
     @Override
     public Page<RecResponse> recommend(RecRequest request, int page, int size) {
         long start = System.currentTimeMillis();
-
         int safePage = Math.max(page, 0);
         int safeSize = size <= 0 ? 10 : size;
-        List<ItemCandidate> cachedIds = user2Items.get(request.userId());
-        if (safePage == 0 || cachedIds == null) {
+        List<ItemCandidate> cachedItems = user2Items.get(request.userId());
+        if (safePage == 0 || cachedItems == null) {
             RecallRequest recallRequest = new RecallRequest(request.userId(), request.scene(), safeSize * 6, Collections.emptyMap(), false, Instant.now());
-            cachedIds = recallEngine.recall(recallRequest).items();
-            user2Items.put(request.userId(), cachedIds);
+            RecallResponse recalled = recallEngine.recall(recallRequest);
+            cachedItems = reRankerService.reranker(recalled.userContext(), recalled.items());
+            cachedItems.forEach(item -> {
+                log.debug("{} score: {}",item.itemId(), item.score());
+            });
+            user2Items.put(request.userId(), cachedItems);
         }
-        Map<Long, ItemCandidate> id2Source = cachedIds.stream().collect(Collectors.toMap(ItemCandidate::itemId, Function.identity()));
+        Map<Long, ItemCandidate> id2Source = cachedItems.stream().collect(Collectors.toMap(ItemCandidate::itemId, Function.identity()));
         log.info("recall:{}ms", System.currentTimeMillis() - start);
-        return articleService.findIds2Article(cachedIds.stream().map(ItemCandidate::itemId).toList(), safePage, safeSize).map(item -> {
+        return articleService.findIds2Article(cachedItems.stream().map(ItemCandidate::itemId).toList(), safePage, safeSize).map(item -> {
             ItemCandidate candidate = id2Source.get(item.articleId());
             return new RecResponse(
                     item.id(),
