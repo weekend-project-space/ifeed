@@ -1,9 +1,9 @@
 package org.bitmagic.ifeed.domain.repository;
 
-import jakarta.persistence.TemporalType;
 import org.bitmagic.ifeed.domain.model.Article;
 import org.bitmagic.ifeed.domain.model.Feed;
-import org.bitmagic.ifeed.domain.record.ArticleIdPair;
+import org.bitmagic.ifeed.domain.record.ArticleContent;
+import org.bitmagic.ifeed.domain.record.ArticleTitle;
 import org.bitmagic.ifeed.domain.record.ArticleSummary;
 import org.bitmagic.ifeed.domain.record.ArticleSummaryView;
 import org.springframework.data.domain.Page;
@@ -11,17 +11,15 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.jpa.repository.Temporal;
 import org.springframework.data.repository.query.Param;
 
 import java.time.Instant;
-import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-public interface ArticleRepository extends JpaRepository<Article, Integer>, JpaSpecificationExecutor<Article> {
+public interface ArticleRepository extends JpaRepository<Article, Long>, JpaSpecificationExecutor<Article> {
 
     boolean existsByFeedAndLink(Feed feed, String link);
 
@@ -69,11 +67,11 @@ public interface ArticleRepository extends JpaRepository<Article, Integer>, JpaS
               ))
             """)
     Page<ArticleSummaryView> findArticleSummaries(@Param("feedUid") UUID feedUid,
-            @Param("tagPattern") String tagPattern,
-            @Param("category") String category,
-            @Param("ownerId") Integer ownerId,
-            @Param("start") Instant start,
-            Pageable pageable);
+                                                  @Param("tagPattern") String tagPattern,
+                                                  @Param("category") String category,
+                                                  @Param("ownerId") Integer ownerId,
+                                                  @Param("start") Instant start,
+                                                  Pageable pageable);
 
     @Query(value = """
             select new org.bitmagic.ifeed.domain.record.ArticleSummaryView(
@@ -119,8 +117,8 @@ public interface ArticleRepository extends JpaRepository<Article, Integer>, JpaS
               ))
             """)
     Page<ArticleSummaryView> searchArticleSummaries(@Param("term") String term,
-            @Param("ownerId") Integer ownerId,
-            Pageable pageable);
+                                                    @Param("ownerId") Integer ownerId,
+                                                    Pageable pageable);
 
     @Query(value = """
             select new org.bitmagic.ifeed.domain.record.ArticleSummary(
@@ -160,8 +158,8 @@ public interface ArticleRepository extends JpaRepository<Article, Integer>, JpaS
             order by cnt desc
             """)
     List<Object[]> countCategoriesForOwnerWithin(@Param("ownerId") Integer ownerId,
-            @Param("fromTs") Instant fromTs,
-            @Param("toTs") Instant toTs);
+                                                 @Param("fromTs") Instant fromTs,
+                                                 @Param("toTs") Instant toTs);
 
     /**
      * Fetch raw tag JSON strings for later in-memory aggregation, for articles
@@ -178,8 +176,8 @@ public interface ArticleRepository extends JpaRepository<Article, Integer>, JpaS
               and (coalesce(a.tags, '') <> '')
             """)
     List<String> findTagJsonForOwnerWithin(@Param("ownerId") Integer ownerId,
-            @Param("fromTs") Instant fromTs,
-            @Param("toTs") Instant toTs);
+                                           @Param("fromTs") Instant fromTs,
+                                           @Param("toTs") Instant toTs);
 
     @Query(value = """
             select new org.bitmagic.ifeed.domain.record.ArticleSummaryView(
@@ -199,10 +197,22 @@ public interface ArticleRepository extends JpaRepository<Article, Integer>, JpaS
             """)
     List<ArticleSummaryView> findArticleSummariesByIds(@Param("ids") Collection<Long> ids);
 
+
+    @Query(value = """
+            select new org.bitmagic.ifeed.domain.record.ArticleContent(
+                a.id,
+                a.content,
+                a.publishedAt)
+            from Article a
+            left join a.feed f
+            where a.id in (:ids)
+            """)
+    List<ArticleContent> findArticleContentByIds(@Param("ids") Collection<Long> ids);
+
     @Query("select a.id, a.publishedAt from Article a where a.id in (:ids)")
     List<Object[]> findPublishedAtByIdIn(@Param("ids") Collection<Long> ids);
 
-    @Query("select new org.bitmagic.ifeed.domain.record.ArticleIdPair(a.uid, a.id) from Article a where a.uid in (:ids)")
-    List<ArticleIdPair> findIdByUIdIn(@Param("ids") Collection<UUID> ids);
+    @Query("select new org.bitmagic.ifeed.domain.record.ArticleTitle(a.uid, a.id, a.title) from Article a where a.uid in (:ids)")
+    List<ArticleTitle> findIdByUIdIn(@Param("ids") Collection<UUID> ids);
 
 }

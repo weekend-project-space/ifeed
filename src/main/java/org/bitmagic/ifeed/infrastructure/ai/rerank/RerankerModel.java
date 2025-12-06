@@ -35,4 +35,15 @@ public interface RerankerModel extends Model<RerankRequest, RerankResponse> {
                 .withOptions(options);
         return call(request).results();
     }
+
+    /**
+     * 便捷方法：返回得分
+     */
+    default double documentScore(String query, String document, RerankOptions options) {
+        RerankRequest request = RerankRequest.create(query, List.of(document))
+                .withOptions(options);
+        return call(request).results().stream()
+                .map(RerankResult::getOutput)
+                .findFirst().orElse(0D);
+    }
 }

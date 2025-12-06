@@ -24,10 +24,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 
@@ -70,7 +67,7 @@ public class FeedIngestionScheduler {
         long start = System.currentTimeMillis();
 
         var feedIds = ingestionService.getFeedIds(
-                feed -> LocalDateTime.now().getHour() == 0 || feed.getFailureCount() < 7
+                feed -> LocalDateTime.now().getHour() == 0 || feed.getFailureCount() < 12
         );
 
         if (feedIds.isEmpty()) {
@@ -81,16 +78,21 @@ public class FeedIngestionScheduler {
         log.info("Starting scheduled ingestion for {} feeds", feedIds.size());
 
         AtomicInteger success = new AtomicInteger(0);
+        AtomicInteger fetchSuccess = new AtomicInteger(0);
         AtomicInteger failed = new AtomicInteger(0);
         CountDownLatch latch = new CountDownLatch(feedIds.size());
 
         // 构造任务列表
         List<Runnable> tasks = feedIds.stream()
-                .map(feedId -> (Runnable) () -> ingestionService.ingestFeed(feedId))
+                .map(feedId -> (Runnable) () -> {
+                    if (ingestionService.ingestFeed(feedId).orElse(false)) {
+                        fetchSuccess.incrementAndGet();
+                    }
+                })
                 .toList();
 
         // 封装执行 + 超时控制
-        TaskUtils.executeWithTimeout(executor, tasks, feedIds.size() / properties.getThreadPoolSize(), TimeUnit.MINUTES, latch, success, failed);
+        List<Future<?>> executed = TaskUtils.executeWithTimeout(executor, tasks, feedIds.size() / properties.getThreadPoolSize(), TimeUnit.MINUTES, latch, success, failed);
 
         // 等待完成（稍长于超时，防止竞争）
         try {
@@ -102,7 +104,7 @@ public class FeedIngestionScheduler {
         evictItemCache();
         long duration = (System.currentTimeMillis() - start) / 1000;
         log.info("Feed refresh completed: {} success, {} failed, {}s",
-                success.get(), failed.get(), duration);
+                fetchSuccess.get(), feedIds.size() - fetchSuccess.get(), duration);
         refreshMixFeeds();
     }
 

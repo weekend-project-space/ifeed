@@ -102,6 +102,16 @@ app:
       freshness-time-weight: 0.3
       freshness-lambda: 0.5
       similarity-threshold: 0.3
+  # 召回
+  recall:
+    preference:
+      read-window-days: 30
+      collection-window-days: 90
+      lookback: 200
+      collection-bonus: 2.0
+      min-total-score: 0.1
+      extract-keywords: true
+      extract-entities: true
   # OAuth 集成
   oauth:
     linux-do:
