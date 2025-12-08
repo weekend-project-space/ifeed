@@ -277,7 +277,7 @@ const errorMessage = computed(() => localError.value || error.value || '');
 
 /* 输入框样式 - 圆角胶囊形 */
 .input-field {
-  @apply block w-full rounded-full border border-outline/30 bg-surface px-5 py-3 text-[15px] text-text placeholder:text-text-muted/60 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/20 transition-all;
+  @apply block w-full rounded-full border border-outline/30 bg-surface px-5 py-3 text-[15px] text-text placeholder:text-text-muted/60 focus:border-secondary focus:outline-none focus:ring-1 focus:ring-secondary/20 transition-all;
 }
 
 /* 提交按钮样式 - 圆角胶囊形 */

@@ -234,7 +234,7 @@
                 :to="{ name: 'home' }"
                 class="flex items-center gap-2 text-base font-semibold"
                 @click="mobileNavOpen = false">
-              <img class="h-9 w-9 rounded-2xl" src="https://ifeed.cc/logo.svg" alt="iFeed"/>
+              <img class="h-9 w-9 rounded-2xl" src="/logo.svg" alt="iFeed"/>
               <span>IFeed</span>
             </RouterLink>
             <button
@@ -326,7 +326,7 @@
         ]">
         <div class="flex h-full flex-col overflow-hidden py-4">
 
-          <RouterLink :to="{ name: 'home' }" class="flex items-center gap-2 text-lg font-semibold px-4 pt-1 pb-5"
+          <RouterLink :to="{ name: 'home' }" class="flex items-center gap-2 text-lg font-semibold px-4 pt-2 pb-5"
                       :class=" isSidebarCollapsed ? 'justify-center px-2' : 'gap-3 px-3'">
             <img class="h-7 w-7 rounded-2xl" src="/logo.svg" alt="iFeed"/>
             <span v-if="!isSidebarCollapsed">IFeed</span>
