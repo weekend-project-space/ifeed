@@ -65,14 +65,16 @@
               #{{ tag }}
             </button>
           </div>
+          <Teleport to="#header-action">
           <button
-              class="ml-auto px-4 py-1.5 text-sm font-medium rounded-full transition-colors"
+              class="ml-auto px-4 py-1.5 h-10 text-sm font-medium rounded-full transition-colors"
               :class="article.collected
               ? 'bg-secondary/10 text-secondary hover:bg-secondary/20'
               : 'bg-secondary/5 text-secondary hover:bg-secondary/10'"
               @click="toggleCollection">
             {{ article.collected ? '已收藏' : '收藏' }}
           </button>
+          </Teleport>
         </div>
       </header>
 
@@ -441,8 +443,10 @@ const toggleCollection = async () => {
       collected: article.value.collected,
     });
 
-    // Refresh article to get updated collection status
-    await articlesStore.fetchArticleById(props.id);
+    // Manually toggle local state instead of re-fetching
+    if (articlesStore.currentArticle) {
+      articlesStore.currentArticle.collected = !articlesStore.currentArticle.collected;
+    }
   } catch (err) {
     console.warn('收藏操作失败', err);
   }

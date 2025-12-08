@@ -3,7 +3,7 @@
     <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
       上传 OPML 文件批量导入订阅，文件大小建议不超过 2 MB
     </p>
-    <div class=" bg-white dark:bg-gray-800  dark:border-gray-700  mb-3 hover:shadow-sm transition-all space-y-5">
+    <div class=" bg-white dark:bg-gray-800  dark:border-gray-700  mb-3  transition-all space-y-5 rounded-xl px-5 py-5">
       <div class="flex items-center gap-4">
         <div class="w-10 h-10 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center flex-shrink-0">
           <svg class="w-5 h-5 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">

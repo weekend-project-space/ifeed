@@ -211,8 +211,6 @@ public class MixFeedService {
      */
     @Transactional(readOnly = true)
     public long countArticles(MixFeed mixFeed) {
-        MixFeedFilterConfig config = deserializeFilterConfig(mixFeed.getFilterConfig());
-
         // TODO: Implement count using similar filter logic
         // For now, return 0 as placeholder
         return 0;

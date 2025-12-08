@@ -17,8 +17,8 @@ module.exports = {
                     container: colorVar('--md-surface-container')
                 },
                 secondary: {
-                    DEFAULT: colorVar('--md-text'),
-                    foreground: colorVar('--md-on-primary'),
+                    DEFAULT: colorVar('--md-secondary'),
+                    foreground: colorVar('--md-on-secondary'),
                 },
                 outline: colorVar('--md-outline'),
                 text: {

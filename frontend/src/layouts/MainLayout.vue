@@ -1,10 +1,11 @@
 <template>
-  <div class="min-h-screen bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100 transition-colors duration-300"
+  <div class="min-h-screen text-gray-900 dark:text-gray-100 transition-colors duration-300"
        :class="{ 'overflow-hidden': mobileNavOpen }">
 
     <!-- Header -->
-    <header :class="isSidebarCollapsed ? 'lg:pl-20' : 'lg:pl-72'" class="sticky top-0 z-30  bg-white/95 dark:bg-gray-950/95 backdrop-blur-sm">
-      <div class="flex items-center gap-3 px-4 py-3 lg:px-5">
+    <header :class="isSidebarCollapsed ? 'lg:pl-20' : 'lg:pl-72'"
+            class="sticky top-0 z-30  bg-white/95 dark:bg-surface/95 backdrop-blur-sm">
+      <div class="flex items-center  justify-between gap-3 px-4 py-3 lg:px-5">
         <!-- Logo & Menu Button -->
         <div class="flex items-center gap-3">
           <button
@@ -77,107 +78,114 @@
           </div>
         </div>
 
-        <!-- Actions -->
-        <div class="flex items-center gap-2">
-          <!-- Theme Toggle -->
-          <button
-              type="button"
-              class="flex h-10 w-10 items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition"
-              @click="toggleTheme">
-            <svg v-if="isDark" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round"
-                    d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z"/>
-            </svg>
-            <svg v-else class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round"
-                    d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z"/>
-            </svg>
-          </button>
+        <div class="min-w-[12rem] flex  justify-end">
+          <div class="flex items-center gap-2 " id="header-action">
 
-          <!-- Add Subscription Button -->
-          <RouterLink
-              :to="{ name: 'subscriptions' }"
-              class="hidden sm:flex items-center gap-2 h-10 px-4 rounded-full bg-secondary/5 text-secondary hover:bg-secondary/20 text-sm font-medium transition">
-            <span class="text-lg leading-none">＋</span>
-            添加订阅
-          </RouterLink>
+          </div>
+          <!-- Actions -->
+          <div class="flex items-center gap-2" v-show="route.name!='article-detail'">
+            <!-- Theme Toggle -->
+            <button
+                type="button"
+                class="flex h-10 w-10 items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition"
+                @click="toggleTheme">
+              <svg v-if="isDark" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.5"
+                   viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                      d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z"/>
+              </svg>
+              <svg v-else class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                      d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z"/>
+              </svg>
+            </button>
 
-          <RouterLink
-              :to="{ name: 'subscriptions' }"
-              class="flex sm:hidden h-10 w-10 items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition">
-            <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
-            </svg>
-          </RouterLink>
 
-          <!-- User Menu (YouTube Style - Pure CSS Hover) -->
-          <div class="relative group hidden md:block">
-            <div
-                class="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-semibold cursor-pointer group-hover:ring-2 group-hover:ring-primary/30 transition-all">
-              {{ userInitials }}
-            </div>
+            <!-- Add Subscription Button -->
+            <RouterLink
+                :to="{ name: 'subscriptions' }"
+                class="hidden sm:flex items-center gap-2 h-10 px-4 rounded-full bg-secondary/5 text-secondary hover:bg-secondary/20 text-sm font-medium transition">
+              <span class="text-lg leading-none">＋</span>
+              订阅
+            </RouterLink>
 
-            <!-- Dropdown Menu -->
-            <div
-                class="absolute right-0 mt-2 w-64 origin-top-right rounded-xl bg-white dark:bg-gray-900 shadow-lg ring-1 ring-black ring-opacity-5 overflow-hidden z-50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 transform scale-95 group-hover:scale-100">
-              <!-- User Info Section -->
-              <div class="px-4 py-3 border-b border-gray-200 dark:border-gray-800">
-                <div class="flex items-center gap-3">
-                  <div
-                      class="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-semibold">
-                    {{ userInitials }}
-                  </div>
-                  <div class="flex-1 min-w-0">
-                    <p class="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">
-                      {{ user?.username ?? '访客' }}
-                    </p>
-                    <p class="text-xs text-gray-500 dark:text-gray-400 truncate">
-                      {{ user?.email ?? '' }}
-                    </p>
+            <RouterLink
+                :to="{ name: 'subscriptions' }"
+                class="flex sm:hidden h-10 w-10 items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition">
+              <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
+              </svg>
+            </RouterLink>
+            <!-- User Menu (YouTube Style - Pure CSS Hover) -->
+            <div class="relative group hidden md:block">
+              <div
+                  class="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-semibold cursor-pointer group-hover:ring-2 group-hover:ring-primary/30 transition-all">
+                {{ userInitials }}
+              </div>
+
+              <!-- Dropdown Menu -->
+              <div
+                  class="absolute right-0 mt-2 w-64 origin-top-right rounded-xl bg-white dark:bg-gray-900 shadow-lg ring-1 ring-black ring-opacity-5 overflow-hidden z-50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 transform scale-95 group-hover:scale-100">
+                <!-- User Info Section -->
+                <div class="px-4 py-3 border-b border-gray-200 dark:border-gray-800">
+                  <div class="flex items-center gap-3">
+                    <div
+                        class="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-semibold">
+                      {{ userInitials }}
+                    </div>
+                    <div class="flex-1 min-w-0">
+                      <p class="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">
+                        {{ user?.username ?? '访客' }}
+                      </p>
+                      <p class="text-xs text-gray-500 dark:text-gray-400 truncate">
+                        {{ user?.email ?? '' }}
+                      </p>
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              <!-- Menu Items -->
-              <div class="py-1">
-                <!--                <RouterLink-->
-                <!--                    to="/profile"-->
-                <!--                    class="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition">-->
-                <!--                  <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">-->
-                <!--                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />-->
-                <!--                  </svg>-->
-                <!--                  个人资料-->
-                <!--                </RouterLink>-->
+                <!-- Menu Items -->
+                <div class="py-1">
+                  <!--                <RouterLink-->
+                  <!--                    to="/profile"-->
+                  <!--                    class="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition">-->
+                  <!--                  <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">-->
+                  <!--                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />-->
+                  <!--                  </svg>-->
+                  <!--                  个人资料-->
+                  <!--                </RouterLink>-->
 
-                <RouterLink
-                    to="/feeds/channels"
-                    class="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition">
-                  <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round"
-                          d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 010 .255c-.007.378.138.75.43.99l1.005.828c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 010-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.281z"/>
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                  </svg>
-                  管理订阅
-                </RouterLink>
-              </div>
+                  <RouterLink
+                      to="/feeds/channels"
+                      class="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition">
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 010 .255c-.007.378.138.75.43.99l1.005.828c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 010-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.281z"/>
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    </svg>
+                    管理订阅
+                  </RouterLink>
+                </div>
 
-              <!-- Logout Section -->
-              <div class="border-t border-gray-200 dark:border-gray-800 py-1">
-                <button
-                    type="button"
-                    class="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 dark:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 transition"
-                    @click="handleLogout">
-                  <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round"
-                          d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75"/>
-                  </svg>
-                  退出登录
-                </button>
+                <!-- Logout Section -->
+                <div class="border-t border-gray-200 dark:border-gray-800 py-1">
+                  <button
+                      type="button"
+                      class="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 dark:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 transition"
+                      @click="handleLogout">
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75"/>
+                    </svg>
+                    退出登录
+                  </button>
+                </div>
               </div>
             </div>
           </div>
         </div>
       </div>
+
 
       <!-- Search Bar (Mobile) -->
       <div class="lg:hidden px-4 pb-3">
@@ -313,17 +321,18 @@
       <!-- Desktop Sidebar -->
       <aside
           :class="[
-          'fixed left-0 top-[0px] bottom-0 z-30 hidden lg:block bg-gray-100 dark:bg-gray-950 transition-all duration-200',
+          'fixed left-0 top-[0px] bottom-0 z-30 hidden lg:block bg-gray-50 dark:bg-gray-950 transition-all duration-200',
           isSidebarCollapsed ? 'w-20' : 'w-72'
         ]">
         <div class="flex h-full flex-col overflow-hidden py-4">
 
-          <RouterLink :to="{ name: 'home' }" class="flex items-center gap-2 text-lg font-semibold px-4 pt-2 pb-5" :class=" isSidebarCollapsed ? 'justify-center px-2' : 'gap-3 px-3'">
-            <img class="h-7 w-7 rounded-2xl" src="https://ifeed.cc/logo.svg" alt="iFeed"/>
+          <RouterLink :to="{ name: 'home' }" class="flex items-center gap-2 text-lg font-semibold px-4 pt-1 pb-5"
+                      :class=" isSidebarCollapsed ? 'justify-center px-2' : 'gap-3 px-3'">
+            <img class="h-7 w-7 rounded-2xl" src="/logo.svg" alt="iFeed"/>
             <span v-if="!isSidebarCollapsed">IFeed</span>
           </RouterLink>
           <nav class="flex-1 overflow-y-auto px-2" :class="{ 'space-y-1': isSidebarCollapsed }">
-            <div v-for="(section, index) in navSections" :key="section.id" class="mb-6">
+            <div v-for="(section, index) in navSections" :key="section.id" class="mb-6" v-show="!(isSidebarCollapsed&&section?.id=='subscriptions')">
               <div
                   v-if="section.title && !isSidebarCollapsed"
                   class="px-3 mb-2 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
@@ -375,7 +384,7 @@
 
       <!-- Main Content -->
       <main
-          class="flex-1 min-w-0 min-h-[calc(100vh-5em)]  bg-surface-variant/30 px-3 pb-10 pt-5 sm:px-6 sm:pb-12 sm:pt-6">
+          class="flex-1 min-w-0 min-h-[calc(100vh-5em)]   px-3 pb-10 pt-5 sm:px-6 sm:pb-12 sm:pt-6">
         <router-view/>
       </main>
     </div>
@@ -510,11 +519,7 @@ const subscriptionNavSection = computed<NavSection>(() => {
         })();
 
     const initials =
-        label
-            .split(/\s+/)
-            .map((part) => part.charAt(0).toUpperCase())
-            .join('')
-            .slice(0, 2) || 'S';
+        Array.from(label).slice(0, 2).join('').toUpperCase() || 'F';
 
     const danger = Boolean((s.failureCount ?? 0) > 0 || s.fetchError?.trim());
 
@@ -585,7 +590,7 @@ const subscriptionNavSection = computed<NavSection>(() => {
 });
 
 const navSections = computed<NavSection[]>(() => {
-  return [...baseNavSections, subscriptionNavSection.value ,{
+  return [...baseNavSections, subscriptionNavSection.value, {
     id: 'you',
     title: '我',
     items: [

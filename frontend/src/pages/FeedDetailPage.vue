@@ -31,13 +31,21 @@
 
           <!-- Stats -->
           <div class="flex flex-wrap gap-4 text-sm text-gray-600 dark:text-gray-400">
-              <span class="flex items-center gap-1.5">
+              <span class="flex items-center gap-1.5" v-if="detail?.sources?.length ?? 0 ">
+               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+                </svg>
+                {{ detail?.sources.length ?? 0 }} 个来源
+              </span>
+            <span class="flex items-center gap-1.5" v-else>
                 <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                 </svg>
                 {{ detail?.articleCount ?? 0 }} 篇文章
               </span>
+
             <span class="flex items-center gap-1.5">
                 <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -49,15 +57,16 @@
 
           <!-- Sources (for MixFeed) -->
           <div v-if="detail?.sources && detail.sources.length > 0" class="space-y-2">
-            <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300">来源订阅 ({{ detail.sources.length }})</h3>
+            <!--            <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300">来源订阅 ({{ detail.sources.length }})</h3>-->
             <div class="flex flex-wrap gap-2">
               <span
                   v-for="sourceId in detail.sources"
                   :key="sourceId"
-                  class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 rounded-full"
+                  class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-900 rounded-full"
               >
                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/>
                 </svg>
                 {{ sourceId }}
               </span>
@@ -228,7 +237,8 @@ const channelTitle = computed(() => {
 const channelInitial = computed(() => {
   const text = channelTitle.value?.trim();
   if (!text) return 'F';
-  return text.charAt(0).toUpperCase();
+  const chars = Array.from(text);
+  return chars.slice(0, 2).join('').toUpperCase();
 });
 
 const latestUpdateText = computed(() => {
@@ -385,9 +395,9 @@ const toggleSubscription = async () => {
   }
 };
 
-const readFeed=async ()=>{
-  const canRead = subscriptionsStore.items.filter(item=>!item.isRead&&item.feedId==currentFeedId.value).length
-  if(canRead>0){
+const readFeed = async () => {
+  const canRead = subscriptionsStore.items.filter(item => !item.isRead && item.feedId == currentFeedId.value).length
+  if (canRead > 0) {
     await readFeedStore.recordFeedRead(currentFeedId.value);
     await subscriptionsStore.fetchSubscriptions();
   }

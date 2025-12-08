@@ -1,46 +1,5 @@
 <template>
   <div class="mx-auto">
-    <!-- 分类筛选 -->
-    <header class="mb-6">
-      <div class="flex items-center gap-1.5 overflow-x-auto pb-2">
-        <button
-            class="px-3 py-1 text-sm font-medium rounded-lg transition-colors whitespace-nowrap"
-            :class="!currentCategory ? 'bg-secondary text-secondary-foreground' : 'bg-secondary/5 text-secondary hover:bg-secondary/20'"
-            @click="clearCategoryFilter"
-        >
-          全部
-        </button>
-
-        <template v-if="insightsLoading">
-          <span class="text-xs text-gray-500 px-3">加载中...</span>
-        </template>
-        <template v-else>
-          <button
-              v-for="c in topCategories"
-              :key="c.category"
-              class="px-3 py-1 text-sm font-medium rounded-lg transition-colors whitespace-nowrap"
-              :class="currentCategory === c.category.toLowerCase() ? 'bg-secondary text-secondary-foreground' : 'bg-secondary/5 text-secondary hover:bg-secondary/20'"
-              @click="handleSelectCategory(c.category)"
-          >
-            {{ c.category }}
-          </button>
-          <span v-if="!topCategories.length" class="text-sm text-gray-500 px-3">暂无分类</span>
-        </template>
-      </div>
-
-      <!-- 标签筛选提示 -->
-      <div v-if="activeTag" class="mt-3">
-        <div class="inline-flex items-center gap-2 px-3 py-1 text-xs bg-secondary/10 rounded-lg border border-secondary/20">
-          <span class="text-secondary">#{{ activeTag }}</span>
-          <button
-              class="text-secondary hover:text-secondary/80 font-medium"
-              @click="clearTagFilter"
-          >
-            ✕
-          </button>
-        </div>
-      </div>
-    </header>
 
     <!-- 文章列表 -->
     <main>
@@ -65,6 +24,50 @@
           @select-tag="handleSelectTag"
           @refresh="refresh"
       >
+        <template #header>
+
+          <!-- 分类筛选 -->
+          <header class="mb-6">
+            <div class="flex items-center gap-1.5 overflow-x-auto pb-2">
+              <button
+                  class="px-3 py-1 text-sm font-medium rounded-lg transition-colors whitespace-nowrap"
+                  :class="!currentCategory ? 'bg-secondary text-secondary-foreground' : 'bg-secondary/5 text-secondary hover:bg-secondary/20'"
+                  @click="clearCategoryFilter"
+              >
+                全部
+              </button>
+
+              <template v-if="insightsLoading">
+                <span class="text-xs text-gray-500 px-3">加载中...</span>
+              </template>
+              <template v-else>
+                <button
+                    v-for="c in topCategories"
+                    :key="c.category"
+                    class="px-3 py-1 text-sm font-medium rounded-lg transition-colors whitespace-nowrap"
+                    :class="currentCategory === c.category.toLowerCase() ? 'bg-secondary text-secondary-foreground' : 'bg-secondary/5 text-secondary hover:bg-secondary/20'"
+                    @click="handleSelectCategory(c.category)"
+                >
+                  {{ c.category }}
+                </button>
+                <span v-if="!topCategories.length" class="text-sm text-gray-500 px-3">暂无分类</span>
+              </template>
+            </div>
+
+            <!-- 标签筛选提示 -->
+            <div v-if="activeTag" class="mt-3">
+              <div class="inline-flex items-center gap-2 px-3 py-1 text-xs bg-secondary/10 rounded-lg border border-secondary/20">
+                <span class="text-secondary">#{{ activeTag }}</span>
+                <button
+                    class="text-secondary hover:text-secondary/80 font-medium"
+                    @click="clearTagFilter"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+          </header>
+        </template>
         <template #action>
           <router-link class="p-2 text-sm text-primary font-medium rounded-lg transition-colors  hover:bg-surface-container" to="/feeds/channels">管理</router-link>
         </template>

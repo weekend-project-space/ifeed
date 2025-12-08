@@ -79,7 +79,7 @@
       <div v-if="currentTab === 'subscriptions'">
         <!-- Loading State -->
         <div v-if="subscriptionsStore.loading && !items.length" class="space-y-3">
-          <div v-for="i in 3" :key="i" class="flex items-start gap-4 p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg animate-pulse">
+          <div v-for="i in 3" :key="i" class="flex items-start gap-4 p-4 rounded-lg animate-pulse">
             <div class="w-14 h-14 bg-gray-200 dark:bg-gray-700 rounded-full"></div>
             <div class="flex-1 space-y-2 py-1">
               <div class="h-5 bg-gray-200 dark:bg-gray-700 rounded w-2/3"></div>

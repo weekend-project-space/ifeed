@@ -32,7 +32,7 @@
 
     <!-- Loading State -->
     <div v-if="mixFeedsStore.loading && !mixFeedsStore.myMixFeeds.length" class="space-y-3">
-      <div v-for="i in 3" :key="i" class="flex items-start gap-4 p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg animate-pulse">
+      <div v-for="i in 3" :key="i" class="flex items-start gap-4 p-4 rounded-lg animate-pulse">
         <div class="w-14 h-14 bg-gray-200 dark:bg-gray-700 rounded-full"></div>
         <div class="flex-1 space-y-2 py-1">
           <div class="h-5 bg-gray-200 dark:bg-gray-700 rounded w-2/3"></div>
@@ -115,6 +115,9 @@
           </div>
 
           <router-link :to="`/feeds/${feed.id}`" class="block">
+            <p class="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 mb-2">
+              {{ feed.description || '暂无描述' }}
+            </p>
             <div class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 mb-1.5">
               <span v-if="feed.isPublic" class="inline-flex items-center gap-1 text-xs font-medium text-secondary bg-secondary/10 dark:bg-secondary/20 px-2 py-0.5 rounded-full">
                 公开
@@ -128,9 +131,7 @@
               <span>{{ formatDate(feed.createdAt) }}</span>
             </div>
 
-            <p class="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 mb-2">
-              {{ feed.description || '暂无描述' }}
-            </p>
+
           </router-link>
         </div>
       </div>
