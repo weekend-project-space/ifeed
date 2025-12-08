@@ -61,6 +61,16 @@ public class Feed {
     @Builder.Default
     private Integer failureCount = 0;
 
+    @Column(name = "category", length = 50)
+    private String category;
+
+    @Column(name = "featured")
+    @Builder.Default
+    private Boolean featured = false;
+
+    @Column(name = "update_frequency", length = 20)
+    private String updateFrequency;
+
     @PrePersist
     void onCreate() {
         if (uid == null) {
@@ -71,6 +81,15 @@ public class Feed {
         }
         if (failureCount == null) {
             failureCount = 0;
+        }
+        if (category == null || category.isBlank()) {
+            category = "tech";
+        }
+        if (featured == null) {
+            featured = false;
+        }
+        if (updateFrequency == null || updateFrequency.isBlank()) {
+            updateFrequency = "UNKNOWN";
         }
     }
 }

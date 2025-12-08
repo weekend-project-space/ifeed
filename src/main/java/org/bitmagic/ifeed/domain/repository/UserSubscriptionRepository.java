@@ -41,4 +41,18 @@ public interface UserSubscriptionRepository
       GROUP BY s.sourceId
       """)
   List<Object[]> countActiveSubscribersByFeedIds(@Param("feedIds") List<Integer> feedIds);
+
+  // Discovery feature methods
+  List<UserSubscription> findByUserIdAndSourceTypeAndActiveTrue(Integer userId, SourceType sourceType);
+
+  @Query("""
+      SELECT s.sourceId, COUNT(s.id)
+      FROM UserSubscription s
+      WHERE s.sourceType = :sourceType
+        AND s.sourceId IN :sourceIds
+        AND s.active = true
+      GROUP BY s.sourceId
+      """)
+  List<Object[]> countBySourceTypeAndSourceIdIn(@Param("sourceType") SourceType sourceType,
+      @Param("sourceIds") List<Integer> sourceIds);
 }

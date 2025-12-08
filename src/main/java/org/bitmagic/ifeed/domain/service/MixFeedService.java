@@ -15,7 +15,6 @@ import org.bitmagic.ifeed.domain.repository.UserSubscriptionRepository;
 import org.bitmagic.ifeed.domain.spec.MixFeedSpecs;
 import org.bitmagic.ifeed.exception.ApiException;
 import org.bitmagic.ifeed.infrastructure.util.JSON;
-import org.jetbrains.annotations.NotNull;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -38,6 +37,7 @@ public class MixFeedService {
     private final ArticleRepository articleRepository;
     private final UserSubscriptionRepository userSubscriptionRepository;
     private final ObjectMapper objectMapper;
+    private final static int MAX_USER_MIX_FEEDS = 3;
 
     @Transactional
     public MixFeed create(User user, String name, String description, String icon, boolean isPublic,
@@ -45,9 +45,8 @@ public class MixFeedService {
         if (!StringUtils.hasText(name)) {
             throw new ApiException(HttpStatus.BAD_REQUEST, "MixFeed name is required");
         }
-
+        checkMixFeedCountLimit(user.getId());
         String filterConfigJson = serializeFilterConfig(filterConfig);
-
         MixFeed mixFeed = MixFeed.builder()
                 .user(user)
                 .name(name.trim())
@@ -214,6 +213,14 @@ public class MixFeedService {
         // TODO: Implement count using similar filter logic
         // For now, return 0 as placeholder
         return 0;
+    }
+
+    private void checkMixFeedCountLimit(Integer userId) {
+        long count = mixFeedRepository.count(MixFeedSpecs.toSpec(userId));
+        if (count >= MAX_USER_MIX_FEEDS) {
+            throw new ApiException(HttpStatus.BAD_REQUEST,
+                    String.format("Maximum %d MixFeeds allowed per user", MAX_USER_MIX_FEEDS));
+        }
     }
 
     private String serializeFilterConfig(MixFeedFilterConfig config) {

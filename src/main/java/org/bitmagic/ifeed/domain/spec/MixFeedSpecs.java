@@ -2,11 +2,14 @@ package org.bitmagic.ifeed.domain.spec;
 
 import jakarta.persistence.criteria.Predicate;
 import org.bitmagic.ifeed.domain.model.Article;
+import org.bitmagic.ifeed.domain.model.MixFeed;
+import org.bitmagic.ifeed.infrastructure.spec.Spec;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.data.jpa.domain.Specification;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 
@@ -57,5 +60,10 @@ public interface MixFeedSpecs {
             return cb.and(predicates.toArray(new Predicate[0]));
         };
         return spec;
+    }
+
+    static Specification<MixFeed> toSpec(Integer userId) {
+        return Spec.<MixFeed>on()
+                .and((root, query, criteriaBuilder) -> criteriaBuilder.equal(root.get("user").get("id"), userId)).build();
     }
 }
