@@ -1,9 +1,10 @@
-import {createRouter, createWebHistory} from 'vue-router';
+import { createRouter, createWebHistory } from 'vue-router';
 import AuthPage from '../pages/AuthPage.vue';
 // import HomePage from '../pages/HomePage.vue';
 import SearchPage from '../pages/SearchPage.vue';
 import MainLayout from '../layouts/MainLayout.vue';
 import SubscriptionsAddPage from '../pages/SubscriptionsAddPage.vue';
+import SubscriptionDiscoveryPage from '../pages/SubscriptionDiscoveryPage.vue';
 import CollectionsPage from '../pages/CollectionsPage.vue';
 import HistoryPage from '../pages/HistoryPage.vue';
 import ArticleDetailPage from '../pages/ArticleDetailPage.vue';
@@ -11,7 +12,7 @@ import FeedDetailPage from '../pages/FeedDetailPage.vue';
 import HomePage from '../pages/HomePage.vue';
 import FeedSubscriptionsPage from '../pages/FeedSubscriptionsPage.vue';
 import FeedChannelsPage from '../pages/SubscriptionsListPage.vue';
-import {useAuthStore} from '../stores/auth';
+import { useAuthStore } from '../stores/auth';
 
 const router = createRouter({
     history: createWebHistory(),
@@ -34,6 +35,11 @@ const router = createRouter({
                     path: 'search',
                     name: 'search',
                     component: SearchPage
+                },
+                {
+                    path: 'discover',
+                    name: 'discover',
+                    component: SubscriptionDiscoveryPage
                 },
                 {
                     path: 'subscriptions',
@@ -79,7 +85,7 @@ const router = createRouter({
 
 router.beforeEach(async (to: any) => {
     const auth = useAuthStore();
-    window.scrollTo({top: 0, behavior: 'smooth'});
+    window.scrollTo({ top: 0, behavior: 'smooth' });
     if (!auth.initialized && auth.token) {
         try {
             await auth.fetchUser();
@@ -89,11 +95,11 @@ router.beforeEach(async (to: any) => {
     }
 
     if (to.name !== 'auth' && !auth.isAuthenticated) {
-        return {name: 'auth', query: {redirect: to.fullPath}};
+        return { name: 'auth', query: { redirect: to.fullPath } };
     }
 
     if (to.name === 'auth' && auth.isAuthenticated) {
-        return {name: 'home'};
+        return { name: 'home' };
     }
 
     return true;

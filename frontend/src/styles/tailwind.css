@@ -41,7 +41,7 @@
 
 :root {
     color-scheme: light;
-    --md-primary: 104 159 56;         /* 更沉稳的猕猴桃绿 */
+    --md-primary: 14 116 144;         /* Teal 深青色 */
     --md-on-primary: 255 255 255;
     --md-secondary: 33 33 33;
     --md-on-secondary: 255 255 255;
@@ -60,8 +60,8 @@
 
 .dark {
     color-scheme: dark;
-    --md-primary: 129 199 132;        /* 柔和的浅绿 */
-    --md-on-primary: 27 94 32;
+    --md-primary: 94 234 212;         /* Teal 亮青色 */
+    --md-on-primary: 13 148 136;
     --md-secondary: 163 163 163;
     --md-on-secondary: 255 255 255;
     --md-surface: 17 17 17;

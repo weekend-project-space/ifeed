@@ -103,17 +103,21 @@
 
             <!-- Add Subscription Button -->
             <RouterLink
-                :to="{ name: 'subscriptions' }"
+                :to="{ name: 'discover' }"
                 class="hidden sm:flex items-center gap-2 h-10 px-4 rounded-full bg-secondary/5 text-secondary hover:bg-secondary/20 text-sm font-medium transition">
-              <span class="text-lg leading-none">＋</span>
-              订阅
+              <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+                <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/>
+              </svg>
+              发现
             </RouterLink>
 
             <RouterLink
-                :to="{ name: 'subscriptions' }"
+                :to="{ name: 'discover' }"
                 class="flex sm:hidden h-10 w-10 items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition">
-              <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
+              <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+                <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/>
               </svg>
             </RouterLink>
             <!-- User Menu (YouTube Style - Pure CSS Hover) -->
@@ -478,6 +482,7 @@ const baseNavSections: NavSection[] = [
           return current.name === 'home' && view !== 'shorts' && !section;
         }
       },
+
       {
         id: 'feedsSubscriptions',
         label: '订阅',
@@ -488,7 +493,7 @@ const baseNavSections: NavSection[] = [
           viewBox: '0 0 24 24'
         },
         activeMatch: (current) => current.name === 'feedsSubscriptions'
-      }
+      },
     ]
   },
 

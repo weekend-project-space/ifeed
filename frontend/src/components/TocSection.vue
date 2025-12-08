@@ -1,5 +1,5 @@
 <template>
-  <nav class="p-4 rounded-lg bg-secondary/5 border border-secondary/10">
+  <nav class="p-4 rounded-lg bg-secondary/5 border border-secondary/10 max-h-[80vh]  overflow-y-auto">
     <h2 class="text-xs font-semibold text-secondary/60  uppercase tracking-wide mb-2">
       章节
     </h2>

@@ -26,7 +26,7 @@
         <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M12 5v14M5 12h14"/>
         </svg>
-        <span>新建聚合订阅</span>
+        <span>新建订阅</span>
       </button>
     </div>
 
@@ -48,13 +48,13 @@
           <path d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
         </svg>
       </div>
-      <h2 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">没有聚合订阅</h2>
-      <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">创建聚合订阅以聚合多个来源的内容</p>
+      <h2 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">没有订阅</h2>
+      <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">创建订阅以聚合多个来源的内容</p>
       <button
           @click="openCreateModal"
           class="inline-flex items-center gap-2 px-5 py-2 text-sm font-medium text-white bg-secondary hover:bg-secondary/90 rounded-full transition-colors"
       >
-        新建聚合订阅
+        新建订阅
       </button>
     </div>
 
@@ -147,7 +147,7 @@
         <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-lg w-full max-h-[90vh] flex flex-col">
           <div class="flex items-center justify-between p-5 border-b border-gray-200 dark:border-gray-700">
             <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100">
-              {{ isEditing ? '编辑聚合订阅' : '新建聚合订阅' }}
+              {{ isEditing ? '编辑订阅' : '新建订阅' }}
             </h3>
             <button
                 @click="closeModal"
@@ -178,7 +178,7 @@
                     v-model.trim="form.description"
                     rows="3"
                     class="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary/50 focus:border-secondary text-sm text-gray-900 dark:text-gray-100"
-                    placeholder="描述这个聚合订阅的内容..."
+                    placeholder="描述这个订阅的内容..."
                 ></textarea>
               </div>
 
@@ -283,7 +283,7 @@
       <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-sm w-full p-5">
         <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">确认删除</h3>
         <p class="text-sm text-gray-600 dark:text-gray-400 mb-5">
-          确定要删除聚合订阅 <strong>{{ feedToDelete.name }}</strong> 吗? 此操作无法撤销。
+          确定要删除订阅 <strong>{{ feedToDelete.name }}</strong> 吗? 此操作无法撤销。
         </p>
         
         <div v-if="mixFeedsStore.error" class="mb-4 text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 p-3 rounded-lg">
