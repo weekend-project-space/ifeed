@@ -34,7 +34,7 @@
             <input
                 v-model="search"
                 type="search"
-                placeholder="搜索文章、标签、订阅..."
+                placeholder="搜索您订阅的文章、标签、订阅..."
                 class="w-full h-12 pl-14 pr-4 rounded-full border bg-white dark:bg-gray-900 text-base transition-all duration-200"
                 :class="[
                 searchFocused
@@ -195,7 +195,7 @@
           <input
               v-model="search"
               type="search"
-              placeholder="搜索文章、标签、订阅..."
+              placeholder="搜索您订阅的文章、标签、订阅..."
               class="w-full h-11 pl-12 pr-12 rounded-full border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition"
               @keyup.enter="handleSearch"/>
           <svg class="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" fill="none" stroke="currentColor"
