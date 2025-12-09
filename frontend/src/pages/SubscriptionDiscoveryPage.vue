@@ -1,6 +1,6 @@
 <template>
   <div class="min-h-screen ">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8 py-8">
       <!-- Header -->
       <div class="mb-8">
         <h1 class="text-3xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
@@ -104,15 +104,14 @@
                 @click="viewMode = view.id"
                 :class="[
                   viewMode === view.id
-                    ? 'text-secondary bg-secondary/10'
-                    : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300',
-                  'p-2 rounded-lg transition-colors'
+                    ? 'text-secondary bg-surface-container' : 'text-gray-500',
+                  'p-2 text-sm font-medium rounded-full transition-colors whitespace-nowrap hover:bg-surface-container',
                 ]"
                 :title="view.name"
             >
               <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path v-if="view.id === 'grid'" d="M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z"/>
-                <path v-else d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>
+                <path v-else stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16" />
               </svg>
             </button>
           </div>
@@ -375,6 +374,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue';
+import { useRouter, useRoute } from 'vue-router';
 import { request } from '../api/client';
 import type { PageResponse } from '../types/api';
 import type { Category, CategoriesResponse, DiscoveryFeed } from '../types/discovery';
@@ -396,6 +396,10 @@ interface Feed {
   updateFrequency: string;
   subscribed: boolean;
 }
+
+// Router
+const router = useRouter();
+const route = useRoute();
 
 // State
 const searchQuery = ref('');
@@ -554,10 +558,29 @@ const toggleSubscribe = async (feed: Feed) => {
   }
 };
 
+// Route synchronization
+const updateRoute = () => {
+  const query: Record<string, string | number> = {};
+  
+  if (searchQuery.value) {
+    query.q = searchQuery.value;
+  }
+  
+  if (selectedCategory.value !== 'all') {
+    query.category = selectedCategory.value;
+  }
+  
+  if (currentPage.value > 0) {
+    query.page = currentPage.value + 1;
+  }
+  
+  router.push({ query });
+};
+
 const nextPage = () => {
   if (hasNextPage.value && !loading.value) {
     currentPage.value++;
-    loadFeeds();
+    updateRoute();
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 };
@@ -565,7 +588,7 @@ const nextPage = () => {
 const prevPage = () => {
   if (hasPreviousPage.value && !loading.value) {
     currentPage.value--;
-    loadFeeds();
+    updateRoute();
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 };
@@ -582,20 +605,58 @@ const handleOpmlSuccess = () => {
 };
 
 // Watchers
+// Update route when filters change
 watch(selectedCategory, () => {
   currentPage.value = 0;
-  loadFeeds();
+  updateRoute();
 });
 
-watch(searchQuery, () => {
-  currentPage.value = 0;
-  loadFeeds();
+// Debounce search update
+let searchTimeout: number | null = null;
+watch(searchQuery, (newVal, oldVal) => {
+  // Only update route if the value actually changed and it's not the initial sync
+  if (newVal !== oldVal) {
+    if (searchTimeout) clearTimeout(searchTimeout);
+    searchTimeout = window.setTimeout(() => {
+      currentPage.value = 0;
+      updateRoute();
+    }, 500);
+  }
 });
+
+// React to route changes
+watch(
+  () => route.query,
+  (newQuery) => {
+    // Sync state from route
+    const q = (newQuery.q as string) || '';
+    const category = (newQuery.category as string) || 'all';
+    const page = parseInt(newQuery.page as string) || 1;
+    
+    // Only update if changed to avoid loops
+    if (searchQuery.value !== q) {
+      searchQuery.value = q;
+    }
+    
+    if (selectedCategory.value !== category) {
+      selectedCategory.value = category;
+    }
+    
+    // Internal page is 0-based
+    const targetPage = Math.max(0, page - 1);
+    if (currentPage.value !== targetPage) {
+      currentPage.value = targetPage;
+    }
+    
+    loadFeeds();
+  },
+  { immediate: true }
+);
 
 // Lifecycle
 onMounted(async () => {
   await loadCategories();
-  await loadFeeds();
+  // loadFeeds is called by the immediate route watcher
 });
 </script>
 

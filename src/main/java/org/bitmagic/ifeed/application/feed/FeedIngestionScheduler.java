@@ -92,7 +92,7 @@ public class FeedIngestionScheduler {
                 .toList();
 
         // 封装执行 + 超时控制
-        List<Future<?>> executed = TaskUtils.executeWithTimeout(executor, tasks, feedIds.size() / properties.getThreadPoolSize(), TimeUnit.MINUTES, latch, success, failed);
+        TaskUtils.executeWithTimeout(executor, tasks, feedIds.size() / properties.getThreadPoolSize(), TimeUnit.MINUTES, latch, success, failed);
 
         // 等待完成（稍长于超时，防止竞争）
         try {
