@@ -4,6 +4,7 @@ import com.huaban.analysis.jieba.JiebaSegmenter;
 import com.huaban.analysis.jieba.SegToken;
 import com.rometools.utils.Strings;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 
 import java.util.HashMap;
 import java.util.List;
@@ -51,7 +52,7 @@ public class TermUtils {
      */
     private static List<String> segment(String text) {
 //        List<SegToken> tokens = ;
-        return segmenter.sentenceProcess(text); //tokens.stream().map(segToken -> segToken.word).toList();
+        return segmenter.sentenceProcess(text).stream().filter(StringUtils::isNotBlank).toList(); //tokens.stream().map(segToken -> segToken.word).toList();
     }
 
 

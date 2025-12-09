@@ -14,6 +14,7 @@ import org.bitmagic.ifeed.domain.repository.FeedRepository;
 import org.bitmagic.ifeed.exception.ApiException;
 import org.bitmagic.ifeed.infrastructure.text.search.Document;
 import org.bitmagic.ifeed.infrastructure.text.search.TextSearchStore;
+import org.bitmagic.ifeed.infrastructure.util.JSON;
 import org.springframework.data.domain.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -44,7 +45,7 @@ public class ArticleService {
             metadata.put("feedTitle", feedRepository.findById(a.getFeed().getId())
                     .map(Feed::getTitle)
                     .orElse(""));
-            metadata.put("tags", a.getTags() != null ? a.getTags() : "");
+            metadata.put("tags", a.getTags() != null ? String.join(" ", JSON.fromJson(a.getTags(), TAGS_TYPE)) : "");
             metadata.put("summary", a.getSummary() != null ? a.getSummary() : "");
             metadata.put("pubDate", a.getPublishedAt() != null ? a.getPublishedAt().getEpochSecond() : 0L);
             return new Document(a.getId(), a.getFeed().getId(), a.getContent(), metadata);

@@ -10,5 +10,5 @@ import java.time.Instant;
  **/
 
 @RegisterReflectionForBinding(ArticleContent.class)
-public record ArticleContent(Long id, String content, Instant publishedAt) {
+public record ArticleContent(Long id, String title, String content, Instant publishedAt) {
 }

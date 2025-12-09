@@ -501,10 +501,10 @@ public class DefaultAiContentService implements AiContentService {
     }
 
     private List<String> generateTags(String content) {
-        return generateTagsWithHanLP(content);
+        return generateTagsWithTerm(content);
     }
 
-    private List<String> generateTagsWithHanLP(String content) {
+    private List<String> generateTagsWithTerm(String content) {
         if (!StringUtils.hasText(content)) {
             return List.of();
         }
@@ -518,7 +518,7 @@ public class DefaultAiContentService implements AiContentService {
 
             return keywords.stream()
                     .filter(this::isValidTag)
-                    .limit(target)
+                    .limit(target).map(String::trim).map(String::toUpperCase)
                     .collect(Collectors.toList());
 
         } catch (Exception ex) {

@@ -21,7 +21,7 @@ public class DefaultUserContextFactory implements UserContextFactory {
     public UserContext create(RecallRequest request) {
         Integer userId = request.userId();
         List<SequenceStore.UserInteraction> interactions = sequenceStore != null
-                ? sequenceStore.recentInteractions(userId, 50)
+                ? sequenceStore.recentInteractions(userId, 150)
                 : List.of();
         return new UserContext(userId, request.scene(), interactions, request.filters(), request.requestTime());
     }

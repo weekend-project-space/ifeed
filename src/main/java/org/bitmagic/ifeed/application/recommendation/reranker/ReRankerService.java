@@ -33,8 +33,12 @@ public class ReRankerService {
         if (items == null || items.isEmpty()) {
             return Collections.emptyList();
         }
+//        return items;
         List<ItemCandidate> candidates = deduplication(userContext, items);
         Map<Long, ArticleContent> id2Content = articleRepository.findArticleContentByIds(candidates.stream().map(ItemCandidate::itemId).toList()).stream().collect(Collectors.toMap(ArticleContent::id, Function.identity()));
+//        移除后面一样标题的内容
+        Set<String> titles = id2Content.values().stream().map(ArticleContent::title).collect(Collectors.toSet());
+        candidates = candidates.stream().filter(c -> titles.remove(id2Content.get(c.itemId()).title())).toList();
         return candidates.stream().map(itemCandidate -> {
             ArticleContent content = id2Content.get(itemCandidate.itemId());
             // NPE Protection
@@ -43,7 +47,7 @@ public class ReRankerService {
             }
             double score = qualityScorer.score(content.content(), LocalDateTime.ofInstant(content.publishedAt(), ZoneId.systemDefault()));
             log.debug("itemId: {}, score: {}", itemCandidate.itemId(), qualityScorer.getGrade(score));
-            return itemCandidate.withScore(score * itemCandidate.score());
+            return itemCandidate.withScore(score * 0.2 + 0.8 * itemCandidate.score());
         }).filter(Objects::nonNull).sorted(Comparator.comparingDouble(ItemCandidate::score).reversed()).toList();
 
     }
@@ -57,4 +61,5 @@ public class ReRankerService {
             return title != null && !itemTitles.contains(title);
         }).toList();
     }
+
 }

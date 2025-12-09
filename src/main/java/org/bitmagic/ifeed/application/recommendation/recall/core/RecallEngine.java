@@ -3,6 +3,7 @@ package org.bitmagic.ifeed.application.recommendation.recall.core;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.bitmagic.ifeed.application.recommendation.recall.model.*;
+import org.bitmagic.ifeed.domain.record.ArticleSummaryView;
 import org.bitmagic.ifeed.domain.repository.ArticleRepository;
 
 import java.time.Duration;
@@ -11,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
+import java.util.stream.Collectors;
 
 /**
  * 多路召回调度引擎，负责并发执行各策略并完成结果融合。

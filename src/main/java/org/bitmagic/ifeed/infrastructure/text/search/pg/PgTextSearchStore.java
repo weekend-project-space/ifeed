@@ -171,12 +171,12 @@ public class PgTextSearchStore implements TextSearchStore {
                                 .addValue("id", doc.id())
                                 .addValue("pubDate", Timestamp.from(getMetadataInstant(doc, "pubDate")))
                                 .addValue("content", TermUtils.segmentStr(doc.content()))
-                                .addValue("title", truncate(getMetadataString(doc, "title"), 500))
-                                .addValue("category", truncate(getMetadataString(doc, "category"), 100))
+                                .addValue("title", truncate(getMetadataSegmentStr(doc, "title"), 500))
+                                .addValue("category", truncate(getMetadataSegmentStr(doc, "category"), 100))
                                 .addValue("feedId", doc.feedId())
-                                .addValue("feedTitle", truncate(getMetadataString(doc, "feedTitle"), 200))
-                                .addValue("tags", truncate(getMetadataString(doc, "tags"), 200))
-                                .addValue("summary", truncate(getMetadataString(doc, "summary"), 300))
+                                .addValue("feedTitle", truncate(getMetadataSegmentStr(doc, "feedTitle"), 200))
+                                .addValue("tags", truncate(getMetadataStr(doc, "tags"), 200))
+                                .addValue("summary", truncate(getMetadataSegmentStr(doc, "summary"), 300))
                                 .addValue("metadata", toJson(doc.metadata()));
                     } catch (Exception e) {
                         throw new RuntimeException("Error processing document id: " + doc.id(), e);
@@ -454,7 +454,11 @@ public class PgTextSearchStore implements TextSearchStore {
                 rs.getTimestamp("last_updated").toLocalDateTime()));
     }
 
-    private String getMetadataString(Document doc, String key) {
+    private String getMetadataSegmentStr(Document doc, String key) {
+        return TermUtils.segmentStr(getMetadataStr(doc, key));
+    }
+
+    private String getMetadataStr(Document doc, String key) {
         if (doc.metadata() == null || !doc.metadata().containsKey(key)) {
             return "";
         }
@@ -462,7 +466,7 @@ public class PgTextSearchStore implements TextSearchStore {
         if (value == null) {
             return "";
         }
-        return TermUtils.segmentStr(value.toString());
+        return value.toString();
     }
 
     private Instant getMetadataInstant(Document doc, String key) {
