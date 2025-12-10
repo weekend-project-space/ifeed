@@ -83,7 +83,7 @@ public class JpaInvertedIndex implements InvertedIndex {
                 // 保存元数据
                 metadataMap.putIfAbsent(score.docId(), Map.of("source", attr, "docScore", score));
             }
-            log.info("search {} time {}ms", attr.attributeValue(), System.currentTimeMillis() - start);
+            log.debug("search {} time {}ms", attr.attributeValue(), System.currentTimeMillis() - start);
         }
 
         // 排序并返回 top-k

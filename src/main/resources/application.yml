@@ -42,8 +42,9 @@ spring:
       username: ${MONGO_DB_USERNAME:mongo_cTXZaN}
       password: ${MONGO_DB_PASSWORD:mongo_MDNyW6}
       database: ${MONGO_DB_DATABASE:i_feed}
-  profiles:
-    active: rel
+  mvc:
+    pathmatch:
+      matching-strategy: ant_path_matcher
 app:
   # 定时任务
   rss:
@@ -77,7 +78,7 @@ app:
   # ai 集成
   ai:
     provider:
-      enabled: false
+      enabled: true
       base-url: ''
       api-key: ''
       model: 'gpt-4o-mini'

@@ -17,6 +17,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.SchedulingConfigurer;
 import org.springframework.scheduling.config.ScheduledTaskRegistrar;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
+import org.springframework.web.servlet.config.annotation.ViewControllerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import java.net.http.HttpClient;
@@ -30,7 +31,7 @@ import java.util.concurrent.Executors;
 public class IFeedApplication {
 
     @Configuration
-    public static class CorsMvcConfigurer implements WebMvcConfigurer {
+    public static class IFeedMvcConfigurer implements WebMvcConfigurer {
         @Override
         public void addCorsMappings(CorsRegistry registry) {
 
@@ -41,6 +42,15 @@ public class IFeedApplication {
                     .allowCredentials(true).maxAge(3600);
 
             // Add more mappings...
+        }
+
+        @Override
+        public void addViewControllers(ViewControllerRegistry registry) {
+            // 将所有路由转发到 index.html
+            registry.addViewController("/{spring:\\w+}")
+                    .setViewName("forward:/index.html");
+            registry.addViewController("/**/{spring:\\w+}")
+                    .setViewName("forward:/index.html");
         }
 
     }
