@@ -1,0 +1,32 @@
+[
+  {
+    "name": "org.bitmagic.ifeed.domain.record.ArticleSummaryView",
+    "allDeclaredConstructors": true,
+    "allPublicConstructors": true
+  },
+  {
+    "name": "org.bitmagic.ifeed.domain.record.ArticleSummary",
+    "allDeclaredConstructors": true,
+    "allPublicConstructors": true
+  },
+  {
+    "name": "org.bitmagic.ifeed.domain.record.ArticleTitle",
+    "allDeclaredConstructors": true,
+    "allPublicConstructors": true
+  },
+  {
+    "name": "org.bitmagic.ifeed.domain.record.ArticleEmbeddingRecord",
+    "allDeclaredConstructors": true,
+    "allPublicConstructors": true
+  },
+  {
+    "name": "org.bitmagic.ifeed.application.recommendation.recall.model.UserContext",
+    "allDeclaredMethods": true,
+    "allDeclaredFields": true
+  },
+  {
+    "name": "org.bitmagic.ifeed.domain.record.ArticleContent",
+    "allDeclaredConstructors": true,
+    "allPublicConstructors": true
+  }
+]

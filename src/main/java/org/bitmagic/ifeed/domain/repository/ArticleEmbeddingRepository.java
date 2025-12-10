@@ -2,7 +2,7 @@ package org.bitmagic.ifeed.domain.repository;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.bitmagic.ifeed.domain.model.ArticleEmbeddingRecord;
+import org.bitmagic.ifeed.domain.record.ArticleEmbeddingRecord;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -24,9 +24,9 @@ public class ArticleEmbeddingRepository {
 
 
     public void upsert(
-            UUID feedId,
+            Integer feedId,
             String feedTitle,
-            UUID articleId,
+            Long articleId,
             String title,
             String category,
             String tags,
@@ -50,7 +50,22 @@ public class ArticleEmbeddingRepository {
         vectorStore.add(List.of(document));
     }
 
-    public List<ArticleEmbeddingRecord> findAllByIds(Collection<UUID> articleIds) {
+    public Optional<ArticleEmbeddingRecord> findById(Long articleId) {
+        if (articleId == null) {
+            return Optional.empty();
+        }
+        var sql = """
+                SELECT id, embedding FROM article_embeddings  WHERE id = ?
+                """;
+        List<ArticleEmbeddingRecord> results = jdbcTemplate.query(sql, (rs, rowNum) -> {
+            String value = rs.getString("embedding");
+            float[] vector = parseVector(value);
+            return new ArticleEmbeddingRecord(rs.getLong("id"), vector);
+        }, articleId);
+        return results.isEmpty() ? Optional.empty() : Optional.of(results.getFirst());
+    }
+
+    public List<ArticleEmbeddingRecord> findAllByIds(Collection<Long> articleIds) {
         if (articleIds == null || articleIds.isEmpty()) {
             return Collections.emptyList();
         }
@@ -64,21 +79,21 @@ public class ArticleEmbeddingRepository {
         return jdbcTemplate.query(sql, (rs, rowNum) -> {
             String value = rs.getString("embedding");
             float[] vector = parseVector(value);
-            return new ArticleEmbeddingRecord(UUID.fromString(rs.getString("id")), vector);
-        }, articleIds.toArray(new UUID[]{}));
+            return new ArticleEmbeddingRecord(rs.getLong("id"), vector);
+        }, articleIds.toArray(new Long[]{}));
     }
 
 
-    private Map<String, Object> buildMetadata(UUID feedId,
+    private Map<String, Object> buildMetadata(Integer feedId,
                                               String feedTitle,
-                                              UUID articleId,
+                                              Long articleId,
                                               String title,
                                               String link,
                                               String summary,
                                               Instant publishedAt) {
         var metadata = new HashMap<String, Object>();
-        metadata.put("articleId", articleId.toString());
-        metadata.put("feedId", feedId != null ? feedId.toString() : null);
+        metadata.put("articleId", articleId);
+        metadata.put("feedId", feedId != null ? feedId : null);
         if (StringUtils.hasText(feedTitle)) {
             metadata.put("feedTitle", feedTitle);
         }

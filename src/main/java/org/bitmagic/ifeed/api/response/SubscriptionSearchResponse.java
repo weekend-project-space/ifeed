@@ -5,15 +5,12 @@ import java.time.Instant;
 public record SubscriptionSearchResponse(
         String feedId,
         String title,
-        String url,
-        String siteUrl,
+        String description,
         String avatar,
-        Instant lastFetched,
-        Instant lastUpdated,
+        String siteUrl,
         Long subscriberCount,
         Boolean subscribed,
-        Boolean isRead,
-        Integer failureCount,
-        String fetchError
+        Instant lastUpdated,
+        String type // "FEED" or "MIX_FEED"
 ) {
 }

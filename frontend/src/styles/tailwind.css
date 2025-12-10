@@ -2,67 +2,108 @@
 @tailwind components;
 @tailwind utilities;
 
+/*:root {*/
+/*    color-scheme: light;*/
+/*    --md-primary: 72 147 218;*/
+/*    --md-on-primary: 255 255 255;*/
+/*    --md-secondary: 33 33 33;*/
+/*    --md-on-secondary: 255 255 255;*/
+/*    --md-surface: 255 255 255;*/
+/*    --md-surface-variant: 255 255 255;*/
+/*    --md-surface-container: 228 240 250;;*/
+/*    --md-outline: 194 210 228;*/
+/*    --md-text: 17 36 56;*/
+/*    --md-text-secondary: 75 102 132;*/
+/*    --md-text-muted: 117 140 162;*/
+/*    --md-danger: 220 38 38;*/
+/*    --md-inverse: 12 30 50;*/
+/*    --md-on-inverse: 237 245 254;*/
+/*}*/
+
+
+/*.dark {*/
+/*    color-scheme: dark;*/
+/*    --md-primary: 96 165 250;*/
+/*    --md-on-primary: 255 255 255;*/
+/*    --md-secondary: 163 163 163;*/
+/*    --md-on-secondary: 255 255 255;*/
+/*    --md-surface: 17 17 17;*/
+/*    --md-surface-variant: 41 41 41;*/
+/*    --md-surface-container: 33 33 33;*/
+/*    --md-outline: 64 64 64;*/
+/*    --md-text: 250 250 250;*/
+/*    --md-text-secondary: 163 163 163;*/
+/*    --md-text-muted: 115 115 115;*/
+/*    --md-danger: 239 68 68;*/
+/*    --md-inverse: 250 250 250;*/
+/*    --md-on-inverse: 17 17 17;*/
+/*}*/
+
 :root {
-  color-scheme: light;
-  --md-primary: 72 147 218;
-  --md-on-primary: 255 255 255;
-  --md-surface: 255 255 255;
-  /* 244 249 254; */
-  /*  --md-surface-variant: 228 240 250; */
-  --md-surface-container: 255 255 255;
-  --md-outline: 194 210 228;
-  --md-text: 17 36 56;
-  --md-text-secondary: 75 102 132;
-  --md-text-muted: 117 140 162;
-  --md-danger: 220 38 38;
-  --md-inverse: 12 30 50;
-  --md-on-inverse: 237 245 254;
+    color-scheme: light;
+    --md-primary: 14 116 144;         /* Teal 深青色 */
+    --md-on-primary: 255 255 255;
+    --md-secondary: 33 33 33;
+    --md-on-secondary: 255 255 255;
+    --md-surface: 255 255 255;
+    --md-surface-variant: 255 255 255;
+    --md-surface-container: 228 240 250;;
+    --md-outline: 194 210 228;
+    --md-text: 17 36 56;
+    --md-text-secondary: 75 102 132;
+    --md-text-muted: 117 140 162;
+    --md-danger: 220 38 38;
+    --md-inverse: 12 30 50;
+    --md-on-inverse: 237 245 254;
 }
 
+
 .dark {
-  color-scheme: dark;
-  --md-primary: 132 205 255;
-  --md-on-primary: 9 23 34;
-  --md-surface: 13 21 32;
-  --md-surface-variant: 21 32 46;
-  --md-surface-container: 21 32 46;
-  --md-outline: 74 96 123;
-  --md-text: 220 232 246;
-  --md-text-secondary: 157 179 206;
-  --md-text-muted: 120 146 174;
-  --md-danger: 248 113 113;
-  --md-inverse: 239 246 255;
-  --md-on-inverse: 19 36 51;
+    color-scheme: dark;
+    --md-primary: 94 234 212;         /* Teal 亮青色 */
+    --md-on-primary: 13 148 136;
+    --md-secondary: 163 163 163;
+    --md-on-secondary: 255 255 255;
+    --md-surface: 17 17 17;
+    --md-surface-variant: 41 41 41;
+    --md-surface-container: 33 33 33;
+    --md-outline: 64 64 64;
+    --md-text: 250 250 250;
+    --md-text-secondary: 163 163 163;
+    --md-text-muted: 115 115 115;
+    --md-danger: 239 68 68;
+    --md-inverse: 250 250 250;
+    --md-on-inverse: 17 17 17;
 }
 
 html {
-  scrollbar-gutter: stable;
+    scrollbar-gutter: stable;
 }
 
 @layer base {
-  body {
-    /* Flatter base: plain surface, no extra shadows */
-    /* @apply bg-surface text-text antialiased; */
-    font-family: 'Google Sans', 'Product Sans', 'Inter', 'Noto Sans SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    transition: background-color 200ms ease, color 200ms ease;
-  }
+    body {
+        /* Flatter base: plain surface, no extra shadows */
+        /* @apply bg-surface text-text antialiased; */
+        font-family: 'Google Sans', 'Product Sans', 'Inter', 'Noto Sans SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        transition: background-color 200ms ease, color 200ms ease;
+    }
 
-  ::selection {
-    background-color: rgba(72, 147, 218, 0.18);
-  }
+    ::selection {
+        background-color: rgba(72, 147, 218, 0.18);
+    }
 
-  .dark ::selection {
-    background-color: rgba(132, 205, 255, 0.28);
-  }
+    .dark ::selection {
+        background-color: rgba(132, 205, 255, 0.28);
+    }
 
-  a {
-    /* YouTube-like subtle hover */
-    /* @apply text-primary hover: opacity-90; */
-  }
+    a {
+        /* YouTube-like subtle hover */
+        /* @apply text-primary hover: opacity-90; */
+    }
 
-  input,
-  textarea,
-  select {
-    /* @apply bg-surface border border-outline/50 text-text focus: border-primary focus:ring-0; */
-  }
+    input,
+    textarea,
+    select {
+        /* @apply bg-surface border border-outline/50 text-text focus: border-primary focus:ring-0; */
+    }
 }

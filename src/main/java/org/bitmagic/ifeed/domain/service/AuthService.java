@@ -1,0 +1,116 @@
+package org.bitmagic.ifeed.domain.service;
+
+import lombok.RequiredArgsConstructor;
+import org.bitmagic.ifeed.domain.model.User;
+import org.bitmagic.ifeed.domain.model.UserSession;
+import org.bitmagic.ifeed.domain.repository.UserRepository;
+import org.bitmagic.ifeed.domain.repository.UserSessionRepository;
+import org.bitmagic.ifeed.exception.ApiException;
+import org.bitmagic.ifeed.infrastructure.spec.Spec;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.security.SecureRandom;
+import java.util.Base64;
+import java.util.Optional;
+import java.util.UUID;
+
+@Service
+@RequiredArgsConstructor
+public class AuthService {
+
+    private static final int TOKEN_BYTE_SIZE = 32;
+
+    private final UserRepository userRepository;
+    private final UserSessionRepository userSessionRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final SecureRandom secureRandom = new SecureRandom();
+
+    @Transactional
+    public AuthToken register(String username, String rawPassword) {
+        userRepository.findByUsername(username).ifPresent(user -> {
+            throw new ApiException(HttpStatus.CONFLICT, "Username already exists");
+        });
+
+        var user = User.builder()
+                .username(username)
+                .passwordHash(passwordEncoder.encode(rawPassword))
+                .build();
+
+        user = userRepository.save(user);
+        return issueToken(user);
+    }
+
+    @Transactional
+    public AuthToken login(String username, String rawPassword) {
+        var user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new ApiException(HttpStatus.UNAUTHORIZED, "Invalid credentials"));
+
+        if (!passwordEncoder.matches(rawPassword, user.getPasswordHash())) {
+            throw new ApiException(HttpStatus.UNAUTHORIZED, "Invalid credentials");
+        }
+
+        return issueToken(user);
+    }
+
+    @Transactional
+    public AuthToken authLogin(String id, String username) {
+        var user = userRepository.findOne(Spec.<User>on().eq("linuxDoUserId", id).build())
+                .orElseGet(() -> {
+                    String finalUsername = username;
+
+                    // 如果用户名冲突，使用 username_linuxdo{id} 格式
+                    if (userRepository.findByUsername(username).isPresent()) {
+                        finalUsername = username + "_linux_do" + id;
+                    }
+
+                    User u = User.builder()
+                            .linuxDoUserId(id)
+                            .username(finalUsername)
+                            .passwordHash(null)
+                            .build();
+
+                    return userRepository.save(u);
+                });
+
+        return issueToken(user);
+    }
+
+    @Transactional
+    public void logout(String token) {
+        if (token == null || token.isBlank()) {
+            return;
+        }
+
+        userSessionRepository.findByToken(token).ifPresent(userSessionRepository::delete);
+    }
+
+    @Cacheable(cacheNames = "USERS", key = "#p0", unless = "#result == null")
+    public Optional<User> findUserById(Integer userId) {
+        return userRepository.findById(userId);
+    }
+
+    private AuthToken issueToken(User user) {
+        userSessionRepository.findByUser(user).ifPresent(session -> {
+            userSessionRepository.deleteByToken(session.getToken());
+        });
+
+        var token = generateToken();
+        var session = UserSession.builder()
+                .token(token)
+                .user(user)
+                .build();
+
+        userSessionRepository.save(session);
+        return new AuthToken(user, token);
+    }
+
+    private String generateToken() {
+        var bytes = new byte[TOKEN_BYTE_SIZE];
+        secureRandom.nextBytes(bytes);
+        return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
+    }
+}

@@ -134,6 +134,40 @@ export const useAuthStore = defineStore('auth', () => {
     }
   };
 
+  const getLinuxDoAuthUrl = async (): Promise<string> => {
+    try {
+      const authUrl = await request<string>('/api/auth/linuxdo', {
+        skipAuth: true
+      });
+      return authUrl;
+    } catch (err) {
+      const message = extractMessage(err, '获取授权地址失败');
+      error.value = message;
+      throw err;
+    }
+  };
+
+  const linuxDoLogin = async (code: string) => {
+    loading.value = true;
+    error.value = null;
+    try {
+      const response = await request<AuthResponse>('/api/auth/linuxdo/callback', {
+        method: 'GET',
+        query: { code },
+        skipAuth: true
+      });
+      setToken(response.token);
+      await fetchUser();
+      return response;
+    } catch (err) {
+      const message = extractMessage(err, 'Linux.do 登录失败');
+      error.value = message;
+      throw err;
+    } finally {
+      loading.value = false;
+    }
+  };
+
   return {
     token,
     user,
@@ -145,6 +179,8 @@ export const useAuthStore = defineStore('auth', () => {
     register,
     fetchUser,
     logout,
-    setToken
+    setToken,
+    getLinuxDoAuthUrl,
+    linuxDoLogin
   };
 });

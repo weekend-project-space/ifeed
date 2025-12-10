@@ -1,0 +1,171 @@
+<svg viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+        <!-- 径向渐变 - 果肉 -->
+        <radialGradient id="fleshGradient" cx="50%" cy="50%">
+            <stop offset="0%" style="stop-color:#E8F5CD;stop-opacity:1" />
+            <stop offset="30%" style="stop-color:#D4E88F;stop-opacity:1" />
+            <stop offset="70%" style="stop-color:#B8D96E;stop-opacity:1" />
+            <stop offset="100%" style="stop-color:#9BC74D;stop-opacity:1" />
+        </radialGradient>
+
+        <!-- 中心白色渐变 -->
+        <radialGradient id="centerGradient" cx="50%" cy="50%">
+            <stop offset="0%" style="stop-color:#FFFFFF;stop-opacity:1" />
+            <stop offset="60%" style="stop-color:#F5F9E8;stop-opacity:1" />
+            <stop offset="100%" style="stop-color:#E8F5CD;stop-opacity:0.8" />
+        </radialGradient>
+
+        <!-- 外皮渐变 -->
+        <radialGradient id="skinGradient" cx="40%" cy="40%">
+            <stop offset="0%" style="stop-color:#A89B8C;stop-opacity:1" />
+            <stop offset="50%" style="stop-color:#8B7355;stop-opacity:1" />
+            <stop offset="100%" style="stop-color:#6B5D4F;stop-opacity:1" />
+        </radialGradient>
+
+        <!-- 阴影滤镜 -->
+        <filter id="shadow">
+            <feGaussianBlur in="SourceAlpha" stdDeviation="3"/>
+            <feOffset dx="0" dy="2" result="offsetblur"/>
+            <feComponentTransfer>
+                <feFuncA type="linear" slope="0.4"/>
+            </feComponentTransfer>
+            <feMerge>
+                <feMergeNode/>
+                <feMergeNode in="SourceGraphic"/>
+            </feMerge>
+        </filter>
+
+        <!-- 绒毛纹理 -->
+        <pattern id="fuzzPattern" x="0" y="0" width="3" height="3" patternUnits="userSpaceOnUse">
+            <circle cx="1.5" cy="1.5" r="0.4" fill="#5C4F42" opacity="0.25"/>
+        </pattern>
+    </defs>
+
+    <!-- 背景 -->
+<!--    <rect width="400" height="400" fill="#F8F5F0"/>-->
+
+    <!-- 阴影 -->
+    <ellipse cx="200" cy="200" rx="190" ry="190" fill="#000000" opacity="0.08"/>
+
+    <!-- 主体组 -->
+    <g filter="url(#shadow)">
+        <!-- 外皮边缘 -->
+        <circle cx="200" cy="200" r="185" fill="url(#skinGradient)"/>
+
+        <!-- 外皮绒毛纹理 -->
+        <circle cx="200" cy="200" r="185" fill="url(#fuzzPattern)"/>
+
+        <!-- 绒毛短线细节 -->
+        <g opacity="0.3" stroke="#5C4F42" stroke-width="0.7" stroke-linecap="round">
+            <line x1="45" y1="150" x2="42" y2="146"/>
+            <line x1="60" y1="110" x2="56" y2="106"/>
+            <line x1="85" y1="70" x2="82" y2="65"/>
+            <line x1="120" y1="40" x2="118" y2="35"/>
+            <line x1="160" y1="22" x2="160" y2="17"/>
+            <line x1="200" y1="15" x2="201" y2="10"/>
+            <line x1="240" y1="22" x2="243" y2="18"/>
+            <line x1="280" y1="40" x2="284" y2="37"/>
+            <line x1="315" y1="70" x2="319" y2="68"/>
+            <line x1="340" y1="110" x2="344" y2="110"/>
+            <line x1="360" y1="150" x2="365" y2="151"/>
+            <line x1="378" y1="200" x2="383" y2="202"/>
+            <line x1="360" y1="250" x2="365" y2="253"/>
+            <line x1="340" y1="290" x2="343" y2="294"/>
+            <line x1="315" y1="330" x2="317" y2="335"/>
+            <line x1="280" y1="360" x2="280" y2="365"/>
+            <line x1="240" y1="378" x2="238" y2="383"/>
+            <line x1="200" y1="385" x2="198" y2="390"/>
+            <line x1="160" y1="378" x2="157" y2="382"/>
+            <line x1="120" y1="360" x2="116" y2="363"/>
+            <line x1="85" y1="330" x2="81" y2="332"/>
+            <line x1="60" y1="290" x2="56" y2="291"/>
+            <line x1="40" y1="250" x2="35" y2="250"/>
+            <line x1="22" y1="200" x2="17" y2="198"/>
+        </g>
+
+        <!-- 果肉主体 -->
+        <circle cx="200" cy="200" r="165" fill="url(#fleshGradient)"/>
+
+        <!-- 果肉纹理层 -->
+        <g opacity="0.15">
+            <circle cx="200" cy="200" r="155" fill="none" stroke="#9BC74D" stroke-width="0.5"/>
+            <circle cx="200" cy="200" r="140" fill="none" stroke="#9BC74D" stroke-width="0.5"/>
+            <circle cx="200" cy="200" r="125" fill="none" stroke="#B8D96E" stroke-width="0.5"/>
+            <circle cx="200" cy="200" r="110" fill="none" stroke="#C8DC7C" stroke-width="0.5"/>
+        </g>
+
+        <!-- 中心白色区域外层 -->
+        <circle cx="200" cy="200" r="55" fill="#F5F9E8"/>
+
+        <!-- 中心白色区域 -->
+        <circle cx="200" cy="200" r="48" fill="url(#centerGradient)"/>
+
+        <!-- 放射状纹理线 -->
+        <g stroke="#B8D96E" stroke-width="1.2" opacity="0.3" stroke-linecap="round">
+            <line x1="200" y1="200" x2="200" y2="60"/>
+            <line x1="200" y1="200" x2="260" y2="80"/>
+            <line x1="200" y1="200" x2="300" y2="120"/>
+            <line x1="200" y1="200" x2="330" y2="170"/>
+            <line x1="200" y1="200" x2="340" y2="200"/>
+            <line x1="200" y1="200" x2="330" y2="230"/>
+            <line x1="200" y1="200" x2="300" y2="280"/>
+            <line x1="200" y1="200" x2="260" y2="320"/>
+            <line x1="200" y1="200" x2="200" y2="340"/>
+            <line x1="200" y1="200" x2="140" y2="320"/>
+            <line x1="200" y1="200" x2="100" y2="280"/>
+            <line x1="200" y1="200" x2="70" y2="230"/>
+            <line x1="200" y1="200" x2="60" y2="200"/>
+            <line x1="200" y1="200" x2="70" y2="170"/>
+            <line x1="200" y1="200" x2="100" y2="120"/>
+            <line x1="200" y1="200" x2="140" y2="80"/>
+        </g>
+
+        <!-- 种子 - 外圈 -->
+        <g fill="#2C2416">
+            <ellipse cx="200" cy="130" rx="2.2" ry="3.5" transform="rotate(0 200 130)"/>
+            <ellipse cx="235" cy="138" rx="2.2" ry="3.5" transform="rotate(30 235 138)"/>
+            <ellipse cx="262" cy="162" rx="2.2" ry="3.5" transform="rotate(60 262 162)"/>
+            <ellipse cx="270" cy="195" rx="2.2" ry="3.5" transform="rotate(90 270 195)"/>
+            <ellipse cx="262" cy="228" rx="2.2" ry="3.5" transform="rotate(120 262 228)"/>
+            <ellipse cx="235" cy="252" rx="2.2" ry="3.5" transform="rotate(150 235 252)"/>
+            <ellipse cx="200" cy="260" rx="2.2" ry="3.5" transform="rotate(180 200 260)"/>
+            <ellipse cx="165" cy="252" rx="2.2" ry="3.5" transform="rotate(210 165 252)"/>
+            <ellipse cx="138" cy="228" rx="2.2" ry="3.5" transform="rotate(240 138 228)"/>
+            <ellipse cx="130" cy="195" rx="2.2" ry="3.5" transform="rotate(270 130 195)"/>
+            <ellipse cx="138" cy="162" rx="2.2" ry="3.5" transform="rotate(300 138 162)"/>
+            <ellipse cx="165" cy="138" rx="2.2" ry="3.5" transform="rotate(330 165 138)"/>
+        </g>
+
+        <!-- 种子 - 中圈 -->
+        <g fill="#3C3426" opacity="0.9">
+            <ellipse cx="200" cy="155" rx="1.8" ry="3" transform="rotate(15 200 155)"/>
+            <ellipse cx="222" cy="163" rx="1.8" ry="3" transform="rotate(45 222 163)"/>
+            <ellipse cx="237" cy="178" rx="1.8" ry="3" transform="rotate(75 237 178)"/>
+            <ellipse cx="245" cy="200" rx="1.8" ry="3" transform="rotate(105 245 200)"/>
+            <ellipse cx="237" cy="222" rx="1.8" ry="3" transform="rotate(135 237 222)"/>
+            <ellipse cx="222" cy="237" rx="1.8" ry="3" transform="rotate(165 222 237)"/>
+            <ellipse cx="200" cy="245" rx="1.8" ry="3" transform="rotate(195 200 245)"/>
+            <ellipse cx="178" cy="237" rx="1.8" ry="3" transform="rotate(225 178 237)"/>
+            <ellipse cx="163" cy="222" rx="1.8" ry="3" transform="rotate(255 163 222)"/>
+            <ellipse cx="155" cy="200" rx="1.8" ry="3" transform="rotate(285 155 200)"/>
+            <ellipse cx="163" cy="178" rx="1.8" ry="3" transform="rotate(315 163 178)"/>
+            <ellipse cx="178" cy="163" rx="1.8" ry="3" transform="rotate(345 178 163)"/>
+        </g>
+
+        <!-- 种子 - 内圈 -->
+        <g fill="#2C2416" opacity="0.8">
+            <ellipse cx="200" cy="175" rx="1.5" ry="2.5" transform="rotate(10 200 175)"/>
+            <ellipse cx="215" cy="183" rx="1.5" ry="2.5" transform="rotate(40 215 183)"/>
+            <ellipse cx="225" cy="200" rx="1.5" ry="2.5" transform="rotate(70 225 200)"/>
+            <ellipse cx="215" cy="217" rx="1.5" ry="2.5" transform="rotate(100 215 217)"/>
+            <ellipse cx="200" cy="225" rx="1.5" ry="2.5" transform="rotate(130 200 225)"/>
+            <ellipse cx="185" cy="217" rx="1.5" ry="2.5" transform="rotate(160 185 217)"/>
+            <ellipse cx="175" cy="200" rx="1.5" ry="2.5" transform="rotate(190 175 200)"/>
+            <ellipse cx="185" cy="183" rx="1.5" ry="2.5" transform="rotate(220 185 183)"/>
+        </g>
+
+        <!-- 高光效果 -->
+        <ellipse cx="155" cy="155" rx="45" ry="55" fill="#FFFFFF" opacity="0.15" transform="rotate(-25 155 155)"/>
+        <ellipse cx="140" cy="140" rx="25" ry="35" fill="#FFFFFF" opacity="0.2" transform="rotate(-25 140 140)"/>
+    </g>
+</svg>

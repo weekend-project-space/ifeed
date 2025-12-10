@@ -1,25 +1,24 @@
-FROM maven:3.9.6-eclipse-temurin-21 AS build
-WORKDIR /build
+#FROM ghcr.io/graalvm/native-image-community:21 AS builder
+#WORKDIR /app
+#COPY . .
+#RUN ./mvnw -Pnative native:compile -DskipTests
 
-# 如果工程使用 Maven Wrapper，拷贝 wrapper 和 .mvn 目录
-COPY mvnw .
-COPY .mvn .mvn
-RUN chmod +x ./mvnw || true
+#FROM gcr.io/distroless/base-debian12
+#WORKDIR /app
+##COPY --from=builder /app/target/ifeed /app/ifeed
+#COPY ./target/ifeed /app/ifeed
+#EXPOSE 8080
+#ENTRYPOINT ["/app/ifeed"]
 
-# 拷贝 pom 和源码
-COPY pom.xml .
-COPY src ./src
+# 运行阶段 - 使用更小的基础镜像
+FROM oraclelinux:9-slim
 
-# 构建（跳过测试以加速）
-RUN ./mvnw  clean package -DskipTests
-
-FROM openjdk:21-jdk-slim AS runtime
 WORKDIR /app
-ENV TZ=Asia/Shanghai
-# 复制构建产物（假设生成的 jar 在 target）
-COPY --from=build /build/target/*.jar app.jar
+
+COPY ./target/ifeed /app/ifeed
+# 直接复制二进制文件（GraalVM native-image 默认输出在 target/<artifactId>）
+#COPY --from=builder /workspace/app/target/msgsender /app/msgsender
 
 EXPOSE 8080
 
-# Specify the command to run the application
-CMD ["java", "-jar", "/app/app.jar"]
+ENTRYPOINT ["/app/ifeed"]

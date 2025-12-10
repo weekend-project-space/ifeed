@@ -1,0 +1,40 @@
+package org.bitmagic.ifeed.infrastructure.recall;
+
+import lombok.RequiredArgsConstructor;
+import org.bitmagic.ifeed.application.recommendation.recall.spi.EmbeddingStore;
+import org.bitmagic.ifeed.domain.model.UserVectorStore;
+import org.bitmagic.ifeed.domain.record.ArticleEmbeddingRecord;
+import org.bitmagic.ifeed.domain.repository.ArticleEmbeddingRepository;
+import org.bitmagic.ifeed.domain.repository.UserVectorRepository;
+import org.springframework.stereotype.Component;
+
+import java.util.Optional;
+
+/**
+ * 基于数据库的向量存取实现，用户向量来自 user_embeddings，物品向量来自 article_embeddings。
+ */
+@Component
+@RequiredArgsConstructor
+public class DatabaseEmbeddingStore implements EmbeddingStore {
+
+    private final UserVectorRepository userVectorRepository;
+    private final ArticleEmbeddingRepository articleEmbeddingRepository;
+
+    @Override
+    public Optional<float[]> getUserVector(Integer userId) {
+        if (userId == null) {
+            return Optional.empty();
+        }
+        return userVectorRepository.findById(userId)
+                .map(UserVectorStore::getEmbedding)
+                .filter(vec -> vec.length > 0);
+    }
+
+    @Override
+    public Optional<float[]> getItemVector(Long itemId) {
+        if (itemId == null) {
+            return Optional.empty();
+        }
+        return articleEmbeddingRepository.findById(itemId).map(ArticleEmbeddingRecord::embedding);
+    }
+}

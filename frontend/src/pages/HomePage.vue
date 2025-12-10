@@ -1,613 +1,107 @@
 <template>
-    <div class="space-y-6 sm:space-y-8">
-        <section class="space-y-5 sm:space-y-6">
-            <div class="flex flex-col gap-3 sm:gap-4">
-                <div class="flex flex-wrap items-center justify-between gap-3">
-                    <div>
-                        <h1 class="text-3xl f-semibold text-text">为你推荐</h1>
-                        <p class="text-sm text-text-secondary">灵感来自订阅与 AI 筛选 · 分类与热门标签来自最近两周</p>
-                    </div>
-                    <button
-                        class="inline-flex items-center gap-2 rounded-full border border-primary/20 px-3 py-1.5 text-sm font-semibold text-primary transition hover:bg-primary/10 sm:px-4 sm:py-2"
-                        @click="refresh">
-                        <svg class="h-4 w-4" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6">
-                            <path stroke-linecap="round" stroke-linejoin="round"
-                                d="M4.5 8.5A5.5 5.5 0 0 1 10 3a5.5 5.5 0 0 1 4.75 2.75M15.5 11.5A5.5 5.5 0 0 1 10 17a5.5 5.5 0 0 1-4.75-2.75" />
-                            <path stroke-linecap="round" stroke-linejoin="round"
-                                d="M15.5 5.75V3h-2.75M4.5 14.25V17h2.75" />
-                        </svg>
-                        刷新推荐
-                    </button>
-                </div>
-
-                <div class="space-y-3">
-                    <!-- 分类：样式参考标签胶囊条 -->
-                    <div
-                        class="flex items-center gap-2 overflow-x-auto whitespace-nowrap rounded-2xl border border-outline/20 bg-surface p-2 text-sm text-text-secondary">
-                        <button
-                            class="rounded-full px-3 py-1.5 font-medium transition bg-surface text-text-secondary cursor-default sm:px-4 sm:py-2"
-                            disabled>
-                            分类
-                        </button>
-                        <!-- 全部分类按钮 -->
-                        <button class="rounded-full px-3 py-1.5 font-medium transition sm:px-4 sm:py-2"
-                            :class="getFilterClassForCategory('')" @click="clearCategoryFilter()">
-                            全部
-                        </button>
-                        <template v-if="insightsLoading">
-                            <span class="text-text-muted">正在加载分类...</span>
-                        </template>
-                        <template v-else>
-                            <button v-for="c in topCategories" :key="c.category"
-                                class="rounded-full px-3 py-1.5 font-medium transition sm:px-4 sm:py-2"
-                                :class="getFilterClassForCategory(c.category)"
-                                @click="handleSelectCategory(c.category)">
-                                {{ c.category }}
-                            </button>
-                            <span v-if="!topCategories.length" class="text-text-muted">暂无分类统计</span>
-                        </template>
-                    </div>
-
-                    <!-- 隐藏标签快速筛选：如需还原可取消注释 -->
-                    <!--
-                        <div class="flex items-center gap-2 overflow-x-auto whitespace-nowrap rounded-2xl border border-outline/20 bg-surface p-2 text-sm text-text-secondary">
-                            <button v-for="filter in quickFilters" :key="filter.value ?? 'all'" type="button"
-                                class="rounded-full px-4 py-2 font-medium transition" :class="getFilterClass(filter.value)"
-                                @click="filter.value ? handleSelectTag(filter.value) : clearTagFilter()">
-                                {{ filter.label }}
-                            </button>
-                        </div>
-                        -->
-                </div>
-
-                <div class="flex flex-wrap gap-2 text-xs text-text-secondary">
-                    <div v-if="activeFeedInfo"
-                        class="flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-primary">
-                        <span class="max-w-[14rem] truncate font-medium">
-                            {{ activeFeedInfo.title || activeFeedInfo.siteUrl || activeFeedInfo.url }}
-                        </span>
-                        <button
-                            class="rounded-full bg-primary px-2 py-0.5 text-[11px] font-semibold text-primary-foreground transition hover:bg-primary/90"
-                            @click="openFeedChannel">
-                            频道
-                        </button>
-                        <button class="text-xs font-semibold text-primary/80 transition hover:text-primary"
-                            @click="clearFeedFilter">
-                            清除
-                        </button>
-                    </div>
-                    <div v-else-if="activeFeedId"
-                        class="flex items-center gap-2 rounded-full border border-outline/30 bg-surface px-3 py-1">
-                        <span class="max-w-[14rem] truncate font-medium">频道筛选：{{ activeFeedId }}</span>
-                        <button class="text-xs font-semibold text-primary transition hover:underline"
-                            @click="clearFeedFilter">
-                            清除
-                        </button>
-                    </div>
-                    <div v-if="activeTag"
-                        class="flex items-center gap-2 rounded-full border border-outline/30 bg-surface px-3 py-1">
-                        <span class="font-medium">#{{ activeTag }}</span>
-                        <button class="text-xs font-semibold text-primary transition hover:underline"
-                            @click="clearTagFilter">
-                            移除
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <!--            <div class="grid gap-6 xl:grid-cols-[2.1fr,1fr]">-->
-            <div class="relative overflow-hidden rounded-3xl border border-outline/30 bg-surface-container px-8 py-8">
-                <div class="pointer-events-none absolute -left-20 top-10 h-48 w-48 rounded-full bg-primary/15 blur-3xl">
-                </div>
-                <div
-                    class="pointer-events-none absolute -right-32 bottom-0 h-56 w-56 rounded-full bg-primary/10 blur-3xl">
-                </div>
-                <div class="relative flex h-full flex-col gap-6">
-                    <div class="flex items-center gap-3 text-xs font-semibold uppercase tracking-[0.28em] text-primary">
-                        <span class="inline-flex h-1.5 w-1.5 rounded-full bg-primary"></span>
-                        今日精选
-                    </div>
-                    <div class="space-y-3">
-                        <h2 class="text-3xl font-semibold leading-tight text-text">
-                            {{ highlight.title }}
-                        </h2>
-                        <p class="text-sm text-text-secondary">
-                            {{ highlight.description }}
-                        </p>
-                    </div>
-                    <div class="rounded-2xl border border-outline/20 bg-surface p-4 text-sm leading-relaxed text-text-secondary"
-                        v-html="highlight.summary">
-
-                    </div>
-                    <div class="mt-auto flex flex-wrap items-center justify-between gap-3">
-                        <div class="flex flex-wrap gap-2 text-xs text-primary">
-                            <button v-for="tag in highlight.tags" :key="tag" type="button"
-                                class="rounded-full bg-primary/10 px-3 py-1 font-medium transition hover:bg-primary/20"
-                                @click="handleSelectTag(tag)">
-                                #{{ tag }}
-                            </button>
-                        </div>
-                        <button v-if="highlight.id"
-                            class="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary/40"
-                            @click="handleSelect(highlight.id)">
-                            开始阅读
-                            <svg class="h-4 w-4" viewBox="0 0 20 20" fill="none" stroke="currentColor"
-                                stroke-width="1.6">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M7 4l6 6-6 6" />
-                            </svg>
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <!--                <div class="flex flex-col gap-4">-->
-            <!--                    <div class="rounded-3xl border border-primary/25 bg-primary/10 p-6 text-primary">-->
-            <!--                        <div class="space-y-2">-->
-            <!--                            <h3 class="text-lg font-semibold text-primary/90">今日阅读进度</h3>-->
-            <!--                            <p class="text-sm text-primary/80">你已收藏 {{ stats.savedCount }} 篇文章。</p>-->
-            <!--                        </div>-->
-            <!--                        <div class="mt-6 space-y-4">-->
-            <!--                            <div class="text-4xl font-bold tracking-tight text-primary/90">{{ stats.readGoalPercent-->
-            <!--                                }}%</div>-->
-            <!--                            <div class="flex items-center gap-3">-->
-            <!--                                <div class="h-2 flex-1 overflow-hidden rounded-full bg-primary/20">-->
-            <!--                                    <div class="h-full rounded-full bg-primary"-->
-            <!--                                        :style="{ width: `${stats.readGoalPercent}%` }">-->
-            <!--                                    </div>-->
-            <!--                                </div>-->
-            <!--                                <span class="text-xs font-medium text-primary/80">目标 8 篇</span>-->
-            <!--                            </div>-->
-            <!--                            <p v-if="stats.remaining > 0" class="text-xs text-primary/70">-->
-            <!--                                距离完成还差 {{ stats.remaining }} 篇，继续加油！-->
-            <!--                            </p>-->
-            <!--                            <p v-else class="text-xs text-primary/70">-->
-            <!--                                今日目标已达成，看看 AI 还推荐了什么。-->
-            <!--                            </p>-->
-            <!--                        </div>-->
-            <!--                    </div>-->
-
-            <!--                    <div class="rounded-3xl border border-outline/20 bg-surface p-6">-->
-            <!--                        <h3 class="text-sm font-semibold text-text">热门标签</h3>-->
-            <!--                        <p class="mt-2 text-xs text-text-secondary">快速探索近期高频出现的主题。</p>-->
-            <!--                        <div class="mt-4 flex flex-wrap gap-2">-->
-            <!--                            <template v-if="insightsLoading">-->
-            <!--                                <span class="text-text-muted text-xs">加载中...</span>-->
-            <!--                            </template>-->
-            <!--                            <template v-else>-->
-            <!--                                <button v-for="t in hotTags" :key="t.tag" type="button"-->
-            <!--                                    class="rounded-full bg-surface-variant px-3 py-1 text-xs font-medium text-text-secondary transition hover:bg-primary/10 hover:text-primary"-->
-            <!--                                    @click="handleSelectTag(t.tag)">-->
-            <!--                                    #{{ t.tag }}-->
-            <!--                                </button>-->
-            <!--                                <div v-if="!hotTags.length" class="text-xs text-text-muted">等待新的标签更新...</div>-->
-            <!--                            </template>-->
-            <!--                        </div>-->
-            <!--                    </div>-->
-            <!--                </div>-->
-            <!--            </div>-->
-        </section>
-
-        <section class="space-y-4 sm:space-y-5">
-            <div class="flex flex-wrap items-center justify-between gap-3 sm:gap-4">
-                <div class="space-y-1">
-                    <h2 class="text-2xl font-semibold text-text">最新</h2>
-                    <p class="text-sm text-text-secondary">
-                        来自你的订阅源
-                        <!--                      与 AI 智能推荐的精选文章。-->
-                    </p>
-                </div>
-                <button
-                    class="inline-flex items-center gap-2 rounded-full border border-primary/20 px-3 py-1.5 text-sm font-semibold text-primary transition hover:bg-primary/10 sm:px-4 sm:py-2"
-                    @click="refresh">
-                    <svg class="h-4 w-4" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6">
-                        <path stroke-linecap="round" stroke-linejoin="round"
-                            d="M4.5 8.5A5.5 5.5 0 0 1 10 3a5.5 5.5 0 0 1 4.75 2.75M15.5 11.5A5.5 5.5 0 0 1 10 17a5.5 5.5 0 0 1-4.75-2.75" />
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.5 5.75V3h-2.75M4.5 14.25V17h2.75" />
-                    </svg>
-                    刷新列表
-                </button>
-            </div>
-
-            <div v-if="articlesLoading"
-                class="grid place-items-center rounded-3xl border border-outline/20 bg-surface-container py-14 text-sm text-text-muted sm:py-20">
-                正在加载文章...
-            </div>
-
-            <div v-else class="space-y-3 sm:space-y-4">
-                <ArticleList :items="recommendedArticles" @select="handleSelect" @select-tag="handleSelectTag" />
-                <p v-if="articleError" class="text-sm text-danger">{{ articleError }}</p>
-            </div>
-
-            <div
-                class="flex items-center justify-between rounded-2xl border border-outline/20 bg-surface px-3 py-2 text-sm text-text-secondary sm:px-4 sm:py-3">
-                <button
-                    class="rounded-full border border-outline/40 px-2.5 py-1.5 font-medium text-primary transition hover:bg-primary/10 disabled:cursor-not-allowed disabled:border-outline/30 disabled:text-text-muted disabled:opacity-70 sm:px-3 sm:py-2"
-                    :disabled="!hasPrevious" @click="prevPage">
-                    上一页
-                </button>
-                <span>第 {{ currentPage }} 页</span>
-                <button
-                    class="rounded-full border border-outline/40 px-2.5 py-1.5 font-medium text-primary transition hover:bg-primary/10 disabled:cursor-not-allowed disabled:border-outline/30 disabled:text-text-muted disabled:opacity-70 sm:px-3 sm:py-2"
-                    :disabled="!hasNext" @click="nextPage">
-                    下一页
-                </button>
-            </div>
-        </section>
+  <div class="mx-auto">
+    <!-- 错误提示 -->
+    <div v-if="articleError" class="mb-6 p-4 rounded-lg bg-red-50 border border-red-200">
+      <p class="text-sm text-red-800 font-medium mb-2">推荐请求出错：{{ articleError }}</p>
+      <button
+          type="button"
+          class="px-4 py-2 text-sm font-medium rounded-md bg-red-600 text-white hover:bg-red-700 transition-colors"
+          @click="refresh"
+      >
+        重试
+      </button>
     </div>
+
+    <!-- 文章列表 -->
+    <article-list
+        title="智能推荐"
+        subtitle="实时为你刷新阅读灵感"
+        :items="items"
+        :loading="articlesLoading"
+        empty-message="暂无推荐结果，尝试刷新或多收藏一些文章吧。"
+        @refresh="refresh"
+    />
+
+    <!-- 分页控件 -->
+    <pagination
+        v-if="items.length && !articlesLoading"
+        :current-page="currentPage"
+        :has-previous-page="hasPreviousPage"
+        :has-next-page="hasNextPage"
+        :disabled="articlesLoading"
+        @prev-page="prevPage"
+        @next-page="nextPage"
+    />
+  </div>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, watch, ref } from 'vue';
-import { storeToRefs } from 'pinia';
-import { useRouter, useRoute } from 'vue-router';
-import ArticleList from '../components/ArticleList.vue';
-import { useArticlesStore } from '../stores/articles';
-import { useCollectionsStore } from '../stores/collections';
-import { useSubscriptionsStore } from '../stores/subscriptions';
-import { md2html } from '../utils/markdown';
-// 使用 articles store 提供的 fetchInsights，不引入 axios
+import {computed, onMounted, watch} from 'vue';
+import {useRouter, useRoute} from 'vue-router';
+import {storeToRefs} from 'pinia';
+import {useRecommendArticlesStore} from '../stores/articles/recommendArticles';
 
-const router = useRouter();
+const SIZE = 60;
+
 const route = useRoute();
-const articlesStore = useArticlesStore();
-const collectionsStore = useCollectionsStore();
-const subscriptionsStore = useSubscriptionsStore();
+const router = useRouter();
+const recommendStore = useRecommendArticlesStore();
 
 const {
-    items,
-    page,
-    hasNextPage,
-    hasPreviousPage,
-    loading: articlesLoading,
-    error: articleError
-} = storeToRefs(articlesStore);
+  items,
+  loading: articlesLoading,
+  error: articleError,
+  hasNextPage,
+  hasPreviousPage
+} = storeToRefs(recommendStore);
 
-const { insights, insightsLoading } = storeToRefs(articlesStore);
-const { fetchInsights } = articlesStore;
-const topCategories = computed(() => insights.value.categories ?? []);
-const hotTags = computed(() => insights.value.hotTags ?? []);
-
-const { items: collectionItems } = storeToRefs(collectionsStore);
-const { items: subscriptionItems } = storeToRefs(subscriptionsStore);
-
-const routePage = computed(() => {
-    const raw = Array.isArray(route.query.page) ? route.query.page[0] : route.query.page;
-    const parsed = Number(raw);
-    return Number.isFinite(parsed) && parsed > 0 ? parsed : 1;
+const currentPage = computed(() => {
+  const raw = Array.isArray(route.query.page) ? route.query.page[0] : route.query.page;
+  const parsed = Number(raw);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : 1;
 });
 
-const activeFeedId = computed(() => {
-    const raw = Array.isArray(route.query.feedId) ? route.query.feedId[0] : route.query.feedId;
-    if (typeof raw === 'string') {
-        const trimmed = raw.trim();
-        if (trimmed.length > 0) {
-            return trimmed;
-        }
-    }
-    return null;
-});
+const loadRecommendations = async (targetPage = 1) => {
+  if (targetPage < 1) targetPage = 1;
 
-const activeFeedInfo = computed(() => {
-    if (!activeFeedId.value) {
-        return null;
-    }
-    return subscriptionItems.value.find((item) => item.feedId === activeFeedId.value) ?? null;
-});
-
-const activeTag = computed(() => {
-    const raw = Array.isArray(route.query.tags) ? route.query.tags[0] : route.query.tags;
-    if (typeof raw === 'string') {
-        const trimmed = raw.trim();
-        if (trimmed.length > 0) {
-            return trimmed;
-        }
-    }
-    return null;
-});
-
-const recommendedArticles = computed(() => items.value);
-
-const quickFilters = computed(() => {
-    const filters: Array<{ label: string; value: string | null }> = [{ label: '全部', value: null }];
-    const tagMap = new Map<string, string>();
-    for (const article of items.value) {
-        if (!article || !Array.isArray(article.tags)) {
-            continue;
-        }
-        for (const tag of article.tags) {
-            if (!tag) {
-                continue;
-            }
-            const normalized = tag.toLowerCase();
-            if (!tagMap.has(normalized)) {
-                tagMap.set(normalized, tag);
-            }
-            if (tagMap.size >= 11) {
-                break;
-            }
-        }
-        if (tagMap.size >= 11) {
-            break;
-        }
-    }
-    tagMap.forEach((label, value) => {
-        filters.push({ label, value });
+  try {
+    await recommendStore.fetchArticles({
+      page: targetPage,
+      size: SIZE
     });
-    return filters;
-});
-const airectext = ref('')
-const highlight = computed(() => {
-    const subscriptionCount = subscriptionItems.value.length;
-    return {
-        id: null,
-        title: 'AI 智能摘要助力高效阅读',
-        description: subscriptionCount
-            ? `根据你订阅的 ${subscriptionCount} 个源，我们为你总结了今日最值得关注的资讯。`
-            : '添加订阅源后，我们将每日为你推送精选文章与智能摘要。',
-        summary: airectext.value ? md2html(airectext.value) : '立即开始阅读，收藏值得反复品读的内容，让信息顺畅的在这会合。',
-        // tags: ['AI', '生产力', '行业趋势', '智能推荐']
-    };
-});
-
-const stats = computed(() => {
-    const savedCount = collectionItems.value.length;
-    const totalGoal = 8;
-    const readGoalPercent = Math.min(100, Math.round((savedCount / totalGoal) * 100));
-    const remaining = Math.max(totalGoal - savedCount, 0);
-    return {
-        savedCount,
-        readGoalPercent,
-        remaining
-    };
-});
-
-const currentPage = computed(() => page.value);
-const hasNext = computed(() => hasNextPage.value);
-const hasPrevious = computed(() => hasPreviousPage.value);
-
-const buildQuery = (overrides?: { page?: number; feedId?: string | null; tags?: string | null; category?: string | null }) => {
-    const query: Record<string, string> = {};
-    const hasFeedOverride = overrides && Object.prototype.hasOwnProperty.call(overrides, 'feedId');
-    const feedId = hasFeedOverride ? overrides?.feedId ?? null : activeFeedId.value;
-    if (feedId) {
-        query.feedId = feedId;
-    }
-    const hasTagOverride = overrides && Object.prototype.hasOwnProperty.call(overrides, 'tags');
-    const tag = hasTagOverride ? overrides?.tags ?? null : activeTag.value;
-    if (tag) {
-        query.tags = tag;
-    }
-    const hasCategoryOverride = overrides && Object.prototype.hasOwnProperty.call(overrides, 'category');
-    const category = hasCategoryOverride ? overrides?.category ?? null : route.query.category as string | null;
-    if (category) {
-        query.category = category;
-    }
-    const nextPage = overrides?.page ?? routePage.value;
-    if (nextPage > 1) {
-        query.page = String(nextPage);
-    }
-    return query;
+  } catch (err) {
+    console.error('加载推荐文章失败:', err);
+  }
 };
 
-const loadData = async () => {
-    const tasks: Promise<unknown>[] = [];
-    if (!collectionItems.value.length) {
-        tasks.push(collectionsStore.fetchCollections());
-    }
+const refresh = () => loadRecommendations(currentPage.value);
 
-    if (activeFeedId.value && !subscriptionItems.value.length) {
-        tasks.push(subscriptionsStore.fetchSubscriptions());
-    }
-
-    tasks.push(
-        articlesStore.fetchArticles({
-            size: 20,
-            page: routePage.value,
-            feedId: activeFeedId.value,
-            tags: activeTag.value,
-            // 从路由读取 category 传递给 store 请求
-            category: (route.query.category as string | undefined) ?? undefined
-        })
-    );
-
-    try {
-        await Promise.all(tasks);
-    } catch (err) {
-        console.warn('数据加载失败', err);
-    }
-};
-
-const connectSSE = async () => {
-    // Reset state
-    articlesLoading.value = true;
-    articleError.value = null;
-
-    const token = localStorage.getItem('auth-token'); // Retrieve JWT token
-    const url = `/api/ai/recommendations?scope=PERSONAL`;
-
-    try {
-        const response = await fetch(url, {
-            method: 'GET',
-            headers: {
-                'Authorization': `Bearer ${token || ''}`,
-                'Accept': 'text/event-stream'
-            }
-        });
-
-        if (!response.ok) {
-            throw new Error(`HTTP error: ${response.status}`);
-        }
-
-        const reader = response.body!.getReader();
-        const decoder = new TextDecoder();
-        let buffer = '';
-        let currentEventData = '';
-
-        while (true) {
-            const { value, done } = await reader.read();
-            if (done) {
-                console.log('SSE stream closed');
-                articlesLoading.value = false;
-                break;
-            }
-
-            buffer += decoder.decode(value, { stream: true });
-            const lines = buffer.split('\n\n');
-            buffer = lines.pop() || ''; // Retain incomplete event
-
-            for (const event of lines) {
-                if (!event.trim()) continue; // Skip empty events
-
-                // Split event into lines
-                const eventLines = event.split('\n');
-                currentEventData = '';
-
-                // Aggregate data lines
-                for (const line of eventLines) {
-                    if (line.startsWith('data:')) {
-                        const data = line.replace(/^data:/, '');
-                        if (data) {
-                            currentEventData += data + '\n'; // Preserve multi-line data
-                        }
-                    }
-                }
-
-                if (currentEventData) {
-                    try {
-                        // Parse the aggregated data as JSON
-                        airectext.value += currentEventData.trim()
-                        articlesLoading.value = false;
-                    } catch (e) {
-                        console.error('Error parsing SSE data:', e);
-                        articleError.value = '无法解析推荐内容';
-                        articlesLoading.value = false;
-                    }
-                }
-            }
-        }
-    } catch (error) {
-        console.error('Fetch SSE error:', error);
-        articleError.value = '连接失败，正在重试...';
-        articlesLoading.value = false;
-        // setTimeout(connectSSE, 5000); // Retry after 5 seconds
-    }
-};
-
-const refresh = async () => {
-    await loadData();
-};
-
-const navigateToPage = (target: number) => {
-    if (target < 1) {
-        return;
-    }
-    router.push({ name: 'home', query: buildQuery({ page: target }) });
-};
 
 const nextPage = () => {
-    if (!hasNext.value) {
-        return;
-    }
-    navigateToPage(routePage.value + 1);
+  if (hasNextPage.value) {
+    router.push({
+      query: {...route.query, page: String(currentPage.value + 1)}
+    });
+  }
 };
 
 const prevPage = () => {
-    if (!hasPrevious.value) {
-        return;
-    }
-    navigateToPage(Math.max(1, routePage.value - 1));
-};
-
-const handleSelect = (articleId: string) => {
-    articlesStore.recordHistory(articleId);
-    router.push({ name: 'article-detail', params: { id: articleId } });
-};
-
-const clearFeedFilter = () => {
-    router.push({ name: 'home', query: buildQuery({ feedId: null, page: 1 }) });
-};
-
-const clearTagFilter = () => {
-    router.push({ name: 'home', query: buildQuery({ tags: null, page: 1 }) });
-};
-
-const openFeedChannel = () => {
-    const feedId = activeFeedInfo.value?.feedId ?? activeFeedId.value;
-    if (!feedId) {
-        return;
-    }
-    router.push({ name: 'feed', params: { feedId } });
-};
-
-const handleSelectTag = (tag: string) => {
-    if (!tag) {
-        return;
-    }
-    router.push({ name: 'home', query: buildQuery({ page: 1, tags: tag.toLowerCase() }) });
-};
-
-const handleSelectCategory = (category: string) => {
-    if (!category) {
-        return;
-    }
-    router.push({ name: 'home', query: buildQuery({ page: 1, category: category.toLowerCase(), tags: null }) });
-};
-
-const clearCategoryFilter = () => {
-    router.push({ name: 'home', query: buildQuery({ page: 1, category: null }) });
-};
-
-const getFilterClass = (filterValue: string | null) => {
-    if (filterValue) {
-        return activeTag.value === filterValue
-            ? 'bg-primary text-primary-foreground shadow-sm'
-            : 'bg-surface text-text-secondary hover:bg-primary/10 hover:text-primary';
-    }
-    return !activeTag.value
-        ? 'bg-primary text-primary-foreground shadow-sm'
-        : 'bg-surface text-text-secondary hover:bg-primary/10 hover:text-primary';
-};
-
-// 分类的选中样式与标签一致，但依据当前路由的 category 判断
-const getFilterClassForCategory = (category: string) => {
-    const current = ((route.query.category as string | undefined) ?? '').toLowerCase();
-    const value = (category ?? '').toLowerCase();
-    const isSelected = (!current && !value) || (current && current === value);
-    return isSelected
-        ? 'bg-primary text-primary-foreground shadow-sm'
-        : 'bg-surface text-text-secondary hover:bg-primary/10 hover:text-primary';
+  if (hasPreviousPage.value) {
+    router.push({
+      query: {...route.query, page: String(Math.max(1, currentPage.value - 1))}
+    });
+  }
 };
 
 onMounted(() => {
-    loadData();
-    fetchInsights();
-    // connectSSE();
+  if (sessionStorage.getItem('origin-list') != route.path) {
+    loadRecommendations(currentPage.value);
+  }
+  sessionStorage.removeItem('origin-list')
 });
 
 watch(
-    () => [
-        routePage.value,
-        activeFeedId.value,
-        activeTag.value,
-        route.query.category // 确保分类变化触发数据刷新
-    ],
-    () => {
-        loadData();
-        // 点击分类/标签时不再刷新概览，避免重复请求
-    }
-);
-
-watch(
-    activeFeedId,
-    async (id) => {
-        if (id && !subscriptionItems.value.length) {
-            try {
-                await subscriptionsStore.fetchSubscriptions();
-            } catch (err) {
-                console.warn('订阅信息加载失败', err);
-            }
-        }
-    },
-    { immediate: true }
+    () => currentPage.value,
+    (page) => loadRecommendations(page)
 );
 </script>

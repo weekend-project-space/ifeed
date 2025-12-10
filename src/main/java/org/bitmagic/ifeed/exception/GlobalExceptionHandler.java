@@ -35,7 +35,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleGeneralException(Exception ex, HttpServletRequest request) {
         var status = HttpStatus.INTERNAL_SERVER_ERROR;
         var body = new ErrorResponse(Instant.now(), status.value(), status.getReasonPhrase(), ex.getMessage(), request.getRequestURI());
-        ex.printStackTrace();
+//        ex.printStackTrace();
         return ResponseEntity.status(status).body(body);
     }
 }

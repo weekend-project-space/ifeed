@@ -4,7 +4,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.bitmagic.ifeed.api.request.AuthRequest;
 import org.bitmagic.ifeed.api.response.AuthResponse;
-import org.bitmagic.ifeed.service.AuthService;
+import org.bitmagic.ifeed.domain.service.AuthService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;

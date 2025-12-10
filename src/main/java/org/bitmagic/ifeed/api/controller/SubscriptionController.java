@@ -2,44 +2,44 @@ package org.bitmagic.ifeed.api.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.bitmagic.ifeed.api.converter.SubscriptionViewConverter;
 import org.bitmagic.ifeed.api.request.OpmlImportConfirmRequest;
 import org.bitmagic.ifeed.api.request.SubscriptionRequest;
-import org.bitmagic.ifeed.api.response.*;
+import org.bitmagic.ifeed.api.response.MessageResponse;
+import org.bitmagic.ifeed.api.response.OpmlImportConfirmResponse;
+import org.bitmagic.ifeed.api.response.OpmlPreviewResponse;
+import org.bitmagic.ifeed.api.response.SubscriptionResponse;
 import org.bitmagic.ifeed.api.util.IdentifierUtils;
+import org.bitmagic.ifeed.config.security.UserPrincipal;
 import org.bitmagic.ifeed.domain.document.UserBehaviorDocument;
-import org.bitmagic.ifeed.domain.entity.Feed;
-import org.bitmagic.ifeed.domain.entity.User;
+import org.bitmagic.ifeed.domain.model.Feed;
+import org.bitmagic.ifeed.domain.model.MixFeed;
+import org.bitmagic.ifeed.domain.model.SourceType;
+import org.bitmagic.ifeed.domain.model.User;
+import org.bitmagic.ifeed.domain.model.value.UserSubscription;
+import org.bitmagic.ifeed.domain.repository.FeedRepository;
+import org.bitmagic.ifeed.domain.repository.MixFeedRepository;
 import org.bitmagic.ifeed.domain.repository.UserBehaviorRepository;
+import org.bitmagic.ifeed.domain.service.AuthService;
+import org.bitmagic.ifeed.domain.service.OpmlImportService;
+import org.bitmagic.ifeed.domain.service.SubscriptionService;
+import org.bitmagic.ifeed.domain.spec.FeedSpecs;
 import org.bitmagic.ifeed.exception.ApiException;
-import org.bitmagic.ifeed.security.UserPrincipal;
-import org.bitmagic.ifeed.service.AuthService;
-import org.bitmagic.ifeed.service.OpmlImportService;
-import org.bitmagic.ifeed.service.SubscriptionService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.time.Instant;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/subscriptions")
 @RequiredArgsConstructor
@@ -49,11 +49,13 @@ public class SubscriptionController {
     private final AuthService authService;
 
     private final UserBehaviorRepository userBehaviorRepository;
+    private final FeedRepository feedRepository;
+    private final MixFeedRepository mixFeedRepository;
     private final OpmlImportService opmlImportService;
 
     @PostMapping
     public ResponseEntity<MessageResponse> subscribe(@AuthenticationPrincipal UserPrincipal principal,
-                                                     @Valid @RequestBody SubscriptionRequest request) {
+            @Valid @RequestBody SubscriptionRequest request) {
         var user = resolveUser(principal);
         subscriptionService.subscribe(user, request);
         return ResponseEntity.status(HttpStatus.CREATED).body(new MessageResponse("Subscription added."));
@@ -61,48 +63,70 @@ public class SubscriptionController {
 
     @GetMapping
     public ResponseEntity<List<SubscriptionResponse>> list(@AuthenticationPrincipal UserPrincipal principal) {
-        var user = resolveUser(principal);
-        UserBehaviorDocument userBehaviorDocument = userBehaviorRepository.findById(user.getId().toString()).orElse(null);
-        Map<String, Instant> feedReadTimes = Objects.nonNull(userBehaviorDocument) ? userBehaviorDocument.getReadFeedHistory().stream().collect(Collectors.toMap(UserBehaviorDocument.FeedRef::getFeedId, UserBehaviorDocument.FeedRef::getTimestamp)) : new HashMap<>();
-        var subscriptions = subscriptionService.getActiveSubscriptions(user).stream()
-                .map(subscription -> {
-                    var feed = subscription.getFeed();
-                    return toSubscriptionResponse(feed, feedReadTimes);
-                })
-                .toList();
-        return ResponseEntity.ok(subscriptions);
-    }
+        UserBehaviorDocument userBehaviorDocument = userBehaviorRepository.findById(principal.getId().toString())
+                .orElse(null);
+        Map<String, Instant> feedReadTimes = Objects.nonNull(userBehaviorDocument)
+                ? userBehaviorDocument.getReadFeedHistory().stream().collect(Collectors
+                        .toMap(UserBehaviorDocument.FeedRef::getFeedId, UserBehaviorDocument.FeedRef::getTimestamp))
+                : new HashMap<>();
 
-    @GetMapping("/search")
-    public ResponseEntity<List<SubscriptionSearchResponse>> search(@AuthenticationPrincipal UserPrincipal principal,
-                                                                   @RequestParam("query") String query) {
-        var user = resolveUser(principal);
-        UserBehaviorDocument userBehaviorDocument = userBehaviorRepository.findById(user.getId().toString()).orElse(null);
-        Map<String, Instant> feedReadTimes = Objects.nonNull(userBehaviorDocument) ? userBehaviorDocument.getReadFeedHistory().stream().collect(Collectors.toMap(UserBehaviorDocument.FeedRef::getFeedId, UserBehaviorDocument.FeedRef::getTimestamp)) : new HashMap<>();
-        var feeds = subscriptionService.searchFeeds(query);
-        var subscribedFeedIds = subscriptionService.getActiveFeedIds(user).stream()
-                .map(UUID::toString)
-                .collect(Collectors.toSet());
-        var responses = feeds.stream()
-                .map(feed -> {
-                    var subscriberCount = subscriptionService.getSubscriberCount(feed);
-                    return toSubscriptionSearchResponse(feed, feedReadTimes, subscribedFeedIds.contains(feed.getId().toString()), subscriberCount);
+        List<UserSubscription> userSubscriptions = subscriptionService.getActiveSubscriptions(principal.getId());
+
+        // Separate IDs by type
+        Set<Integer> feedIds = new HashSet<>();
+        Set<Integer> mixFeedIds = new HashSet<>();
+
+        for (UserSubscription sub : userSubscriptions) {
+            if (sub.getSourceType() == SourceType.FEED) {
+                feedIds.add(sub.getSourceId());
+            } else if (sub.getSourceType() == SourceType.MIX_FEED) {
+                mixFeedIds.add(sub.getSourceId());
+            }
+        }
+
+        // Fetch Feeds
+        Map<Integer, Feed> id2Feed = feedIds.isEmpty() ? Map.of()
+                : feedRepository.findAll(FeedSpecs.idIn(feedIds)).stream()
+                        .collect(Collectors.toMap(Feed::getId, Function.identity()));
+
+        // Fetch MixFeeds
+        Map<Integer, MixFeed> id2MixFeed = mixFeedIds.isEmpty() ? Map.of()
+                : mixFeedRepository.findAllById(mixFeedIds).stream()
+                        .collect(Collectors.toMap(MixFeed::getId, Function.identity()));
+
+        // Map to response
+        List<SubscriptionResponse> responses = userSubscriptions.stream()
+                .flatMap(sub -> {
+                    if (sub.getSourceType() == SourceType.FEED) {
+                        Feed feed = id2Feed.get(sub.getSourceId());
+                        if (feed != null) {
+                            return Stream.of(SubscriptionViewConverter.toResponse(feed, feedReadTimes, false));
+                        }
+                    } else if (sub.getSourceType() == SourceType.MIX_FEED) {
+                        MixFeed mixFeed = id2MixFeed.get(sub.getSourceId());
+                        if (mixFeed != null) {
+                            return Stream.of(SubscriptionViewConverter.toResponse(mixFeed, feedReadTimes, false));
+                        }
+                    }
+                    return Stream.empty();
                 })
                 .toList();
+
         return ResponseEntity.ok(responses);
     }
 
-    @DeleteMapping("/{feedId}")
+    @DeleteMapping("/{id}")
     public ResponseEntity<MessageResponse> unsubscribe(@AuthenticationPrincipal UserPrincipal principal,
-                                                       @PathVariable String feedId) {
+            @PathVariable String id) {
         var user = resolveUser(principal);
-        subscriptionService.unsubscribe(user, IdentifierUtils.parseUuid(feedId, "feed id"));
+        // id is UUID string
+        subscriptionService.unsubscribe(user, id);
         return ResponseEntity.ok(new MessageResponse("Subscription removed."));
     }
 
     @PostMapping(value = "/opml/preview", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<OpmlPreviewResponse> previewOpml(@AuthenticationPrincipal UserPrincipal principal,
-                                                           @RequestParam("file") MultipartFile file) {
+            @RequestParam("file") MultipartFile file) {
         var user = resolveUser(principal);
         var response = opmlImportService.generatePreview(user, file);
         return ResponseEntity.ok(response);
@@ -110,101 +134,10 @@ public class SubscriptionController {
 
     @PostMapping(value = "/opml/confirm", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<OpmlImportConfirmResponse> confirmOpml(@AuthenticationPrincipal UserPrincipal principal,
-                                                                 @Valid @RequestBody OpmlImportConfirmRequest request) {
+            @Valid @RequestBody OpmlImportConfirmRequest request) {
         var user = resolveUser(principal);
         var response = opmlImportService.confirm(user, request);
         return ResponseEntity.ok(response);
-    }
-
-    private SubscriptionResponse toSubscriptionResponse(Feed feed, Map<String, Instant> feedReadTimes) {
-        if (feed == null) {
-            return new SubscriptionResponse(
-                    null,
-                    "未命名订阅",
-                    null,
-                    null,
-                    "https://favicon.im/",
-                    null,
-                    null,
-                    false,
-                    0,
-                    null
-            );
-        }
-        var title = resolveFeedTitle(feed);
-        var feedUrl = feed.getUrl();
-        var siteUrl = feed.getSiteUrl();
-        if (siteUrl == null || siteUrl.isBlank()) {
-            siteUrl = feedUrl;
-        }
-        var failureCount = Optional.ofNullable(feed.getFailureCount()).orElse(0);
-        var readTimestamp = feedReadTimes.getOrDefault(feed.getId().toString(), Instant.EPOCH);
-        var effectiveLastUpdated = Objects.nonNull(feed.getLastUpdated()) ? feed.getLastUpdated() : Instant.EPOCH;
-        var avatarHost = extractHost(siteUrl);
-        if (avatarHost == null || avatarHost.isBlank()) {
-            avatarHost = extractHost(feedUrl);
-        }
-        return new SubscriptionResponse(
-                feed.getId().toString(),
-                title,
-                feedUrl,
-                siteUrl,
-                "https://favicon.im/%s".formatted(avatarHost != null ? avatarHost : ""),
-                feed.getLastFetched(),
-                feed.getLastUpdated(),
-                readTimestamp.isAfter(effectiveLastUpdated),
-                failureCount < 3 ? 0 : failureCount,
-                failureCount < 3 ? null : feed.getFetchError()
-        );
-    }
-
-
-    private SubscriptionSearchResponse toSubscriptionSearchResponse(Feed feed, Map<String, Instant> feedReadTimes, boolean subscribed, long subscriberCount) {
-        if (feed == null) {
-            return new SubscriptionSearchResponse(
-                    null,
-                    "未命名订阅",
-                    null,
-                    null,
-                    "https://favicon.im/",
-                    null,
-                    null,
-                    subscriberCount,
-
-                    subscribed,
-                    false,
-                    0,
-                    null
-            );
-        }
-        var title = resolveFeedTitle(feed);
-        var feedUrl = feed.getUrl();
-        var siteUrl = feed.getSiteUrl();
-        if (siteUrl == null || siteUrl.isBlank()) {
-            siteUrl = feedUrl;
-        }
-        var failureCount = Optional.ofNullable(feed.getFailureCount()).orElse(0);
-        var readTimestamp = feedReadTimes.getOrDefault(feed.getId().toString(), Instant.EPOCH);
-        var effectiveLastUpdated = Objects.nonNull(feed.getLastUpdated()) ? feed.getLastUpdated() : Instant.EPOCH;
-        var avatarHost = extractHost(siteUrl);
-        if (avatarHost == null || avatarHost.isBlank()) {
-            avatarHost = extractHost(feedUrl);
-        }
-        return new SubscriptionSearchResponse(
-                feed.getId().toString(),
-                title,
-                feedUrl,
-                siteUrl,
-                "https://favicon.im/%s".formatted(avatarHost != null ? avatarHost : ""),
-                feed.getLastFetched(),
-                feed.getLastUpdated(),
-                subscriberCount,
-
-                subscribed,
-                readTimestamp.isAfter(effectiveLastUpdated),
-                failureCount < 3 ? 0 : failureCount,
-                failureCount < 3 ? null : feed.getFetchError()
-        );
     }
 
     private User resolveUser(UserPrincipal principal) {
@@ -215,41 +148,4 @@ public class SubscriptionController {
                 .orElseThrow(() -> new ApiException(HttpStatus.UNAUTHORIZED, "User not found"));
     }
 
-    private String resolveFeedTitle(Feed feed) {
-        if (feed == null) {
-            return "未命名订阅";
-        }
-        var title = feed.getTitle();
-        if (title != null && !title.isBlank()) {
-            return title;
-        }
-        var host = extractHost(feed.getSiteUrl());
-        if (host != null && !host.isBlank()) {
-            return host;
-        }
-        host = extractHost(feed.getUrl());
-        if (host != null && !host.isBlank()) {
-            return host;
-        }
-        return "未命名订阅";
-    }
-
-    private String extractHost(String url) {
-        if (url == null || url.isBlank()) {
-            return null;
-        }
-        try {
-            var uri = new URI(url.trim());
-            if (uri.getHost() != null && !uri.getHost().isBlank()) {
-                return uri.getHost();
-            }
-            var path = uri.getPath();
-            if (path != null && !path.isBlank()) {
-                return path;
-            }
-        } catch (URISyntaxException ignored) {
-            return url;
-        }
-        return url;
-    }
 }
