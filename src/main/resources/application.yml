@@ -1,6 +1,7 @@
 spring:
   application:
-    name: iFeed
+    name: IFeed
+    version: 0.1.0
   datasource:
     url: jdbc:postgresql://${PG:127.0.0.1}:${PG_PORT:5432}/${PG_DATABASE:i_feed}
     username: ${PG_USERNAME:i_feed}

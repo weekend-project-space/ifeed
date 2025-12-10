@@ -18,13 +18,11 @@ public class CacheConfig {
 
     @Bean
     public CacheManager cacheManager(RssFetcherProperties properties) {
-        var spec = "maximumSize=%d,expireAfterWrite=%ds".formatted(
-                properties.getCache().getMaximumSize(),
-                properties.getCache().getExpireAfterWrite().getSeconds()
-        );
-
-        CaffeineCacheManager manager = new CaffeineCacheManager(RssFetcherProperties.Cache.CACHE_NAME, "USER-SESSIONS","rss-feed-cache", "U2I", "U2I2I", "USERS", "ITEMS");
-        manager.setCaffeine(Caffeine.from(spec));
+        CaffeineCacheManager manager = new CaffeineCacheManager(RssFetcherProperties.Cache.CACHE_NAME, "USER-SESSIONS", "rss-feed-cache", "U2I", "U2I2I", "USERS", "ITEMS");
+        manager.setCaffeine(Caffeine.newBuilder()
+                .maximumSize(properties.getCache().getMaximumSize())
+                .expireAfterWrite(properties.getCache().getExpireAfterWrite())
+                .recordStats());  // Enable stats
         manager.setAllowNullValues(true);
         return manager;
     }
