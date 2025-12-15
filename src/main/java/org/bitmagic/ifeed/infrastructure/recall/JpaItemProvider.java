@@ -5,13 +5,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.bitmagic.ifeed.application.recommendation.recall.model.UserContext;
 import org.bitmagic.ifeed.application.recommendation.recall.spi.ItemProvider;
 import org.bitmagic.ifeed.application.recommendation.recall.spi.ScoredId;
-import org.bitmagic.ifeed.domain.model.Article;
 import org.bitmagic.ifeed.domain.record.ArticleSummaryView;
 import org.bitmagic.ifeed.domain.repository.ArticleRepository;
-import org.bitmagic.ifeed.infrastructure.FreshnessCalculator;
-import org.bitmagic.ifeed.infrastructure.QualityScorer;
+import org.bitmagic.ifeed.infrastructure.score.QualityScorer;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Component;
@@ -41,7 +38,7 @@ public class JpaItemProvider implements ItemProvider {
         List<ArticleSummaryView> all = new ArrayList<>(articleRepository.searchArticleSummaries("", null, pageable).getContent());
         all.addAll(articleRepository.searchArticleSummaries("", userContext.getUserId(), pageable).getContent());
         log.debug("{} time: {}", type.name(), System.currentTimeMillis() - currentTimeMillis);
-        List<ScoredId> scoredIds = all.stream().map(article -> new ScoredId(article.articleId(), qualityScorer.score(article.summary(), null), Map.of("title", article.title()))).toList();
+        List<ScoredId> scoredIds = all.stream().map(article -> new ScoredId(article.articleId(), qualityScorer.score(article.summary()).totalScore(), Map.of("title", article.title()))).toList();
         return scoredIds;
     }
 }

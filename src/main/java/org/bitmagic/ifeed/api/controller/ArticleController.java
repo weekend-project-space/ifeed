@@ -11,14 +11,18 @@ import org.bitmagic.ifeed.application.recommendation.RecRequest;
 import org.bitmagic.ifeed.application.recommendation.RecResponse;
 import org.bitmagic.ifeed.application.recommendation.RecommendationService;
 import org.bitmagic.ifeed.config.security.UserPrincipal;
+import org.bitmagic.ifeed.domain.model.ArticleEnrichment;
+import org.bitmagic.ifeed.domain.model.Feed;
 import org.bitmagic.ifeed.domain.record.ArticleSummaryView;
 import org.bitmagic.ifeed.domain.repository.FeedRepository;
 import org.bitmagic.ifeed.domain.repository.MixFeedRepository;
+import org.bitmagic.ifeed.domain.service.ArticleEnrichmentService;
 import org.bitmagic.ifeed.domain.service.ArticleService;
 import org.bitmagic.ifeed.domain.service.MixFeedService;
 import org.bitmagic.ifeed.domain.service.UserCollectionService;
 import org.bitmagic.ifeed.exception.ApiException;
 import org.bitmagic.ifeed.infrastructure.util.DateUtils;
+import org.bitmagic.ifeed.infrastructure.util.FaviconResolver;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -45,6 +49,7 @@ public class ArticleController {
     private static final String SOURCE_GLOBAL = "global";
 
     private final ArticleService articleService;
+    private final ArticleEnrichmentService articleEnrichmentService;
     private final UserCollectionService userCollectionService;
     private final RecommendationService recommendationService;
 
@@ -55,11 +60,11 @@ public class ArticleController {
 
     @GetMapping
     public ResponseEntity<Page<ArticleSummaryResponse>> listArticles(@AuthenticationPrincipal UserPrincipal principal,
-            @RequestParam(required = false) String feedId,
-            @RequestParam(required = false, name = "tags") String tags,
-            @RequestParam(required = false, name = "category") String category,
-            @RequestParam(required = false, defaultValue = SOURCE_OWNER) String source,
-            @PageableDefault(sort = "publishedAt", direction = Sort.Direction.DESC) Pageable pageable) {
+                                                                     @RequestParam(required = false) String feedId,
+                                                                     @RequestParam(required = false, name = "tags") String tags,
+                                                                     @RequestParam(required = false, name = "category") String category,
+                                                                     @RequestParam(required = false, defaultValue = SOURCE_OWNER) String source,
+                                                                     @PageableDefault(sort = "publishedAt", direction = Sort.Direction.DESC) Pageable pageable) {
         ensureAuthenticated(principal);
         var normalizedTags = parseTags(tags);
         var normalizedCategory = normalizeCategory(category);
@@ -98,8 +103,8 @@ public class ArticleController {
 
     @GetMapping("/recommendations")
     public ResponseEntity<Page<RecResponse>> rec(@AuthenticationPrincipal UserPrincipal principal,
-            @RequestParam(defaultValue = "0") Integer page,
-            @RequestParam(required = false) Integer size) {
+                                                 @RequestParam(defaultValue = "0") Integer page,
+                                                 @RequestParam(required = false) Integer size) {
         return ResponseEntity.ok(recommendationService
                 .recommend(new RecRequest(principal.getId(), "home", Map.of(), Map.of()), page, size));
     }
@@ -119,22 +124,26 @@ public class ArticleController {
 
     @GetMapping("/{articleId}")
     public ResponseEntity<ArticleDetailResponse> getArticle(@AuthenticationPrincipal UserPrincipal principal,
-            @PathVariable String articleId) {
+                                                            @PathVariable String articleId) {
         ensureAuthenticated(principal);
         var article = articleService.getArticle(IdentifierUtils.parseUuid(articleId, "article id"));
         var tags = extractTags(article.getTags());
+        ArticleEnrichment enrichment = articleEnrichmentService.getEnrichment(article.getId());
         var collected = userCollectionService.isCollected(principal.getId(), article.getUid());
+        Feed feed = article.getFeed();
         var response = new ArticleDetailResponse(
                 article.getUid().toString(),
                 article.getTitle(),
                 article.getContent(),
-                article.getSummary(),
+                Objects.nonNull(enrichment) ? enrichment.getAiSummary() : null,
+                Objects.nonNull(enrichment) ? enrichment.getMindMap() : null,
                 article.getLink(),
                 article.getThumbnail(),
                 article.getEnclosure(),
                 article.getEnclosureType(),
-                article.getFeed().getUid().toString(),
-                resolveFeedTitle(article.getFeed() == null ? null : article.getFeed().getTitle()),
+                feed.getUid().toString(),
+                resolveFeedTitle(feed == null ? null : feed.getTitle()),
+                FaviconResolver.resolve(feed.getSiteUrl(), feed.getUrl()),
                 formatTimestamp(article.getPublishedAt()),
                 tags,
                 collected);

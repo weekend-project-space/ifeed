@@ -1,5 +1,5 @@
-import {formatRelativeTime} from '@/utils/datetime';
-import {md2html} from '@/utils/markdown';
+import { formatRelativeTime } from '@/utils/datetime';
+import { md2html } from '@/utils/markdown';
 
 export interface ArticleDto {
     id: string;
@@ -36,6 +36,8 @@ export interface ArticleListItem {
 export interface ArticleDetail extends ArticleListItem {
     content: string;
     feedId?: string;
+    feedAvatar?: string;
+    mindMap?: string;
 }
 
 
@@ -65,9 +67,10 @@ export const normalizeArticleDetail = (article: ArticleDto): ArticleDetail => {
     const rawContent = article.content ?? article.summary ?? '';
 
     return {
+        ...article,
         id: String(article.id),
         title: article.title ?? '未命名文章',
-        summary: article.summary ?? '暂无摘要。',
+        summary:article.summary? md2html(article.summary) : '暂无摘要。',
         content: md2html(rawContent),
         link: article.link,
         thumbnail: article.thumbnail,
@@ -79,6 +82,6 @@ export const normalizeArticleDetail = (article: ArticleDto): ArticleDetail => {
         publishedAt,
         timeAgo: formatRelativeTime(publishedAt ?? Date.now()),
         tags: Array.from(new Set(tags)).slice(0, 6),
-        collected: article.collected ?? false
+        collected: article.collected ?? false,
     };
 };

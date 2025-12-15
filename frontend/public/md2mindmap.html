@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>思维导图 - Mindmap Viewer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #ffffff;
+            overflow: hidden;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        .header {
+            background: #fff;
+            border-bottom: 1px solid #e0e0e0;
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            z-index: 10;
+        }
+
+        .header h1 {
+            font-size: 16px;
+            font-weight: 600;
+            color: #1a1a1a;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .header h1 svg {
+            width: 20px;
+            height: 20px;
+            color: #3b82f6;
+        }
+
+        .controls {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .btn {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-secondary {
+            background: #f3f4f6;
+            color: #374151;
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+            background: #e5e7eb;
+        }
+
+        .btn svg {
+            width: 14px;
+            height: 14px;
+        }
+
+        .content {
+            flex: 1;
+            position: relative;
+            background: #ffffff;
+        }
+
+        #svgref {
+            width: 100%;
+            height: 100%;
+        }
+
+        .loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            color: #6b7280;
+        }
+
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid #f3f4f6;
+            border-top-color: #3b82f6;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 12px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            font-size: 13px;
+        }
+
+        .empty {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            max-width: 500px;
+            padding: 20px;
+        }
+
+        .empty-icon {
+            width: 60px;
+            height: 60px;
+            margin: 0 auto 16px;
+            background: #f3f4f6;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .empty-icon svg {
+            width: 30px;
+            height: 30px;
+            color: #9ca3af;
+        }
+
+        .empty h2 {
+            font-size: 18px;
+            margin-bottom: 8px;
+            color: #1a1a1a;
+        }
+
+        .empty p {
+            font-size: 13px;
+            color: #6b7280;
+            line-height: 1.6;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/markmap-lib@0.15"></script>
+    <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+    <script src="https://cdn.jsdelivr.net/npm/markmap-view"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/>
+                </svg>
+                思维导图
+            </h1>
+            <div class="controls">
+                <button class="btn btn-secondary" onclick="resetView()" id="resetBtn">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/>
+                    </svg>
+                    重置
+                </button>
+            </div>
+        </div>
+
+        <div class="content">
+            <div id="loading" class="loading">
+                <div class="loading-spinner"></div>
+                <div class="loading-text">等待数据...</div>
+            </div>
+
+            <div id="empty" class="empty hidden">
+                <div class="empty-icon">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                </div>
+                <h2>等待 Markdown 内容</h2>
+                <p>此页面通过 postMessage 接收 Markdown 内容来生成思维导图</p>
+            </div>
+
+            <svg class="hidden" id="svgref"></svg>
+        </div>
+    </div>
+
+    <script>
+        let markmapInstance = null;
+
+        // 初始化 Markmap
+        const initMarkmap = (() => {
+            const { Transformer, Markmap } = window.markmap;
+            const transformer = new Transformer();
+            const svg = document.getElementById('svgref');
+            markmapInstance = Markmap.create(svg, {
+                duration: 500,
+                maxWidth: 300,
+                nodeMinHeight: 30,
+                spacingVertical: 10,
+                spacingHorizontal: 80,
+                paddingX: 8,
+                autoFit: true,
+                color: (node) => {
+                    const colors = ['#3b82f6', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981', '#06b6d4', '#f43f5e'];
+                    return colors[node.depth % colors.length];
+                }
+            });
+
+            return (text) => {
+                try {
+                    const { root } = transformer.transform(text);
+                    markmapInstance.setData(root);
+                    markmapInstance.fit();
+                    
+                    // 显示 SVG，隐藏加载状态
+                    document.getElementById('loading').classList.add('hidden');
+                    document.getElementById('empty').classList.add('hidden');
+                    document.getElementById('svgref').classList.remove('hidden');
+                    document.getElementById('resetBtn').disabled = false;
+                } catch (error) {
+                    console.error('渲染失败:', error);
+                }
+            }
+        })();
+
+        // 监听 postMessage
+        window.addEventListener('message', (e) => {
+            if (e.data && typeof e.data === 'string') {
+                initMarkmap(e.data);
+            }
+        }, false);
+
+        // 从 URL 参数获取内容（额外支持）
+        const params = new URLSearchParams(window.location.search);
+        const md = params.get('md');
+        const md64 = params.get('md64');
+
+        if (md) {
+            initMarkmap(decodeURIComponent(md));
+        } else if (md64) {
+            try {
+                initMarkmap(decodeURIComponent(atob(md64)));
+            } catch (e) {
+                console.error('Base64 解码失败:', e);
+            }
+        } else {
+            // 5秒后如果没有数据，显示空状态
+            setTimeout(() => {
+                if (document.getElementById('svgref').classList.contains('hidden')) {
+                    document.getElementById('loading').classList.add('hidden');
+                    document.getElementById('empty').classList.remove('hidden');
+                }
+            }, 5000);
+        }
+
+        // 重置视图
+        function resetView() {
+            if (markmapInstance) {
+                markmapInstance.fit();
+            }
+        }
+    </script>
+</body>
+</html>
