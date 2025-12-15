@@ -440,7 +440,6 @@ const sendMindmapData = () => {
       const cleanedMarkdown = mindmapMarkdown.value
           .replaceAll('\\\\\\\\n', '\n')
           .replaceAll('\\\\n', '\n');
-      mindmapMarkdown.value.split('\n')
       iframe.postMessage(cleanedMarkdown, '*');
     }
   } catch (error) {
@@ -608,7 +607,7 @@ const loadArticle = async (articleId: string) => {
 
     if (currentController.signal.aborted) return;
 
-    window.scrollTo({top: 0, behavior: 'instant'});
+    window.scrollTo({top: 0, behavior: 'auto'});
     await nextTick();
 
     scrollTracked.value = false;
@@ -616,7 +615,6 @@ const loadArticle = async (articleId: string) => {
       console.warn('recordHistory failed', err);
     });
 
-    await nextTick();
     await refreshHeadingNavigation();
     mindmapMarkdown.value = article.value.mindMap;
     attachImageLoadListeners();
@@ -688,7 +686,6 @@ watch(
     () => article.value?.content,
     async () => {
       if (errorMessage.value) return;
-      await nextTick();
       debouncedRefreshHeadingNavigation();
       attachImageLoadListeners();
     }
