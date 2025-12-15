@@ -7,11 +7,9 @@ import org.bitmagic.ifeed.application.recommendation.recall.model.UserContext;
 import org.bitmagic.ifeed.domain.record.ArticleContent;
 import org.bitmagic.ifeed.domain.record.ArticleSummaryView;
 import org.bitmagic.ifeed.domain.repository.ArticleRepository;
-import org.bitmagic.ifeed.infrastructure.QualityScorer;
+import org.bitmagic.ifeed.infrastructure.score.QualityScorer;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -45,7 +43,7 @@ public class ReRankerService {
             if (content == null) {
                 return null;
             }
-            double score = qualityScorer.score(content.content(), LocalDateTime.ofInstant(content.publishedAt(), ZoneId.systemDefault()));
+            double score = qualityScorer.score(content.content()).totalScore();
             log.debug("itemId: {}, score: {}", itemCandidate.itemId(), qualityScorer.getGrade(score));
             return itemCandidate.withScore(score * 0.2 + 0.8 * itemCandidate.score());
         }).filter(Objects::nonNull).sorted(Comparator.comparingDouble(ItemCandidate::score).reversed()).toList();
