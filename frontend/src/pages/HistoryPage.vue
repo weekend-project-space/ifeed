@@ -61,74 +61,22 @@
         <section v-for="group in groupedByDate" :key="group.label" class="space-y-3 sm:space-y-4">
           <h2 class="text-sm sm:text-base font-medium text-text">{{ group.label }}</h2>
 
-          <article v-for="entry in group.items" :key="`${entry.articleId}-${entry.readAt}`">
-            <router-link
-                :to="`/articles/${entry.articleId}`"
-                class="group flex flex-col sm:flex-row gap-3 sm:gap-4 hover:bg-surface-container/50 -mx-2 px-2 py-2 rounded-lg transition-colors"
-            >
-              <!-- Thumbnail -->
-              <div class="relative flex-shrink-0 w-full sm:w-52 h-40 sm:h-32 rounded-lg overflow-hidden bg-surface-container">
-                <img
-                    v-if="entry.thumbnail"
-                    :src="entry.thumbnail"
-                    :alt="entry.title || '文章缩略图'"
-                    class="w-full h-full object-cover"
-                    loading="lazy"
-                    referrerpolicy="no-referrer"
-                    @error="handleImageError"
-                />
-                <div v-else class="w-full h-full flex items-center justify-center">
-                  <svg class="w-8 h-8 sm:w-10 sm:h-10 text-text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                    <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
-                    <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
-                  </svg>
-                </div>
-
-                <!-- Menu Button (Mobile) -->
-                <button
-                    @click.stop.prevent="handleMenuClick(entry)"
-                    class="sm:hidden absolute top-2 right-2 p-2 bg-black/60 backdrop-blur-sm hover:bg-black/80 rounded-full transition-all"
-                    aria-label="文章选项菜单"
-                >
-                  <svg class="w-5 h-5 text-white" viewBox="0 0 24 24" fill="currentColor">
-                    <circle cx="12" cy="12" r="1.5"/>
-                    <circle cx="12" cy="5" r="1.5"/>
-                    <circle cx="12" cy="19" r="1.5"/>
-                  </svg>
-                </button>
-              </div>
-
-              <!-- Content -->
-              <div class="flex-1 min-w-0 flex flex-col py-0 sm:py-1">
-                <h3 class="text-sm sm:text-base font-normal text-text line-clamp-2 mb-1.5 sm:mb-2 leading-normal">
-                  {{ entry.title || '未命名文章' }}
-                </h3>
-                <div class="flex items-center gap-1.5 text-xs sm:text-sm text-text-secondary mb-1.5 sm:mb-2">
-                  <span v-if="entry.feedTitle" class="truncate">{{ entry.feedTitle }}</span>
-                  <span v-if="entry.feedTitle" class="flex-shrink-0">•</span>
-                  <span class="flex-shrink-0">{{ formatRelativeTime(entry.readAt) }}</span>
-                </div>
-                <p v-if="entry.summary" class="text-xs sm:text-sm text-text-secondary line-clamp-2 leading-relaxed">
-                  {{ entry.summary }}
-                </p>
-              </div>
-
-              <!-- Menu Button (Desktop) -->
-              <button
-                  @click.stop.prevent="handleMenuClick(entry)"
-                  class="hidden sm:block self-start p-2 opacity-0 group-hover:opacity-100 hover:bg-surface-container rounded-full transition-all"
-                  aria-label="文章选项菜单"
-              >
-                <svg class="w-5 h-5 text-text-secondary" viewBox="0 0 24 24" fill="currentColor">
-                  <circle cx="12" cy="12" r="1.5"/>
-                  <circle cx="12" cy="5" r="1.5"/>
-                  <circle cx="12" cy="19" r="1.5"/>
-                </svg>
-              </button>
-            </router-link>
-          </article>
+          <article-card-list
+              :loading="loading"
+              :items="group.items"
+              meta-field="readAt"
+              action-label="文章选项菜单"
+          >
+            <template #empty-thumbnail>
+              <svg class="w-8 h-8 sm:w-10 sm:h-10 text-text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
+                <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+              </svg>
+            </template>
+          </article-card-list>
         </section>
       </div>
+
 
       <!-- Pagination -->
       <pagination

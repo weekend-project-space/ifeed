@@ -26,8 +26,8 @@ public class RecallEngine {
     private final RecallFusion fusion;
     private final UserContextFactory contextFactory;
     private final Executor executor;
-    private final ArticleRepository articleRepository;
-    private final AdaptiveScoreMapper adaptiveScoreMapper = new AdaptiveScoreMapper();
+//    private final ArticleRepository articleRepository;
+//    private final AdaptiveScoreMapper adaptiveScoreMapper = new AdaptiveScoreMapper();
 
     public RecallResponse recall(RecallRequest request) {
         long start = System.nanoTime();

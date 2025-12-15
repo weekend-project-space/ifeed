@@ -109,6 +109,13 @@ public class ArticleController {
                 .recommend(new RecRequest(principal.getId(), "home", Map.of(), Map.of()), page, size));
     }
 
+    @GetMapping("/details-recommendations")
+    public ResponseEntity<List<RecResponse>> rec(@AuthenticationPrincipal UserPrincipal principal,
+                                                 @RequestParam(required = false, defaultValue = "6") Integer topK) {
+        return ResponseEntity.ok(recommendationService
+                .recommend(new RecRequest(principal.getId(), "details", Map.of(), Map.of()), topK));
+    }
+
     @GetMapping("/insights")
     public ResponseEntity<UserSubscriptionInsightResponse> insights(
             @AuthenticationPrincipal UserPrincipal principal,

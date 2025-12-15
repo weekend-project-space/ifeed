@@ -52,6 +52,7 @@ public class JpaInvertedIndex implements InvertedIndex {
         // 按权重排序，权重高的优先
         List<UserPreferenceService.AttributePreference> sorted = attrs.stream()
                 .sorted(Comparator.comparingDouble(UserPreferenceService.AttributePreference::weight).reversed())
+                .limit(k*2)
                 .toList();
 
 
@@ -60,6 +61,7 @@ public class JpaInvertedIndex implements InvertedIndex {
         Map<Long, Map<String, Object>> metadataMap = new HashMap<>();
 
         int topK = ((Double) (k / sorted.size() * 1.5)).intValue();
+        topK = topK < 1 ? 1 : topK;
 
         for (UserPreferenceService.AttributePreference attr : sorted) {
 

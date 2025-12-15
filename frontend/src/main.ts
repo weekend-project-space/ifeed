@@ -5,6 +5,7 @@ import router from './router';
 import './styles/tailwind.css';
 import Pagination from "./components/Pagination.vue";
 import ArticleList from "./components/ArticleList.vue";
+import ArticleCardList from "./components/ArticleCardList.vue";
 import {useThemeStore} from './stores/theme';
 
 const app = createApp(App);
@@ -14,6 +15,7 @@ app.use(pinia);
 app.use(router);
 app.component('pagination',Pagination)
 app.component('article-list',ArticleList)
+app.component('article-card-list',ArticleCardList)
 const themeStore = useThemeStore(pinia);
 themeStore.init();
 app.mount('#app');

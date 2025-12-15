@@ -25,6 +25,6 @@ public class StrategyRegistry {
     }
 
     public Collection<StrategyId> available(String scene) {
-        return scene.contains("home") ? strategies.keySet() : Collections.singleton(StrategyId.I2I);
+        return scene.contains("home") ? strategies.keySet() : Arrays.asList(StrategyId.I2I, StrategyId.U2A2I);
     }
 }

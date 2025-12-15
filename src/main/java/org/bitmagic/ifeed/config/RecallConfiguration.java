@@ -69,8 +69,8 @@ public class RecallConfiguration {
                                      RecallPlanner planner,
                                      RecallFusion fusion,
                                      UserContextFactory contextFactory,
-                                     @Qualifier("recallExecutor") Executor executor, ArticleRepository articleRepository) {
+                                     @Qualifier("recallExecutor") Executor executor) {
         // 构建多路召回引擎，对外提供统一服务
-        return new RecallEngine(registry, planner, fusion, contextFactory, executor,articleRepository);
+        return new RecallEngine(registry, planner, fusion, contextFactory, executor);
     }
 }

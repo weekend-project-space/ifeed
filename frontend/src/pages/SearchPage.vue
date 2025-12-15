@@ -58,18 +58,23 @@
         <p class="text-xs sm:text-sm text-text-secondary px-4">输入关键词查找你感兴趣的文章</p>
       </div>
 
-      <!-- Loading State -->
-      <div v-else-if="searchLoading" role="status" aria-live="polite" class="space-y-3 sm:space-y-4">
-        <div class="text-center sr-only">正在搜索...</div>
-        <div v-for="i in 3" :key="i" class="flex flex-col sm:flex-row gap-3 sm:gap-4 animate-pulse">
-          <div class="w-full sm:w-52 h-40 sm:h-32 bg-surface-container rounded-lg flex-shrink-0"></div>
-          <div class="flex-1 space-y-2 sm:space-y-3 py-1 sm:py-2">
-            <div class="h-4 sm:h-5 bg-surface-container rounded w-3/4"></div>
-            <div class="h-3 sm:h-4 bg-surface-container rounded w-1/2"></div>
-            <div class="h-3 sm:h-4 bg-surface-container rounded w-full"></div>
-          </div>
-        </div>
-      </div>
+      <!-- Results List -->
+      <article-card-list
+          v-else-if="searchArticleItems.length||searchLoading"
+          :loading="searchLoading"
+          :items="searchArticleItems"
+          meta-field="timeAgo"
+          action-label="文章选项菜单"
+          @action="handleMenuClick"
+      >
+        <template #empty-thumbnail>
+          <svg class="w-8 h-8 sm:w-10 sm:h-10 text-text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
+            <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+          </svg>
+        </template>
+      </article-card-list>
+
 
       <!-- Search Results -->
       <div v-else>
@@ -98,83 +103,15 @@
           <p class="text-xs sm:text-sm text-text-secondary px-4">换个关键词试试</p>
         </div>
 
-        <!-- Results List -->
-        <div v-else class="space-y-4 sm:space-y-5">
-          <article v-for="item in searchArticleItems" :key="item.id">
-            <router-link
-                :to="`/articles/${item.id}`"
-                class="group flex flex-col sm:flex-row gap-3 sm:gap-4 hover:bg-surface-container/50 -mx-2 px-2 py-2 rounded-lg transition-colors"
-            >
-              <!-- Thumbnail -->
-              <div class="relative flex-shrink-0 w-full sm:w-52 h-40 sm:h-32 rounded-lg overflow-hidden bg-surface-container">
-                <img
-                    v-if="item.thumbnail"
-                    :src="item.thumbnail"
-                    :alt="item.title || '文章缩略图'"
-                    class="w-full h-full object-cover"
-                    loading="lazy"
-                    referrerpolicy="no-referrer"
-                    @error="handleImageError"
-                />
-                <div v-else class="w-full h-full flex items-center justify-center">
-                  <svg class="w-8 h-8 sm:w-10 sm:h-10 text-text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                    <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
-                    <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
-                  </svg>
-                </div>
 
-                <!-- Menu Button (Mobile) -->
-                <button
-                    @click.stop.prevent="handleMenuClick(item)"
-                    class="sm:hidden absolute top-2 right-2 p-2 bg-black/60 backdrop-blur-sm hover:bg-black/80 rounded-full transition-all"
-                    aria-label="文章选项菜单"
-                >
-                  <svg class="w-5 h-5 text-white" viewBox="0 0 24 24" fill="currentColor">
-                    <circle cx="12" cy="12" r="1.5"/>
-                    <circle cx="12" cy="5" r="1.5"/>
-                    <circle cx="12" cy="19" r="1.5"/>
-                  </svg>
-                </button>
-              </div>
-
-              <!-- Content -->
-              <div class="flex-1 min-w-0 flex flex-col py-0 sm:py-0.5">
-                <h3 class="text-sm sm:text-base font-normal text-text line-clamp-2 mb-1.5 sm:mb-2 leading-normal">
-                  {{ item.title }}
-                </h3>
-                <div class="flex items-center gap-1.5 text-xs sm:text-sm text-text-secondary mb-1.5 sm:mb-2">
-                  <span v-if="item.feedTitle" class="truncate">{{ item.feedTitle }}</span>
-                  <span v-if="item.feedTitle && item.timeAgo" class="flex-shrink-0">•</span>
-                  <span v-if="item.timeAgo" class="flex-shrink-0">{{ item.timeAgo }}</span>
-                </div>
-                <p v-if="item.summary" class="text-xs sm:text-sm text-text-secondary line-clamp-2 leading-relaxed">
-                  {{ item.summary }}
-                </p>
-              </div>
-
-              <!-- Menu Button (Desktop) -->
-              <button
-                  @click.stop.prevent="handleMenuClick(item)"
-                  class="hidden sm:block self-start p-2 opacity-0 group-hover:opacity-100 hover:bg-surface-container rounded-full transition-all"
-                  aria-label="文章选项菜单"
-              >
-                <svg class="w-5 h-5 text-text-secondary" viewBox="0 0 24 24" fill="currentColor">
-                  <circle cx="12" cy="12" r="1.5"/>
-                  <circle cx="12" cy="5" r="1.5"/>
-                  <circle cx="12" cy="19" r="1.5"/>
-                </svg>
-              </button>
-            </router-link>
-          </article>
-        </div>
 
         <!-- Pagination -->
         <pagination
-            v-if="searchArticleItems.length && !loading"
+            v-if="searchArticleItems.length && !searchLoading"
             :current-page="page"
             :has-previous-page="hasPreviousPage"
             :has-next-page="hasNextPage"
-            :disabled="loading"
+            :disabled="searchLoading"
             @prev-page="prevPage"
             @next-page="nextPage"
         />

@@ -44,19 +44,30 @@
         </div>
       </div>
 
-      <!-- Loading State -->
-      <div v-if="loading && !items.length" role="status" aria-live="polite" class="space-y-3 sm:space-y-4">
-        <span class="sr-only">正在加载收藏列表</span>
-        <div v-for="i in 3" :key="i" class="flex flex-col sm:flex-row gap-3 sm:gap-4 animate-pulse">
-          <div class="w-full sm:w-52 h-40 sm:h-32 bg-surface-container rounded-lg flex-shrink-0"></div>
-          <div class="flex-1 space-y-2 sm:space-y-3 py-1 sm:py-2">
-            <div class="h-4 sm:h-5 bg-surface-container rounded w-3/4"></div>
-            <div class="h-3 sm:h-4 bg-surface-container rounded w-1/2"></div>
-            <div class="h-3 sm:h-4 bg-surface-container rounded w-full"></div>
-          </div>
-        </div>
-      </div>
 
+      <!-- Collection Items -->
+      <article-card-list
+          v-if="loading || items.length"
+          :loading="loading"
+          :items="items"
+          meta-field="collectedAt"
+          meta-prefix="收藏于 "
+          action-label="取消收藏"
+          @action="item=>remove(item.articleId)"
+      >
+        <template #action-icon-mobile>
+          <svg class="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="3 6 5 6 21 6"/>
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+          </svg>
+        </template>
+        <template #action-icon-desktop>
+          <svg class="w-5 h-5 text-text-secondary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="3 6 5 6 21 6"/>
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+          </svg>
+        </template>
+      </article-card-list>
       <!-- Empty State -->
       <div v-else-if="!items.length && !loading" class="flex flex-col items-center justify-center py-16 sm:py-20 text-center">
         <div class="w-20 h-20 sm:w-24 sm:h-24 mb-4 sm:mb-6 flex items-center justify-center rounded-full bg-surface-container">
@@ -68,72 +79,7 @@
         <p class="text-xs sm:text-sm text-text-secondary px-4">收藏你喜欢的文章，它们将显示在这里</p>
       </div>
 
-      <!-- Collection Items -->
-      <div v-else class="space-y-4 sm:space-y-5">
-        <article v-for="item in items" :key="`${item.articleId}-${item.collectedAt}`">
-          <router-link
-              :to="`/articles/${item.articleId}`"
-              class="group flex flex-col sm:flex-row gap-3 sm:gap-4 hover:bg-surface-container/50 -mx-2 px-2 py-2 rounded-lg transition-colors"
-          >
-            <!-- Thumbnail -->
-            <div class="relative flex-shrink-0 w-full sm:w-52 h-40 sm:h-32 rounded-lg overflow-hidden bg-surface-container">
-              <img
-                  v-if="item.thumbnail"
-                  :src="item.thumbnail"
-                  :alt="item.title || '文章缩略图'"
-                  class="w-full h-full object-cover"
-                  loading="lazy"
-                  referrerpolicy="no-referrer"
-                  @error="handleImageError"
-              />
-              <div v-else class="w-full h-full flex items-center justify-center">
-                <svg class="w-8 h-8 sm:w-10 sm:h-10 text-text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                  <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
-                </svg>
-              </div>
 
-              <!-- Remove Button (Mobile) -->
-              <button
-                  @click.stop.prevent="remove(item.articleId)"
-                  class="sm:hidden absolute top-2 right-2 p-2 bg-black/60 backdrop-blur-sm hover:bg-black/80 rounded-full transition-all"
-                  aria-label="取消收藏"
-              >
-                <svg class="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <polyline points="3 6 5 6 21 6"/>
-                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
-                </svg>
-              </button>
-            </div>
-
-            <!-- Content -->
-            <div class="flex-1 min-w-0 flex flex-col py-0 sm:py-0.5">
-              <h3 class="text-sm sm:text-base font-normal text-text line-clamp-2 mb-1.5 sm:mb-2 leading-normal">
-                {{ item.title || '未命名文章' }}
-              </h3>
-              <div class="flex items-center gap-1.5 text-xs sm:text-sm text-text-secondary mb-1.5 sm:mb-2">
-                <span v-if="item.feedTitle" class="truncate">{{ item.feedTitle }}</span>
-                <span v-if="item.feedTitle && item.collectedAt" class="flex-shrink-0">•</span>
-                <span v-if="item.collectedAt" class="flex-shrink-0">收藏于 {{ formatRelativeTime(item.collectedAt) }}</span>
-              </div>
-              <p v-if="item.summary" class="text-xs sm:text-sm text-text-secondary line-clamp-2 leading-relaxed">
-                {{ item.summary }}
-              </p>
-            </div>
-
-            <!-- Remove Button (Desktop) -->
-            <button
-                @click.stop.prevent="remove(item.articleId)"
-                class="hidden sm:block self-start p-2 opacity-0 group-hover:opacity-100 hover:bg-surface-container rounded-full transition-all"
-                aria-label="取消收藏"
-            >
-              <svg class="w-5 h-5 text-text-secondary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polyline points="3 6 5 6 21 6"/>
-                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
-              </svg>
-            </button>
-          </router-link>
-        </article>
-      </div>
 
       <!-- Pagination -->
       <pagination

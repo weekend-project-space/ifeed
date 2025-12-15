@@ -254,21 +254,7 @@
                       />
                     </div>
                   </div>
-
-                  <!-- Empty state for other tabs -->
-                  <div v-else class="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-8 text-center">
-                    <div
-                        class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gray-100 dark:bg-gray-700 mb-3">
-                      <svg class="w-6 h-6 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor"
-                           viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                              d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                      </svg>
-                    </div>
-                    <p class="text-sm text-gray-500 dark:text-gray-400">
-                      暂无导航
-                    </p>
-                  </div>
+                  <article-card-list class="mt-5" :items="detailsItems" :loading="detailsLoading" compact></article-card-list>
                 </div>
               </aside>
             </div>
@@ -346,8 +332,10 @@ import {storeToRefs} from 'pinia';
 import {useRouter} from 'vue-router';
 import {useArticlesStore} from '../stores/articles/articles';
 import {useCollectionsStore} from '../stores/collections';
+import {useRecommendArticlesStore} from '../stores/articles/recommendArticles'
 import MediaAttachment from "../components/MediaAttachment.vue";
 import TocSection from "../components/TocSection.vue";
+import ArticleCardList from "../components/ArticleCardList.vue";
 
 // ==================== Types ====================
 interface Props {
@@ -366,7 +354,9 @@ const props = defineProps<Props>();
 const router = useRouter();
 const articlesStore = useArticlesStore();
 const collectionsStore = useCollectionsStore();
+const recommendArticlesStore = useRecommendArticlesStore();
 const {currentArticle} = storeToRefs(articlesStore);
+const {detailsItems, loading: detailsLoading} = storeToRefs(recommendArticlesStore);
 
 // ==================== State ====================
 const errorMessage = ref('');
@@ -604,7 +594,6 @@ const loadArticle = async (articleId: string) => {
     await articlesStore.fetchArticleById(articleId, {
       signal: currentController.signal
     });
-
     if (currentController.signal.aborted) return;
 
     window.scrollTo({top: 0, behavior: 'auto'});
@@ -618,6 +607,8 @@ const loadArticle = async (articleId: string) => {
     await refreshHeadingNavigation();
     mindmapMarkdown.value = article.value.mindMap;
     attachImageLoadListeners();
+
+    await recommendArticlesStore.fetchDetailsArticles()
   } catch (err) {
     if (currentController.signal.aborted) return;
     console.error('文章详情加载失败', err);
