@@ -24,6 +24,7 @@ import org.bitmagic.ifeed.domain.repository.UserBehaviorRepository;
 import org.bitmagic.ifeed.domain.service.AuthService;
 import org.bitmagic.ifeed.domain.service.OpmlImportService;
 import org.bitmagic.ifeed.domain.service.SubscriptionService;
+import org.bitmagic.ifeed.domain.service.UserService;
 import org.bitmagic.ifeed.domain.spec.FeedSpecs;
 import org.bitmagic.ifeed.exception.ApiException;
 import org.springframework.http.HttpStatus;
@@ -46,7 +47,7 @@ import java.util.stream.Stream;
 public class SubscriptionController {
 
     private final SubscriptionService subscriptionService;
-    private final AuthService authService;
+    private final UserService userService;
 
     private final UserBehaviorRepository userBehaviorRepository;
     private final FeedRepository feedRepository;
@@ -144,7 +145,7 @@ public class SubscriptionController {
         if (principal == null) {
             throw new ApiException(HttpStatus.UNAUTHORIZED, "Unauthorized");
         }
-        return authService.findUserById(principal.getId())
+        return userService.findUserById(principal.getId())
                 .orElseThrow(() -> new ApiException(HttpStatus.UNAUTHORIZED, "User not found"));
     }
 

@@ -87,7 +87,7 @@
             <!-- Theme Toggle -->
             <button
                 type="button"
-                class="flex h-10 w-10 items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition"
+                class="flex h-10 w-10 items-center justify-center rounded-full hover:bg-secondary/20 transition"
                 @click="toggleTheme">
               <svg v-if="isDark" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.5"
                    viewBox="0 0 24 24">
@@ -113,7 +113,7 @@
 
             <RouterLink
                 :to="{ name: 'discover' }"
-                class="flex sm:hidden h-10 w-10 items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition">
+                class="flex sm:hidden h-10 w-10 items-center justify-center rounded-full hover:bg-secondary/20 transition">
               <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M12 5v14M5 12h14"></path>
               </svg>
@@ -155,9 +155,9 @@
                   <RouterLink
                       to="/upgrade"
                       class="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                            d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/>
                     </svg>
                     升级套餐
                   </RouterLink>

@@ -38,20 +38,26 @@
     </header>
 
     <!-- Promotion Banner -->
-    <div class="bg-gradient-to-r from-purple-600 to-blue-600 dark:from-purple-700 dark:to-blue-700">
-      <div class="max-w-screen-xl  mx-auto px-4 sm:px-6 lg:px-8 py-4">
+    <div class="bg-gradient-to-r from-purple-600 to-primary dark:from-purple-700 dark:to-primary">
+      <div class="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
         <div class="flex items-center justify-center space-x-2 text-white text-sm">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                   d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"></path>
           </svg>
+
           <span class="font-medium">特别优惠！</span>
           <span>我们为中文用户提供特别优惠！请在订阅时使用优惠码</span>
-          <span class="bg-white text-purple-600 dark:text-purple-700 px-2 py-1 rounded font-bold">FLY</span>
+
+          <span class="bg-white text-primary px-2 py-1 rounded font-bold">
+        AIR
+      </span>
+
           <span>，即可额外享受 <strong>85折</strong> 优惠！</span>
         </div>
       </div>
     </div>
+
 
     <!-- Main Content -->
     <div class="max-w-screen-xl  mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -288,12 +294,13 @@
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                     d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
             </svg>
-            <div class="text-sm text-blue-800 dark:text-blue-300">
+            <div class="text-sm  ">
               <p class="font-medium mb-1">支付提示：</p>
-              <ul class="list-disc list-inside space-y-1 text-blue-700 dark:text-blue-400">
-                <li>付款留言处填写你在本站的账号：{{ userInfo.username }} （受字数限制没填写完整也可）</li>
-                <li>支付成功后，套餐将自动激活, 如有问题，请联系客服</li>
-                <li>记得使用优惠码 <strong>FLY</strong> 享受85折优惠</li>
+              <ul class="list-disc list-inside space-y-1 ">
+                <li>付款留言处填写你在本站的账号：<strong>{{ userInfo.username }}</strong> <br><small> （受字数限制没填写完整也可）</small></li>
+                <li>支付成功后，套餐将2小时内自动激活, </li>
+                <li>记得使用优惠码 <strong>AIR</strong> 享受85折优惠</li>
+                <small> 如有问题，<a class="text-blue-900" href="https://zhidayingxiao.cn/to/06g6yb">请联系客服</a></small>
               </ul>
             </div>
           </div>

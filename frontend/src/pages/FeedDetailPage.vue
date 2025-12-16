@@ -1,5 +1,5 @@
 <template>
-  <div class="mx-auto max-w-7xl px-0 py-8 sm:px-6">
+  <div class="mx-auto max-w-screen-xl px-0 py-8 sm:px-6">
     <!-- Channel Header -->
     <section class="mb-8 space-y-4">
       <!-- Channel Info -->

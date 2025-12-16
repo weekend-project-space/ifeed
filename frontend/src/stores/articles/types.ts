@@ -38,6 +38,7 @@ export interface ArticleDetail extends ArticleListItem {
     feedId?: string;
     feedAvatar?: string;
     mindMap?: string;
+    requiresUpgrade: string;
 }
 
 

@@ -10,6 +10,7 @@ public record ArticleDetailResponse(
         String content,
         String summary,
         String mindMap,
+        boolean requiresUpgrade, //内容访问是否被会员等级限制
         String link,
         String thumbnail,
         String enclosure,

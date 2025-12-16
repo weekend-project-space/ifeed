@@ -1,5 +1,5 @@
 <template>
-  <div class="mx-auto max-w-7xl px-4 py-8 sm:px-6">
+  <div class="mx-auto max-w-screen-xl px-4 py-8 sm:px-6">
     <!-- Loading State -->
     <div v-if="articlesStore.loading" class="flex flex-col items-center justify-center py-32 gap-4">
       <div class="relative h-12 w-12">
@@ -129,7 +129,7 @@
                 ></div>
               </button>
               <button
-                  v-if="article.summary"
+                  v-if="article.summary||article.requiresUpgrade"
                   @click="activeMainTab = 'summary'"
                   :class="[
                     'px-6 py-3 text-sm font-medium transition-all relative flex items-center gap-2',
@@ -150,7 +150,7 @@
               </button>
 
               <button
-                  v-if="article.mindMap"
+                  v-if="article.mindMap||article.requiresUpgrade"
                   @click="activeMainTab = 'mindmap'"
                   :class="[
                     'px-6 py-3 text-sm font-medium transition-all relative flex items-center gap-2',
@@ -253,14 +253,15 @@
                       />
                     </div>
                   </div>
-                  <article-card-list class="mt-5" :items="detailsItems" :loading="detailsLoading" key-field="id" compact></article-card-list>
+                  <article-card-list class="mt-5" :items="detailsItems" :loading="detailsLoading" key-field="id"
+                                     compact></article-card-list>
                 </div>
               </aside>
             </div>
 
             <!-- Summary Tab -->
             <div v-show="activeMainTab === 'summary'">
-              <div class="prose prose-lg prose-gray dark:prose-invert max-w-none">
+              <div v-if="article.summary" class="prose prose-lg prose-gray dark:prose-invert max-w-none">
                 <div class="flex items-start gap-3 p-4 bg-blue-50 dark:bg-blue-900/10 rounded-xl mb-6">
                   <svg class="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" fill="none"
                        stroke="currentColor" viewBox="0 0 24 24">
@@ -276,11 +277,31 @@
                      class="article-content text-gray-700 dark:text-gray-300 leading-relaxed text-base ">
                 </div>
               </div>
+              <div v-else class="text-center py-24">
+                <div
+                    class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 dark:bg-gray-800 mb-4">
+                  <svg class="w-8 h-8 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor"
+                       viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                  </svg>
+                </div>
+                <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">摘要</h3>
+                <p class="text-gray-500 dark:text-gray-400 mb-3">此功能仅限会员使用</p>
+                <router-link to="/upgrade"
+                    class="inline-flex items-center text-white bg-secondary hover:bg-secondary/90 px-4 py-2 text-sm font-medium rounded-full transition-colors">
+                  <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/>
+                  </svg>
+                  升级会员
+                </router-link>
+              </div>
             </div>
 
             <!-- Mindmap Tab -->
             <div v-show="activeMainTab === 'mindmap'">
-              <div v-if="mindmapMarkdown"
+              <div v-show="mindmapMarkdown"
                    class="rounded-xl overflow-hidden bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
                 <iframe
                     ref="mindmapFrame"
@@ -291,17 +312,25 @@
                     @load="sendMindmapData"
                 />
               </div>
-              <div v-else class="text-center py-24">
+              <div v-if="!mindmapMarkdown" class="text-center py-24">
                 <div
                     class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 dark:bg-gray-800 mb-4">
-                  <svg class="w-8 h-8 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor"
+                  <svg class="w-8 h-8 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor"
                        viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                          d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/>
+                          d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
                   </svg>
                 </div>
                 <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">思维导图</h3>
-                <p class="text-gray-500 dark:text-gray-400">文章内容太少，无法生成思维导图</p>
+                <p class="text-gray-500 dark:text-gray-400 mb-3">此功能仅限会员使用</p>
+                <router-link to="/upgrade"
+                             class="inline-flex items-center text-white bg-secondary hover:bg-secondary/90 px-4 py-2 text-sm font-medium rounded-full transition-colors">
+                  <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/>
+                  </svg>
+                  升级会员
+                </router-link>
               </div>
             </div>
           </div>
@@ -427,7 +456,7 @@ const sendMindmapData = () => {
       const cleanedMarkdown = mindmapMarkdown.value
           .replaceAll('\\\\\\\\n', '\n')
           .replaceAll('\\\\n', '\n')
-      clearMindMap.value=cleanedMarkdown.replaceAll('\n\n', '\n')
+      clearMindMap.value = cleanedMarkdown.replaceAll('\n\n', '\n')
       iframe.postMessage(cleanedMarkdown, '*');
     }
   } catch (error) {

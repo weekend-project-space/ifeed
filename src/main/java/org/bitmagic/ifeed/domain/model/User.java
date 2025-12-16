@@ -1,11 +1,7 @@
 package org.bitmagic.ifeed.domain.model;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.Instant;
@@ -44,6 +40,8 @@ public class User {
     @Enumerated(EnumType.STRING)
     private Plan currentPlan;
 
+    private Instant currentPlanCreatedAt;
+
     {
         currentPlan = Plan.FREE;
     }
@@ -55,5 +53,10 @@ public class User {
         private final int maxSubscriptions;
         private final int maxCreatedMixFeed;
         private final int maxWebhooks;
+    }
+
+    public void changePlan(Plan plan) {
+        this.currentPlan = plan;
+        this.currentPlanCreatedAt = Instant.now();
     }
 }

@@ -132,6 +132,10 @@ public class ArticleEnrichmentService {
         return enrichmentRepository.findById(articleId).orElse(null);
     }
 
+    public boolean existsById(Long articleId) {
+        return enrichmentRepository.existsById(articleId);
+    }
+
     /**
      * 生成文章总结
      */
