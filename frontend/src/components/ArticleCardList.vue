@@ -17,7 +17,7 @@
   <div v-else :class="compact ? 'space-y-2 sm:space-y-2.5' : 'space-y-4 sm:space-y-5'">
     <article v-for="(item, index) in items" :key="getItemKey(item, index)">
       <router-link
-          :to="`/articles/${item.articleId}`"
+          :to="`/articles/${item[keyField]}`"
           :class="[
             'group flex flex-col sm:flex-row hover:bg-surface-container/50 -mx-2 px-2 rounded-lg transition-colors',
             compact ? 'gap-2 sm:gap-3 py-1.5' : 'gap-3 sm:gap-4 py-2'
@@ -26,7 +26,7 @@
         <!-- Thumbnail -->
         <div :class="[
           'relative flex-shrink-0 rounded-lg overflow-hidden bg-surface-container',
-          compact ? 'w-full sm:w-24 h-20 sm:h-16' : 'w-full sm:w-52 h-40 sm:h-32'
+          compact ? 'w-full sm:w-24 h-24 sm:h-16' : 'w-full sm:w-52 h-40 sm:h-32'
         ]">
           <img
               v-if="item.thumbnail"
@@ -39,8 +39,10 @@
           />
           <div v-else class="w-full h-full flex items-center justify-center">
             <slot name="empty-thumbnail" :item="item">
-              <svg :class="['text-text-muted', compact ? 'w-6 h-6 sm:w-7 sm:h-7' : 'w-8 h-8 sm:w-10 sm:h-10']" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+              <svg :class="['text-text-muted', compact ? 'w-6 h-6 sm:w-7 sm:h-7' : 'w-8 h-8 sm:w-10 sm:h-10']" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                <circle cx="8.5" cy="8.5" r="1.5"/>
+                <polyline points="21 15 16 10 5 21"/>
               </svg>
             </slot>
           </div>

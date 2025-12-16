@@ -70,7 +70,7 @@ export const normalizeArticleDetail = (article: ArticleDto): ArticleDetail => {
         ...article,
         id: String(article.id),
         title: article.title ?? '未命名文章',
-        summary:article.summary? md2html(article.summary) : '暂无摘要。',
+        summary:article.summary? md2html(article.summary) : '',
         content: md2html(rawContent),
         link: article.link,
         thumbnail: article.thumbnail,

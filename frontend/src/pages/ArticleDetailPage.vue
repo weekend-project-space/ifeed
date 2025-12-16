@@ -128,9 +128,8 @@
                     class="absolute bottom-0 left-0 right-0 h-0.5 bg-gray-900 dark:bg-white"
                 ></div>
               </button>
-
               <button
-                  v-if="showSummary"
+                  v-if="article.summary"
                   @click="activeMainTab = 'summary'"
                   :class="[
                     'px-6 py-3 text-sm font-medium transition-all relative flex items-center gap-2',
@@ -151,7 +150,7 @@
               </button>
 
               <button
-                  v-if="showMindMap"
+                  v-if="article.mindMap"
                   @click="activeMainTab = 'mindmap'"
                   :class="[
                     'px-6 py-3 text-sm font-medium transition-all relative flex items-center gap-2',
@@ -234,11 +233,11 @@
                 </footer>
               </div>
               <!-- Sidebar (Desktop Only)-->
-              <aside class="hidden lg:block">
-                <div class="sticky top-24">
+              <aside class="">
+                <div class="lg:sticky lg:top-24 ">
                   <!-- Show TOC only when viewing content -->
                   <div v-if="activeMainTab === 'content' && showToc"
-                       class="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-5">
+                       class="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-5 hidden lg:block">
                     <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
                       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -254,7 +253,7 @@
                       />
                     </div>
                   </div>
-                  <article-card-list class="mt-5" :items="detailsItems" :loading="detailsLoading" compact></article-card-list>
+                  <article-card-list class="mt-5" :items="detailsItems" :loading="detailsLoading" key-field="id" compact></article-card-list>
                 </div>
               </aside>
             </div>
@@ -287,7 +286,7 @@
                     ref="mindmapFrame"
                     src="/md2mindmap.html"
                     class="w-full"
-                    :style="`max-height: 500vh; height: ${mindmapMarkdown.split('\n').length*1.5}vh;`"
+                    :style="`max-height: 500vh; height: ${clearMindMap.split('\n').length*1.5}vh;`"
                     frameborder="0"
                     @load="sendMindmapData"
                 />
@@ -379,9 +378,7 @@ const SCROLL_PROGRESS_THRESHOLD = 0.3;
 
 // ==================== Computed ====================
 const article = computed(() => currentArticle.value);
-const showSummary = computed(() => !!article.value?.summary);
 const showToc = computed(() => tocItems.value.length > 0);
-const showMindMap = computed(() => tocItems.value.length > 0 || article.value.mindMap != null);
 
 // ==================== Utility Functions ====================
 function throttle<T extends (...args: any[]) => void>(fn: T, wait = 100): T {
@@ -419,7 +416,7 @@ const getScrollTop = (): number => {
 };
 
 // ==================== Mindmap Generation ====================
-
+const clearMindMap = ref('')
 const sendMindmapData = () => {
   if (!mindmapFrame.value || !mindmapMarkdown.value) return;
 
@@ -429,7 +426,8 @@ const sendMindmapData = () => {
       // Clean up markdown newlines
       const cleanedMarkdown = mindmapMarkdown.value
           .replaceAll('\\\\\\\\n', '\n')
-          .replaceAll('\\\\n', '\n');
+          .replaceAll('\\\\n', '\n')
+      clearMindMap.value=cleanedMarkdown.replaceAll('\n\n', '\n')
       iframe.postMessage(cleanedMarkdown, '*');
     }
   } catch (error) {

@@ -8,7 +8,7 @@
           v-for="item in items"
           :key="item.id"
           type="button"
-          class="block w-full text-left py-1.5 px-0 text-sm rounded transition-colors truncate "
+          class="block w-full text-left py-1 px-0 text-sm rounded transition-colors truncate "
           :class="activeId === item.id
             ? 'text-secondary font-medium'
             : 'text-secondary/70 hover:text-secondary '"
