@@ -45,7 +45,7 @@ public class MixFeedService {
         if (!StringUtils.hasText(name)) {
             throw new ApiException(HttpStatus.BAD_REQUEST, "MixFeed name is required");
         }
-        checkMixFeedCountLimit(user.getId());
+        checkMixFeedCountLimit(user);
         String filterConfigJson = serializeFilterConfig(filterConfig);
         MixFeed mixFeed = MixFeed.builder()
                 .user(user)
@@ -215,11 +215,11 @@ public class MixFeedService {
         return 0;
     }
 
-    private void checkMixFeedCountLimit(Integer userId) {
-        long count = mixFeedRepository.count(MixFeedSpecs.toSpec(userId));
-        if (count >= MAX_USER_MIX_FEEDS) {
+    private void checkMixFeedCountLimit(User user) {
+        long count = mixFeedRepository.count(MixFeedSpecs.toSpec(user.getId()));
+        if (count >= user.getCurrentPlan().getMaxCreatedMixFeed()) {
             throw new ApiException(HttpStatus.BAD_REQUEST,
-                    String.format("Maximum %d MixFeeds allowed per user", MAX_USER_MIX_FEEDS));
+                    String.format("Maximum %d MixFeeds allowed per user", user.getCurrentPlan().getMaxCreatedMixFeed()));
         }
     }
 

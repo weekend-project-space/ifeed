@@ -15,12 +15,12 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api")
 @RequiredArgsConstructor
 public class UserController {
-
+    //    src="https://api.dicebear.com/7.x/avataaars/svg?seed=13437977913"
     @GetMapping("/user")
     public ResponseEntity<UserResponse> currentUser(@AuthenticationPrincipal UserPrincipal principal) {
         if (principal == null) {
             throw new ApiException(HttpStatus.UNAUTHORIZED, "Unauthorized");
         }
-        return ResponseEntity.ok(new UserResponse(principal.getId().toString(), principal.getUsername()));
+        return ResponseEntity.ok(new UserResponse(principal.getId().toString(), principal.getUsername(), "https://api.dicebear.com/7.x/pixel-art/svg?seed=" + principal.getUsername(), principal.getCurrentPlan().name()));
     }
 }

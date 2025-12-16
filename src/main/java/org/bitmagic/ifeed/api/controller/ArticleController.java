@@ -13,6 +13,7 @@ import org.bitmagic.ifeed.application.recommendation.RecommendationService;
 import org.bitmagic.ifeed.config.security.UserPrincipal;
 import org.bitmagic.ifeed.domain.model.ArticleEnrichment;
 import org.bitmagic.ifeed.domain.model.Feed;
+import org.bitmagic.ifeed.domain.model.User;
 import org.bitmagic.ifeed.domain.record.ArticleSummaryView;
 import org.bitmagic.ifeed.domain.repository.FeedRepository;
 import org.bitmagic.ifeed.domain.repository.MixFeedRepository;
@@ -135,7 +136,7 @@ public class ArticleController {
         ensureAuthenticated(principal);
         var article = articleService.getArticle(IdentifierUtils.parseUuid(articleId, "article id"));
         var tags = extractTags(article.getTags());
-        ArticleEnrichment enrichment = articleEnrichmentService.getEnrichment(article.getId());
+        ArticleEnrichment enrichment = User.Plan.FREE.equals(principal.getCurrentPlan()) ? null : articleEnrichmentService.getEnrichment(article.getId());
         var collected = userCollectionService.isCollected(principal.getId(), article.getUid());
         Feed feed = article.getFeed();
         var response = new ArticleDetailResponse(
@@ -149,7 +150,7 @@ public class ArticleController {
                 article.getEnclosure(),
                 article.getEnclosureType(),
                 feed.getUid().toString(),
-                resolveFeedTitle(feed == null ? null : feed.getTitle()),
+                resolveFeedTitle(feed.getTitle()),
                 FaviconResolver.resolve(feed.getSiteUrl(), feed.getUrl()),
                 formatTimestamp(article.getPublishedAt()),
                 tags,

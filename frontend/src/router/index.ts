@@ -12,6 +12,7 @@ import FeedDetailPage from '../pages/FeedDetailPage.vue';
 import HomePage from '../pages/HomePage.vue';
 import FeedSubscriptionsPage from '../pages/FeedSubscriptionsPage.vue';
 import FeedChannelsPage from '../pages/SubscriptionsListPage.vue';
+import UpgradePage from "../pages/UpgradePage.vue";
 import { useAuthStore } from '../stores/auth';
 
 const router = createRouter({
@@ -77,6 +78,11 @@ const router = createRouter({
                     name: 'article-detail',
                     component: ArticleDetailPage,
                     props: true
+                },
+                {
+                    path: 'upgrade',
+                    name: 'upgrade',
+                    component: UpgradePage,
                 }
             ]
         }

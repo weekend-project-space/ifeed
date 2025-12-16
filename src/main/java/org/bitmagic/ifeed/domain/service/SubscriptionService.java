@@ -39,7 +39,9 @@ public class SubscriptionService {
     public UserSubscription subscribe(User user, SubscriptionRequest request) {
         SourceType type;
         Integer sourceId;
-
+        long usedQuota = subscriptionRepository.countByUserAndActiveTrue(user);
+        int remainingQuota = (int) Math.max(0, user.getCurrentPlan().getMaxSubscriptions() - usedQuota);
+        Assert.isTrue(remainingQuota > 0, "Exceeding the subscription limit, please upgrade your plan");
         // If sourceId is provided, try to find by UUID (Feed or MixFeed)
         if (StringUtils.hasText(request.feedId())) {
             UUID uuid;

@@ -36,4 +36,24 @@ public class User {
 
     @Column(length = 64)
     private String linuxDoUserId;
+
+    /**
+     * 套餐
+     */
+    @Column(length = 16, nullable = false)
+    @Enumerated(EnumType.STRING)
+    private Plan currentPlan;
+
+    {
+        currentPlan = Plan.FREE;
+    }
+
+    @AllArgsConstructor
+    @Getter
+    public enum Plan {
+        FREE(30, 0, 1), STANDARD(300, 2, 2), PRO(2000, 6, 6);
+        private final int maxSubscriptions;
+        private final int maxCreatedMixFeed;
+        private final int maxWebhooks;
+    }
 }

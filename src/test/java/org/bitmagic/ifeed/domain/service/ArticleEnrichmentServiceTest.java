@@ -30,7 +30,7 @@ class ArticleEnrichmentServiceTest {
     void enrichArticle() {
         Stream.iterate(0, i -> i + 1).skip(0).limit(1).forEach(i -> {
             Specification<Article> specification = Spec.<Article>on().and((root, query, criteriaBuilder) -> {
-                return criteriaBuilder.equal(root.get("feed").get("id"), 74);
+                return criteriaBuilder.equal(root.get("feed").get("id"), 4);
             }).build();
             List<Article> articles = articleRepository.findAll(specification,PageRequest.of(i, 10, Sort.by(Sort.Direction.DESC, "id"))).getContent();
             articles.forEach(article -> {

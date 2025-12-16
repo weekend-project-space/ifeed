@@ -234,7 +234,7 @@
               </div>
               <!-- Sidebar (Desktop Only)-->
               <aside class="">
-                <div class="lg:sticky lg:top-24 ">
+                <div class="lg:sticky lg:top-20 ">
                   <!-- Show TOC only when viewing content -->
                   <div v-if="activeMainTab === 'content' && showToc"
                        class="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-5 hidden lg:block">
