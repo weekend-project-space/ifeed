@@ -1,4 +1,4 @@
-import { createRouter, createWebHistory } from 'vue-router';
+import {createRouter, createWebHistory} from 'vue-router';
 import AuthPage from '../pages/AuthPage.vue';
 // import HomePage from '../pages/HomePage.vue';
 import SearchPage from '../pages/SearchPage.vue';
@@ -14,7 +14,7 @@ import FeedSubscriptionsPage from '../pages/FeedSubscriptionsPage.vue';
 import FeedChannelsPage from '../pages/SubscriptionsListPage.vue';
 import AdminPage from "../pages/AdminPage.vue";
 import UpgradePage from "../pages/UpgradePage.vue";
-import { useAuthStore } from '../stores/auth';
+import {useAuthStore} from '../stores/auth';
 
 const router = createRouter({
     history: createWebHistory(),
@@ -95,9 +95,9 @@ const router = createRouter({
     ]
 });
 
-router.beforeEach(async (to: any) => {
+router.beforeEach(async (to: any, from: any) => {
     const auth = useAuthStore();
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo({top: 0, behavior: 'smooth'});
     if (!auth.initialized && auth.token) {
         try {
             await auth.fetchUser();
@@ -105,13 +105,15 @@ router.beforeEach(async (to: any) => {
             console.warn('用户信息初始化失败', err);
         }
     }
-
+    if (to.name == 'article-detail') {
+        sessionStorage.setItem('origin-list', from.path)
+    }
     if (to.name !== 'auth' && !auth.isAuthenticated) {
-        return { name: 'auth', query: { redirect: to.fullPath } };
+        return {name: 'auth', query: {redirect: to.fullPath}};
     }
 
     if (to.name === 'auth' && auth.isAuthenticated) {
-        return { name: 'home' };
+        return {name: 'home'};
     }
 
     return true;
