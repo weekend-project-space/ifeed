@@ -61,7 +61,7 @@ public class Feed {
     @Builder.Default
     private Integer failureCount = 0;
 
-    @Column(name = "category", length = 50)
+    @Column(name = "category", length = 32)
     private String category;
 
     @Column(name = "featured")

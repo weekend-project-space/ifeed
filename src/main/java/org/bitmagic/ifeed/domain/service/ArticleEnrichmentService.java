@@ -4,12 +4,14 @@ package org.bitmagic.ifeed.domain.service;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.logging.log4j.util.Strings;
 import org.bitmagic.ifeed.domain.model.Article;
 import org.bitmagic.ifeed.domain.model.ArticleEnrichment;
 import org.bitmagic.ifeed.domain.model.Feed;
 import org.bitmagic.ifeed.domain.repository.ArticleEnrichmentRepository;
 import org.bitmagic.ifeed.domain.repository.FeedRepository;
-import org.bitmagic.ifeed.infrastructure.score.QualityScorer;
+import org.bitmagic.ifeed.domain.spec.ArticleEnrichmentSpec;
+import org.bitmagic.ifeed.infrastructure.score.ContentQualityEvaluator;
 import org.bitmagic.ifeed.infrastructure.ai.rerank.RerankerModel;
 import org.bitmagic.ifeed.infrastructure.score.ScoreMerger;
 import org.springframework.ai.chat.client.ChatClient;
@@ -35,7 +37,7 @@ public class ArticleEnrichmentService {
 
     private final ChatClient chatClient;
     private final RerankerModel rerankerModel;
-    private final QualityScorer qualityScorer = new QualityScorer();
+    private final ContentQualityEvaluator qualityEvaluator = new ContentQualityEvaluator();
     private final ArticleEnrichmentRepository enrichmentRepository;
     private final FeedRepository feedRepository;
 
@@ -81,8 +83,8 @@ public class ArticleEnrichmentService {
         log.info("开始为文章生成增强信息: id={}, title={}", article.getId(), article.getTitle());
 
         // 1. 计算内容质量评分
-        double contentScore = qualityScorer.score(article.getContent()).totalScore();
-        String contentGrade = qualityScorer.getGrade(contentScore);
+        double contentScore = getContentScore(article);
+        String contentGrade = ContentQualityEvaluator.getGrade(contentScore);
         log.info("内容质量评分: score={}, grade={}", String.format("%.2f", contentScore), contentGrade);
 
         // 创建或获取 Enrichment
@@ -92,41 +94,49 @@ public class ArticleEnrichmentService {
                         .build());
 
         // 如果内容质量太差（D级），直接返回
-        if ("D".equals(contentGrade) || "E".equals(contentGrade)) {
+        if ("D".equals(contentGrade) || "E".equals(contentGrade) || "F".equals(contentGrade)) {
             log.warn("文章质量过低({}级)，跳过AI增强: articleId={}", contentGrade, article.getId());
             enrichment.setRating(ArticleEnrichment.Rating.D);
             return enrichmentRepository.save(enrichment);
         }
+//        有3/5 在D
+        String finalGrade = contentGrade;
+        if (!"C".equals(contentGrade)) {
+            // 2. 计算排序分数（reranker分数）
+            double rerankerScore = getRerankerScore(article);
+            String rerankerGrade = toGrade(rerankerScore);
+            log.info("Reranker评分: score={}, grade={}", String.format("%.2f", rerankerScore), rerankerGrade);
 
-        // 2. 计算排序分数（reranker分数）
-        double rerankerScore = generateReranker(article);
-        String rerankerGrade = toGrade(rerankerScore);
-        log.info("Reranker评分: score={}, grade={}", String.format("%.2f", rerankerScore), rerankerGrade);
+            // 3. 综合评分（reranker70% + 内容30%）
+            finalGrade = ScoreMerger.merge(rerankerGrade, contentGrade);
+            log.info("综合评级: {} (内容) + {} (reranker) = {} (最终)",
+                    contentGrade, rerankerGrade, finalGrade);
+        }
 
-        // 3. 综合评分（内容60% + reranker40%）
-        String finalGrade = ScoreMerger.merge(contentGrade, rerankerGrade);
-        log.info("综合评级: {} (内容) + {} (reranker) = {} (最终)",
-                contentGrade, rerankerGrade, finalGrade);
 
-        // 4. 生成AI增强内容
-        log.info("开始生成AI增强内容: articleId={}", article.getId());
-        String aiSummary = generateSummary(article);
-        String mindMap = generateMindMap(article);
-
-        enrichment.setAiSummary(aiSummary);
-        enrichment.setMindMap(mindMap);
+//        // 4. 生成AI增强内容
+//        log.info("开始生成AI增强内容: articleId={}", article.getId());
+//        String aiSummary = generateSummary(article);
+//        String mindMap = generateMindMap(article);
+//
+//        enrichment.setAiSummary(aiSummary);
+//        enrichment.setMindMap(mindMap);
         enrichment.setRating(ArticleEnrichment.Rating.valueOf(finalGrade));
 
         ArticleEnrichment saved = enrichmentRepository.save(enrichment);
-        log.info("文章增强信息生成完成: articleId={}, finalGrade={}, " +
-                        "summaryLength={}, hasMindMap={}",
+        log.info("文章增强信息生成完成: articleId={}, finalGrade={}, ",
                 article.getId(),
-                finalGrade,
-                aiSummary != null ? aiSummary.length() : 0,
-                mindMap != null && !mindMap.isEmpty());
+                finalGrade);
+//        log.info("文章增强信息生成完成: articleId={}, finalGrade={}, " +
+//                        "summaryLength={}, hasMindMap={}",
+//                article.getId(),
+//                finalGrade,
+//                aiSummary != null ? aiSummary.length() : 0,
+//                mindMap != null && !mindMap.isEmpty());
 
         return saved;
     }
+
 
     public ArticleEnrichment getEnrichment(Long articleId) {
         return enrichmentRepository.findById(articleId).orElse(null);
@@ -134,6 +144,10 @@ public class ArticleEnrichmentService {
 
     public boolean existsById(Long articleId) {
         return enrichmentRepository.existsById(articleId);
+    }
+
+    public boolean requiresUpgrade(Long articleId) {
+        return enrichmentRepository.count(ArticleEnrichmentSpec.top(articleId)) > 0;
     }
 
     /**
@@ -170,15 +184,21 @@ public class ArticleEnrichmentService {
         }
     }
 
-    private double generateReranker(Article article) {
+    private double getRerankerScore(Article article) {
         try {
             String content = removeImagesAndLinks(article.getContent());
-            String category = feedRepository.findById(article.getFeed().getId()).map(Feed::getCategory).orElse("").toUpperCase();
-            return rerankerModel.documentScore(ratingPromptMap.getOrDefault(category, ""), truncateContent(content, 700), null);
+            String category = feedRepository.findById(article.getFeed().getId()).map(Feed::getCategory).orElse("other").toUpperCase();
+            return rerankerModel.documentScore(ratingPromptMap.getOrDefault(category, ""), truncateContent(content, 650), null);
         } catch (Exception e) {
             log.error("生成打分失败: articleId={}", article.getId(), e);
             return -10;
         }
+    }
+
+    private double getContentScore(Article article) {
+        String category = feedRepository.findById(article.getFeed().getId()).map(Feed::getCategory).orElse("other").toUpperCase();
+        ContentQualityEvaluator.ContentCategory contentCategory = Strings.isNotBlank(category) ? ContentQualityEvaluator.ContentCategory.valueOf(category) : ContentQualityEvaluator.ContentCategory.OTHER;
+        return qualityEvaluator.evaluate(contentCategory, article.getTitle(), article.getContent()).totalScore();
     }
 
     /**
@@ -203,8 +223,8 @@ public class ArticleEnrichmentService {
      */
     public static String toGrade(double score) {
         // 不需要 Sigmoid，直接用原始分数
-        if (score >= -1.0) return "A";  // 最优质
-        if (score >= -2.0) return "B";
+        if (score >= 0) return "A";  // 最优质
+        if (score >= -1.5) return "B";
         if (score >= -3.0) return "C";
         if (score >= -4.5) return "D";
         return "F";

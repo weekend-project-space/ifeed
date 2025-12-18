@@ -175,7 +175,7 @@
 
           <!-- Tab Content -->
           <div class="tab-content">
-            <div v-show="activeMainTab === 'content'" class="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6">
+            <div v-show="activeMainTab === 'content'" class="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-6">
               <!-- Content Tab -->
               <div>
                 <!-- Media Attachment -->
@@ -190,7 +190,7 @@
                 />
 
                 <!-- Article Body -->
-                <div class="prose prose-lg prose-gray dark:prose-invert max-w-none">
+                <div class="prose prose-lg prose-gray dark:prose-invert max-w-screen-lg">
                   <div
                       v-if="article.content"
                       ref="articleContentRef"
@@ -234,7 +234,7 @@
               </div>
               <!-- Sidebar (Desktop Only)-->
               <aside class="">
-                <div class="lg:sticky lg:top-20 ">
+                <div class="lg:sticky lg:top-16 ">
                   <!-- Show TOC only when viewing content -->
                   <div v-if="activeMainTab === 'content' && showToc"
                        class="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-5 hidden lg:block">
@@ -780,11 +780,11 @@ watch(activeMainTab, async (newTab) => {
 }
 
 .article-content :deep(blockquote) {
-  @apply border-l-4 border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800/50 px-5 py-4 my-6 text-gray-700 dark:text-gray-300 italic;
+  @apply border-l-4 border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800/50 px-5 py-4 mb-6 text-gray-700 dark:text-gray-300 italic;
 }
 
 .article-content :deep(pre) {
-  @apply bg-gray-50 dark:bg-gray-900 p-5 my-6 overflow-x-auto rounded-lg;
+  @apply bg-gray-50 dark:bg-gray-900 p-5 mb-6 overflow-x-auto rounded-lg;
 }
 
 .article-content :deep(pre code) {
@@ -796,11 +796,11 @@ watch(activeMainTab, async (newTab) => {
 }
 
 .article-content :deep(img) {
-  @apply w-full h-auto my-8 rounded-lg;
+  @apply w-full h-auto mb-8 rounded-lg;
 }
 
 .article-content :deep(table) {
-  @apply w-full border-collapse my-8 text-sm;
+  @apply w-full border-collapse mb-8 text-sm;
 }
 
 .article-content :deep(th),
@@ -817,14 +817,14 @@ watch(activeMainTab, async (newTab) => {
 }
 
 .article-content :deep(hr) {
-  @apply border-0 h-px bg-gray-200 dark:bg-gray-700 my-8;
+  @apply border-0 h-px bg-gray-200 dark:bg-gray-700 mb-8;
 }
 
 .article-content :deep(a) {
   @apply text-blue-600 dark:text-blue-400 hover:underline;
 }
 
-.tab-content {
+/*.tab-content {
   @apply min-h-[60vh];
-}
+}*/
 </style>

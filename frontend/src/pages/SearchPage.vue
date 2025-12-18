@@ -64,6 +64,7 @@
           :loading="searchLoading"
           :items="searchArticleItems"
           meta-field="timeAgo"
+          key-field="id"
           action-label="文章选项菜单"
           @action="handleMenuClick"
       >

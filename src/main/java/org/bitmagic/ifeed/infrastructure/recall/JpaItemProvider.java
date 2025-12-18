@@ -5,9 +5,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.bitmagic.ifeed.application.recommendation.recall.model.UserContext;
 import org.bitmagic.ifeed.application.recommendation.recall.spi.ItemProvider;
 import org.bitmagic.ifeed.application.recommendation.recall.spi.ScoredId;
+import org.bitmagic.ifeed.domain.model.ArticleEnrichment;
 import org.bitmagic.ifeed.domain.record.ArticleSummaryView;
+import org.bitmagic.ifeed.domain.repository.ArticleEnrichmentRepository;
 import org.bitmagic.ifeed.domain.repository.ArticleRepository;
+import org.bitmagic.ifeed.domain.spec.ArticleEnrichmentSpec;
 import org.bitmagic.ifeed.infrastructure.score.QualityScorer;
+import org.bitmagic.ifeed.infrastructure.score.ScoreMerger;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -26,19 +30,16 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class JpaItemProvider implements ItemProvider {
 
-    private final ArticleRepository articleRepository;
-
-    private final QualityScorer qualityScorer = new QualityScorer();
+    private final ArticleEnrichmentRepository articleEnrichmentRepository;
 
     @Cacheable(cacheNames = "ITEMS", key = "#userContext.userId() + '_' + #type.name() + '_' + #k", unless = "#result == null")
     @Override
     public List<ScoredId> ls(UserContext userContext, ScoredLsType type, Integer k) {
         long currentTimeMillis = System.currentTimeMillis();
-        PageRequest pageable = ScoredLsType.LATEST.equals(type) ? PageRequest.of(0, k, Sort.by(Sort.Order.desc("id"))) : PageRequest.ofSize(k / 2);
-        List<ArticleSummaryView> all = new ArrayList<>(articleRepository.searchArticleSummaries("", null, pageable).getContent());
-        all.addAll(articleRepository.searchArticleSummaries("", userContext.getUserId(), pageable).getContent());
+        PageRequest pageable = ScoredLsType.LATEST.equals(type) ? PageRequest.of(0, k / 2, Sort.by(Sort.Order.desc("id"))) : PageRequest.ofSize(k / 2);
+        List<ArticleEnrichment> content = articleEnrichmentRepository.findAll(ArticleEnrichmentSpec.top(), pageable).getContent();
         log.debug("{} time: {}", type.name(), System.currentTimeMillis() - currentTimeMillis);
-        List<ScoredId> scoredIds = all.stream().map(article -> new ScoredId(article.articleId(), qualityScorer.score(article.summary()).totalScore(), Map.of("title", article.title()))).toList();
+        List<ScoredId> scoredIds = content.stream().map(article -> new ScoredId(article.getId(), ScoreMerger.gradeToScore(article.getRating().name()), Map.of("rating", article.getRating()))).toList();
         return scoredIds;
     }
 }

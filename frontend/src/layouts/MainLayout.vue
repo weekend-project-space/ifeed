@@ -5,7 +5,7 @@
     <!-- Header -->
     <header :class="isSidebarCollapsed ? 'lg:pl-20' : 'lg:pl-72'"
             class="sticky top-0 z-30  bg-white/95 dark:bg-surface/95 backdrop-blur-sm">
-      <div class="flex items-center  justify-between gap-3 px-4 py-3 lg:px-5">
+      <div class="flex items-center  justify-between gap-3 px-4 py-2 lg:px-5">
         <!-- Logo & Menu Button -->
         <div class="flex items-center gap-3">
           <button
@@ -35,7 +35,7 @@
                 v-model="search"
                 type="search"
                 placeholder="搜索您订阅的文章、标签、订阅..."
-                class="w-full h-12 pl-14 pr-4 rounded-full border bg-white dark:bg-gray-900 text-base transition-all duration-200"
+                class="w-full h-10 pl-14 pr-4 rounded-full border bg-white dark:bg-gray-900 text-base transition-all duration-200"
                 :class="[
                 searchFocused
                   ? 'border-transparent shadow-lg ring-1 ring-gray-300 dark:ring-gray-700'

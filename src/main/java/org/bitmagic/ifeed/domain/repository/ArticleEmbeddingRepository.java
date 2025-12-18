@@ -3,6 +3,7 @@ package org.bitmagic.ifeed.domain.repository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.bitmagic.ifeed.domain.record.ArticleEmbeddingRecord;
+import org.springframework.ai.autoconfigure.vectorstore.pgvector.PgVectorStoreProperties;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -22,6 +23,8 @@ public class ArticleEmbeddingRepository {
 
     private final JdbcTemplate jdbcTemplate;
 
+    private final PgVectorStoreProperties properties;
+
 
     public void upsert(
             Integer feedId,
@@ -32,10 +35,9 @@ public class ArticleEmbeddingRepository {
             String tags,
             String summary,
             String content,
-            String link,
             Instant publishedAt) {
         var textBody = StringUtils.hasText(summary) ? summary : content;
-        textBody = "#标题:%s\n作者:%s\n 时间:%s\n分类:%s\n标签:%s\n大纲:%s".formatted(title, feedTitle, publishedAt.toString(), category, tags, summary);
+        textBody = "#标题:%s\n来源:%s\n 时间:%s\n分类:%s\n标签:%s\n大纲:%s".formatted(title, feedTitle, publishedAt.toString(), category, tags, summary);
         if (!StringUtils.hasText(textBody)) {
             log.debug("Skip embedding persistence for article {} because there is no textual content", articleId);
             return;
@@ -44,7 +46,7 @@ public class ArticleEmbeddingRepository {
         var document = Document.builder()
                 .id(articleId.toString())
                 .text(textBody)
-                .metadata(buildMetadata(feedId, feedTitle, articleId, title, link, summary, publishedAt))
+                .metadata(buildMetadata(feedId, feedTitle, articleId, title,  summary, publishedAt))
                 .build();
 
         vectorStore.add(List.of(document));
@@ -55,8 +57,8 @@ public class ArticleEmbeddingRepository {
             return Optional.empty();
         }
         var sql = """
-                SELECT id, embedding FROM article_embeddings  WHERE id = ?
-                """;
+                SELECT id, embedding FROM %s  WHERE id = ?
+                """.formatted(properties.getTableName());
         List<ArticleEmbeddingRecord> results = jdbcTemplate.query(sql, (rs, rowNum) -> {
             String value = rs.getString("embedding");
             float[] vector = parseVector(value);
@@ -73,9 +75,9 @@ public class ArticleEmbeddingRepository {
         var placeholders = params.stream().map(id -> "?").toList();
         var sql = """
                 SELECT id, embedding
-                FROM article_embeddings
+                FROM %s
                 WHERE id IN (%s)
-                """.formatted(String.join(",", placeholders));
+                """.formatted(properties.getTableName(), String.join(",", placeholders));
         return jdbcTemplate.query(sql, (rs, rowNum) -> {
             String value = rs.getString("embedding");
             float[] vector = parseVector(value);
@@ -88,7 +90,6 @@ public class ArticleEmbeddingRepository {
                                               String feedTitle,
                                               Long articleId,
                                               String title,
-                                              String link,
                                               String summary,
                                               Instant publishedAt) {
         var metadata = new HashMap<String, Object>();
@@ -99,9 +100,6 @@ public class ArticleEmbeddingRepository {
         }
         if (StringUtils.hasText(title)) {
             metadata.put("title", title);
-        }
-        if (StringUtils.hasText(link)) {
-            metadata.put("link", link);
         }
         if (StringUtils.hasText(summary)) {
             metadata.put("summary", summary);

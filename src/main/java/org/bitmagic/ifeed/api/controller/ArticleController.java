@@ -145,7 +145,7 @@ public class ArticleController {
                 article.getContent(),
                 Objects.nonNull(enrichment) ? enrichment.getAiSummary() : null,
                 Objects.nonNull(enrichment) ? enrichment.getMindMap() : null,
-                articleEnrichmentService.existsById(article.getId()),
+                articleEnrichmentService.requiresUpgrade(article.getId()),
                 article.getLink(),
                 article.getThumbnail(),
                 article.getEnclosure(),

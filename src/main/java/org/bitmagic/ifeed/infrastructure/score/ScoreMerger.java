@@ -17,17 +17,18 @@ public class ScoreMerger {
         GRADE_SCORES.put("C", 0.5);
         GRADE_SCORES.put("D", 0.25);
         GRADE_SCORES.put("E", 0.0);
+        GRADE_SCORES.put("F", 0.0);
     }
 
     /**
-     * 综合两个评级（默认权重 60:40）
+     * 综合两个评级（默认权重 70:30）
      *
-     * @param grade1 第一个评级（权重60%）
-     * @param grade2 第二个评级（权重40%）
+     * @param grade1 第一个评级（权重70%）
+     * @param grade2 第二个评级（权重30%）
      * @return 综合后的评级
      */
     public static String merge(String grade1, String grade2) {
-        return merge(grade1, grade2, 0.6, 0.4);
+        return merge(grade1, grade2, 0.7, 0.3);
     }
 
     /**

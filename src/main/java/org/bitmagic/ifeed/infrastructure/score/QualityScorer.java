@@ -73,8 +73,10 @@ public class QualityScorer {
         f.lines = content.split("\n").length;
         f.paragraphs = content.split("\n\\s*\n+").length;
 
-        // 去除代码块后的纯文本（避免代码影响统计）
+        // 去除代码块、图片、链接后的纯文本（避免代码影响统计）
         String textOnly = CODE_BLOCK.matcher(content).replaceAll("");
+        textOnly = IMAGE.matcher(textOnly).replaceAll("");
+        textOnly = LINK.matcher(textOnly).replaceAll("");
         f.textLength = textOnly.length();
 
         // 句子分析
@@ -391,8 +393,8 @@ public class QualityScorer {
     public String getGrade(double score) {
         if (score >= 0.90) return "S";
         if (score >= 0.80) return "A";
-        if (score >= 0.65) return "B";
-        if (score >= 0.50) return "C";
+        if (score >= 0.62) return "B";
+        if (score >= 0.55) return "C";
         if (score >= 0.35) return "D";
         return "F";
     }
