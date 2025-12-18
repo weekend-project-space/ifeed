@@ -7,6 +7,7 @@ import org.bitmagic.ifeed.application.recommendation.recall.model.UserContext;
 import org.bitmagic.ifeed.domain.record.ArticleContent;
 import org.bitmagic.ifeed.domain.record.ArticleSummaryView;
 import org.bitmagic.ifeed.domain.repository.ArticleRepository;
+import org.bitmagic.ifeed.infrastructure.score.ContentQualityEvaluator;
 import org.bitmagic.ifeed.infrastructure.score.QualityScorer;
 import org.springframework.stereotype.Service;
 
@@ -23,7 +24,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class ReRankerService {
 
-    private final QualityScorer qualityScorer = new QualityScorer();
+    private final ContentQualityEvaluator qualityEvaluator = new ContentQualityEvaluator();
 
     private final ArticleRepository articleRepository;
 
@@ -43,8 +44,9 @@ public class ReRankerService {
             if (content == null) {
                 return null;
             }
-            double score = qualityScorer.score(content.content()).totalScore();
-            log.debug("itemId: {}, score: {}", itemCandidate.itemId(), qualityScorer.getGrade(score));
+//            TODO
+            double score = qualityEvaluator.evaluate(ContentQualityEvaluator.ContentCategory.OTHER, content.title(), content.content()).totalScore();
+            log.debug("itemId: {}, score: {}", itemCandidate.itemId(), ContentQualityEvaluator.getGrade(score));
             return itemCandidate.withScore(score * 0.2 + 0.8 * itemCandidate.score());
         }).filter(Objects::nonNull).sorted(Comparator.comparingDouble(ItemCandidate::score).reversed()).toList();
 

@@ -28,7 +28,7 @@ public class U2A2IRecallStrategy implements RecallStrategy {
 
     public U2A2IRecallStrategy(UserPreferenceService preferenceService,
                                InvertedIndex invertedIndex,
-                               @Value("${recall.u2a2i.attribute-limit:30}") int attributeLimit) {
+                               @Value("${recall.u2a2i.attribute-limit:20}") int attributeLimit) {
         this.preferenceService = preferenceService;
         this.invertedIndex = invertedIndex;
         this.attributeLimit = Math.max(1, attributeLimit); // 至少为1
@@ -44,9 +44,10 @@ public class U2A2IRecallStrategy implements RecallStrategy {
         if (context.userId() == null || limit <= 0) {
             return List.of();
         }
-
+//        回溯最近 多少条
+        int lookback = context.scene().equals("home") ? -1 : 3;
         List<UserPreferenceService.AttributePreference> attributes =
-                preferenceService.topAttributes(context.userId(), attributeLimit);
+                preferenceService.topAttributes(context.userId(), lookback, attributeLimit);
 
         log.debug("U2A2I top attributes for user {}: {}", context.userId(), attributes);
 

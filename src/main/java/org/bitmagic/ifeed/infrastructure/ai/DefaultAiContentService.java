@@ -224,9 +224,10 @@ public class DefaultAiContentService implements AiContentService {
     }
 
     private boolean shouldUseExternalAI(String content) {
-        return properties.isEnabled()
-                && StringUtils.hasText(properties.getBaseUrl())
-                && content.length() > EXTERNAL_AI_LENGTH_THRESHOLD;
+        return false;
+//        return properties.isEnabled()
+//                && StringUtils.hasText(properties.getBaseUrl())
+//                && content.length() > EXTERNAL_AI_LENGTH_THRESHOLD;
     }
 
     private AiContent callExternalProvider(String title, String content) {

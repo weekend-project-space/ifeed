@@ -42,6 +42,7 @@ public class ArticleEnhancedService {
             ArticleEnrichment enrichment = aeRepository.findById(article.getId()).orElseGet(() -> articleEnrichmentService.enrichArticle(article));
 //            d级别不需要进行向量化
             if (!enrichment.getRating().equals(ArticleEnrichment.Rating.D)) {
+                log.info("嵌入文章[{}]", article.getTitle());
                 vectorStore.upsert(
                         article.getFeed().getId(),
                         title(article.getFeed().getId()),
