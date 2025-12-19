@@ -113,26 +113,32 @@ public class ArticleEnrichmentService {
                     contentGrade, rerankerGrade, finalGrade);
         }
 
+        ArticleEnrichment.Rating rating = ArticleEnrichment.Rating.valueOf(finalGrade);
+        enrichment.setRating(rating);
+        if (ArticleEnrichment.Rating.A.equals(rating) || ArticleEnrichment.Rating.B.equals(rating)) {
+            // 4. 生成AI增强内容
+            log.info("开始生成AI增强内容: articleId={}", article.getId());
+            if(Strings.isBlank(enrichment.getAiSummary())){
+                String aiSummary = generateSummary(article);
+                String mindMap = generateMindMap(article);
+                enrichment.setAiSummary(aiSummary);
+                enrichment.setMindMap(mindMap);
+                log.info("文章增强信息生成完成: articleId={}, finalGrade={}, " +
+                                "summaryLength={}, hasMindMap={}",
+                        article.getId(),
+                        finalGrade,
+                        aiSummary != null ? aiSummary.length() : 0,
+                        mindMap != null && !mindMap.isEmpty());
+            }
 
-//        // 4. 生成AI增强内容
-//        log.info("开始生成AI增强内容: articleId={}", article.getId());
-//        String aiSummary = generateSummary(article);
-//        String mindMap = generateMindMap(article);
-//
-//        enrichment.setAiSummary(aiSummary);
-//        enrichment.setMindMap(mindMap);
-        enrichment.setRating(ArticleEnrichment.Rating.valueOf(finalGrade));
+        } else {
+            log.info("文章增强信息生成完成: articleId={}, finalGrade={}, ",
+                    article.getId(),
+                    finalGrade);
+        }
 
         ArticleEnrichment saved = enrichmentRepository.save(enrichment);
-        log.info("文章增强信息生成完成: articleId={}, finalGrade={}, ",
-                article.getId(),
-                finalGrade);
-//        log.info("文章增强信息生成完成: articleId={}, finalGrade={}, " +
-//                        "summaryLength={}, hasMindMap={}",
-//                article.getId(),
-//                finalGrade,
-//                aiSummary != null ? aiSummary.length() : 0,
-//                mindMap != null && !mindMap.isEmpty());
+
 
         return saved;
     }
@@ -147,7 +153,7 @@ public class ArticleEnrichmentService {
     }
 
     public boolean requiresUpgrade(Long articleId) {
-        return enrichmentRepository.count(ArticleEnrichmentSpec.top(articleId)) > 0;
+        return enrichmentRepository.count(ArticleEnrichmentSpec.toTop(articleId)) > 0;
     }
 
     /**

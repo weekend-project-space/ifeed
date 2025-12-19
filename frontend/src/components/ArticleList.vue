@@ -133,7 +133,8 @@
                     :alt="item.title"
                     loading="lazy"
                     decoding="async"
-                    class="w-full h-full object-cover transition-transform duration-500 hover:scale-105"/>
+                    class="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
+                    @error="thumbErrorMap[item.id] = true"/>
                 <div v-else class="hidden md:flex flex flex-col items-center justify-center w-full h-full text-gray-400 dark:text-gray-600 gap-2 ">
 
                   <svg class="w-12 h-12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">

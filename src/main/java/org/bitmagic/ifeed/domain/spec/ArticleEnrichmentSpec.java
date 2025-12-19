@@ -14,16 +14,22 @@ import java.util.List;
 public interface ArticleEnrichmentSpec {
     List<ArticleEnrichment.Rating> TOPS = Arrays.asList(ArticleEnrichment.Rating.values()).stream().filter(rating -> !ArticleEnrichment.Rating.D.equals(rating)).toList();
 
-    static Specification<ArticleEnrichment> top() {
+    static Specification<ArticleEnrichment> toTop() {
         return Spec.<ArticleEnrichment>on()
                 .in("rating", TOPS)
                 .build();
     }
 
-    static Specification<ArticleEnrichment> top(Long id) {
+    static Specification<ArticleEnrichment> toTop(Long id) {
         return Spec.<ArticleEnrichment>on()
                 .in("rating", TOPS)
                 .eq("id", id)
+                .build();
+    }
+
+    static Specification<ArticleEnrichment> toSpec(ArticleEnrichment.Rating rating) {
+        return Spec.<ArticleEnrichment>on()
+                .eq("rating", rating)
                 .build();
     }
 }
