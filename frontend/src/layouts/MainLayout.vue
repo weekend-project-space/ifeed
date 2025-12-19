@@ -339,11 +339,13 @@
         ]">
         <div class="flex h-full flex-col overflow-hidden py-4">
 
-          <RouterLink :to="{ name: 'home' }" class="flex items-center   text-lg font-semibold px-4 pt-2 pb-5"
+          <RouterLink :to="{ name: 'home' }" class="flex items-center text-lg font-semibold px-4 pt-2 pb-5 text-gray-700 dark:text-gray-300"
                       :class=" isSidebarCollapsed ? 'justify-center px-2' : 'gap-3 px-3'">
-            <img class="h-7 w-7 rounded-2xl" src="/logo.svg" alt="iFeed"/>
-            <span v-if="!isSidebarCollapsed" class="flex items-center gap-2">IFeed
-           <span>
+            <img class="h-7 w-7 rounded-2xl opacity-70 dark:invert" src="/logo.svg" alt="iFeed"/>
+
+            <span v-if="!isSidebarCollapsed" class="flex items-center gap-2">
+              IFeed
+              <span>
               <span class="bg-secondary text-white shadow-md  rounded-full px-1 text-[8px]  opacity-60 font-medium ">Beta</span>
            </span>
             </span>
@@ -385,14 +387,14 @@
                       <path v-for="path in item.icon.paths" :key="path" :d="path"/>
                     </svg>
                   </span>
-                  <img v-else-if="item.avatar" :src="item.avatar" class="h-6 w-6 rounded-full"/>
+                  <img v-else-if="item.avatar" :src="item.avatar" class="h-6 w-6 rounded-full "/>
                   <span v-else-if="item.avatarText"
                         class="flex h-6 w-6 items-center justify-center rounded-full text-xs font-semibold"
                         :class="item.accent ?? 'bg-primary text-primary-foreground'">
                     {{ item.avatarText }}
                   </span>
-                  <span v-if="!isSidebarCollapsed" class=" truncate">{{ item.label }}</span>
-                  <span v-if="item.badge && !isSidebarCollapsed" class="flex h-1 w-1 rounded-full bg-primary"/>
+                  <span v-if="!isSidebarCollapsed" class="truncate">{{ item.label }}</span>
+                  <span v-if="item.badge && !isSidebarCollapsed" class="ml-auto flex h-1 w-1 rounded-full bg-primary"/>
                 </component>
               </div>
             </div>
