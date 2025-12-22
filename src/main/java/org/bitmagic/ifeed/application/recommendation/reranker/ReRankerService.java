@@ -47,7 +47,7 @@ public class ReRankerService {
 //            TODO
             double score = qualityEvaluator.evaluate(ContentQualityEvaluator.ContentCategory.OTHER, content.title(), content.content()).totalScore();
             log.debug("itemId: {}, score: {}", itemCandidate.itemId(), ContentQualityEvaluator.getGrade(score));
-            return itemCandidate.withScore(score * 0.2 + 0.8 * itemCandidate.score());
+            return itemCandidate.withScore(score * 0.3 + 0.7 * itemCandidate.score());
         }).filter(Objects::nonNull).sorted(Comparator.comparingDouble(ItemCandidate::score).reversed()).toList();
 
     }

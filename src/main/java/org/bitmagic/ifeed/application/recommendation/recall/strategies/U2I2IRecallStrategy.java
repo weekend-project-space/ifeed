@@ -34,7 +34,7 @@ public class U2I2IRecallStrategy implements RecallStrategy {
     public U2I2IRecallStrategy(EmbeddingStore embeddingStore,
                                AnnIndex annIndex,
                                CoOccurIndex coOccurIndex,
-                               @Value("${recall.u2i2i.seed-limit:3}") int seedLimit,
+                               @Value("${recall.u2i2i.seed-limit:6}") int seedLimit,
                                @Value("${recall.u2i2i.per-seed-limit:10}") int perSeedLimit) {
         this.embeddingStore = embeddingStore;
         this.annIndex = annIndex;

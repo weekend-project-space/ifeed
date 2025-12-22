@@ -18,7 +18,7 @@ public class CacheConfig {
 
     @Bean
     public CacheManager cacheManager(RssFetcherProperties properties) {
-        CaffeineCacheManager manager = new CaffeineCacheManager(RssFetcherProperties.Cache.CACHE_NAME, "USER-SESSIONS", "rss-feed-cache", "U2I", "U2I2I", "USERS", "ITEMS");
+        CaffeineCacheManager manager = new CaffeineCacheManager(RssFetcherProperties.Cache.CACHE_NAME, "USER-SESSIONS", "rss-feed-cache", "U2I", "U2A2I", "U2I2I", "USERS", "ITEMS");
         manager.setCaffeine(Caffeine.newBuilder()
                 .maximumSize(properties.getCache().getMaximumSize())
                 .expireAfterWrite(properties.getCache().getExpireAfterWrite())

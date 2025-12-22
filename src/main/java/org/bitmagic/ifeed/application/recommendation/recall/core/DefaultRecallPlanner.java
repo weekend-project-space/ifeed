@@ -17,7 +17,7 @@ public class DefaultRecallPlanner implements RecallPlanner {
     @Override
     public RecallPlan plan(RecallRequest request, Collection<StrategyId> availableStrategies) {
         if (availableStrategies.isEmpty()) {
-            return new RecallPlan(Map.of(), new FusionConfig(request.topK(), true, Map.of(), false, DiversityConfig.disabled()));
+            return new RecallPlan(Map.of(), new FusionConfig(request.topK(), true, Map.of(), false, DiversityConfig.disabled(), 60, 100, 0.8));
         }
 
         Map<StrategyId, Integer> quotas = getStrategyQuotas(availableStrategies, request.topK());
@@ -28,7 +28,7 @@ public class DefaultRecallPlanner implements RecallPlanner {
         boolean interleave = parseBoolean(request.filters().getOrDefault("interleaveChannels", Boolean.TRUE));
         DiversityConfig diversity = extractDiversityConfig(request);
 
-        FusionConfig config = new FusionConfig(request.topK(), true, weights, interleave, diversity);
+        FusionConfig config = new FusionConfig(request.topK(), true, weights, interleave, diversity, 60, request.topK(), 0.8);
         return new RecallPlan(quotas, config);
     }
 

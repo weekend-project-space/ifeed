@@ -13,6 +13,7 @@ import org.bitmagic.ifeed.infrastructure.retrieval.RetrievalContext;
 import org.bitmagic.ifeed.infrastructure.retrieval.RetrievalPipeline;
 import org.bitmagic.ifeed.infrastructure.retrieval.impl.MultiChannelRetrievalPipeline;
 import org.bitmagic.ifeed.infrastructure.retrieval.impl.TextSearchRetrievalHandler;
+import org.bitmagic.ifeed.infrastructure.retrieval.impl.VectorRetrievalHandler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -37,7 +38,7 @@ public class JpaInvertedIndex implements InvertedIndex {
     @Autowired
     public JpaInvertedIndex(TextSearchRetrievalHandler textSearchRetrievalHandler, FreshnessCalculator freshnessCalculator, SearchRetrievalProperties properties) {
         this.retrievalPipeline = new MultiChannelRetrievalPipeline(properties.getFreshnessTimeWeight(), properties.getFreshnessLambda())
-                .addHandler(textSearchRetrievalHandler, 1);
+                .addHandler(textSearchRetrievalHandler, 0.7);
         this.freshnessCalculator = freshnessCalculator;
     }
 
@@ -52,7 +53,7 @@ public class JpaInvertedIndex implements InvertedIndex {
         // 按权重排序，权重高的优先
         List<UserPreferenceService.AttributePreference> sorted = attrs.stream()
                 .sorted(Comparator.comparingDouble(UserPreferenceService.AttributePreference::weight).reversed())
-                .limit(k*2)
+                .limit(k * 2)
                 .toList();
 
 

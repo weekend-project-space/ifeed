@@ -50,7 +50,7 @@ public class TermUtils {
      *
      * @param text 待分词文本
      */
-    private static List<String> segment(String text) {
+    public static List<String> segment(String text) {
 //        List<SegToken> tokens = ;
         return segmenter.sentenceProcess(text).stream().filter(StringUtils::isNotBlank).toList(); //tokens.stream().map(segToken -> segToken.word).toList();
     }

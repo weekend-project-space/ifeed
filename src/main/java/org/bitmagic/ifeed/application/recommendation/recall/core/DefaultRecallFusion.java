@@ -1,9 +1,6 @@
 package org.bitmagic.ifeed.application.recommendation.recall.core;
 
-import org.bitmagic.ifeed.application.recommendation.recall.model.DiversityConfig;
-import org.bitmagic.ifeed.application.recommendation.recall.model.FusionContext;
-import org.bitmagic.ifeed.application.recommendation.recall.model.ItemCandidate;
-import org.bitmagic.ifeed.application.recommendation.recall.model.StrategyId;
+import org.bitmagic.ifeed.application.recommendation.recall.model.*;
 import org.bitmagic.ifeed.application.recommendation.recall.spi.ItemFreshnessProvider;
 import org.bitmagic.ifeed.infrastructure.FreshnessCalculatorUtils;
 
@@ -24,14 +21,11 @@ public class DefaultRecallFusion implements RecallFusion {
 
     private static final Duration DEFAULT_HALF_LIFE = Duration.ofHours(48);
     private static final double MIN_LAMBDA = 0.0001d;
-    private static final int DEFAULT_RRF_K = 60;
-
     private final ItemFreshnessProvider freshnessProvider;
     private final double freshnessWeight;
     private final double freshnessLambda;
     private final Duration freshnessHalfLife;
     private final double defaultFreshnessScore;
-    private final int rrfK;
 
     public DefaultRecallFusion() {
         this(ItemFreshnessProvider.noop(), 0.3d, DEFAULT_HALF_LIFE);
@@ -40,20 +34,18 @@ public class DefaultRecallFusion implements RecallFusion {
     public DefaultRecallFusion(ItemFreshnessProvider freshnessProvider,
                                double freshnessWeight,
                                Duration freshnessHalfLife) {
-        this(freshnessProvider, freshnessWeight, freshnessHalfLife, 0.5d, DEFAULT_RRF_K);
+        this(freshnessProvider, freshnessWeight, freshnessHalfLife, 0.5d );
     }
 
     public DefaultRecallFusion(ItemFreshnessProvider freshnessProvider,
                                double freshnessWeight,
                                Duration freshnessHalfLife,
-                               double defaultFreshnessScore,
-                               int rrfK) {
+                               double defaultFreshnessScore) {
         this.freshnessProvider = freshnessProvider == null ? ItemFreshnessProvider.noop() : freshnessProvider;
         this.freshnessWeight = clamp(freshnessWeight, 0.0d, 1.0d);
         this.freshnessHalfLife = normalizeHalfLife(freshnessHalfLife);
         this.freshnessLambda = clamp(Math.log(2) / this.freshnessHalfLife.toHours(), MIN_LAMBDA, 1.0d);
         this.defaultFreshnessScore = clamp(defaultFreshnessScore, 0.0d, 1.0d);
-        this.rrfK = Math.max(1, rrfK);
     }
 
     @Override
@@ -63,7 +55,7 @@ public class DefaultRecallFusion implements RecallFusion {
         }
 
         // 1. RRF 融合
-        List<ItemCandidate> fused = reciprocalRankFusion(channelResults, context);
+        List<ItemCandidate> fused = fuseByRrf(channelResults, context.config());
 
         if (fused.isEmpty()) {
             return List.of();
@@ -89,88 +81,188 @@ public class DefaultRecallFusion implements RecallFusion {
     /**
      * RRF（Reciprocal Rank Fusion）融合
      */
-    private List<ItemCandidate> reciprocalRankFusion(
+//    private List<ItemCandidate> reciprocalRankFusion(
+//            Map<StrategyId, List<ItemCandidate>> channelResults,
+//            FusionContext context) {
+//
+//        Map<Long, Double> rrfScores = new HashMap<>();
+//        Map<Long, ItemCandidate> candidateMap = new HashMap<>();
+//        Map<Long, Set<StrategyId>> sourcesMap = new HashMap<>();
+//        Map<Long, List<String>> reasonsMap = new HashMap<>();
+//
+//        for (Map.Entry<StrategyId, List<ItemCandidate>> entry : channelResults.entrySet()) {
+//            StrategyId channel = entry.getKey();
+//            List<ItemCandidate> items = entry.getValue();
+//
+//            if (items == null || items.isEmpty()) {
+//                continue;
+//            }
+//
+//            double channelWeight = context.config().weightOf(channel);
+//
+//            for (int rank = 0; rank < items.size(); rank++) {
+//                ItemCandidate item = items.get(rank);
+//                long itemId = item.itemId();
+//
+//                // RRF 公式
+//                double positionScore = channelWeight / (rrfK + rank + 1);
+//                rrfScores.merge(itemId, positionScore, Double::sum);
+//
+//                // 保留最高分的候选项版本
+//                ItemCandidate existing = candidateMap.get(itemId);
+//                if (existing == null || item.score() > existing.score()) {
+//                    candidateMap.put(itemId, item);
+//                }
+//
+//                // 记录来源通道
+//                sourcesMap.computeIfAbsent(itemId, id -> new HashSet<>()).add(channel);
+//
+//                // 收集 reason
+//                if (item.reason() != null && !item.reason().isBlank()) {
+//                    reasonsMap.computeIfAbsent(itemId, id -> new ArrayList<>()).add(item.reason());
+//                }
+//            }
+//        }
+//
+//        if (rrfScores.isEmpty()) {
+//            return List.of();
+//        }
+//
+//        // 按 RRF 分数排序
+//        List<Map.Entry<Long, Double>> sorted = new ArrayList<>(rrfScores.entrySet());
+//        sorted.sort(Map.Entry.<Long, Double>comparingByValue().reversed());
+//
+//        // 构建结果
+//        List<ItemCandidate> result = new ArrayList<>();
+//        for (Map.Entry<Long, Double> entry : sorted) {
+//            long itemId = entry.getKey();
+//            double rrfScore = entry.getValue();
+//            ItemCandidate original = candidateMap.get(itemId);
+//            Set<StrategyId> sources = sourcesMap.get(itemId);
+//            List<String> reasons = reasonsMap.get(itemId);
+//
+//            // 构建新的 attributes
+//            Map<String, Object> attrs = new HashMap<>(original.attributes());
+//            if (sources != null && !sources.isEmpty()) {
+//                attrs.put("_sources", sources.stream().map(Enum::name).toList());
+//                attrs.put("_sourceCount", sources.size());
+//            }
+//            attrs.put("_originalScore", original.score());
+//
+//            // 合并 reason
+//            String mergedReason = mergeReasons(reasons, sources);
+//
+//            result.add(new ItemCandidate(
+//                    itemId,
+//                    rrfScore,
+//                    sources != null && sources.size() > 1 ? StrategyId.MIX : original.source(),
+//                    mergedReason,
+//                    attrs
+//            ));
+//        }
+//
+//        return result;
+//    }
+
+
+    /**
+     * RRF（Reciprocal Rank Fusion）融合（增强版）
+     */
+    private List<ItemCandidate> fuseByRrf(
             Map<StrategyId, List<ItemCandidate>> channelResults,
-            FusionContext context) {
+            FusionConfig config) {
 
-        Map<Long, Double> rrfScores = new HashMap<>();
-        Map<Long, ItemCandidate> candidateMap = new HashMap<>();
-        Map<Long, Set<StrategyId>> sourcesMap = new HashMap<>();
-        Map<Long, List<String>> reasonsMap = new HashMap<>();
+        Map<Long, Double> sumRrf = new HashMap<>();
+        Map<Long, Double> maxRrf = new HashMap<>();
+        Map<Long, ItemCandidate> bestCandidate = new HashMap<>();
+        Map<Long, Set<StrategyId>> sources = new HashMap<>();
+        Map<Long, List<String>> reasons = new HashMap<>();
 
-        for (Map.Entry<StrategyId, List<ItemCandidate>> entry : channelResults.entrySet()) {
-            StrategyId channel = entry.getKey();
+        int rrfK = config.rrfK();
+        int maxRank = config.maxRankPerChannel();
+        double alpha = config.rrfAlpha();
+
+        for (var entry : channelResults.entrySet()) {
+            StrategyId strategy = entry.getKey();
             List<ItemCandidate> items = entry.getValue();
 
-            if (items == null || items.isEmpty()) {
+            if (items == null || items.isEmpty() || config.isDisabled(strategy)) {
                 continue;
             }
 
-            double channelWeight = context.config().weightOf(channel);
+            double weight = config.weightOf(strategy);
+            int limit = Math.min(items.size(), maxRank);
 
-            for (int rank = 0; rank < items.size(); rank++) {
+            for (int rank = 0; rank < limit; rank++) {
                 ItemCandidate item = items.get(rank);
                 long itemId = item.itemId();
 
-                // RRF 公式
-                double positionScore = channelWeight / (rrfK + rank + 1);
-                rrfScores.merge(itemId, positionScore, Double::sum);
+                double rrfScore = weight / (rrfK + rank + 1);
 
-                // 保留最高分的候选项版本
-                ItemCandidate existing = candidateMap.get(itemId);
+                sumRrf.merge(itemId, rrfScore, Double::sum);
+                maxRrf.merge(itemId, rrfScore, Math::max);
+
+                // 选一个“质量最好”的 candidate 版本
+                ItemCandidate existing = bestCandidate.get(itemId);
                 if (existing == null || item.score() > existing.score()) {
-                    candidateMap.put(itemId, item);
+                    bestCandidate.put(itemId, item);
                 }
 
-                // 记录来源通道
-                sourcesMap.computeIfAbsent(itemId, id -> new HashSet<>()).add(channel);
+                sources.computeIfAbsent(itemId, k -> new HashSet<>()).add(strategy);
 
-                // 收集 reason
                 if (item.reason() != null && !item.reason().isBlank()) {
-                    reasonsMap.computeIfAbsent(itemId, id -> new ArrayList<>()).add(item.reason());
+                    reasons.computeIfAbsent(itemId, k -> new ArrayList<>()).add(item.reason());
                 }
             }
         }
 
-        if (rrfScores.isEmpty()) {
+        if (sumRrf.isEmpty()) {
             return List.of();
         }
 
-        // 按 RRF 分数排序
-        List<Map.Entry<Long, Double>> sorted = new ArrayList<>(rrfScores.entrySet());
-        sorted.sort(Map.Entry.<Long, Double>comparingByValue().reversed());
+        List<ItemCandidate> result = new ArrayList<>(sumRrf.size());
 
-        // 构建结果
-        List<ItemCandidate> result = new ArrayList<>();
-        for (Map.Entry<Long, Double> entry : sorted) {
+        for (var entry : sumRrf.entrySet()) {
             long itemId = entry.getKey();
-            double rrfScore = entry.getValue();
-            ItemCandidate original = candidateMap.get(itemId);
-            Set<StrategyId> sources = sourcesMap.get(itemId);
-            List<String> reasons = reasonsMap.get(itemId);
 
-            // 构建新的 attributes
-            Map<String, Object> attrs = new HashMap<>(original.attributes());
-            if (sources != null && !sources.isEmpty()) {
-                attrs.put("_sources", sources.stream().map(Enum::name).toList());
-                attrs.put("_sourceCount", sources.size());
+            double sum = entry.getValue();
+            double max = maxRrf.getOrDefault(itemId, 0.0);
+
+            Set<StrategyId> src = sources.getOrDefault(itemId, Set.of());
+            int sourceCount = src.size();
+
+            double finalScore = alpha * sum + (1 - alpha) * max;
+
+            // 多策略命中轻量奖励（不破坏排序稳定性）
+            if (sourceCount > 1) {
+                finalScore *= (1 + Math.log(sourceCount));
             }
-            attrs.put("_originalScore", original.score());
 
-            // 合并 reason
-            String mergedReason = mergeReasons(reasons, sources);
+            ItemCandidate base = bestCandidate.get(itemId);
+
+            Map<String, Object> attrs = new HashMap<>(base.attributes());
+            attrs.put("_sumRrf", sum);
+            attrs.put("_maxRrf", max);
+            attrs.put("_sourceCount", sourceCount);
+            attrs.put("_sources", src.stream().map(Enum::name).toList());
+            attrs.put("_originalScore", base.score());
 
             result.add(new ItemCandidate(
                     itemId,
-                    rrfScore,
-                    sources != null && sources.size() > 1 ? StrategyId.MIX : original.source(),
-                    mergedReason,
+                    finalScore,
+                    sourceCount > 1 ? StrategyId.MIX : base.source(),
+                    mergeReasons(reasons.get(itemId), src),
                     attrs
             ));
         }
 
-        return result;
+        result.sort(Comparator.comparingDouble(ItemCandidate::score).reversed());
+
+        return result.size() > config.topK()
+                ? result.subList(0, config.topK())
+                : result;
     }
+
 
     /**
      * 合并多来源的 reason
@@ -184,7 +276,7 @@ public class DefaultRecallFusion implements RecallFusion {
         }
 
         if (reasons.size() == 1) {
-            return reasons.get(0);
+            return reasons.getFirst();
         }
 
         // 去重并合并
