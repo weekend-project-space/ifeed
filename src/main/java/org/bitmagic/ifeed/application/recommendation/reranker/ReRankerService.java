@@ -5,14 +5,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.bitmagic.ifeed.application.recommendation.recall.model.ItemCandidate;
 import org.bitmagic.ifeed.application.recommendation.recall.model.UserContext;
 import org.bitmagic.ifeed.domain.record.ArticleContent;
-import org.bitmagic.ifeed.domain.record.ArticleSummaryView;
 import org.bitmagic.ifeed.domain.repository.ArticleRepository;
-import org.bitmagic.ifeed.infrastructure.score.ContentQualityEvaluator;
-import org.bitmagic.ifeed.infrastructure.score.QualityScorer;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -24,7 +20,6 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class ReRankerService {
 
-    private final ContentQualityEvaluator qualityEvaluator = new ContentQualityEvaluator();
 
     private final ArticleRepository articleRepository;
 
@@ -32,30 +27,16 @@ public class ReRankerService {
         if (items == null || items.isEmpty()) {
             return Collections.emptyList();
         }
-//        return items;
+//       移除后面一样标题的内容
         List<ItemCandidate> candidates = deduplication(userContext, items);
-        Map<Long, ArticleContent> id2Content = articleRepository.findArticleContentByIds(candidates.stream().map(ItemCandidate::itemId).toList()).stream().collect(Collectors.toMap(ArticleContent::id, Function.identity()));
-//        移除后面一样标题的内容
-        Set<String> titles = id2Content.values().stream().map(ArticleContent::title).collect(Collectors.toSet());
-        candidates = candidates.stream().filter(c -> titles.remove(id2Content.get(c.itemId()).title())).toList();
-        return candidates.stream().map(itemCandidate -> {
-            ArticleContent content = id2Content.get(itemCandidate.itemId());
-            // NPE Protection
-            if (content == null) {
-                return null;
-            }
-//            TODO
-            double score = qualityEvaluator.evaluate(ContentQualityEvaluator.ContentCategory.OTHER, content.title(), content.content()).totalScore();
-            log.debug("itemId: {}, score: {}", itemCandidate.itemId(), ContentQualityEvaluator.getGrade(score));
-            return itemCandidate.withScore(score * 0.3 + 0.7 * itemCandidate.score());
-        }).filter(Objects::nonNull).sorted(Comparator.comparingDouble(ItemCandidate::score).reversed()).toList();
+        return candidates.stream().sorted(Comparator.comparingDouble(ItemCandidate::score).reversed()).toList();
 
     }
 
     private List<ItemCandidate> deduplication(UserContext context, List<ItemCandidate> items) {
 //      title去重
         Set<String> itemTitles = context.recentItemTitles();
-        Map<Long, String> id2title = articleRepository.findArticleSummariesByIds(items.stream().map(ItemCandidate::itemId).toList()).stream().collect(Collectors.toMap(ArticleSummaryView::articleId, ArticleSummaryView::title));
+        Map<Long, String> id2title = articleRepository.findArticleContentByIds(items.stream().map(ItemCandidate::itemId).toList()).stream().collect(Collectors.toMap(ArticleContent::id, ArticleContent::title));
         return items.stream().filter(item -> {
             String title = id2title.get(item.itemId());
             return title != null && !itemTitles.contains(title);
