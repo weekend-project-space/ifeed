@@ -339,7 +339,7 @@
         ]">
         <div class="flex h-full flex-col overflow-hidden py-4">
 
-          <RouterLink :to="{ name: 'home' }" class="flex items-center text-lg font-semibold px-4 pt-2 pb-5 text-gray-700 dark:text-gray-300"
+          <RouterLink :to="{ name: 'home' }" class="flex items-center text-lg  px-4 pt-0 pb-5 text-gray-700 dark:text-gray-300"
                       :class=" isSidebarCollapsed ? 'justify-center px-2' : 'gap-3 px-3'">
             <img class="h-7 w-7 rounded-2xl opacity-70 dark:invert" src="/logo.svg" alt="iFeed"/>
 

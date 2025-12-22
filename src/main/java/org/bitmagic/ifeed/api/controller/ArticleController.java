@@ -88,7 +88,7 @@ public class ArticleController {
                 var mixFeedOpt = mixFeedRepository.findByUid(feedUuid);
                 if (mixFeedOpt.isPresent()) {
                     // MixFeed - use MixFeedService filtered articles
-                    articlePage = mixFeedService.getFilteredArticles(feedUuid, principal.getId(), pageable);
+                    articlePage = mixFeedService.getFilteredArticles(feedUuid, normalizedTags, principal.getId(), pageable);
                 } else {
                     throw new ApiException(HttpStatus.NOT_FOUND, "Feed or MixFeed not found");
                 }

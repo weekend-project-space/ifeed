@@ -161,7 +161,7 @@ public class MixFeedService {
      * Get filtered articles for a MixFeed based on user's own Feed subscriptions
      */
     @Transactional(readOnly = true)
-    public Page<ArticleSummaryView> getFilteredArticles(UUID mixFeedUid, Integer userId, Pageable pageable) {
+    public Page<ArticleSummaryView> getFilteredArticles(UUID mixFeedUid, Set<String> tags, Integer userId, Pageable pageable) {
         MixFeed mixFeed = getById(mixFeedUid);
 
         // Check access
@@ -184,7 +184,7 @@ public class MixFeedService {
         Instant toDate = config.getDateRange() != null ? config.getDateRange().getTo() : null;
 
         // Build Specification
-        Specification<Article> spec = MixFeedSpecs.mixFeedArticles(sourceFeedIds, fromDate, toDate, includeKeywords, excludeKeywords);
+        Specification<Article> spec = MixFeedSpecs.mixFeedArticles(sourceFeedIds, fromDate, toDate, tags, includeKeywords, excludeKeywords);
 
         // Execute query and map results
         return articleRepository.findAll(spec, pageable).map(this::toSummaryView);

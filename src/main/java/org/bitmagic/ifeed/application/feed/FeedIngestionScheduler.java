@@ -21,6 +21,7 @@ import org.springframework.stereotype.Component;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -129,7 +130,7 @@ public class FeedIngestionScheduler {
                     Instant toDate = config.getDateRange() != null ? config.getDateRange().getTo() : null;
 
                     // Build Specification
-                    Specification<Article> spec = MixFeedSpecs.mixFeedArticles(sourceFeedIds, fromDate, toDate, includeKeywords, excludeKeywords);
+                    Specification<Article> spec = MixFeedSpecs.mixFeedArticles(sourceFeedIds, fromDate, toDate, Collections.emptySet(), includeKeywords, excludeKeywords);
                     List<Article> articles = articleRepository.findAll(spec, PageRequest.of(0, 1, Sort.by(Sort.Order.desc("publishedAt")))).getContent();
                     if (!articles.isEmpty()) {
                         mixFeed.setLastFetched(Instant.now());
