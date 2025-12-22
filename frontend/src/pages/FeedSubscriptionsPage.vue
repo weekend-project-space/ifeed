@@ -48,7 +48,7 @@
                     :class="currentCategory === c.category.toLowerCase() ? 'bg-secondary text-secondary-foreground' : 'bg-secondary/5 text-secondary hover:bg-secondary/20'"
                     @click="handleSelectCategory(c.category)"
                 >
-                  {{ c.category }}
+                  {{ c.category }} <small v-if="c.category=='Today'">({{c.count}})</small>
                 </button>
                 <span v-if="!topCategories.length" class="text-sm text-gray-500 px-3">暂无分类</span>
               </template>

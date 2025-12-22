@@ -145,38 +145,39 @@ public class ArticleService {
                                                     Integer topN) {
         var rows = articleRepository.countCategoriesForOwnerWithin(ownerId, fromTs, toTs);
         var categories = new ArrayList<UserSubscriptionInsightResponse.CategoryCount>();
-        categories.add(new UserSubscriptionInsightResponse.CategoryCount("Today", 0));
+        categories.add(new UserSubscriptionInsightResponse.CategoryCount("Today", articleRepository.countOwnerWithin(ownerId,
+                LocalDate.now(ZoneId.systemDefault()).atStartOfDay(ZoneId.systemDefault()).toInstant(), toTs)));
         for (var row : rows) {
             var category = (String) row[0];
             var cnt = (Long) row[1];
             categories.add(new UserSubscriptionInsightResponse.CategoryCount(category, cnt));
         }
 
-        var tagJsonList = articleRepository.findTagJsonForOwnerWithin(ownerId, fromTs, toTs);
-        var tagCounter = new HashMap<String, Long>();
-        for (var raw : tagJsonList) {
-            try {
-                var tags = OBJECT_MAPPER.readValue(raw, TAGS_TYPE);
-                if (tags != null) {
-                    for (var t : tags) {
-                        if (t != null) {
-                            var key = t.trim().toLowerCase();
-                            if (!key.isEmpty()) {
-                                tagCounter.merge(key, 1L, Long::sum);
-                            }
-                        }
-                    }
-                }
-            } catch (Exception ignored) {
-            }
-        }
+//        var tagJsonList = articleRepository.findTagJsonForOwnerWithin(ownerId, fromTs, toTs);
+//        var tagCounter = new HashMap<String, Long>();
+//        for (var raw : tagJsonList) {
+//            try {
+//                var tags = OBJECT_MAPPER.readValue(raw, TAGS_TYPE);
+//                if (tags != null) {
+//                    for (var t : tags) {
+//                        if (t != null) {
+//                            var key = t.trim().toLowerCase();
+//                            if (!key.isEmpty()) {
+//                                tagCounter.merge(key, 1L, Long::sum);
+//                            }
+//                        }
+//                    }
+//                }
+//            } catch (Exception ignored) {
+//            }
+//        }
 
-        var hotTags = tagCounter.entrySet().stream()
-                .sorted((a, b) -> Long.compare(b.getValue(), a.getValue()))
-                .limit(topN == null || topN <= 0 ? 20 : topN)
-                .map(e -> new UserSubscriptionInsightResponse.TagCount(e.getKey(), e.getValue()))
-                .collect(java.util.stream.Collectors.toList());
+//        var hotTags = tagCounter.entrySet().stream()
+//                .sorted((a, b) -> Long.compare(b.getValue(), a.getValue()))
+//                .limit(topN == null || topN <= 0 ? 20 : topN)
+//                .map(e -> new UserSubscriptionInsightResponse.TagCount(e.getKey(), e.getValue()))
+//                .collect(java.util.stream.Collectors.toList());
 
-        return new UserSubscriptionInsightResponse(categories.subList(0, Math.min(categories.size(), topN == null || topN <= 0 ? 20 : topN)), hotTags);
+        return new UserSubscriptionInsightResponse(categories.subList(0, Math.min(categories.size(), topN == null || topN <= 0 ? 20 : topN)), null);
     }
 }

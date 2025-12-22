@@ -161,6 +161,20 @@ public interface ArticleRepository extends JpaRepository<Article, Long>, JpaSpec
                                                  @Param("fromTs") Instant fromTs,
                                                  @Param("toTs") Instant toTs);
 
+    @Query("""
+            select  count(a) as cnt
+            from Article a
+            where a.publishedAt between :fromTs and :toTs
+              and (:ownerId is null or exists (
+                    select 1 from UserSubscription us
+                    where us.sourceType = 'FEED' and us.sourceId = a.feed.id and us.user.id = :ownerId and us.active = true
+              ))
+              and (coalesce(a.category, '') <> '')
+            """)
+    Long countOwnerWithin(@Param("ownerId") Integer ownerId,
+                                                 @Param("fromTs") Instant fromTs,
+                                                 @Param("toTs") Instant toTs);
+
     /**
      * Fetch raw tag JSON strings for later in-memory aggregation, for articles
      * visible to owner within window.
@@ -201,7 +215,6 @@ public interface ArticleRepository extends JpaRepository<Article, Long>, JpaSpec
             select new org.bitmagic.ifeed.domain.record.ArticleContent(
                 a.id,
                 a.title,
-                a.content,
                 a.publishedAt)
             from Article a
             left join a.feed f
