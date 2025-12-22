@@ -796,11 +796,11 @@ watch(activeMainTab, async (newTab) => {
 }
 
 .article-content :deep(img) {
-  @apply w-full h-auto mb-8 rounded-lg;
+  @apply w-full h-auto my-8 rounded-lg;
 }
 
 .article-content :deep(table) {
-  @apply w-full border-collapse mb-8 text-sm;
+  @apply w-full border-collapse my-8 text-sm;
 }
 
 .article-content :deep(th),
@@ -817,13 +817,15 @@ watch(activeMainTab, async (newTab) => {
 }
 
 .article-content :deep(hr) {
-  @apply border-0 h-px bg-gray-200 dark:bg-gray-700 mb-8;
+  @apply border-0 h-px bg-gray-200 dark:bg-gray-700 my-8;
 }
 
 .article-content :deep(a) {
   @apply text-blue-600 dark:text-blue-400 hover:underline;
 }
-
+.article-content:first-child{
+  margin-top: 0 !important;
+}
 /*.tab-content {
   @apply min-h-[60vh];
 }*/
