@@ -28,19 +28,35 @@ public class ReRankerService {
             return Collections.emptyList();
         }
 //       移除后面一样标题的内容
-        List<ItemCandidate> candidates = deduplication(userContext, items);
+        List<ItemCandidate> candidates = deduplicateByTitle(userContext, items);
         return candidates.stream().sorted(Comparator.comparingDouble(ItemCandidate::score).reversed()).toList();
 
     }
 
-    private List<ItemCandidate> deduplication(UserContext context, List<ItemCandidate> items) {
-//      title去重
-        Set<String> itemTitles = context.recentItemTitles();
-        Map<Long, String> id2title = articleRepository.findArticleContentByIds(items.stream().map(ItemCandidate::itemId).toList()).stream().collect(Collectors.toMap(ArticleContent::id, ArticleContent::title));
-        return items.stream().filter(item -> {
-            String title = id2title.get(item.itemId());
-            return title != null && !itemTitles.contains(title);
-        }).toList();
+    private List<ItemCandidate> deduplicateByTitle(UserContext context, List<ItemCandidate> items) {
+        // 1. 获取用户最近已读的文章标题
+        Set<String> recentTitles = context.recentItemTitles();
+
+        // 2. 获取候选文章的标题
+        Map<Long, String> id2title = articleRepository
+                .findArticleContentByIds(items.stream().map(ItemCandidate::itemId).toList())
+                .stream()
+                .collect(Collectors.toMap(ArticleContent::id, ArticleContent::title));
+
+        // 3. 用于去重的 Set（包含已读 + 当前列表已出现的）
+        Set<String> seenTitles = new HashSet<>(recentTitles);
+
+        // 4. 过滤：去掉已读的 + 去掉列表内重复的
+        return items.stream()
+                .filter(item -> {
+                    String title = id2title.get(item.itemId());
+                    if (title == null || seenTitles.contains(title)) {
+                        return false;
+                    }
+                    seenTitles.add(title); // 标记为已出现
+                    return true;
+                })
+                .toList();
     }
 
 }
