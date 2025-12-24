@@ -14,7 +14,6 @@
 
     <!-- 文章列表 -->
     <article-list
-        title="智能推荐"
         subtitle="实时为你刷新阅读灵感"
         :items="items"
         :loading="articlesLoading"

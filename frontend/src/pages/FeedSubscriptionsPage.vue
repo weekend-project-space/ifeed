@@ -69,7 +69,7 @@
           </header>
         </template>
         <template #action>
-          <router-link class="p-2 text-sm text-primary font-medium rounded-lg transition-colors  hover:bg-surface-container" to="/feeds/channels">管理</router-link>
+          <router-link class="p-2 text-sm text-primary font-medium rounded-lg transition-colors  hover:bg-surface-container" to="/feeds/channels">所有订阅</router-link>
         </template>
         <template #empty>
             <div class="w-16 h-16 mx-auto mb-4 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center">

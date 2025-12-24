@@ -1,10 +1,14 @@
 <template>
-  <div class="space-y-6" :class="{'max-w-4xl mx-auto':view === 'magazine'}">
+  <div class="space-y-3" :class="{'max-w-4xl mx-auto':view === 'magazine'}">
     <slot name="header"></slot>
     <!-- Header -->
     <header class="flex flex-wrap items-center justify-between gap-4 px-4">
       <div class="flex items-center gap-3">
-        <h1 class="text-xl font-normal text-gray-900 dark:text-gray-100" v-text="title"></h1>
+        <template v-if="title">
+        <h1 class="text-xl font-normal text-gray-900 dark:text-gray-100" >
+          {{title}}
+          <small v-text="subtitle"> </small>
+        </h1>
         <button
             type="button"
             class="p-2 hover:bg-surface-container rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
@@ -24,6 +28,7 @@
             <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
           </svg>
         </button>
+        </template>
       </div>
       <div class="flex items-center gap-2">
         <slot name="action"></slot>

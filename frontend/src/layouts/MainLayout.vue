@@ -79,17 +79,6 @@
               </div>
             </div>
 
-            <!-- Clear Button -->
-<!--            <button-->
-<!--                v-if="search"-->
-<!--                type="button"-->
-<!--                class="absolute right-12 top-1/2 -translate-y-1/2 flex h-7 w-7 items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition text-gray-500"-->
-<!--                @click="search = ''">-->
-<!--              <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">-->
-<!--                <path stroke-linecap="round" stroke-linejoin="round" :d="icons.close"/>-->
-<!--              </svg>-->
-<!--            </button>-->
-
             <!-- Search Button -->
             <button
                 type="button"
@@ -312,12 +301,22 @@
 
           <!-- Mobile Nav -->
           <nav class="flex-1 overflow-y-auto p-2">
-            <div v-for="(section, index) in navSections" :key="section.id" class="mb-6">
-              <div v-if="section.title"
-                   class="px-3 mb-2 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                {{ section.title }}
-              </div>
-              <div class="space-y-1">
+            <div v-for="(section, index) in navSections" :key="section.id" class="mb-3 space-y-0.5">
+              <RouterLink
+                  v-if="section.title"
+                  :to="section.to"
+                  class="flex items-center gap-1 px-3 py-2.5 rounded-lg text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 transition-colors duration-150 cursor-pointer"
+                  :class="[
+                    isSectionActive(section)
+                      ? 'bg-primary/10 dark:bg-primary/20 text-text font-semibold '
+                      : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800']"
+              >
+                <span>{{ section.title }}</span>
+                <svg class="h-3 w-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
+                </svg>
+              </RouterLink>
+              <div class="space-y-0.5">
                 <component
                     v-for="item in section.items"
                     :is="item.to ? 'RouterLink' : 'button'"
@@ -388,7 +387,7 @@
       <!-- Desktop Sidebar -->
       <aside
           :class="[
-          'fixed left-0 top-[0px] bottom-0 z-30 hidden lg:block bg-gray-50 dark:bg-gray-950 transition-all duration-200',
+          'fixed left-0 top-[0px] bottom-0 z-30 hidden lg:block border-r border-gray-200 dark:border-gray-800 transition-all duration-200',
           isSidebarCollapsed ? 'w-20' : 'w-72'
         ]">
         <div class="flex h-full flex-col overflow-hidden py-4">
@@ -404,15 +403,24 @@
            </span>
             </span>
           </RouterLink>
-          <nav class="flex-1 overflow-y-auto px-2" :class="{ 'space-y-1': isSidebarCollapsed }">
-            <div v-for="(section, index) in navSections" :key="section.id" class="mb-6"
+          <nav class="flex-1 overflow-y-auto px-2 " :class="{ 'space-y-1': isSidebarCollapsed }">
+            <div v-for="(section, index) in navSections" :key="section.id" class="mb-3  space-y-0.5"
                  v-show="!(isSidebarCollapsed&&section?.id=='subscriptions')">
-              <div
+              <RouterLink
                   v-if="section.title && !isSidebarCollapsed"
-                  class="px-3 mb-2 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                {{ section.title }}
-              </div>
-              <div class="space-y-1">
+                  :to="section.to"
+                  class="flex items-center gap-1 px-3 py-2.5 rounded-lg text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 transition-colors duration-150 cursor-pointer"
+                  :class="[
+                    isSectionActive(section)
+                      ? 'bg-primary/10 dark:bg-primary/20 text-text font-semibold '
+                      : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800']"
+              >
+                <span>{{ section.title }}</span>
+                <svg class="h-3 w-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
+                </svg>
+              </RouterLink>
+              <div class="space-y-0.5">
                 <component
                     v-for="item in section.items"
                     :is="item.to ? 'RouterLink' : 'button'"
@@ -532,6 +540,8 @@ type NavItem = {
 type NavSection = {
   id: string;
   title?: string;
+  to?: RouteLocationRaw;
+  activeMatch?: (current: RouteLocationNormalizedLoaded) => boolean;
   items: NavItem[];
 };
 
@@ -554,18 +564,18 @@ const baseNavSections: NavSection[] = [
           return current.name === 'home' && view !== 'shorts' && !section;
         }
       },
-
-      {
-        id: 'feedsSubscriptions',
-        label: '订阅',
-        to: {name: 'feedsSubscriptions' as const},
-        icon: {
-          stroke: true,
-          paths: [icons.inbox],
-          viewBox: '0 0 24 24'
-        },
-        activeMatch: (current) => current.name === 'feedsSubscriptions'
-      },
+      //
+      // {
+      //   id: 'feedsSubscriptions',
+      //   label: '订阅',
+      //   to: {name: 'feedsSubscriptions' as const},
+      //   icon: {
+      //     stroke: true,
+      //     paths: [icons.inbox],
+      //     viewBox: '0 0 24 24'
+      //   },
+      //   activeMatch: (current) => current.name === 'feedsSubscriptions'
+      // },
     ]
   },
 
@@ -650,6 +660,8 @@ const subscriptionNavSection = computed<NavSection>(() => {
   return {
     id: 'subscriptions',
     title: '订阅',
+    to: { name: 'feedsSubscriptions' as const },
+    activeMatch: (current) => current.name === 'feedsSubscriptions' ,
     items
   };
 });
@@ -658,6 +670,9 @@ const navSections = computed<NavSection[]>(() => {
   return [...baseNavSections, subscriptionNavSection.value, {
     id: 'you',
     title: '我',
+    // http://localhost:5173/upgrade
+    to: { name: 'upgrade' as const },
+    activeMatch: (current) => current.name === 'upgrade',
     items: [
       {
         id: 'history',
@@ -771,6 +786,21 @@ const toggleTheme = () => {
 const toggleSidebar = () => {
   isSidebarCollapsed.value = !isSidebarCollapsed.value;
   localStorage.setItem('sidebar-collapsed', String(isSidebarCollapsed.value));
+};
+
+
+const isSectionActive = (section: NavSection): boolean => {
+  if (section.activeMatch) {
+    return section.activeMatch(route);
+  }
+  if (!section.to) {
+    return false;
+  }
+  const resolved = router.resolve(section.to);
+  if (resolved.name && resolved.name === route.name) {
+    return true;
+  }
+  return resolved.path === route.path;
 };
 
 watch(

@@ -3,8 +3,6 @@
 
 
     <article-list
-        title="文章列表"
-        subtitle=""
         :items="items"
         :loading="articlesLoading"
         empty-message="该频道暂时没有文章，稍后再来看看。"

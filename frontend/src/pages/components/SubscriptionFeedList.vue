@@ -245,12 +245,12 @@
               </svg>
               <span>抓取异常</span>
             </div>
-            <span v-else class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-green-50 dark:bg-green-900/20 text-xs text-green-700 dark:text-green-400">
-              <svg class="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor">
-                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z"/>
-              </svg>
-              <span>已订阅</span>
-            </span>
+<!--            <span v-else class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-green-50 dark:bg-green-900/20 text-xs text-green-700 dark:text-green-400">-->
+<!--              <svg class="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor">-->
+<!--                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z"/>-->
+<!--              </svg>-->
+<!--              <span>已订阅</span>-->
+<!--            </span>-->
           </router-link>
         </div>
       </article>
