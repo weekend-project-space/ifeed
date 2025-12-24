@@ -52,7 +52,7 @@ public class TermUtils {
      */
     public static List<String> segment(String text) {
 //        List<SegToken> tokens = ;
-        return segmenter.sentenceProcess(text).stream().filter(StringUtils::isNotBlank).toList(); //tokens.stream().map(segToken -> segToken.word).toList();
+        return segmenter.sentenceProcess(text).stream().filter(StringUtils::isNotBlank).filter(s -> !StopWorldHolder.STOP_WORDS.contains(s)).toList(); //tokens.stream().map(segToken -> segToken.word).toList();
     }
 
 
@@ -63,6 +63,7 @@ public class TermUtils {
                 .stream()
                 .map(t -> t.word)
                 .filter(w -> w.length() > 1) // 去掉无意义词
+                .filter(s -> !StopWorldHolder.STOP_WORDS.contains(s))
                 .toList();
 
         // 2. TF

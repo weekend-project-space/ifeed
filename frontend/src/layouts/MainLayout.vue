@@ -34,44 +34,69 @@
             <input
                 v-model="search"
                 type="search"
-                placeholder="搜索您订阅的文章、标签、订阅..."
-                class="w-full h-10 pl-14 pr-4 rounded-full border bg-white dark:bg-gray-900 text-base transition-all duration-200"
+                placeholder="搜索文章、标签、订阅..."
+                class="w-full h-10 pl-24 pr-14 rounded-full border bg-white dark:bg-gray-900 text-base transition-all duration-200"
                 :class="[
-                searchFocused
-                  ? 'border-transparent shadow-lg ring-1 ring-gray-300 dark:ring-gray-700'
-                  : 'border-gray-300 dark:border-gray-700 hover:shadow-md hover:border-gray-400 dark:hover:border-gray-600'
-              ]"
+                  searchFocused
+                    ? 'border-transparent shadow-lg ring-1 ring-gray-300 dark:ring-gray-700'
+                    : 'border-gray-300 dark:border-gray-700 hover:shadow-md hover:border-gray-400 dark:hover:border-gray-600'
+                ]"
                 @focus="searchFocused = true"
                 @blur="searchFocused = false"
                 @keyup.enter="handleSearch"/>
 
-            <!-- Search Icon -->
-            <div class="absolute left-5 top-1/2 -translate-y-1/2">
-              <svg class="h-5 w-5 transition-colors duration-200"
-                   :class="searchFocused ? 'text-primary' : 'text-gray-400'"
-                   fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" :d="icons.search"/>
-              </svg>
+            <!-- Source Selector (replaces search icon) -->
+            <div class="absolute left-3 top-1/2 -translate-y-1/2">
+              <button
+                  type="button"
+                  class="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium transition-colors hover:bg-gray-100 dark:hover:bg-gray-800"
+                  :class="searchFocused ? 'text-primary' : 'text-gray-600 dark:text-gray-400'"
+                  @click="toggleSourceDropdown">
+                {{ searchSource === 'owner' ? '订阅' : '发现' }}
+                <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
+                </svg>
+              </button>
+
+              <!-- Dropdown -->
+              <div
+                  v-if="showSourceDropdown"
+                  class="absolute top-full mt-1 left-0 w-20 bg-white dark:bg-gray-900 rounded-lg shadow-lg ring-1 ring-gray-200 dark:ring-gray-800 overflow-hidden z-50">
+                <button
+                    type="button"
+                    class="w-full px-3 py-2 text-xs text-left hover:bg-gray-100 dark:hover:bg-gray-800 transition"
+                    :class="{ 'bg-gray-50 dark:bg-gray-850 font-medium': searchSource === 'owner' }"
+                    @click="selectSource('owner')">
+                  订阅
+                </button>
+                <button
+                    type="button"
+                    class="w-full px-3 py-2 text-xs text-left hover:bg-gray-100 dark:hover:bg-gray-800 transition"
+                    :class="{ 'bg-gray-50 dark:bg-gray-850 font-medium': searchSource === 'global' }"
+                    @click="selectSource('global')">
+                  发现
+                </button>
+              </div>
             </div>
 
-            <!-- Voice Search Button (Optional) -->
-            <button
-                v-if="search"
-                type="button"
-                class="absolute right-16 top-1/2 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition text-gray-500"
-                @click="search = ''">
-              <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" :d="icons.close"/>
-              </svg>
-            </button>
+            <!-- Clear Button -->
+<!--            <button-->
+<!--                v-if="search"-->
+<!--                type="button"-->
+<!--                class="absolute right-12 top-1/2 -translate-y-1/2 flex h-7 w-7 items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition text-gray-500"-->
+<!--                @click="search = ''">-->
+<!--              <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">-->
+<!--                <path stroke-linecap="round" stroke-linejoin="round" :d="icons.close"/>-->
+<!--              </svg>-->
+<!--            </button>-->
 
             <!-- Search Button -->
             <button
                 type="button"
-                class="absolute right-3 top-1/2 -translate-y-1/2 flex h-9 w-9 items-center justify-center rounded-full transition-colors"
+                class="absolute right-2 top-1/2 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-full transition-colors"
                 :class="search ? 'bg-primary text-primary-foreground hover:bg-primary/90' : 'text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'"
                 @click="handleSearch">
-              <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+              <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" :d="icons.search"/>
               </svg>
             </button>
@@ -200,14 +225,43 @@
           <input
               v-model="search"
               type="search"
-              placeholder="搜索您订阅的文章、标签、订阅..."
-              class="w-full h-11 pl-12 pr-12 rounded-full border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition"
+              placeholder="搜索文章、标签、订阅..."
+              class="w-full h-11 pl-24 pr-12 rounded-full border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition"
               @keyup.enter="handleSearch"/>
-          <svg class="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" fill="none" stroke="currentColor"
-               stroke-width="1.5" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round"
-                  d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"/>
-          </svg>
+
+          <!-- Source Selector (replaces search icon) -->
+          <div class="absolute left-3 top-1/2 -translate-y-1/2">
+            <button
+                type="button"
+                class="flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs font-medium transition-colors hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-400"
+                @click="toggleSourceDropdown">
+              {{ searchSource === 'owner' ? '订阅' : '发现' }}
+              <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
+              </svg>
+            </button>
+
+            <!-- Mobile Dropdown -->
+            <div
+                v-if="showSourceDropdown"
+                class="absolute top-full mt-1 left-0 w-20 bg-white dark:bg-gray-900 rounded-lg shadow-lg ring-1 ring-gray-200 dark:ring-gray-800 overflow-hidden z-50">
+              <button
+                  type="button"
+                  class="w-full px-3 py-2 text-xs text-left hover:bg-gray-100 dark:hover:bg-gray-800 transition"
+                  :class="{ 'bg-gray-50 dark:bg-gray-850 font-medium': searchSource === 'owner' }"
+                  @click="selectSource('owner')">
+                订阅
+              </button>
+              <button
+                  type="button"
+                  class="w-full px-3 py-2 text-xs text-left hover:bg-gray-100 dark:hover:bg-gray-800 transition"
+                  :class="{ 'bg-gray-50 dark:bg-gray-850 font-medium': searchSource === 'global' }"
+                  @click="selectSource('global')">
+                发现
+              </button>
+            </div>
+          </div>
+
           <button
               type="button"
               class="absolute right-2 top-1/2 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition"
@@ -306,17 +360,17 @@
           <!-- Mobile User Section -->
           <div class="p-4 border-t border-gray-200 dark:border-gray-800">
             <router-link to="/upgrade">
-            <div class="flex items-center gap-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-900">
-              <img v-if="user.avatarUrl" :src="user.avatarUrl" class="h-10 w-10 rounded-full bg-primary"/>
-              <div
-                  v-else
-                  class="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-semibold">
-                {{ userInitials }}
+              <div class="flex items-center gap-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-900">
+                <img v-if="user.avatarUrl" :src="user.avatarUrl" class="h-10 w-10 rounded-full bg-primary"/>
+                <div
+                    v-else
+                    class="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-semibold">
+                  {{ userInitials }}
+                </div>
+                <div class="flex-1 min-w-0">
+                  <p class="text-sm font-medium truncate">{{ user?.username ?? '访客' }}</p>
+                </div>
               </div>
-              <div class="flex-1 min-w-0">
-                <p class="text-sm font-medium truncate">{{ user?.username ?? '访客' }}</p>
-              </div>
-            </div>
             </router-link>
             <button
                 type="button"
@@ -452,6 +506,8 @@ const mobileNavOpen = ref(false);
 const isSidebarCollapsed = ref(localStorage.getItem('sidebar-collapsed') === 'true');
 const search = ref('');
 const searchFocused = ref(false);
+const searchSource = ref<'owner' | 'global'>('owner');
+const showSourceDropdown = ref(false);
 
 type NavIcon = {
   paths: string[];
@@ -576,18 +632,6 @@ const subscriptionNavSection = computed<NavSection>(() => {
     };
   });
 
-  // items.push({
-  //   id: 'manage-subscriptions',
-  //   label: '管理订阅',
-  //   to: {name: 'feedChannels' as const},
-  //   icon: {
-  //     stroke: true,
-  //     paths: [icons.adjustments],
-  //     viewBox: '0 0 24 24'
-  //   },
-  //   activeMatch: (current) => current.name === 'feedChannels'
-  // });
-
   if (entries.length > 9) {
     items.push({
       id: 'toggle-subscriptions',
@@ -677,6 +721,15 @@ const userInitials = computed(() => {
       .slice(0, 2);
 });
 
+const toggleSourceDropdown = () => {
+  showSourceDropdown.value = !showSourceDropdown.value;
+};
+
+const selectSource = (source: 'owner' | 'global') => {
+  searchSource.value = source;
+  showSourceDropdown.value = false;
+};
+
 const handleSearch = () => {
   const keyword = search.value.trim();
   const currentType =
@@ -695,7 +748,10 @@ const handleSearch = () => {
     return;
   }
 
-  const query: Record<string, string> = {q: keyword};
+  const query: Record<string, string> = {
+    q: keyword,
+    source: searchSource.value
+  };
   if (currentType === 'semantic') query.type = currentType;
   if (feedId) query.feedId = feedId;
   if (tag) query.tags = tag;
@@ -724,6 +780,22 @@ watch(
     },
     {immediate: true}
 );
+
+// Close dropdown when clicking outside
+watch(showSourceDropdown, (isOpen) => {
+  if (isOpen) {
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (!target.closest('button') || !target.closest('.relative')) {
+        showSourceDropdown.value = false;
+        document.removeEventListener('click', handleClickOutside);
+      }
+    };
+    setTimeout(() => {
+      document.addEventListener('click', handleClickOutside);
+    }, 0);
+  }
+});
 
 onMounted(async () => {
   await subscriptionsStore.fetchSubscriptions();

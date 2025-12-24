@@ -76,7 +76,7 @@ public class SearchRetrievalService {
 
         log.debug("Hybrid search(IDs) start: user={}, includeGlobal={}, maxSize={}, query='{}'", userId, includeGlobal, safeSize, normalizedQuery);
 
-        List<DocScore> docScores = retrievalPipeline.execute(RetrievalContext.builder().query(normalizedQuery).embedding(queryEmbedding).threshold(properties.getSimilarityThreshold()).userId(userId).topK(desired).build());
+        List<DocScore> docScores = retrievalPipeline.execute(RetrievalContext.builder().query(normalizedQuery).embedding(queryEmbedding).threshold(properties.getSimilarityThreshold()).includeGlobal(includeGlobal).userId(userId).topK(desired).build());
         log.debug("Hybrid search(IDs) complete: user={}, query='{}', returnCount={}", userId, normalizedQuery, docScores.size());
         return docScores;
     }
