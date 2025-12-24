@@ -45,6 +45,9 @@ public class VectorRetrievalHandler implements RetrievalHandler {
 
         if (!context.isIncludeGlobal() && Objects.nonNull(context.getUserId())) {
             List<Integer> feedIds = subscriptionRepository.findActiveFeedIdsByUserId(context.getUserId());
+            if (feedIds.isEmpty()) {
+                return Collections.emptyList();
+            }
             builder.filterExpression(
                     new FilterExpressionBuilder()
                             .in("feedId", feedIds.toArray(Integer[]::new))
