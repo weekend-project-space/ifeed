@@ -221,12 +221,6 @@ const loadData = async () => {
   }
 
   try {
-    console.log({
-      query: searchQuery.value,
-      source: source.value,
-      page: routePage.value,
-      type: searchType.value
-    })
     await searchStore.searchArticles({
       query: searchQuery.value,
       source: source.value,

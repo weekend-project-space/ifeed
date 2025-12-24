@@ -139,7 +139,7 @@
               class="group bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-200 dark:border-gray-700 hover:shadow-lg hover:border-secondary/50 transition-all duration-200"
           >
             <!-- Feed Header -->
-            <div class="flex items-start gap-4 mb-4">
+            <router-link :to="'/feeds/'+feed.id" class="flex items-start gap-4 mb-4">
               <img
                   :src="feed.favicon"
                   :alt="feed.name"
@@ -154,7 +154,7 @@
                   {{ feed.url }}
                 </p>
               </div>
-            </div>
+            </router-link>
 
             <!-- Feed Description -->
             <p class="text-sm text-gray-600 dark:text-gray-400 line-clamp-3 mb-4 h-[60px]">
@@ -214,16 +214,19 @@
           >
             <div class="flex items-start gap-4">
               <!-- Feed Icon -->
+              <router-link :to="'/feeds/'+feed.id">
               <img
                   :src="feed.favicon"
                   :alt="feed.name"
                   class="w-14 h-14 rounded-full object-cover bg-gray-100 dark:bg-gray-700 flex-shrink-0"
                   @error="handleImageError"
               />
+              </router-link>
 
               <!-- Feed Info -->
               <div class="flex-1 min-w-0">
                 <div class="flex items-start justify-between gap-4 mb-2">
+                  <router-link :to="'/feeds/'+feed.id">
                   <div class="flex-1 min-w-0">
                     <h3 class="text-base font-semibold text-gray-900 dark:text-gray-100 mb-1 line-clamp-1 group-hover:text-secondary transition-colors">
                       {{ feed.name }}
@@ -232,7 +235,7 @@
                       {{ feed.url }}
                     </p>
                   </div>
-                  
+                  </router-link>
                   <!-- Subscribe Button -->
                   <button
                       @click="toggleSubscribe(feed)"
