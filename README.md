@@ -191,20 +191,30 @@ iFeed 是一个以 AI 驱动 的智能信息流聚合与推荐分发系统，核
 
 ### 快速开始 (Docker Compose)
 
-如果您已安装 Docker 和 Docker Compose，可以快速启动体验：
+如果您已安装 Docker 可以快速启动体验：
 
-1.  克隆项目：
-    ```bash
-    git clone https://github.com/weekend-project-space/ifeed.git
-    cd ifeed
-    ```
+1.  docker run：
+```
+   docker run -d \
+    --name ifeed-app \
+    -p 8080:8080 \
+    -e PG=PG\
+    -e PG_DATABASE=i_feed \
+    -e PG_USERNAME=PG_USERNAME \
+    -e PG_PASSWORD=PG_PASSWORD \
+    -e MONGO_DB=MONGO_DB \
+    -e MONGO_DB_DATABASE=i_feed \
+    -e MONGO_DB_USERNAME=MONGO_DB_USERNAME \
+    -e MONGO_DB_PASSWORD=MONGO_DB_PASSWORD \
+    -e app.ai.provider.api-key=APIKEY \
+    -e app.ai.provider.base-url=BASE_URL \
+    -e app.ai.provider.reranker.api-key=APIKEY \
+    -e app.ai.provider.reranker.base-url=BASE_URL \
+    --restart always \
+    ifeed/ifeed:latest
+```
 
-2.  参考 [部署指南](./deployment.md) 配置 `docker-compose.yml` 及环境变量。
-
-3.  启动服务：
-    ```bash
-    docker-compose up -d
-    ```
+2.  参考 [部署指南](./deployment.md) 配置环境变量和初始化。
 
 ------------------------------------------------------------------------
 
