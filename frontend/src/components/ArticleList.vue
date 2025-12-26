@@ -111,16 +111,13 @@
 
       <transition name="fade" mode="out-in">
         <!-- Magazine view -  -->
-        <!-- Magazine view - 标题不加粗，与其他视图统一 -->
         <div v-if="view === 'magazine'" key="view-magazine" class="space-y-4">
           <router-link
               v-for="item in items"
               :key="item.id"
               :to="{ name: 'article-detail', params: { id: item.id } }"
-              custom
               v-slot="{ href, navigate, isActive }">
             <article
-                :href="href"
                 @click="navigate"
                 @keydown.enter="navigate"
                 class="flex flex-col md:flex-row md:items-center gap-4 md:gap-6 p-4 md:p-5 rounded-2xl transition-all duration-300 cursor-pointer
@@ -147,7 +144,7 @@
                     <circle cx="8.5" cy="8.5" r="1.5"/>
                     <polyline points="21 15 16 10 5 21"/>
                   </svg>
-                  <span class="text-xs">无图</span>
+<!--                  <span class="text-xs">无图</span>-->
                 </div>
               </figure>
 
@@ -194,10 +191,8 @@
               v-for="item in items"
               :key="item.id"
               :to="{ name: 'article-detail', params: { id: item.id } }"
-              custom
               v-slot="{ href, navigate, isActive }">
             <article
-                :href="href"
                 @click="navigate"
                 @keydown.enter="navigate"
                 class="group relative flex h-full cursor-pointer flex-col overflow-hidden rounded-xl p-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
@@ -224,7 +219,7 @@
                     <circle cx="8.5" cy="8.5" r="1.5"/>
                     <polyline points="21 15 16 10 5 21"/>
                   </svg>
-                  <span class="text-xs">无图</span>
+<!--                  <span class="text-xs">无图</span>-->
                 </div>
               </figure>
 
@@ -265,10 +260,8 @@
               v-for="item in items"
               :key="item.id"
               :to="{ name: 'article-detail', params: { id: item.id } }"
-              custom
               v-slot="{ href, navigate, isActive }">
             <article
-                :href="href"
                 @click="navigate"
                 @keydown.enter="navigate"
                 class="flex items-center gap-4 px-4 py-3 transition cursor-pointer rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
