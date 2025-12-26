@@ -12,6 +12,7 @@ import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * 先用tf-idf
@@ -22,7 +23,6 @@ import java.util.Map;
 @RequiredArgsConstructor
 @Slf4j
 public class TextSearchRetrievalHandler implements RetrievalHandler {
-
 
     private final PgTextSearchStore pgTextSearchStore;
 
@@ -43,7 +43,8 @@ public class TextSearchRetrievalHandler implements RetrievalHandler {
         try {
             List<DocScore> results = Collections.emptyList();
             if (Strings.isNotBlank(context.getQuery())) {
-                results = pgTextSearchStore.searchWithFilter(buildChineseQuery(context.getQuery()), context.getTopK(), context.getUserId(), context.isIncludeGlobal(), context.getThreshold()).stream().map(doc -> {
+                RetrievalContext.DateRange dateRange = context.getDateRange();
+                results = pgTextSearchStore.searchWithFilter(buildChineseQuery(context.getQuery()), context.getTopK(), context.isIncludeGlobal(), context.getUserId(), context.getSourceFeeds(), Objects.nonNull(dateRange) ? dateRange.from() : null, Objects.nonNull(dateRange) ? dateRange.to() : null, context.getThreshold()).stream().map(doc -> {
                     Map<String, Object> metadata = doc.document().metadata();
                     Object pubDate = metadata.get("pubDate");
                     if (pubDate instanceof Integer) {
@@ -82,8 +83,13 @@ public class TextSearchRetrievalHandler implements RetrievalHandler {
         if (context.getTopK() <= 0 || context.getTopK() > 1000) {
             throw new IllegalArgumentException("topK must be between 1 and 1000");
         }
-        if (!context.isIncludeGlobal() && context.getUserId() == null) {
-            throw new IllegalArgumentException("userId is required when includeGlobal is false");
+        if (!context.isIncludeGlobal()) {
+            boolean userFeedMissing = context.getUserId() == null
+                    && (context.getSourceFeeds() == null || context.getSourceFeeds().isEmpty());
+            if (userFeedMissing) {
+                throw new IllegalArgumentException("Either userId or sourceFeeds must be provided when includeGlobal is false");
+            }
         }
+
     }
 }

@@ -67,7 +67,6 @@ public class U2A2IRecallStrategy implements RecallStrategy {
         if (attributes.isEmpty()) {
             return List.of();
         }
-
         try {
             List<ScoredId> hits = invertedIndex.query(attributes, limit);
             return hits.stream()

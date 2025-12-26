@@ -21,7 +21,7 @@ import java.util.Set;
 /**
  * 用户到物品再到物品（U2I2I）召回：先找用户相关的种子物品，再扩展相似/互补物品。
  */
-@Component
+//@Component
 @ConditionalOnBean({EmbeddingStore.class, AnnIndex.class, CoOccurIndex.class})
 public class U2I2IRecallStrategy implements RecallStrategy {
 

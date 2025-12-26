@@ -46,7 +46,7 @@ public interface MixFeedSpecs {
                 for (String keyword : includeKeywords) {
                     String pattern = "%" + keyword.toLowerCase() + "%";
                     keywordPredicates.add(cb.like(cb.lower(root.get("title")), pattern));
-                    keywordPredicates.add(cb.like(cb.lower(root.get("content")), pattern));
+                    keywordPredicates.add(cb.like(cb.lower(root.get("summary")), pattern));
                 }
                 predicates.add(cb.or(keywordPredicates.toArray(new Predicate[0])));
             }
@@ -59,7 +59,7 @@ public interface MixFeedSpecs {
                 for (String keyword : excludeKeywords) {
                     String pattern = "%" + keyword.toLowerCase() + "%";
                     predicates.add(cb.notLike(cb.lower(root.get("title")), pattern));
-                    predicates.add(cb.notLike(cb.lower(root.get("content")), pattern));
+                    predicates.add(cb.notLike(cb.lower(root.get("summary")), pattern));
                 }
             }
 

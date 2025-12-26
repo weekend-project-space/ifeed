@@ -13,10 +13,11 @@ import org.bitmagic.ifeed.infrastructure.retrieval.RetrievalContext;
 import org.bitmagic.ifeed.infrastructure.retrieval.RetrievalPipeline;
 import org.bitmagic.ifeed.infrastructure.retrieval.impl.MultiChannelRetrievalPipeline;
 import org.bitmagic.ifeed.infrastructure.retrieval.impl.TextSearchRetrievalHandler;
-import org.bitmagic.ifeed.infrastructure.retrieval.impl.VectorRetrievalHandler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -69,7 +70,8 @@ public class JpaInvertedIndex implements InvertedIndex {
             RetrievalContext context = RetrievalContext.builder()
                     .includeGlobal(true)
                     .query(attr.attributeValue())
-                    .topK(topK)
+                    .dateRange(RetrievalContext.DateRange.of(Instant.now().minus(7, ChronoUnit.DAYS), Instant.now().plus(1, ChronoUnit.DAYS)))
+                    .topK(attr.attributeKey().equals("feedTitle") ? 2 * topK : topK)
                     .threshold(0.12)
                     .build();
 

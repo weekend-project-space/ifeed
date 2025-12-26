@@ -53,6 +53,7 @@ public class ReRankerService {
                     if (title == null || seenTitles.contains(title)) {
                         return false;
                     }
+                    log.debug("source:{} title {} score {}", item.source(), title, item.score());
                     seenTitles.add(title); // 标记为已出现
                     return true;
                 })

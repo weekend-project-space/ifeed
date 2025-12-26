@@ -240,7 +240,7 @@ public class PgTextSearchStore implements TextSearchStore {
      * 集成时间衰减因子,优先返回较新的文档
      */
     public List<ScoredDocument> searchWithFilter(
-            String query, int topK, Integer userId, boolean includeGlobal, double threshold) {
+            String query, int topK, boolean includeGlobal, Integer userId, Collection<Integer> feedIds, Instant start, Instant end, double threshold) {
 
 //        String sql = String.format("""
 //                WITH query AS (
@@ -298,8 +298,11 @@ public class PgTextSearchStore implements TextSearchStore {
                     WHERE
                         q.q @@ d.catalog_tsv
                         AND d.pub_date >= NOW() - INTERVAL '90 days'
+                        AND (:start::timestamp IS NULL OR d.pub_date >= :start)
+                        AND (:end::timestamp IS NULL OR d.pub_date <= :end)
                         AND (
-                            :includeGlobal = TRUE
+                             :includeGlobal = TRUE
+                             OR (:hasFeedIds = TRUE AND d.feed_id = ANY(:feedIds))
                             OR EXISTS (
                                 SELECT 1
                                 FROM user_subscriptions us
@@ -309,7 +312,7 @@ public class PgTextSearchStore implements TextSearchStore {
                             )
                         )
                     ORDER BY text_score DESC
-                    LIMIT 500               -- ⭐ 粗排窗口
+                    LIMIT 500 
                 )
                 SELECT
                     id,
@@ -324,12 +327,16 @@ public class PgTextSearchStore implements TextSearchStore {
                 ORDER BY score DESC
                 LIMIT :topK;
                 """, textSearchConfig, tableName);
-
+        boolean hasFeedIds = feedIds != null && !feedIds.isEmpty();
         MapSqlParameterSource params = new MapSqlParameterSource()
                 .addValue("query", TermUtils.segmentStr(query))
                 .addValue("topK", topK)
                 .addValue("userId", userId)
                 .addValue("includeGlobal", includeGlobal)
+                .addValue("hasFeedIds", hasFeedIds)
+                .addValue("feedIds", feedIds)
+                .addValue("start", Objects.nonNull(start)?Timestamp.from(start):null)
+                .addValue("end", Objects.nonNull(end)?Timestamp.from(end):null)
                 .addValue("scoreThreshold", threshold);
 
         return namedJdbcTemplate.query(sql, params, this::mapScoredDocument);

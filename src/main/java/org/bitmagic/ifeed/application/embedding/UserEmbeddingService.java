@@ -3,6 +3,7 @@ package org.bitmagic.ifeed.application.embedding;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.bitmagic.ifeed.application.recommendation.recall.spi.SequenceStore;
+import org.bitmagic.ifeed.config.PromptProvider;
 import org.bitmagic.ifeed.config.properties.AiProviderProperties;
 import org.bitmagic.ifeed.config.properties.RecommendationProperties;
 import org.bitmagic.ifeed.domain.model.Article;
@@ -12,6 +13,8 @@ import org.bitmagic.ifeed.domain.repository.ArticleEmbeddingRepository;
 import org.bitmagic.ifeed.domain.repository.ArticleRepository;
 import org.bitmagic.ifeed.domain.repository.UserVectorRepository;
 import org.bitmagic.ifeed.infrastructure.util.DateUtils;
+import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.embedding.EmbeddingModel;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -41,6 +44,9 @@ public class UserEmbeddingService {
     private final UserVectorRepository userVectorRepository;
     private final RecommendationProperties recommendationProperties;
     private final AiProviderProperties aiProviderProperties;
+    private final PromptProvider promptProvider;
+    private final ChatClient chatClient;
+    private final EmbeddingModel embeddingModel;
 
     /**
      * 重建用户向量
@@ -140,9 +146,16 @@ public class UserEmbeddingService {
             UserVectorStore embedding = existingOpt.orElseGet(() -> UserVectorStore.builder()
                     .userId(userId)
                     .build());
+            if (aiProviderProperties.isEnabled()) {
+                profileText = genProfileText(profileText);
+                float[] profileVector = getProfileVector(profileText);
+                embedding.setEmbedding(Objects.nonNull(profileVector) ? profileVector : normalizedVector);
+                embedding.setContent(profileText);
+            } else {
+                embedding.setEmbedding(normalizedVector);
+                embedding.setContent(profileText);
+            }
 
-            embedding.setEmbedding(normalizedVector);
-            embedding.setContent(profileText);
             embedding.setUpdatedAt(now);
 
             UserVectorStore saved = userVectorRepository.save(embedding);
@@ -154,6 +167,36 @@ public class UserEmbeddingService {
         } catch (Exception e) {
             log.error("Failed to rebuild user embedding for user {}", userId, e);
             return Optional.empty();
+        }
+    }
+
+    /**
+     * 总结得到用户画像
+     *
+     * @param profileText
+     * @return
+     */
+    private String genProfileText(String profileText) {
+        try {
+            return chatClient.prompt(promptProvider.getPrompt("profile-analyzer-lite").replace("{content}", profileText)).call().content();
+        } catch (RuntimeException e) {
+            log.warn("gen profile text failed", e);
+            return profileText;
+        }
+    }
+
+    /**
+     * 获取用户画像向量
+     *
+     * @param profileText
+     * @return
+     */
+    private float[] getProfileVector(String profileText) {
+        try {
+            return embeddingModel.embed(profileText);
+        } catch (RuntimeException e) {
+            log.warn("get profile vector failed", e);
+            return null;
         }
     }
 

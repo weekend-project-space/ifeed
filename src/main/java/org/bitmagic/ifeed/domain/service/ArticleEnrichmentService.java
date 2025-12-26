@@ -1,29 +1,23 @@
 package org.bitmagic.ifeed.domain.service;
 
 
-import jakarta.annotation.PostConstruct;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
+import org.bitmagic.ifeed.config.PromptProvider;
 import org.bitmagic.ifeed.domain.model.Article;
 import org.bitmagic.ifeed.domain.model.ArticleEnrichment;
 import org.bitmagic.ifeed.domain.model.Feed;
 import org.bitmagic.ifeed.domain.repository.ArticleEnrichmentRepository;
 import org.bitmagic.ifeed.domain.repository.FeedRepository;
 import org.bitmagic.ifeed.domain.spec.ArticleEnrichmentSpec;
-import org.bitmagic.ifeed.infrastructure.score.ContentQualityEvaluator;
 import org.bitmagic.ifeed.infrastructure.ai.rerank.RerankerModel;
+import org.bitmagic.ifeed.infrastructure.score.ContentQualityEvaluator;
 import org.bitmagic.ifeed.infrastructure.score.ScoreMerger;
 import org.springframework.ai.chat.client.ChatClient;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
-import org.yaml.snakeyaml.Yaml;
 
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 /**
@@ -32,7 +26,6 @@ import java.util.Map;
  **/
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class ArticleEnrichmentService {
 
     private final ChatClient chatClient;
@@ -41,37 +34,19 @@ public class ArticleEnrichmentService {
     private final ArticleEnrichmentRepository enrichmentRepository;
     private final FeedRepository feedRepository;
 
-    @Value("classpath:prompts/summary-prompt.md")
-    private Resource summaryPromptResource;
-
-    @Value("classpath:prompts/mind-map-prompt.md")
-    private Resource mindmapPromptResource;
-
-    @Value("classpath:prompts/rating-prompt.yml")
-    private Resource ratingPromptResource;
 
     private String summaryPromptTemplate;
     private String mindMapPromptTemplate;
     private Map<String, String> ratingPromptMap;
 
-    @PostConstruct
-    public void init() {
-        try {
-            summaryPromptTemplate = summaryPromptResource.getContentAsString(StandardCharsets.UTF_8);
-            mindMapPromptTemplate = mindmapPromptResource.getContentAsString(StandardCharsets.UTF_8);
-            String string = ratingPromptResource.getContentAsString(StandardCharsets.UTF_8);
-            Yaml yaml = new Yaml();
-            Object data = yaml.load(string.toUpperCase());
-            if (data instanceof Map<?, ?> map) {
-                ratingPromptMap = (Map<String, String>) map;
-            } else {
-                throw new IllegalStateException("Invalid yml format");
-            }
-            log.info("提示词模板加载成功");
-        } catch (IOException e) {
-            log.error("加载提示词模板失败", e);
-            throw new RuntimeException("Failed to load prompt templates", e);
-        }
+    public ArticleEnrichmentService(ChatClient chatClient, RerankerModel rerankerModel, PromptProvider promptProvider, ArticleEnrichmentRepository enrichmentRepository, FeedRepository feedRepository) {
+        this.chatClient = chatClient;
+        this.rerankerModel = rerankerModel;
+        this.enrichmentRepository = enrichmentRepository;
+        this.feedRepository = feedRepository;
+        this.summaryPromptTemplate = promptProvider.getPrompt("summary-prompt");
+        this.mindMapPromptTemplate = promptProvider.getPrompt("mind-map-prompt");
+        this.ratingPromptMap = promptProvider.getPromptGroup("rating-prompt");
     }
 
     /**
@@ -118,7 +93,7 @@ public class ArticleEnrichmentService {
         if (ArticleEnrichment.Rating.A.equals(rating) || ArticleEnrichment.Rating.B.equals(rating)) {
             // 4. 生成AI增强内容
             log.info("开始生成AI增强内容: articleId={}", article.getId());
-            if(Strings.isBlank(enrichment.getAiSummary())){
+            if (Strings.isBlank(enrichment.getAiSummary())) {
                 String aiSummary = generateSummary(article);
                 String mindMap = generateMindMap(article);
                 enrichment.setAiSummary(aiSummary);
