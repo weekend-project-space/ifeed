@@ -1,32 +1,25 @@
-<svg
-        xmlns="http://www.w3.org/2000/svg"
-        viewBox="0 0 24 24"
-        width="24"
-        height="24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="1.5"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-        role="img"
-        aria-label="kiwi"
-        focusable="false"
->
-    <!-- 外形 -->
-    <circle cx="12" cy="12" r="9" />
+<!-- 流动的曲线 -->
+<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path
+            d="M2 8
+       C6 4, 10 4, 14 8
+       S22 12, 26 8"
+            stroke="currentColor"
+            stroke-width="1.8"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+    />
 
-    <!-- 果肉内圈（识别关键） -->
-    <circle cx="12" cy="12" r="6" />
+    <path
+            d="M2 14
+       C6 10, 10 10, 14 14
+       S22 18, 26 14"
+            stroke="currentColor"
+            stroke-width="1.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            opacity="0.45"
+    />
 
-    <!-- 种子（放射 + 数量足够） -->
-    <g fill="currentColor" stroke="none">
-        <circle cx="12" cy="5.8" r="1" />
-        <circle cx="16.8" cy="7.2" r="1" />
-        <circle cx="18.2" cy="12" r="1" />
-        <circle cx="16.8" cy="16.8" r="1" />
-        <circle cx="12" cy="18.2" r="1" />
-        <circle cx="7.2" cy="16.8" r="1" />
-        <circle cx="5.8" cy="12" r="1" />
-        <circle cx="7.2" cy="7.2" r="1" />
-    </g>
+    <circle cx="5" cy="18" r="1.6" fill="currentColor"/>
 </svg>

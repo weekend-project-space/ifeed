@@ -41,7 +41,7 @@
 
 :root {
     color-scheme: light;
-    --md-primary: 14 116 144;         /* Teal 深青色 */
+    --md-primary: 79 70 229;          /* 靛紫色 #4F46E5 */
     --md-on-primary: 255 255 255;
     --md-secondary: 33 33 33;
     --md-on-secondary: 255 255 255;
@@ -60,7 +60,7 @@
 
 .dark {
     color-scheme: dark;
-    --md-primary: 94 234 212;         /* Teal 亮青色 */
+    --md-primary: 129 140 248; /* #818CF8 */
     --md-on-primary: 13 148 136;
     --md-secondary: 163 163 163;
     --md-on-secondary: 255 255 255;
