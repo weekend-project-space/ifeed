@@ -12,6 +12,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Objects;
+
 @RestController
 @RequestMapping("/api/discovery")
 @RequiredArgsConstructor
@@ -40,14 +42,13 @@ public class DiscoveryController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
             @RequestParam(defaultValue = "popular") String sort) {
-        ensureAuthenticated(principal);
 
         // Validate and limit size
         size = Math.min(Math.max(size, 1), 100);
         page = Math.max(page, 0);
-
+        Integer userId = Objects.nonNull(principal) ? principal.getId() : null;
         var feeds = discoveryService.browseFeeds(
-                principal.getId(),
+                userId,
                 category,
                 page,
                 size,
@@ -67,7 +68,6 @@ public class DiscoveryController {
             @RequestParam(required = false) String category,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
-        ensureAuthenticated(principal);
 
         // Validate query
         if (q == null || q.trim().isEmpty()) {
@@ -78,8 +78,9 @@ public class DiscoveryController {
         size = Math.min(Math.max(size, 1), 100);
         page = Math.max(page, 0);
 
+        Integer userId = Objects.nonNull(principal) ? principal.getId() : null;
         var result = discoveryService.searchFeeds(
-                principal.getId(),
+                userId,
                 q.trim(),
                 category,
                 page,
@@ -88,9 +89,4 @@ public class DiscoveryController {
         return ResponseEntity.ok(result);
     }
 
-    private void ensureAuthenticated(UserPrincipal principal) {
-        if (principal == null) {
-            throw new ApiException(HttpStatus.UNAUTHORIZED, "Unauthorized");
-        }
-    }
 }

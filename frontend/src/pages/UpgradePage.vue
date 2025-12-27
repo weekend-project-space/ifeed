@@ -4,7 +4,7 @@
     <header class="border-b border-gray-200 dark:border-gray-700">
       <div class="max-w-screen-xl  mx-auto px-4 sm:px-6 lg:px-8 py-4">
         <div class="flex items-center justify-between">
-          <div class="flex items-center space-x-3">
+          <div  v-if="userInfo" class="flex items-center space-x-3">
             <div class="flex items-center space-x-2">
               <img v-if="userInfo.avatarUrl" :src="userInfo.avatarUrl" class="h-8 w-8 rounded-full bg-primary"/>
               <span class="text-sm text-gray-700 dark:text-gray-300">{{ userInfo.username }}</span>
@@ -12,6 +12,10 @@
             <span class="bg-green-500 dark:bg-green-600 text-white text-xs px-3 py-1 rounded-full font-medium">
               {{ userInfo.currentPlan }} 套餐
             </span>
+          </div>
+          <div v-else  class="flex items-center space-x-3" >
+            <div class="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-semibold cursor-pointer group-hover:ring-2 group-hover:ring-primary/30 transition-all">U</div>
+            <span>访客</span>
           </div>
           <div class="flex items-center space-x-4">
             <router-link to="/feeds/channels"

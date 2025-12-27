@@ -135,7 +135,7 @@
             <!-- User Menu (YouTube Style - Pure CSS Hover) -->
             <div class="relative group hidden md:block">
               <router-link to="/upgrade">
-                <img v-if="user.avatarUrl" :src="user.avatarUrl" class="h-9 w-9 rounded-full bg-primary"/>
+                <img v-if="user&&user.avatarUrl" :src="user.avatarUrl" class="h-9 w-9 rounded-full bg-primary"/>
                 <div
                     v-else
                     class="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-semibold cursor-pointer group-hover:ring-2 group-hover:ring-primary/30 transition-all">
@@ -148,7 +148,7 @@
                 <!-- User Info Section -->
                 <div class="px-4 py-3 border-b border-gray-200 dark:border-gray-800">
                   <div class="flex items-center gap-3">
-                    <img v-if="user.avatarUrl" :src="user.avatarUrl" class="h-10 w-10 rounded-full bg-primary"/>
+                    <img v-if="user&&user.avatarUrl" :src="user.avatarUrl" class="h-10 w-10 rounded-full bg-primary"/>
                     <div v-else
                          class="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-semibold">
                       {{ userInitials }}
@@ -189,7 +189,7 @@
                 </div>
 
                 <!-- Logout Section -->
-                <div class="border-t border-gray-200 dark:border-gray-800 py-1">
+                <div v-if="user" class="border-t border-gray-200 dark:border-gray-800 py-1">
                   <button
                       type="button"
                       class="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 dark:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 transition"
@@ -360,7 +360,7 @@
           <div class="p-4 border-t border-gray-200 dark:border-gray-800">
             <router-link to="/upgrade">
               <div class="flex items-center gap-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-900">
-                <img v-if="user.avatarUrl" :src="user.avatarUrl" class="h-10 w-10 rounded-full bg-primary"/>
+                <img v-if="user&&user.avatarUrl" :src="user.avatarUrl" class="h-10 w-10 rounded-full bg-primary"/>
                 <div
                     v-else
                     class="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-semibold">
@@ -828,8 +828,10 @@ watch(showSourceDropdown, (isOpen) => {
 });
 
 onMounted(async () => {
-  await subscriptionsStore.fetchSubscriptions();
-  mixFeedStore.clearMyMixFeeds();
+  if(authStore.isAuthenticated){
+    await subscriptionsStore.fetchSubscriptions();
+    mixFeedStore.clearMyMixFeeds();
+  }
 });
 </script>
 

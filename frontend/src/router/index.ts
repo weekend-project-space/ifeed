@@ -1,4 +1,6 @@
 import {createRouter, createWebHistory} from 'vue-router';
+import {onUnauthorized} from '@/api/auth-events';
+import {setAuthToken} from '@/api/client'
 import AuthPage from '../pages/AuthPage.vue';
 // import HomePage from '../pages/HomePage.vue';
 import SearchPage from '../pages/SearchPage.vue';
@@ -108,15 +110,30 @@ router.beforeEach(async (to: any, from: any) => {
     if (to.name == 'article-detail') {
         sessionStorage.setItem('origin-list', from.path)
     }
-    if (to.name !== 'auth' && !auth.isAuthenticated) {
-        return {name: 'auth', query: {redirect: to.fullPath}};
-    }
-
-    if (to.name === 'auth' && auth.isAuthenticated) {
-        return {name: 'home'};
-    }
+    // if (to.name !== 'auth' && !auth.isAuthenticated) {
+    //     return {name: 'auth', query: {redirect: to.fullPath}};
+    // }
+    //
+    // if (to.name === 'auth' && auth.isAuthenticated) {
+    //     return {name: 'home'};
+    // }
 
     return true;
+});
+
+
+// ⭐ 只注册一次
+onUnauthorized(async () => {
+    setAuthToken(null);
+
+    if (router.currentRoute.value.path !== '/auth') {
+        await router.replace({
+            path: '/auth',
+            query: {
+                redirect: router.currentRoute.value.fullPath
+            }
+        });
+    }
 });
 
 export default router;

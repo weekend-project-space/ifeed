@@ -171,7 +171,7 @@
                   <button
                       v-for="tag in item.tags"
                       :key="tag"
-                      @click.stop="emit('select-tag', tag)"
+                      @click.stop.prevent="emit('select-tag', tag)"
                       class="px-3 py-1 text-xs font-medium rounded-full bg-secondary-100 dark:bg-secondary-900/50
                      text-secondary-700 dark:text-secondary-300 hover:bg-secondary-200 dark:hover:bg-secondary-800/50 transition-colors">
                     #{{ tag }}
@@ -245,7 +245,7 @@
                       :key="tag"
                       type="button"
                       class="hover:text-primary transition-colors"
-                      @click.stop="emit('select-tag', tag)">
+                      @click.stop.prevent="emit('select-tag', tag)">
                     #{{ tag }}
                   </button>
                 </footer>

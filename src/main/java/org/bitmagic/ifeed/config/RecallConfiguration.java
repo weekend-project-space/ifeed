@@ -1,26 +1,17 @@
 package org.bitmagic.ifeed.config;
 
-import org.bitmagic.ifeed.application.recommendation.recall.core.DefaultRecallFusion;
-import org.bitmagic.ifeed.application.recommendation.recall.core.DefaultRecallPlanner;
-import org.bitmagic.ifeed.application.recommendation.recall.core.DefaultUserContextFactory;
-import org.bitmagic.ifeed.application.recommendation.recall.core.RecallEngine;
-import org.bitmagic.ifeed.application.recommendation.recall.core.RecallFusion;
-import org.bitmagic.ifeed.application.recommendation.recall.core.RecallPlanner;
-import org.bitmagic.ifeed.application.recommendation.recall.core.RecallStrategy;
-import org.bitmagic.ifeed.application.recommendation.recall.core.StrategyRegistry;
-import org.bitmagic.ifeed.application.recommendation.recall.core.UserContextFactory;
+import org.bitmagic.ifeed.application.recommendation.recall.core.*;
 import org.bitmagic.ifeed.application.recommendation.recall.spi.ItemFreshnessProvider;
 import org.bitmagic.ifeed.application.recommendation.recall.spi.SequenceStore;
-import org.bitmagic.ifeed.domain.repository.ArticleRepository;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.concurrent.Executor;
-import java.time.Duration;
 
 /**
  * 召回子系统的Spring装配，统一注册策略、引擎以及线程池。

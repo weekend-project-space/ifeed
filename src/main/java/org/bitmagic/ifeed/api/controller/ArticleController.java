@@ -66,7 +66,6 @@ public class ArticleController {
                                                                      @RequestParam(required = false, name = "category") String category,
                                                                      @RequestParam(required = false, defaultValue = SOURCE_OWNER) String source,
                                                                      @PageableDefault(sort = "publishedAt", direction = Sort.Direction.DESC) Pageable pageable) {
-        ensureAuthenticated(principal);
         var normalizedTags = parseTags(tags);
         var normalizedCategory = normalizeCategory(category);
         var normalizedSource = normalizeSource(source);
@@ -76,26 +75,27 @@ public class ArticleController {
         Page<ArticleSummaryView> articlePage;
 
         // If feedId is provided, auto-detect Feed or MixFeed
+        Integer userId = Objects.nonNull(principal) ? principal.getId() : 0;
         if (feedUuid != null) {
             // Try Feed first
             var feedOpt = feedRepository.findByUid(feedUuid);
             if (feedOpt.isPresent()) {
                 // Regular Feed - use existing logic
-                articlePage = articleService.listArticles(principal.getId(),
+                articlePage = articleService.listArticles(userId,
                         feedUuid, normalizedTags, normalizedCategory, includeGlobal, pageable);
             } else {
                 // Try MixFeed
                 var mixFeedOpt = mixFeedRepository.findByUid(feedUuid);
                 if (mixFeedOpt.isPresent()) {
                     // MixFeed - use MixFeedService filtered articles
-                    articlePage = mixFeedService.getFilteredArticles(feedUuid, normalizedTags, principal.getId(), pageable);
+                    articlePage = mixFeedService.getFilteredArticles(feedUuid, normalizedTags, userId, pageable);
                 } else {
                     throw new ApiException(HttpStatus.NOT_FOUND, "Feed or MixFeed not found");
                 }
             }
         } else {
             // No feedId - use existing logic
-            articlePage = articleService.listArticles(principal.getId(),
+            articlePage = articleService.listArticles(userId,
                     null, normalizedTags, normalizedCategory, includeGlobal, pageable);
         }
 
@@ -105,16 +105,18 @@ public class ArticleController {
     @GetMapping("/recommendations")
     public ResponseEntity<Page<RecResponse>> rec(@AuthenticationPrincipal UserPrincipal principal,
                                                  @RequestParam(defaultValue = "0") Integer page,
-                                                 @RequestParam(required = false) Integer size) {
+                                                 @RequestParam(required = false, defaultValue = "20") Integer size) {
+        Integer userId = Objects.nonNull(principal) ? principal.getId() : 0;
         return ResponseEntity.ok(recommendationService
-                .recommend(new RecRequest(principal.getId(), "home", Map.of(), Map.of()), page, size));
+                .recommend(new RecRequest(userId, "home", Map.of(), Map.of()), page, size));
     }
 
     @GetMapping("/details-recommendations")
     public ResponseEntity<List<RecResponse>> rec(@AuthenticationPrincipal UserPrincipal principal,
                                                  @RequestParam(required = false, defaultValue = "6") Integer topK) {
+        Integer userId = Objects.nonNull(principal) ? principal.getId() : 0;
         return ResponseEntity.ok(recommendationService
-                .recommend(new RecRequest(principal.getId(), "details", Map.of(), Map.of()), topK));
+                .recommend(new RecRequest(userId, "details", Map.of(), Map.of()), topK));
     }
 
     @GetMapping("/insights")
@@ -123,21 +125,20 @@ public class ArticleController {
             @RequestParam(required = false) String from,
             @RequestParam(required = false) String to,
             @RequestParam(required = false, defaultValue = "20") Integer top) {
-        ensureAuthenticated(principal);
+        Integer userId = Objects.nonNull(principal) ? principal.getId() : 0;
         var toTs = (to == null || to.isBlank()) ? Instant.now() : Instant.parse(to.trim());
         var fromTs = (from == null || from.isBlank()) ? toTs.minus(Duration.ofDays(30)) : Instant.parse(from.trim());
-        var resp = articleService.insights(principal.getId(), fromTs, toTs, top);
+        var resp = articleService.insights(userId, fromTs, toTs, top);
         return ResponseEntity.ok(resp);
     }
 
     @GetMapping("/{articleId}")
     public ResponseEntity<ArticleDetailResponse> getArticle(@AuthenticationPrincipal UserPrincipal principal,
                                                             @PathVariable String articleId) {
-        ensureAuthenticated(principal);
         var article = articleService.getArticle(IdentifierUtils.parseUuid(articleId, "article id"));
         var tags = extractTags(article.getTags());
-        ArticleEnrichment enrichment = User.Plan.FREE.equals(principal.getCurrentPlan()) ? null : articleEnrichmentService.getEnrichment(article.getId());
-        var collected = userCollectionService.isCollected(principal.getId(), article.getUid());
+        ArticleEnrichment enrichment = Objects.isNull(principal) || User.Plan.FREE.equals(principal.getCurrentPlan()) ? null : articleEnrichmentService.getEnrichment(article.getId());
+        var collected = Objects.nonNull(principal) && userCollectionService.isCollected(principal.getId(), article.getUid());
         Feed feed = article.getFeed();
         var response = new ArticleDetailResponse(
                 article.getUid().toString(),
@@ -196,11 +197,6 @@ public class ArticleController {
         return instant == null ? null : instant.toString();
     }
 
-    private void ensureAuthenticated(UserPrincipal principal) {
-        if (principal == null) {
-            throw new ApiException(HttpStatus.UNAUTHORIZED, "Unauthorized");
-        }
-    }
 
     private UUID parseFeedId(String feedId) {
         if (feedId == null || feedId.isBlank()) {
