@@ -149,7 +149,7 @@
       </header>
 
       <!-- Tabs Navigation - Clean Style -->
-      <div class=" border-b border-gray-200 dark:border-gray-800 sticky top-0 backdrop-blur-md z-10">
+      <div v-if="article.summary||article.mindMap||article.requiresUpgrade" class=" border-b border-gray-200 dark:border-gray-800 sticky top-0 backdrop-blur-md z-10" >
         <div class="max-w-screen-md mx-auto px-6">
           <nav class="flex gap-8" role="tablist">
             <button
@@ -196,8 +196,8 @@
         <!-- Content Tab -->
         <div v-show="activeMainTab === 'content'" role="tabpanel" class="animate-fade-in">
           <!-- Media Attachment -->
-          <media-attachment v-if="article.enclosure" :url="article.enclosure" :type="article.enclosureType"
-                            :title="article.title" :artist="article.feedTitle || article.author"
+          <media-attachment v-if="article.enclosure" mode="global"  :url="article.enclosure" :type="article.enclosureType"
+                            :title="article.title" :artist="article.feedTitle || article.author" :track-id="article.id"
                             :cover-image="article.thumbnail" class="mb-12 rounded-lg overflow-hidden"/>
 
           <!-- Article Body - Medium Typography -->

@@ -466,8 +466,10 @@
 
       <!-- Main Content -->
       <main
-          class="flex-1 min-w-0 min-h-[calc(100vh-5em)] px-3 pb-10 pt-5 sm:px-6 sm:pb-12 sm:pt-6">
-        <router-view/>
+          class="flex-1 min-w-0 min-h-[calc(100vh-5em)] px-3 pb-28 pt-5 sm:px-6 sm:pb-24 sm:pt-6">
+        <global-audio-player>
+           <router-view/>
+        </global-audio-player>
       </main>
     </div>
   </div>
@@ -482,7 +484,7 @@ import {useAuthStore} from '../stores/auth';
 import {useThemeStore} from '../stores/theme';
 import {useSubscriptionsStore} from '../stores/subscriptions';
 import {useMixFeedsStore} from "../stores/mixFeeds";
-
+import GlobalAudioPlayer from "../components/GlobalAudioPlayer.vue";
 // Icon Components
 const icons = {
   menu: 'M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5',

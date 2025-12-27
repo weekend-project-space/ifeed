@@ -191,13 +191,13 @@
               v-for="item in items"
               :key="item.id"
               :to="{ name: 'article-detail', params: { id: item.id } }"
+              class="group relative flex h-full cursor-pointer flex-col overflow-hidden rounded-xl p-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              :class="{ 'ring-2 ring-primary': isActive }"
               v-slot="{ href, navigate, isActive }">
             <article
                 @click="navigate"
                 @keydown.enter="navigate"
-                class="group relative flex h-full cursor-pointer flex-col overflow-hidden rounded-xl p-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-                :class="{ 'ring-2 ring-primary': isActive }">
-
+               >
               <!-- 原有的 hover 背景效果 -->
               <span
                   class="pointer-events-none absolute inset-0 origin-center scale-50 rounded-xl h-1/5 bg-primary/5 transition-transform duration-200 ease-out group-hover:scale-[1.02] group-hover:h-full"></span>
