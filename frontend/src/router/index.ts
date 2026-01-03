@@ -107,7 +107,7 @@ router.beforeEach(async (to: any, from: any) => {
             console.warn('用户信息初始化失败', err);
         }
     }
-    if (to.name == 'article-detail') {
+    if (to.name == 'article') {
         sessionStorage.setItem('origin-list', from.path)
     }
     // if (to.name !== 'auth' && !auth.isAuthenticated) {

@@ -8,7 +8,7 @@
         <div class="flex items-center space-x-4 mb-4">
           <img v-if="userInfo?.avatarUrl"
                :src="userInfo.avatarUrl"
-               class="h-20 w-20 sm:h-24 sm:w-24 rounded-full"/>
+               class="h-20 w-20 sm:h-24 sm:w-24 rounded-full bg-primary"/>
           <div v-else class="flex h-20 w-20 sm:h-24 sm:w-24 items-center justify-center rounded-full bg-blue-600 dark:bg-blue-500 text-white text-2xl sm:text-3xl font-medium">
             {{ userInfo?.username?.charAt(0)?.toUpperCase() || 'U' }}
           </div>
@@ -16,9 +16,9 @@
             <h1 class="text-xl sm:text-2xl font-medium text-gray-900 dark:text-white truncate">
               {{ userInfo?.username || '访客' }}
             </h1>
-<!--            <p class="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-0.5">-->
-<!--              {{ userInfo?.email || '未登录' }}-->
-<!--            </p>-->
+            <!--            <p class="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-0.5">-->
+            <!--              {{ userInfo?.email || '未登录' }}-->
+            <!--            </p>-->
             <div class="flex items-center mt-2 text-xs text-gray-600 dark:text-gray-400">
               <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
                 <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
@@ -74,6 +74,17 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
           </svg>
         </router-link>
+
+        <!-- Install App Section -->
+        <button v-if="canInstall" @click="handleInstallPWA" class="w-full flex items-center px-4 py-3.5 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+          <svg class="w-6 h-6 text-gray-900 dark:text-white mr-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+          </svg>
+          <span class="flex-1 text-left text-sm font-normal text-gray-900 dark:text-white">安装应用</span>
+          <svg class="w-5 h-5 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+          </svg>
+        </button>
 
         <!-- Upgrade Section -->
         <button @click="showUpgradePlans = !showUpgradePlans" class="w-full flex items-center px-4 py-3.5 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
@@ -318,15 +329,18 @@
 import {ref, computed} from 'vue';
 import {storeToRefs} from "pinia";
 import {useAuthStore} from "../stores/auth.ts";
+import {usePWAStore} from "../stores/pwa.ts";
 import {useRouter} from "vue-router";
 
 const router = useRouter();
 const authStore = useAuthStore();
+const pwaStore = usePWAStore();
 
 const selectedPlan = ref(null);
 const showPaymentModal = ref(false);
 const showUpgradePlans = ref(false);
 const {user: userInfo} = storeToRefs(authStore);
+const {canInstall} = storeToRefs(pwaStore);
 
 const standardFeatures = [
   '订阅 300 个 RSS 源',
@@ -402,6 +416,11 @@ const handleImageError = () => {
 const handleLogout = async () => {
   await authStore.logout();
   await router.replace({name: 'auth'});
+};
+
+// PWA 安装处理
+const handleInstallPWA = async () => {
+  await pwaStore.installPWA();
 };
 </script>
 

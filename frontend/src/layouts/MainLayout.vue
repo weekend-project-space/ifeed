@@ -5,9 +5,9 @@
     <header
         class="sticky top-0 z-30 bg-white/95 dark:bg-surface/95 backdrop-blur-sm transition-transform duration-200"
         :class="[
-          isSidebarCollapsed ? 'lg:pl-20' : 'lg:pl-72',
+          isSidebarCollapsed ? 'lg:pl-16' : 'lg:pl-72',
           isHeaderHidden ? '-translate-y-full lg:translate-y-0' : 'translate-y-0',
-          !isAtTop ? 'shadow-sm border-b border-gray-200 dark:border-gray-800' : '',
+          !isAtTop ? '' : '',
           route.name === 'upgrade' ? 'hidden lg:block' : ''
         ]">
       <div class="flex items-center justify-between gap-3 px-4 py-3 lg:px-5 lg:py-2">
@@ -312,12 +312,12 @@
     </transition>
 
     <!-- Layout Container -->
-    <div class="flex" :class="isSidebarCollapsed ? 'lg:pl-20' : 'lg:pl-72'">
+    <div class="flex" :class="isSidebarCollapsed ? 'lg:pl-16' : 'lg:pl-72'">
       <!-- Desktop Sidebar -->
       <aside
           :class="[
           'fixed left-0 top-[0px] bottom-0 z-30 hidden lg:block border-r border-gray-200 dark:border-gray-800 transition-all duration-200',
-          isSidebarCollapsed ? 'w-20' : 'w-72'
+          isSidebarCollapsed ? 'w-16' : 'w-72'
         ]">
         <div class="flex h-full flex-col overflow-hidden py-4">
 
