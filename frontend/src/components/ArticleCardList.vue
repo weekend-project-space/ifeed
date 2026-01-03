@@ -14,8 +14,8 @@
       </div>
     </div>
   </div>
-  <div v-else :class="compact ? 'space-y-2 sm:space-y-2.5' : 'space-y-4 sm:space-y-5'">
-    <article v-for="(item, index) in items" :key="getItemKey(item, index)">
+  <div v-else-if="items.length > 0" :class="compact ? 'space-y-2 sm:space-y-2.5' : 'space-y-4 sm:space-y-5'">
+    <article v-for="item in items" :key="getItemKey(item)">
       <router-link
           :to="`/articles/${item[keyField]}`"
           :class="[
@@ -29,13 +29,13 @@
           compact ? 'w-full sm:w-24 h-24 sm:h-16' : 'w-full sm:w-52 h-40 sm:h-32'
         ]">
           <img
-              v-if="item.thumbnail"
+              v-if="shouldShowImage(item)"
               :src="item.thumbnail"
               :alt="item.title || '文章缩略图'"
               class="w-full h-full object-cover"
               loading="lazy"
               referrerpolicy="no-referrer"
-              @error="handleImageError"
+              @error="handleImageError(item)"
           />
           <div v-else class="w-full h-full flex items-center justify-center">
             <slot name="empty-thumbnail" :item="item">
@@ -111,9 +111,18 @@
       </router-link>
     </article>
   </div>
+  <div v-else class="flex flex-col items-center justify-center py-12 sm:py-16 text-center">
+    <svg class="w-12 h-12 sm:w-16 sm:h-16 text-text-muted mb-3 sm:mb-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+      <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+      <path d="M3 9h18"/>
+      <path d="M9 21V9"/>
+    </svg>
+    <p class="text-sm sm:text-base text-text-secondary">暂无文章</p>
+  </div>
 </template>
 
 <script setup lang="ts">
+import { ref } from 'vue';
 import { formatRelativeTime } from '../utils/datetime';
 
 interface ArticleItem {
@@ -125,7 +134,6 @@ interface ArticleItem {
   collectedAt?: string;
   readAt?: string;
   timeAgo?: string;
-  [key: string]: any;
 }
 
 interface Props {
@@ -135,7 +143,7 @@ interface Props {
   actionLabel?: string;
   metaField?: 'collectedAt' | 'readAt' | 'timeAgo' | 'custom';
   metaPrefix?: string;
-  keyField?: string;
+  keyField?: keyof ArticleItem;
   compact?: boolean;
 }
 
@@ -152,22 +160,29 @@ defineEmits<{
   action: [item: ArticleItem];
 }>();
 
-const getItemKey = (item: ArticleItem, index: number): string => {
-  const timestamp = item.collectedAt || item.readAt || '';
-  return `${item[props.keyField]}-${timestamp}-${index}`;
+const failedImages = ref<Set<string>>(new Set());
+
+const getItemKey = (item: ArticleItem): string => {
+  return String(item[props.keyField]);
 };
 
 const getMetaText = (item: ArticleItem): string => {
   if (props.metaField === 'custom') return '';
   if (item.timeAgo) return item.timeAgo;
-  const timestamp = item[props.metaField];
+  const timestamp = item[props.metaField as keyof ArticleItem] as string | undefined;
   if (!timestamp) return '';
 
   const timeText = formatRelativeTime(timestamp);
   return props.metaPrefix ? `${props.metaPrefix}${timeText}` : timeText;
 };
 
-const handleImageError = (e: Event) => {
-  (e.target as HTMLImageElement).style.display = 'none';
+const handleImageError = (item: ArticleItem) => {
+  const key = String(item[props.keyField]);
+  failedImages.value.add(key);
+};
+
+const shouldShowImage = (item: ArticleItem): boolean => {
+  const key = String(item[props.keyField]);
+  return !!item.thumbnail && !failedImages.value.has(key);
 };
 </script>

@@ -48,7 +48,7 @@
                     :class="currentCategory === c.category.toLowerCase() ? 'bg-secondary text-secondary-foreground' : 'bg-secondary/5 text-secondary hover:bg-secondary/20'"
                     @click="handleSelectCategory(c.category)"
                 >
-                  {{ c.category }} <small v-if="c.category=='Today'">({{c.count}})</small>
+                  {{ c.category }} <small v-if="c.category=='Today'">({{ c.count }})</small>
                 </button>
                 <span v-if="!topCategories.length" class="text-sm text-gray-500 px-3">暂无分类</span>
               </template>
@@ -56,7 +56,8 @@
 
             <!-- 标签筛选提示 -->
             <div v-if="activeTag" class="mt-3">
-              <div class="inline-flex items-center gap-2 px-3 py-1 text-xs bg-secondary/10 rounded-lg border border-secondary/20">
+              <div
+                  class="inline-flex items-center gap-2 px-3 py-1 text-xs bg-secondary/10 rounded-lg border border-secondary/20">
                 <span class="text-secondary">#{{ activeTag }}</span>
                 <button
                     class="text-secondary hover:text-secondary/80 font-medium"
@@ -69,16 +70,21 @@
           </header>
         </template>
         <template #action>
-          <router-link class="p-2 text-sm text-primary font-medium rounded-lg transition-colors  hover:bg-surface-container" to="/feeds/channels">所有订阅</router-link>
+          <router-link
+              class="p-2 text-sm text-primary font-medium rounded-lg transition-colors  hover:bg-surface-container"
+              to="/feeds/channels">所有订阅
+          </router-link>
         </template>
         <template #empty>
-            <div class="w-16 h-16 mx-auto mb-4 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center">
-              <svg class="w-8 h-8 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                <path d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
-              </svg>
-            </div>
-            <h2 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">还没有订阅</h2>
-            <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">添加你感兴趣的订阅源开始使用</p>
+          <div
+              class="w-16 h-16 mx-auto mb-4 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center">
+            <svg class="w-8 h-8 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path
+                  d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+            </svg>
+          </div>
+          <h2 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">还没有订阅</h2>
+          <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">添加你感兴趣的订阅源开始使用</p>
           <router-link
               to="/discover"
               class="inline-flex items-center gap-2 px-5 py-2 text-sm font-medium text-white bg-secondary hover:bg-secondary/90 rounded-full transition-colors"
@@ -107,10 +113,14 @@ import {computed, onMounted, watch} from 'vue';
 import {storeToRefs} from 'pinia';
 import {useRoute, useRouter} from 'vue-router';
 import {useSubscriptionArticlesStore} from '../stores/articles/subscriptionArticles';
+import {useSubscriptionsStore} from "../stores/subscriptions";
+import {useReadFeedStore} from "../stores/readfeed";
 
 const router = useRouter();
 const route = useRoute();
 const subscriptionStore = useSubscriptionArticlesStore();
+const subscriptionsStore = useSubscriptionsStore();
+const readFeedStore = useReadFeedStore();
 
 const {
   items,
@@ -120,7 +130,7 @@ const {
   error: articleError
 } = storeToRefs(subscriptionStore);
 
-const { insights, insightsLoading } = storeToRefs(subscriptionStore);
+const {insights, insightsLoading} = storeToRefs(subscriptionStore);
 
 const topCategories = computed(() => insights.value.categories ?? []);
 
@@ -143,8 +153,19 @@ const currentCategory = computed(() => {
   return raw?.toLowerCase() ?? '';
 });
 
+// 当前订阅源ID
+const currentFeedId = computed(() => {
+  const raw = Array.isArray(route.query.feedId) ? route.query.feedId[0] : route.query.feedId;
+  return typeof raw === 'string' && raw.trim() ? raw.trim() : null;
+});
+
 // 构建查询参数
-const buildQuery = (overrides?: { page?: number; tags?: string | null; category?: string | null }) => {
+const buildQuery = (overrides?: {
+  page?: number;
+  tags?: string | null;
+  category?: string | null;
+  feedId?: string | null
+}) => {
   const query: Record<string, string> = {};
 
   const tag = overrides?.hasOwnProperty('tags') ? overrides.tags : activeTag.value;
@@ -152,6 +173,9 @@ const buildQuery = (overrides?: { page?: number; tags?: string | null; category?
 
   const category = overrides?.hasOwnProperty('category') ? overrides.category : currentCategory.value;
   if (category) query.category = category;
+
+  const feedId = overrides?.hasOwnProperty('feedId') ? overrides.feedId : currentFeedId.value;
+  if (feedId) query.feedId = feedId;
 
   const page = overrides?.page ?? currentPage.value;
   if (page > 1) query.page = String(page);
@@ -166,8 +190,12 @@ const loadData = async () => {
       size: 20,
       page: currentPage.value,
       tags: activeTag.value,
-      category: currentCategory.value || undefined
+      category: currentCategory.value || undefined,
+      feedId: currentFeedId.value || undefined
     });
+    if (currentFeedId.value) {
+      await readFeed()
+    }
   } catch (err) {
     console.warn('订阅数据加载失败', err);
   }
@@ -178,7 +206,7 @@ const refresh = () => loadData();
 // 页面跳转
 const navigateToPage = (target: number) => {
   if (target < 1) return;
-  router.push({ name: 'feedsSubscriptions', query: buildQuery({ page: target }) });
+  router.push({name: 'feedsSubscriptions', query: buildQuery({page: target})});
 };
 
 const nextPage = () => {
@@ -195,35 +223,44 @@ const handleSelectTag = (tag: string) => {
   if (!tag) return;
   router.push({
     name: 'feedsSubscriptions',
-    query: buildQuery({ page: 1, tags: tag.toLowerCase() })
+    query: buildQuery({page: 1, tags: tag.toLowerCase()})
   });
 };
 
 const clearTagFilter = () => {
   router.push({
     name: 'feedsSubscriptions',
-    query: buildQuery({ tags: null, page: 1 })
+    query: buildQuery({tags: null, page: 1})
   });
 };
+
 
 // 分类筛选
 const handleSelectCategory = (category: string) => {
   if (!category) return;
   router.push({
     name: 'feedsSubscriptions',
-    query: buildQuery({ page: 1, category: category.toLowerCase(), tags: null })
+    query: buildQuery({page: 1, category: category.toLowerCase(), tags: null})
   });
 };
 
 const clearCategoryFilter = () => {
   router.push({
     name: 'feedsSubscriptions',
-    query: buildQuery({ page: 1, category: null })
+    query: buildQuery({page: 1, category: null})
   });
 };
 
+const readFeed = async () => {
+  const canRead = subscriptionsStore.items.filter(item => !item.isRead && item.feedId == currentFeedId.value).length
+  if (canRead > 0) {
+    await readFeedStore.recordFeedRead(currentFeedId.value);
+    await subscriptionsStore.fetchSubscriptions();
+  }
+}
+
 onMounted(() => {
-  if(sessionStorage.getItem('origin-list')!=route.path){
+  if (sessionStorage.getItem('origin-list') != route.path) {
     loadData();
     subscriptionStore.fetchInsights();
   }
@@ -231,7 +268,7 @@ onMounted(() => {
 });
 
 watch(
-    () => [currentPage.value, activeTag.value, currentCategory.value],
+    () => [currentPage.value, activeTag.value, currentCategory.value, currentFeedId.value],
     () => loadData()
 );
 </script>

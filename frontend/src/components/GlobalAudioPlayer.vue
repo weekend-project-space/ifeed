@@ -2,16 +2,90 @@
 <template>
   <!-- 全局浮动播放器 -->
   <Teleport to="body">
+    <!-- 最小化按钮 -->
+    <Transition name="fade-scale">
+      <button
+          v-if="currentTrack && isMinimized"
+          @click="isMinimized = false"
+          class="fixed bottom-6 right-6 w-16 h-16 rounded-full shadow-2xl transition-all hover:scale-110 z-50 group overflow-hidden"
+          aria-label="展开播放器"
+      >
+        <!-- 封面背景 -->
+        <div class="absolute inset-0">
+          <img
+              v-if="currentTrack.coverImage"
+              :src="currentTrack.coverImage"
+              :alt="currentTrack.title"
+              class="w-full h-full object-cover"
+          />
+          <div
+              v-else
+              class="w-full h-full bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center"
+          >
+            <svg class="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M18 3a1 1 0 00-1.196-.98l-10 2A1 1 0 006 5v9.114A4.369 4.369 0 005 14c-1.657 0-3 .895-3 2s1.343 2 3 2 3-.895 3-2V7.82l8-1.6v5.894A4.37 4.37 0 0015 12c-1.657 0-3 .895-3 2s1.343 2 3 2 3-.895 3-2V3z"/>
+            </svg>
+          </div>
+        </div>
+
+        <!-- 半透明遮罩 -->
+        <div class="absolute inset-0 bg-black/30"></div>
+
+        <!-- 播放/暂停图标 -->
+        <div class="absolute inset-0 flex items-center justify-center">
+          <svg v-if="!isPlaying" class="w-6 h-6 text-white drop-shadow-lg ml-0.5" fill="currentColor" viewBox="0 0 20 20">
+            <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"/>
+          </svg>
+          <svg v-else class="w-6 h-6 text-white drop-shadow-lg" fill="currentColor" viewBox="0 0 20 20">
+            <path d="M6 4h3v12H6V4zm5 0h3v12h-3V4z"/>
+          </svg>
+        </div>
+
+        <!-- 播放进度环 -->
+        <svg class="absolute inset-0 w-16 h-16 -rotate-90 pointer-events-none" viewBox="0 0 64 64">
+          <circle
+              cx="32"
+              cy="32"
+              r="30"
+              fill="none"
+              stroke="rgba(255,255,255,0.3)"
+              stroke-width="2"
+          />
+          <circle
+              cx="32"
+              cy="32"
+              r="30"
+              fill="none"
+              stroke="white"
+              stroke-width="2"
+              stroke-dasharray="188.4"
+              :stroke-dashoffset="188.4 - (188.4 * progressPercent / 100)"
+              class="transition-all duration-100 drop-shadow-lg"
+          />
+        </svg>
+
+        <!-- 悬停提示 -->
+        <div class="absolute bottom-full mb-3 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+          <div class="bg-gray-900 text-white text-xs px-3 py-2 rounded-lg shadow-lg whitespace-nowrap">
+            <div class="font-medium">{{ currentTrack.title }}</div>
+            <div class="text-gray-300 mt-0.5">{{ currentTrack.artist }}</div>
+          </div>
+          <div class="w-2 h-2 bg-gray-900 transform rotate-45 mx-auto -mt-1"></div>
+        </div>
+      </button>
+    </Transition>
+
+    <!-- 完整播放器 -->
     <Transition name="slide-up">
       <div
-          v-if="currentTrack"
+          v-if="currentTrack && !isMinimized"
           class="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 shadow-2xl z-50"
       >
         <!-- 主播放控制区 -->
         <div class="max-w-screen-xl mx-auto px-4 py-3">
           <div class="flex items-center gap-4">
             <!-- 当前播放音乐信息 -->
-            <div class="flex items-center gap-3 flex-1 min-w-0">
+            <router-link :to="{ name: 'article', params: { id: currentTrack.id } }" class="flex items-center gap-3 flex-1 min-w-0">
               <!-- 封面 -->
               <div class="flex-shrink-0">
                 <div
@@ -44,7 +118,7 @@
                   {{ currentTrack.artist }}
                 </p>
               </div>
-            </div>
+            </router-link>
 
             <!-- 播放控制按钮 -->
             <div class="flex items-center gap-2">
@@ -110,7 +184,7 @@
               </span>
             </div>
 
-            <!-- 播放列表和关闭按钮 -->
+            <!-- 播放列表、最小化和关闭按钮 -->
             <div class="flex items-center gap-2">
               <!-- 播放列表按钮 -->
               <button
@@ -125,6 +199,17 @@
                 <span v-if="playlist.length > 0" class="absolute -top-1 -right-1 w-5 h-5 bg-primary text-white text-xs rounded-full flex items-center justify-center">
                   {{ playlist.length }}
                 </span>
+              </button>
+
+              <!-- 最小化按钮 -->
+              <button
+                  @click="minimizePlayer"
+                  class="w-9 h-9 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center justify-center transition-colors"
+                  aria-label="最小化播放器"
+              >
+                <svg class="w-5 h-5 text-gray-700 dark:text-gray-300" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd"/>
+                </svg>
               </button>
 
               <!-- 关闭按钮 -->
@@ -264,8 +349,8 @@ interface AudioTrack {
 }
 
 const STORAGE_KEY = 'audio_player_state';
-const MAX_PLAYLIST_SIZE = 50; // 最大播放列表数量
-const SAVE_INTERVAL = 5000; // 保存间隔(毫秒)
+const MAX_PLAYLIST_SIZE = 50;
+const SAVE_INTERVAL = 5000;
 
 const audioRef = ref<HTMLAudioElement | null>(null);
 const currentTrack = ref<AudioTrack | null>(null);
@@ -274,27 +359,24 @@ const isPlaying = ref(false);
 const currentTime = ref(0);
 const duration = ref(0);
 const showPlaylist = ref(false);
+const isMinimized = ref(false);
 
 let lastSaveTime = 0;
 
-// 从 localStorage 加载状态
 const loadState = () => {
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
       const state = JSON.parse(saved);
 
-      // 恢复播放列表
       if (state.playlist && Array.isArray(state.playlist)) {
         playlist.value = state.playlist;
       }
 
-      // 恢复当前播放的歌曲(但不自动播放)
       if (state.currentTrack && audioRef.value) {
         currentTrack.value = state.currentTrack;
         audioRef.value.src = state.currentTrack.url;
 
-        // 等待元数据加载后恢复进度
         if (state.currentTime) {
           const handleMetadata = () => {
             if (audioRef.value && state.currentTime) {
@@ -305,28 +387,31 @@ const loadState = () => {
         }
       }
 
+      // 恢复最小化状态
+      if (state.isMinimized !== undefined) {
+        isMinimized.value = state.isMinimized;
+      }
+
       console.log('播放器状态已恢复');
     }
   } catch (error) {
     console.error('加载播放器状态失败:', error);
-    // 清除损坏的数据
     localStorage.removeItem(STORAGE_KEY);
   }
 };
 
-// 保存状态到 localStorage
 const saveState = () => {
   try {
     const state = {
-      playlist: playlist.value.slice(0, MAX_PLAYLIST_SIZE), // 限制大小
+      playlist: playlist.value.slice(0, MAX_PLAYLIST_SIZE),
       currentTrack: currentTrack.value,
       currentTime: currentTime.value,
+      isMinimized: isMinimized.value,
       timestamp: Date.now()
     };
 
     const stateStr = JSON.stringify(state);
 
-    // 检查大小(约2MB限制)
     if (stateStr.length > 2 * 1024 * 1024) {
       console.warn('播放列表过大,仅保存前20首');
       state.playlist = playlist.value.slice(0, 20);
@@ -337,12 +422,12 @@ const saveState = () => {
   } catch (error) {
     if (error instanceof Error && error.name === 'QuotaExceededError') {
       console.error('存储空间不足');
-      // 尝试只保存当前歌曲
       try {
         const minState = {
           playlist: currentTrack.value ? [currentTrack.value] : [],
           currentTrack: currentTrack.value,
-          currentTime: currentTime.value
+          currentTime: currentTime.value,
+          isMinimized: isMinimized.value
         };
         localStorage.setItem(STORAGE_KEY, JSON.stringify(minState));
       } catch (e) {
@@ -354,7 +439,6 @@ const saveState = () => {
   }
 };
 
-// 节流保存
 const throttledSave = () => {
   const now = Date.now();
   if (now - lastSaveTime >= SAVE_INTERVAL) {
@@ -362,21 +446,23 @@ const throttledSave = () => {
   }
 };
 
-// 组件挂载时加载状态
 onMounted(() => {
   loadState();
 });
 
-// 组件卸载前保存并清理
 onBeforeUnmount(() => {
-  saveState(); // 最后保存一次
+  saveState();
 });
 
-// 监听播放进度,节流保存
 watch(currentTime, () => {
   if (currentTrack.value) {
     throttledSave();
   }
+});
+
+// 保存最小化状态
+watch(isMinimized, () => {
+  saveState();
 });
 
 const progressPercent = computed(() =>
@@ -392,6 +478,11 @@ const hasPrevious = computed(() => currentTrackIndex.value > 0);
 const hasNext = computed(() =>
     currentTrackIndex.value >= 0 && currentTrackIndex.value < playlist.value.length - 1
 );
+
+const minimizePlayer = () => {
+  isMinimized.value = true;
+  showPlaylist.value = false;
+};
 
 const playTrack = (track: AudioTrack) => {
   if (!audioRef.value) return;
@@ -476,6 +567,7 @@ const closePlayer = () => {
   currentTrack.value = null;
   isPlaying.value = false;
   showPlaylist.value = false;
+  isMinimized.value = false;
   saveState();
 };
 
@@ -578,5 +670,16 @@ watch(currentTrack, (track) => {
 .slide-down-leave-to {
   max-height: 0;
   opacity: 0;
+}
+
+.fade-scale-enter-active,
+.fade-scale-leave-active {
+  transition: all 0.3s ease;
+}
+
+.fade-scale-enter-from,
+.fade-scale-leave-to {
+  opacity: 0;
+  transform: scale(0.8);
 }
 </style>

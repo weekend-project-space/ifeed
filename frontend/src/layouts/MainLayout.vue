@@ -1,22 +1,25 @@
 <template>
-  <div class="min-h-screen text-gray-900 dark:text-gray-100 transition-colors duration-300"
-       :class="{ 'overflow-hidden': mobileNavOpen }">
+  <div class="min-h-screen text-gray-900 dark:text-gray-100 transition-colors duration-300 pt-safe">
 
     <!-- Header -->
-    <header :class="isSidebarCollapsed ? 'lg:pl-20' : 'lg:pl-72'"
-            class="sticky top-0 z-30  bg-white/95 dark:bg-surface/95 backdrop-blur-sm">
-      <div class="flex items-center  justify-between gap-3 px-4 py-2 lg:px-5">
-        <!-- Logo & Menu Button -->
+    <header
+        class="sticky top-0 z-30 bg-white/95 dark:bg-surface/95 backdrop-blur-sm transition-transform duration-200"
+        :class="[
+          isSidebarCollapsed ? 'lg:pl-20' : 'lg:pl-72',
+          isHeaderHidden ? '-translate-y-full lg:translate-y-0' : 'translate-y-0',
+          !isAtTop ? 'shadow-sm border-b border-gray-200 dark:border-gray-800' : '',
+          route.name === 'upgrade' ? 'hidden lg:block' : ''
+        ]">
+      <div class="flex items-center justify-between gap-3 px-4 py-3 lg:px-5 lg:py-2">
+        <!-- Left: Logo (mobile) + Sidebar toggle (desktop) -->
         <div class="flex items-center gap-3">
-          <button
-              type="button"
-              class="flex h-10 w-10 items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition lg:hidden"
-              @click="mobileNavOpen = true">
-            <svg class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" :d="icons.menu"/>
-            </svg>
-          </button>
+          <!-- Mobile Logo -->
+          <RouterLink :to="{ name: 'home' }" class="flex items-center gap-2 lg:hidden">
+            <img class="h-8 w-8 rounded-2xl" src="/logo.svg" alt="iFeed"/>
+            <span class="text-lg font-semibold">IFeed</span>
+          </RouterLink>
 
+          <!-- Desktop sidebar toggle -->
           <button
               type="button"
               class="hidden lg:flex h-10 w-10 items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition"
@@ -25,10 +28,9 @@
               <path stroke-linecap="round" stroke-linejoin="round" :d="icons.menu"/>
             </svg>
           </button>
-
         </div>
 
-        <!-- Search Bar (Desktop) -->
+        <!-- Center: Desktop Search Bar -->
         <div class="hidden lg:flex flex-1 max-w-2xl mx-auto">
           <div class="relative w-full group">
             <input
@@ -46,7 +48,7 @@
                 @keyup.enter="handleSearch"/>
 
             <!-- Source Selector (replaces search icon) -->
-            <div class="absolute left-3 top-1/2 -translate-y-1/2">
+            <div class="absolute left-3 top-1/2 -translate-y-1/2" ref="searchSourceRef">
               <button
                   type="button"
                   class="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium transition-colors hover:bg-gray-100 dark:hover:bg-gray-800"
@@ -92,12 +94,33 @@
           </div>
         </div>
 
-        <div class="min-w-[12rem] flex  justify-end">
-          <div class="flex items-center gap-2 " id="header-action">
+        <!-- Right: header-action + actions (shared for mobile & desktop) -->
+        <div class="flex items-center gap-2 min-w-[12rem] justify-end">
+          <!-- Teleport 挂载点：移动端和桌面端共用 -->
+          <div class="flex items-center gap-2" id="header-action"></div>
 
+          <!-- Mobile search + avatar -->
+          <div v-show="route.name!='article'" class="flex items-center gap-2 lg:hidden">
+            <button
+                type="button"
+                class="flex h-10 w-10 items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition"
+                @click="openSearchPage">
+              <svg class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" :d="icons.search"/>
+              </svg>
+            </button>
+            <router-link to="/upgrade">
+              <img v-if="user&&user.avatarUrl" :src="user.avatarUrl" class="h-9 w-9 rounded-full bg-primary"/>
+              <div
+                  v-else
+                  class="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-semibold">
+                {{ userInitials }}
+              </div>
+            </router-link>
           </div>
-          <!-- Actions -->
-          <div class="flex items-center gap-2" v-show="route.name!='article-detail'">
+
+          <!-- Desktop actions -->
+          <div v-show="route.name!='article'" class="hidden lg:flex items-center gap-2" >
             <!-- Theme Toggle -->
             <button
                 type="button"
@@ -113,7 +136,6 @@
                       d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z"/>
               </svg>
             </button>
-
 
             <!-- Add Subscription Button -->
             <RouterLink
@@ -132,6 +154,7 @@
                 <path d="M12 5v14M5 12h14"></path>
               </svg>
             </RouterLink>
+
             <!-- User Menu (YouTube Style - Pure CSS Hover) -->
             <div class="relative group hidden md:block">
               <router-link to="/upgrade">
@@ -206,177 +229,83 @@
           </div>
         </div>
       </div>
-
-
-      <!-- Search Bar (Mobile) -->
-      <div class="lg:hidden px-4 pb-3">
-        <div class="relative">
-          <input
-              v-model="search"
-              type="search"
-              placeholder="搜索文章、标签、订阅..."
-              class="w-full h-11 pl-24 pr-12 rounded-full border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition"
-              @keyup.enter="handleSearch"/>
-
-          <!-- Source Selector (replaces search icon) -->
-          <div class="absolute left-3 top-1/2 -translate-y-1/2">
-            <button
-                type="button"
-                class="flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs font-medium transition-colors hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-400"
-                @click="toggleSourceDropdown">
-              {{ searchSource === 'owner' ? '订阅' : '发现' }}
-              <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
-              </svg>
-            </button>
-
-            <!-- Mobile Dropdown -->
-            <div
-                v-if="showSourceDropdown"
-                class="absolute top-full mt-1 left-0 w-20 bg-white dark:bg-gray-900 rounded-lg shadow-lg ring-1 ring-gray-200 dark:ring-gray-800 overflow-hidden z-50">
-              <button
-                  type="button"
-                  class="w-full px-3 py-2 text-xs text-left hover:bg-gray-100 dark:hover:bg-gray-800 transition"
-                  :class="{ 'bg-gray-50 dark:bg-gray-850 font-medium': searchSource === 'owner' }"
-                  @click="selectSource('owner')">
-                订阅
-              </button>
-              <button
-                  type="button"
-                  class="w-full px-3 py-2 text-xs text-left hover:bg-gray-100 dark:hover:bg-gray-800 transition"
-                  :class="{ 'bg-gray-50 dark:bg-gray-850 font-medium': searchSource === 'global' }"
-                  @click="selectSource('global')">
-                发现
-              </button>
-            </div>
-          </div>
-
-          <button
-              type="button"
-              class="absolute right-2 top-1/2 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition"
-              @click="handleSearch">
-            <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round"
-                    d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"/>
-            </svg>
-          </button>
-        </div>
-      </div>
     </header>
 
-    <!-- Mobile Sidebar Overlay -->
-    <transition name="fade">
+    <!-- Full Screen Search Page (Mobile) -->
+    <transition name="search-slide">
       <div
-          v-if="mobileNavOpen"
-          class="fixed inset-0 z-30 bg-black/40 backdrop-blur-sm lg:hidden"
-          @click="mobileNavOpen = false"/>
-    </transition>
-
-    <!-- Mobile Sidebar -->
-    <transition name="slide">
-      <div
-          v-if="mobileNavOpen"
-          class="fixed inset-y-0 left-0 z-40 w-72 bg-white dark:bg-gray-950 border-r border-gray-200 dark:border-gray-800 shadow-xl lg:hidden">
-        <div class="flex h-full flex-col">
-          <!-- Mobile Sidebar Header -->
-          <div class="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-800">
-            <RouterLink
-                :to="{ name: 'home' }"
-                class="flex items-center gap-2 text-base font-semibold"
-                @click="mobileNavOpen = false">
-              <img class="h-9 w-9 rounded-2xl" src="/logo.svg" alt="iFeed"/>
-              <span class="flex items-center gap-2">IFeed   <span>
-              <span class="bg-secondary text-white shadow-md  rounded-full px-1 text-[8px]  opacity-60 font-medium ">Beta</span>
-           </span></span>
-            </RouterLink>
+          v-if="showMobileSearch"
+          class="fixed inset-0 z-50 bg-white dark:bg-gray-950 lg:hidden">
+        <div class="flex flex-col h-full">
+          <!-- Search Header -->
+          <div class="flex items-center gap-3 px-4 py-3 border-b border-gray-200 dark:border-gray-800">
             <button
                 type="button"
-                class="flex h-9 w-9 items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition"
-                @click="mobileNavOpen = false">
-              <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                class="flex h-10 w-10 items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition"
+                @click="closeMobileSearch">
+              <svg class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
               </svg>
+            </button>
+            <div class="flex-1 relative">
+              <input
+                  ref="mobileSearchInput"
+                  v-model="search"
+                  type="search"
+                  placeholder="搜索文章、标签、订阅..."
+                  class="w-full h-11 pl-4 pr-12 rounded-full border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition"
+                  @keyup.enter="handleSearchAndClose"/>
+              <button
+                  v-if="search"
+                  type="button"
+                  class="absolute right-2 top-1/2 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-full bg-primary text-white hover:bg-primary/90 transition"
+                  @click="handleSearchAndClose">
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" :d="icons.search"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- Search Source Tabs -->
+          <div class="flex gap-2 px-4 py-3 border-b border-gray-200 dark:border-gray-800">
+            <button
+                type="button"
+                class="flex-1 py-2 px-4 rounded-full text-sm font-medium transition"
+                :class="searchSource === 'owner' ? 'bg-primary text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300'"
+                @click="searchSource = 'owner'">
+              我的订阅
+            </button>
+            <button
+                type="button"
+                class="flex-1 py-2 px-4 rounded-full text-sm font-medium transition"
+                :class="searchSource === 'global' ? 'bg-primary text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300'"
+                @click="searchSource = 'global'">
+              全局发现
             </button>
           </div>
 
-          <!-- Mobile Nav -->
-          <nav class="flex-1 overflow-y-auto p-2">
-            <div v-for="(section, index) in navSections" :key="section.id" class="mb-3 space-y-0.5">
-              <RouterLink
-                  v-if="section.title"
-                  :to="section.to"
-                  class="flex items-center gap-1 px-3 py-2.5 rounded-lg text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 transition-colors duration-150 cursor-pointer"
-                  :class="[
-                    isSectionActive(section)
-                      ? 'bg-primary/10 dark:bg-primary/20 text-text font-semibold '
-                      : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800']"
-              >
-                <span>{{ section.title }}</span>
-                <svg class="h-3 w-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
-                </svg>
-              </RouterLink>
-              <div class="space-y-0.5">
-                <component
-                    v-for="item in section.items"
-                    :is="item.to ? 'RouterLink' : 'button'"
-                    :key="item.id"
-                    v-bind="item.to ? { to: item.to } : { type: 'button' }"
-                    class="flex w-full items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition"
-                    :class="[
-                    isActiveItem(item)
-                      ? 'bg-primary/10 dark:bg-primary/20 text-text font-semibold'
-                      : item.danger
-                        ? 'text-red-500 hover:bg-red-50 dark:hover:bg-red-950'
-                        : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
-                  ]"
-                    @click="handleNavItemClick(item)">
-                  <span
-                      v-if="item.icon"
-                      class="flex h-6 w-6 items-center justify-center rounded-lg">
-                    <svg class="h-6 h-6" :viewBox="item.icon.viewBox ?? '0 0 20 20'"
-                         :fill="item.icon.stroke ? 'none' : 'currentColor'"
-                         :stroke="item.icon.stroke ? 'currentColor' : 'none'"
-                         :stroke-width="item.icon.stroke ? 1.6 : undefined"
-                         :stroke-linecap="item.icon.stroke ? 'round' : undefined"
-                         :stroke-linejoin="item.icon.stroke ? 'round' : undefined">
-                      <path v-for="path in item.icon.paths" :key="path" :d="path"/>
+          <!-- Search Content -->
+          <div class="flex-1 overflow-y-auto p-4">
+            <div v-if="!search" class="space-y-6">
+              <!-- Recent Searches -->
+              <div v-if="recentSearches.length > 0">
+                <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">最近搜索</h3>
+                <div class="space-y-2">
+                  <button
+                      v-for="term in recentSearches"
+                      :key="term"
+                      type="button"
+                      class="flex items-center gap-3 w-full px-4 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition"
+                      @click="searchFromHistory(term)">
+                    <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
                     </svg>
-                  </span>
-                  <img v-else-if="item.avatar" :src="item.avatar" class="h-6 w-6 rounded-full"/>
-                  <span v-else-if="item.avatarText"
-                        class="flex h-6 w-6 items-center justify-center rounded-full text-xs font-semibold"
-                        :class="item.accent ?? 'bg-primary text-primary-foreground'">
-                    {{ item.avatarText }}
-                  </span>
-                  <span class="flex-1 truncate">{{ item.label }}</span>
-                  <span v-if="item.badge" class="flex h-1.5 w-1.5 rounded-full bg-primary"/>
-                </component>
+                    <span class="flex-1 text-left text-gray-700 dark:text-gray-300">{{ term }}</span>
+                  </button>
+                </div>
               </div>
             </div>
-          </nav>
-
-          <!-- Mobile User Section -->
-          <div class="p-4 border-t border-gray-200 dark:border-gray-800">
-            <router-link to="/upgrade">
-              <div class="flex items-center gap-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-900">
-                <img v-if="user&&user.avatarUrl" :src="user.avatarUrl" class="h-10 w-10 rounded-full bg-primary"/>
-                <div
-                    v-else
-                    class="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-semibold">
-                  {{ userInitials }}
-                </div>
-                <div class="flex-1 min-w-0">
-                  <p class="text-sm font-medium truncate">{{ user?.username ?? '访客' }}</p>
-                </div>
-              </div>
-            </router-link>
-            <button
-                type="button"
-                class="mt-3 w-full py-2 rounded-lg bg-red-50 dark:bg-red-950 text-sm font-semibold text-red-500 hover:bg-red-100 dark:hover:bg-red-900 transition"
-                @click="handleLogout">
-              退出登录
-            </button>
           </div>
         </div>
       </div>
@@ -466,17 +395,140 @@
 
       <!-- Main Content -->
       <main
-          class="flex-1 min-w-0 min-h-[calc(100vh-5em)] px-3 pb-28 pt-5 sm:px-6 sm:pb-24 sm:pt-6">
-        <global-audio-player>
-           <router-view/>
-        </global-audio-player>
+          class="flex-1 min-w-0 sm:px-6 sm:pt-6"
+          :class="[
+            route.name !== 'article-detail' ? 'min-h-[calc(100vh-5em)] pb-24 lg:pb-24' : 'min-h-[calc(100vh-5em)] pb-28 lg:pb-24',
+            route.name === 'feedsSubscriptions' ? 'pt-0 px-0' : 'px-1 pt-5'
+          ]">
+        <!-- Subscriptions Horizontal Scroll (only on feedsSubscriptions page) -->
+        <div v-if="route.name === 'feedsSubscriptions' && subscriptionsStore.items.length > 0"
+             class="lg:hidden border-b border-gray-200 dark:border-gray-800 py-3">
+          <div class="overflow-x-scroll scrollbar-hide px-4" style="-webkit-overflow-scrolling: touch;">
+            <div class="flex gap-5 py-1">
+              <RouterLink
+                  v-for="subscription in subscriptionsStore.items"
+                  :key="subscription.feedId"
+                  :to="{ name: 'feedsSubscriptions', query: { feedId: subscription.feedId } }"
+                  class="flex flex-col items-center gap-1.5 flex-shrink-0 w-[3rem] group">
+                <!-- Avatar with Badge -->
+                <div class="relative">
+                  <img
+                      v-if="subscription.avatar"
+                      :src="subscription.avatar"
+                      :alt="getSubscriptionLabel(subscription)"
+                      class="w-9 h-9 rounded-full object-cover ring-2 transition-all"
+                      :class="!subscription.isRead ? 'ring-primary ring-offset-2' : 'ring-transparent group-hover:ring-gray-300 dark:group-hover:ring-gray-700'"/>
+                  <div
+                      v-else
+                      class="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold ring-2 transition-all"
+                      :class="[
+                        getSubscriptionAccent(subscription),
+                        !subscription.isRead ? 'ring-primary ring-offset-2' : 'ring-transparent group-hover:ring-gray-300 dark:group-hover:ring-gray-700'
+                      ]">
+                    {{ getSubscriptionInitials(subscription) }}
+                  </div>
+                  <!-- Unread Indicator -->
+                  <span
+                      v-if="!subscription.isRead"
+                      class="absolute bottom-0 right-0 w-3 h-3 bg-primary rounded-full ring-2 ring-white dark:ring-gray-950"></span>
+                  <!-- Error Indicator -->
+                  <span
+                      v-if="hasSubscriptionError(subscription)"
+                      class="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center shadow-md">
+                    <svg class="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                  </span>
+                </div>
+                <!-- Label -->
+                <span class="text-[11px] text-center text-gray-700 dark:text-gray-300 line-clamp-2 w-full leading-tight">
+                  {{ getSubscriptionLabel(subscription) }}
+                </span>
+              </RouterLink>
+            </div>
+          </div>
+        </div>
+
+        <div :class="route.name === 'feedsSubscriptions' ? 'px-1 pt-5 sm:px-6 sm:pt-6' : ''">
+          <global-audio-player>
+            <router-view/>
+          </global-audio-player>
+        </div>
       </main>
     </div>
+
+    <!-- Mobile Bottom Tab Bar -->
+    <nav v-show="route.name!=='article'" class="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-gray-950/95 backdrop-blur-lg border-t border-gray-200 dark:border-gray-800 pb-safe">
+      <div class="flex items-center justify-around h-16 px-2">
+        <!-- Home Tab -->
+        <RouterLink
+            :to="{ name: 'home' }"
+            class="flex flex-col items-center justify-center flex-1 gap-1 py-2 transition-colors"
+            :class="isTabActive('home') ? 'text-primary' : 'text-gray-600 dark:text-gray-400'">
+          <svg class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" :d="icons.home"/>
+          </svg>
+          <span class="text-[10px] font-medium">首页</span>
+        </RouterLink>
+
+        <!-- Subscriptions Tab -->
+        <RouterLink
+            :to="{ name: 'feedsSubscriptions' }"
+            class="flex flex-col items-center justify-center flex-1 gap-1 py-2 transition-colors relative"
+            :class="isTabActive('feedsSubscriptions') ? 'text-primary' : 'text-gray-600 dark:text-gray-400'">
+          <svg class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" :d="icons.inbox"/>
+          </svg>
+          <span class="text-[10px] font-medium">订阅</span>
+          <span v-if="hasUnreadSubscriptions" class="absolute top-1 right-1/4 h-2 w-2 rounded-full bg-red-500"></span>
+        </RouterLink>
+
+        <!-- Discover Tab (Center with larger icon) -->
+        <RouterLink
+            :to="{ name: 'discover' }"
+            class="flex flex-col items-center justify-center flex-1 gap-1 py-2 -mt-2 transition-colors">
+          <div
+              class="flex items-center justify-center h-12 w-12 rounded-full transition-all"
+              :class="isTabActive('discover') ? 'bg-primary text-white shadow-lg' : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'">
+            <svg class="h-7 w-7" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" :d="icons.plus"/>
+            </svg>
+          </div>
+        </RouterLink>
+
+        <!-- Collections Tab -->
+        <RouterLink
+            :to="{ name: 'collections' }"
+            class="flex flex-col items-center justify-center flex-1 gap-1 py-2 transition-colors"
+            :class="isTabActive('collections') ? 'text-primary' : 'text-gray-600 dark:text-gray-400'">
+          <svg class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" :d="icons.bookmark"/>
+          </svg>
+          <span class="text-[10px] font-medium">收藏</span>
+        </RouterLink>
+
+        <!-- Profile Tab -->
+        <RouterLink
+            :to="{ name: 'upgrade' }"
+            class="flex flex-col items-center justify-center flex-1 gap-1 py-2 transition-colors"
+            :class="isTabActive('upgrade') ? 'text-primary' : 'text-gray-600 dark:text-gray-400'">
+          <div class="relative">
+            <img v-if="user&&user.avatarUrl" :src="user.avatarUrl" class="h-6 w-6 rounded-full"/>
+            <div
+                v-else
+                class="flex h-6 w-6 items-center justify-center rounded-full bg-gray-200 dark:bg-gray-700 text-[10px] font-semibold">
+              {{ userInitials }}
+            </div>
+          </div>
+          <span class="text-[10px] font-medium">我的</span>
+        </RouterLink>
+      </div>
+    </nav>
   </div>
 </template>
 
 <script setup lang="ts">
-import {computed, onMounted, ref, watch} from 'vue';
+import {computed, onMounted, onUnmounted, ref, watch} from 'vue';
 import {useRoute, useRouter} from 'vue-router';
 import type {RouteLocationNormalizedLoaded, RouteLocationRaw} from 'vue-router';
 import {storeToRefs} from 'pinia';
@@ -496,8 +548,6 @@ const icons = {
   chevronUp: 'M5 15l7-7 7 7',
   chevronDown: 'M19 9l-7 7-7-7',
   search: 'M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z',
-  sun: 'M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z',
-  moon: 'M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z',
   plus: 'M12 4.5v15m7.5-7.5h-15',
   close: 'M6 18L18 6M6 6l12 12'
 };
@@ -510,14 +560,21 @@ const subscriptionsStore = useSubscriptionsStore();
 const mixFeedStore = useMixFeedsStore();
 
 const {user} = storeToRefs(authStore);
-const {isDark, label: themeLabel} = storeToRefs(themeStore);
+const {isDark} = storeToRefs(themeStore);
 
-const mobileNavOpen = ref(false);
+const searchSourceRef = ref<HTMLElement | null>(null);
 const isSidebarCollapsed = ref(localStorage.getItem('sidebar-collapsed') === 'true');
 const search = ref('');
 const searchFocused = ref(false);
 const searchSource = ref<'owner' | 'global'>('owner');
 const showSourceDropdown = ref(false);
+const showMobileSearch = ref(false);
+
+const isHeaderHidden = ref(false);
+const isAtTop = ref(true);
+const lastScrollY = ref(0);
+const mobileSearchInput = ref<HTMLInputElement | null>(null);
+const recentSearches = ref<string[]>(JSON.parse(localStorage.getItem('recent-searches') || '[]'));
 
 type NavIcon = {
   paths: string[];
@@ -709,9 +766,6 @@ const handleNavItemClick = (item: NavItem) => {
   if (item.action) {
     item.action();
   }
-  if (mobileNavOpen.value) {
-    mobileNavOpen.value = false;
-  }
 };
 
 const isActiveItem = (item: NavItem) => {
@@ -745,6 +799,92 @@ const toggleSourceDropdown = () => {
 const selectSource = (source: 'owner' | 'global') => {
   searchSource.value = source;
   showSourceDropdown.value = false;
+};
+
+const openSearchPage = () => {
+  showMobileSearch.value = true;
+  setTimeout(() => {
+    mobileSearchInput.value?.focus();
+  }, 100);
+};
+
+const closeMobileSearch = () => {
+  showMobileSearch.value = false;
+};
+
+const handleSearchAndClose = () => {
+  handleSearch();
+  const keyword = search.value.trim();
+  if (keyword) {
+    // Save to recent searches
+    const searches = recentSearches.value.filter(s => s !== keyword);
+    searches.unshift(keyword);
+    recentSearches.value = searches.slice(0, 10);
+    localStorage.setItem('recent-searches', JSON.stringify(recentSearches.value));
+  }
+  closeMobileSearch();
+};
+
+const searchFromHistory = (term: string) => {
+  search.value = term;
+  handleSearchAndClose();
+};
+
+const isTabActive = (tabName: string): boolean => {
+  if (tabName === 'home') {
+    const view = route.query.view as string | undefined;
+    const section = route.query.section as string | undefined;
+    return route.name === 'home' && view !== 'shorts' && !section;
+  }
+  return route.name === tabName;
+};
+
+const hasUnreadSubscriptions = computed(() => {
+  return subscriptionsStore.items.some(s => !s.isRead);
+});
+
+const getSubscriptionLabel = (subscription: any): string => {
+  if (subscription.title?.trim()) {
+    return subscription.title.trim();
+  }
+  const candidate = subscription.siteUrl || subscription.url;
+  if (!candidate) return '订阅源';
+  try {
+    return new URL(candidate).hostname || candidate;
+  } catch {
+    return candidate;
+  }
+};
+
+const getSubscriptionInitials = (subscription: any): string => {
+  const label = getSubscriptionLabel(subscription);
+  return Array.from(label).slice(0, 2).join('').toUpperCase() || 'F';
+};
+
+const getSubscriptionAccent = (subscription: any): string => {
+  const accentPalette = [
+    'bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-300',
+    'bg-purple-100 text-purple-600 dark:bg-purple-900 dark:text-purple-300',
+    'bg-pink-100 text-pink-600 dark:bg-pink-900 dark:text-pink-300',
+    'bg-green-100 text-green-600 dark:bg-green-900 dark:text-green-300',
+    'bg-yellow-100 text-yellow-600 dark:bg-yellow-900 dark:text-yellow-300',
+    'bg-indigo-100 text-indigo-600 dark:bg-indigo-900 dark:text-indigo-300',
+    'bg-teal-100 text-teal-600 dark:bg-teal-900 dark:text-teal-300',
+    'bg-orange-100 text-orange-600 dark:bg-orange-900 dark:text-orange-300',
+  ];
+
+  if (hasSubscriptionError(subscription)) {
+    return 'bg-red-100 text-red-600 dark:bg-red-950 dark:text-red-400';
+  }
+
+  const hash = subscription.feedId.split('').reduce((acc: number, char: string) => {
+    return acc + char.charCodeAt(0);
+  }, 0);
+  return accentPalette[hash % accentPalette.length];
+};
+
+const hasSubscriptionError = (subscription: any): boolean => {
+  return Boolean((subscription.failureCount ?? 0) > 0 || subscription.fetchError?.trim());
 };
 
 const handleSearch = () => {
@@ -813,12 +953,33 @@ watch(
     {immediate: true}
 );
 
+const handleScroll = () => {
+  if (typeof window === 'undefined') return;
+  const current = window.scrollY || window.pageYOffset || 0;
+  const delta = current - lastScrollY.value;
+
+  isAtTop.value = current <= 0;
+
+  // 只在移动端隐藏，桌面始终显示，由模板里的 lg:translate-y-0 保证
+  if (Math.abs(delta) > 5) {
+    if (current > 80 && delta > 0) {
+      // 向下滚动且超过一定距离 -> 隐藏
+      isHeaderHidden.value = true;
+    } else if (delta < 0) {
+      // 向上滚动 -> 显示
+      isHeaderHidden.value = false;
+    }
+  }
+
+  lastScrollY.value = current;
+};
+
 // Close dropdown when clicking outside
 watch(showSourceDropdown, (isOpen) => {
   if (isOpen) {
     const handleClickOutside = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
-      if (!target.closest('button') || !target.closest('.relative')) {
+      if (searchSourceRef.value && !searchSourceRef.value.contains(target)) {
         showSourceDropdown.value = false;
         document.removeEventListener('click', handleClickOutside);
       }
@@ -830,9 +991,19 @@ watch(showSourceDropdown, (isOpen) => {
 });
 
 onMounted(async () => {
+  if (typeof window !== 'undefined') {
+    lastScrollY.value = window.scrollY || window.pageYOffset || 0;
+    window.addEventListener('scroll', handleScroll, {passive: true});
+  }
   if(authStore.isAuthenticated){
     await subscriptionsStore.fetchSubscriptions();
     mixFeedStore.clearMyMixFeeds();
+  }
+});
+
+onUnmounted(() => {
+  if (typeof window !== 'undefined') {
+    window.removeEventListener('scroll', handleScroll);
   }
 });
 </script>
@@ -882,5 +1053,46 @@ nav::-webkit-scrollbar-thumb:hover {
 
 .dark nav::-webkit-scrollbar-thumb:hover {
   background: rgba(75, 85, 99, 0.5);
+}
+
+/* Mobile search page animation */
+.search-slide-enter-active,
+.search-slide-leave-active {
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.search-slide-enter-from {
+  transform: translateY(-100%);
+}
+
+.search-slide-leave-to {
+  transform: translateY(-100%);
+}
+
+/* Safe area for iOS */
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.pt-safe {
+  padding-top: env(safe-area-inset-top);
+}
+
+/* Hide scrollbar for horizontal scroll */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Line clamp for subscription labels */
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 </style>

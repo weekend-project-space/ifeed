@@ -78,7 +78,7 @@ const router = createRouter({
                 },
                 {
                     path: 'articles/:id',
-                    name: 'article-detail',
+                    name: 'article',
                     component: ArticleDetailPage,
                     props: true
                 },

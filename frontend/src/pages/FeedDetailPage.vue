@@ -400,7 +400,6 @@ const readFeed = async () => {
     await readFeedStore.recordFeedRead(currentFeedId.value);
     await subscriptionsStore.fetchSubscriptions();
   }
-
 }
 </script>
 

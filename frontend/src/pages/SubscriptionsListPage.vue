@@ -1,6 +1,6 @@
 <template>
   <div class="">
-    <div class="max-w-screen-lg  mx-auto px-4 sm:px-6 py-6">
+    <div class="max-w-screen-lg  mx-auto px-3 sm:px-6 py-6">
       <!-- Header -->
       <div class="mb-6">
         <h1 class="text-2xl font-normal text-gray-900 dark:text-gray-100 mb-4">

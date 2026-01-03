@@ -1,6 +1,6 @@
 <template>
   <div class="">
-    <div class="max-w-screen-lg mx-auto px-4 sm:px-6 py-4 sm:py-6">
+    <div class="max-w-screen-lg mx-auto px-3 sm:px-6 py-4 sm:py-6">
       <!-- Page Header -->
       <div class="mb-6 sm:mb-8">
         <h1 class="text-2xl sm:text-3xl font-bold text-text">阅读记录</h1>

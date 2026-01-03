@@ -49,7 +49,7 @@ public class User {
     @AllArgsConstructor
     @Getter
     public enum Plan {
-        FREE(30, 0, 1), STANDARD(300, 2, 2), PRO(2000, 6, 6);
+        FREE(60, 0, 1), STANDARD(300, 2, 2), PRO(2000, 6, 6);
         private final int maxSubscriptions;
         private final int maxCreatedMixFeed;
         private final int maxWebhooks;

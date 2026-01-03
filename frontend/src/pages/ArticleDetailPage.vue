@@ -1,7 +1,7 @@
 <template>
   <div class="">
     <!-- Loading State - Skeleton -->
-    <div v-if="articlesStore.loading" class="max-w-screen-md mx-auto px-6 py-12 animate-pulse">
+    <div v-if="articlesStore.loading" class="max-w-screen-md mx-auto px-3 sm:px-6 py-12 animate-pulse">
       <!-- Header Skeleton -->
       <div class="space-y-6 mb-12">
         <div class="h-12 bg-gray-200 dark:bg-gray-800 rounded-lg w-3/4"></div>
@@ -27,7 +27,7 @@
     </div>
 
     <!-- Error State -->
-    <div v-else-if="errorMessage" class="max-w-screen-md mx-auto px-6 py-12">
+    <div v-else-if="errorMessage" class="max-w-screen-md mx-auto px-3 sm:px-6 py-12">
       <div class="rounded-lg bg-red-50 dark:bg-red-900/10 p-6 border border-red-100 dark:border-red-900/20">
         <div class="flex items-start gap-4">
           <div
@@ -53,7 +53,7 @@
     <!-- Article Content -->
     <article v-else-if="article">
       <!-- Header Section - Medium Style -->
-      <header class="max-w-screen-md mx-auto px-6 pt-12 pb-8">
+      <header class="max-w-screen-md mx-auto px-3 sm:px-6 pt-12 pb-8">
         <!-- Title -->
         <h1 class="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 dark:text-gray-50 leading-tight mb-6 font-serif break-words">
           {{ article.title }}
@@ -192,7 +192,7 @@
       </div>
 
       <!-- Tab Content -->
-      <div class="max-w-screen-md mx-auto px-6 py-12">
+      <div class="max-w-screen-md mx-auto px-3 sm:px-6 py-12">
         <!-- Content Tab -->
         <div v-show="activeMainTab === 'content'" role="tabpanel" class="animate-fade-in">
           <!-- Media Attachment -->
@@ -292,7 +292,7 @@
 
       <!-- Recommended Articles Section -->
       <div v-if="detailsItems.length > 0" class="bg-gray-50 dark:bg-gray-900/50 py-16">
-        <div class="max-w-screen-md mx-auto px-6">
+        <div class="max-w-screen-md mx-auto px-3 sm:px-6">
           <h2 class="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-8">推荐阅读</h2>
           <article-card-list :items="detailsItems" :loading="detailsLoading" key-field="id" compact/>
         </div>
