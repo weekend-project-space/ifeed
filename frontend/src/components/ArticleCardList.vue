@@ -50,20 +50,28 @@
           <!-- Action Button (Mobile) -->
           <button
               v-if="showAction"
-              @click.stop.prevent="$emit('action', item)"
+              @click.stop.prevent="onActionClick(item, $event)"
+              :aria-expanded="activeDropdown === getItemKey(item)"
               :class="[
                 'sm:hidden absolute top-2 right-2 bg-black/60 backdrop-blur-sm hover:bg-black/80 rounded-full transition-all',
                 compact ? 'p-1.5' : 'p-2'
               ]"
               :aria-label="actionLabel"
           >
-            <slot name="action-icon-mobile" :item="item">
+            <slot name="action-icon" :item="item">
               <svg :class="['text-white', compact ? 'w-4 h-4' : 'w-5 h-5']" viewBox="0 0 24 24" fill="currentColor">
                 <circle cx="12" cy="12" r="1.5"/>
                 <circle cx="12" cy="5" r="1.5"/>
                 <circle cx="12" cy="19" r="1.5"/>
               </svg>
             </slot>
+            <div
+                v-if="hasDropdownSlot && activeDropdown === getItemKey(item)"
+                @click.stop
+                class="absolute right-0 top-full mt-1 w-44 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-1 z-50"
+            >
+              <slot name="action-dropdown" :item="item" :close="closeDropdown"></slot>
+            </div>
           </button>
         </div>
 
@@ -93,20 +101,28 @@
         <!-- Action Button (Desktop) -->
         <button
             v-if="showAction"
-            @click.stop.prevent="$emit('action', item)"
+            @click.stop.prevent="onActionClick(item, $event)"
+            :aria-expanded="activeDropdown === getItemKey(item)"
             :class="[
-              'hidden sm:block self-start opacity-0 group-hover:opacity-100 hover:bg-surface-container rounded-full transition-all',
+              'hidden sm:block self-start opacity-0 group-hover:opacity-100 hover:bg-surface-container rounded-full transition-all relative z-20',
               compact ? 'p-1.5' : 'p-2'
             ]"
             :aria-label="actionLabel"
         >
-          <slot name="action-icon-desktop" :item="item">
+          <slot name="action-icon" :item="item">
             <svg :class="['text-text-secondary', compact ? 'w-4 h-4' : 'w-5 h-5']" viewBox="0 0 24 24" fill="currentColor">
               <circle cx="12" cy="12" r="1.5"/>
               <circle cx="12" cy="5" r="1.5"/>
               <circle cx="12" cy="19" r="1.5"/>
             </svg>
           </slot>
+          <div
+              v-if="hasDropdownSlot && activeDropdown === getItemKey(item)"
+              @click.stop.prevent
+              class="absolute right-0 top-full mt-1 w-44 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-1 z-50"
+          >
+            <slot name="action-dropdown" :item="item" :close="closeDropdown"></slot>
+          </div>
         </button>
       </router-link>
     </article>
@@ -119,10 +135,11 @@
     </svg>
     <p class="text-sm sm:text-base text-text-secondary">暂无文章</p>
   </div>
+  <div v-if="activeDropdown" @click="closeDropdown" class="fixed inset-0 z-0"></div>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, computed, useSlots } from 'vue';
 import { formatRelativeTime } from '../utils/datetime';
 
 interface ArticleItem {
@@ -156,9 +173,27 @@ const props = withDefaults(defineProps<Props>(), {
   compact: false
 });
 
-defineEmits<{
-  action: [item: ArticleItem];
+const slots = useSlots();
+const hasDropdownSlot = computed(() => !!slots['action-dropdown']);
+
+const emit = defineEmits<{
+  action: [item: ArticleItem, event: MouseEvent];
 }>();
+
+const activeDropdown = ref<string | null>(null);
+
+const toggleDropdown = (key: string) => {
+  activeDropdown.value = activeDropdown.value === key ? null : key;
+};
+
+const closeDropdown = () => {
+  activeDropdown.value = null;
+};
+
+const onActionClick = (item: ArticleItem, event: MouseEvent) => {
+  toggleDropdown(getItemKey(item));
+  emit('action', item, event);
+};
 
 const failedImages = ref<Set<string>>(new Set());
 

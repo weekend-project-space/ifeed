@@ -30,24 +30,27 @@
           <div class="text-xs sm:text-sm text-text-secondary">
             {{ totalText }}
           </div>
-          <button
-              @click="refresh"
-              :disabled="loading"
-              class="p-2 hover:bg-surface-container rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              aria-label="刷新阅读历史"
-          >
-            <svg
-                xmlns="http://www.w3.org/2000/svg"
-                class="w-5 h-5 text-text-secondary transition-transform"
-                :class="{ 'animate-spin': loading }"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
+          <div class="flex items-center gap-2">
+
+            <button
+                @click="refresh"
+                :disabled="loading"
+                class="p-2 hover:bg-surface-container rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                aria-label="刷新阅读历史"
             >
-              <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
-            </svg>
-          </button>
+              <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="w-5 h-5 text-text-secondary transition-transform"
+                  :class="{ 'animate-spin': loading }"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+              >
+                <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
+              </svg>
+            </button>
+          </div>
         </div>
 
         <!-- Error State -->
@@ -83,6 +86,7 @@
                 :loading="loading"
                 :items="group.items"
                 meta-field="readAt"
+                :show-action="true"
                 action-label="文章选项菜单"
             >
               <template #empty-thumbnail>
@@ -91,6 +95,27 @@
                   <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
                 </svg>
               </template>
+
+              <!-- Dropdown Menu -->
+              <template #action-dropdown="{ item, close }">
+                <button
+                    @click.stop.prevent="handleOpenInNewTab(item); close()"
+                    class="w-full px-4 py-2 text-left text-sm text-text hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center gap-2"
+                >
+
+                  在新标签页打开
+                </button>
+
+                <div class="border-t border-gray-200 dark:border-gray-700 my-1"></div>
+
+                <button
+                    @click.stop.prevent="handleDeleteItem(item); close()"
+                    class="w-full px-4 py-2 text-left text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors flex items-center gap-2"
+                >
+                  删除
+                </button>
+              </template>
+
             </article-card-list>
           </section>
         </div>
@@ -107,11 +132,37 @@
         />
       </template>
     </div>
+
+
+    <!-- Delete Confirmation Dialog -->
+    <div v-if="showDeleteDialog" class="fixed inset-0 z-50 flex items-center justify-center p-4" @click.self="showDeleteDialog = false">
+      <div class="absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
+      <div class="relative bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-sm w-full p-6 space-y-4">
+        <h3 class="text-lg font-semibold text-text">删除记录</h3>
+        <p class="text-sm text-text-secondary">确定要删除这条阅读记录吗？</p>
+        <div class="flex gap-3 justify-end">
+          <button
+              @click="showDeleteDialog = false"
+              class="px-4 py-2 text-sm font-medium text-text-secondary hover:bg-surface-container rounded-lg transition-colors"
+          >
+            取消
+          </button>
+          <button
+              @click="confirmDelete"
+              :disabled="deleting"
+              class="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors disabled:opacity-50"
+          >
+            {{ deleting ? '删除中...' : '删除' }}
+          </button>
+        </div>
+      </div>
+    </div>
+
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { storeToRefs } from 'pinia';
 import { useHistoryStore } from '../stores/history';
 import { useAuthStore } from '../stores/auth';
@@ -119,6 +170,14 @@ import { useAuthStore } from '../stores/auth';
 const historyStore = useHistoryStore();
 const authStore = useAuthStore();
 const { loading, items, page, total, hasNextPage, hasPreviousPage, error } = storeToRefs(historyStore);
+
+// 删除相关状态
+const showDeleteDialog = ref(false);
+const deleting = ref(false);
+const itemToDelete = ref<string | null>(null);
+
+// 菜单相关状态
+const activeDropdown = ref<string | null>(null);
 
 // 抽象的加载方法，供页面其它地方调用
 const loadData = async (targetPage: number, options?: { scrollToTop?: boolean }) => {
@@ -150,13 +209,41 @@ const prevPage = async () => {
   await loadData(Math.max(1, page.value - 1), { scrollToTop: true });
 };
 
-const handleImageError = (e: Event) => {
-  (e.target as HTMLImageElement).style.display = 'none';
+
+// 在新标签页打开
+const handleOpenInNewTab = (item: any) => {
+  activeDropdown.value = null;
+  if (item?.articleId) {
+    const url = `/articles/${item.articleId}`;
+    window.open(url, '_blank');
+  }
 };
 
-const handleMenuClick = (entry: any) => {
-  console.log('菜单点击:', entry);
+
+// 处理删除菜单项
+const handleDeleteItem = (item: any) => {
+  activeDropdown.value = null;
+  if (item) {
+    itemToDelete.value = item.articleId;
+    showDeleteDialog.value = true;
+  }
 };
+
+const confirmDelete = async () => {
+  if (!itemToDelete.value) return;
+
+  deleting.value = true;
+  try {
+    await historyStore.deleteHistoryEntry(itemToDelete.value);
+    showDeleteDialog.value = false;
+    itemToDelete.value = null;
+  } catch (err) {
+    console.error('删除失败:', err);
+  } finally {
+    deleting.value = false;
+  }
+};
+
 
 const totalText = computed(() =>
     (total.value === null || total.value === 0) ? '暂无记录' : `共 ${total.value} 条记录`
