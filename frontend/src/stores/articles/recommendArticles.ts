@@ -58,7 +58,7 @@ export const useRecommendArticlesStore = defineStore('recommendArticles', () => 
         }
     };
 
-    const fetchDetailsArticles = async (override?: {
+    const fetchDetailsArticles = async (articleId: string,override?: {
         topK: number ;
     }) => {
         loading.value = true;
@@ -66,7 +66,7 @@ export const useRecommendArticlesStore = defineStore('recommendArticles', () => 
 
         try {
             const response = await request<PageResponse<ArticleDto>>(
-                '/api/articles/details-recommendations',
+                `/api/articles/${articleId}/recommendations`,
             );
             detailsItems.value = response.map(normalizeArticle);
         } catch (err) {

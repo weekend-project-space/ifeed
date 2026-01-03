@@ -39,7 +39,7 @@ public class RecallRecommendationService implements RecommendationService {
         int safeSize = size <= 0 ? 10 : size;
         List<ItemCandidate> cachedItems = user2Items.get(request.userId());
         if (safePage == 0 || cachedItems == null) {
-            RecallRequest recallRequest = new RecallRequest(request.userId(), request.scene(), safeSize * 6, Collections.emptyMap(), false, Instant.now());
+            RecallRequest recallRequest = new RecallRequest(request.userId(), request.scene(), safeSize * 6, request.filters(), false, Instant.now());
             RecallResponse recalled = recallEngine.recall(recallRequest);
             cachedItems = reRankerService.reranker(recalled.userContext(), recalled.items());
             cachedItems.forEach(item -> {
@@ -67,9 +67,10 @@ public class RecallRecommendationService implements RecommendationService {
     }
 
     public List<RecResponse> recommend(RecRequest request, int topK) {
-        RecallRequest recallRequest = new RecallRequest(request.userId(), request.scene(), topK, Collections.emptyMap(), false, Instant.now());
+        RecallRequest recallRequest = new RecallRequest(request.userId(), request.scene(), topK, request.filters(), false, Instant.now());
         RecallResponse recalled = recallEngine.recall(recallRequest);
         List<ItemCandidate> items = reRankerService.reranker(recalled.userContext(), recalled.items());
+//        List<ItemCandidate> items = recalled.items();
         Map<Long, ItemCandidate> id2Source = items.stream().collect(Collectors.toMap(ItemCandidate::itemId, Function.identity()));
         return articleService.findIds2Article(items.stream().map(ItemCandidate::itemId).toList(), 0, topK).map(item -> {
             ItemCandidate candidate = id2Source.get(item.articleId());

@@ -1,5 +1,6 @@
 package org.bitmagic.ifeed.application.recommendation.recall.strategies;
 
+import lombok.extern.slf4j.Slf4j;
 import org.bitmagic.ifeed.application.recommendation.recall.core.RecallStrategy;
 import org.bitmagic.ifeed.application.recommendation.recall.model.ItemCandidate;
 import org.bitmagic.ifeed.application.recommendation.recall.model.StrategyId;
@@ -18,6 +19,7 @@ import java.util.stream.Collectors;
  * 物品到物品（I2I）召回：根据用户最近互动的种子物品，通过共现索引扩展相似物品。
  */
 @Component
+@Slf4j
 @ConditionalOnBean({SequenceStore.class, CoOccurIndex.class})
 public class I2IRecallStrategy implements RecallStrategy {
 
@@ -43,6 +45,18 @@ public class I2IRecallStrategy implements RecallStrategy {
 
     @Override
     public List<ItemCandidate> recall(UserContext context, int limit) {
+//        存在itemId
+        if (context.attributes().containsKey("itemId")) {
+            Object itemId = context.attributes().getOrDefault("itemId", 0);
+            if (itemId instanceof Long) {
+                return coOccurIndex.topRelated((Long) itemId, limit).stream().map(s -> ItemCandidate.of(s.id(), s.score(), id()))
+                        .toList();
+            } else {
+                log.warn("itemId is not a long");
+                return Collections.emptyList();
+            }
+
+        }
         Integer userId = context.userId();
         List<SequenceStore.UserInteraction> interactions = new ArrayList<>(context.interactions());
         if (interactions.isEmpty() && sequenceStore != null) {
@@ -60,7 +74,7 @@ public class I2IRecallStrategy implements RecallStrategy {
         List<SequenceStore.UserInteraction> seeds = interactions.stream()
                 .sorted(Comparator.comparing(SequenceStore.UserInteraction::timestamp,
                         Comparator.nullsLast(Comparator.naturalOrder())).reversed())
-                .limit(seedLimit*3)
+                .limit(seedLimit * 3)
                 .collect(Collectors.toList());
 //          窗口内随机挑选几个
         Collections.shuffle(seeds);

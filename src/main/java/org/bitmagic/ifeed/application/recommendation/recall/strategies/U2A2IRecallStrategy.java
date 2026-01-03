@@ -50,7 +50,7 @@ public class U2A2IRecallStrategy implements RecallStrategy {
             return List.of();
         }
 //        回溯最近 多少条
-        int lookback = context.scene().equals("home") ? -1 : 3;
+        int lookback = context.scene().equals("home") ? -1 : 1;
         if (context.scene().equals("home")) {
             return cacheManager.getCache("U2A2I").get(context.getUserId(), () -> getItemCandidates(context, limit, lookback));
         } else {

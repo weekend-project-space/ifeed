@@ -111,12 +111,14 @@ public class ArticleController {
                 .recommend(new RecRequest(userId, "home", Map.of(), Map.of()), page, size));
     }
 
-    @GetMapping("/details-recommendations")
+    @GetMapping("/{articleId}/recommendations")
     public ResponseEntity<List<RecResponse>> rec(@AuthenticationPrincipal UserPrincipal principal,
+                                                 @PathVariable String articleId,
                                                  @RequestParam(required = false, defaultValue = "6") Integer topK) {
         Integer userId = Objects.nonNull(principal) ? principal.getId() : 0;
+        Long itemId = articleService.getArticle(IdentifierUtils.parseUuid(articleId, "article id")).getId();
         return ResponseEntity.ok(recommendationService
-                .recommend(new RecRequest(userId, "details", Map.of(), Map.of()), topK));
+                .recommend(new RecRequest(userId, "details", Map.of(), Map.of("itemId", itemId)), topK));
     }
 
     @GetMapping("/insights")

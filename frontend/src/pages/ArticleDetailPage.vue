@@ -462,7 +462,7 @@ const loadArticle = async (articleId: string) => {
     // 设置图片懒加载
     setupLazyLoading();
 
-    await recommendArticlesStore.fetchDetailsArticles();
+    await recommendArticlesStore.fetchDetailsArticles(articleId);
   } catch (err) {
     if (currentController.signal.aborted) return;
     console.error('文章详情加载失败', err);
