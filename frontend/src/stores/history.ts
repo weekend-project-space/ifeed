@@ -67,6 +67,25 @@ export const useHistoryStore = defineStore('history', () => {
         page.value = 1;
     };
 
+    // 删除单条历史记录
+    const deleteHistoryEntry = async (articleId: string) => {
+        try {
+            await request(`/api/user/history/${articleId}`, {
+                method: 'DELETE'
+            });
+            // 从本地列表中移除
+            items.value = items.value.filter(item => item.articleId !== articleId);
+            if (total.value !== null) {
+                total.value = Math.max(0, total.value - 1);
+            }
+        } catch (err) {
+            const message = err instanceof Error ? err.message : '删除失败';
+            error.value = message;
+            throw err;
+        }
+    };
+
+
     return {
         items,
         loading,
@@ -78,6 +97,7 @@ export const useHistoryStore = defineStore('history', () => {
         hasNextPage,
         hasPreviousPage,
         fetchHistory,
-        clear
+        clear,
+        deleteHistoryEntry,
     };
 });
