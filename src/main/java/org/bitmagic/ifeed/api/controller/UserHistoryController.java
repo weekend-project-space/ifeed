@@ -33,6 +33,13 @@ public class UserHistoryController {
         return ResponseEntity.ok(new MessageResponse("History recorded."));
     }
 
+    @DeleteMapping("/{articleId}")
+    public ResponseEntity<MessageResponse> removeFromHistory(@AuthenticationPrincipal UserPrincipal principal,
+                                                             @PathVariable String articleId) {
+        userHistoryService.removeFromHistory(principal.getId(), IdentifierUtils.parseUuid(articleId, "article id"));
+        return ResponseEntity.ok(new MessageResponse("History deleted."));
+    }
+
     @GetMapping
     public ResponseEntity<Page<ReadHistoryItemResponse>> listHistory(@AuthenticationPrincipal UserPrincipal principal,
                                                                      Pageable pageable) {

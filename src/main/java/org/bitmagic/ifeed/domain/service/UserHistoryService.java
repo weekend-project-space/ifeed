@@ -115,6 +115,21 @@ public class UserHistoryService {
         return new PageImpl<>(content, pageable, total);
     }
 
+    @Transactional
+    public void removeFromHistory(Integer userId, UUID articleId) {
+        var document = userBehaviorRepository.findById(userId.toString())
+                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Article not read"));
+
+        ensureReadHistoryInitialized(document);
+
+        var removed = document.getReadHistory().removeIf(item -> articleId.toString().equals(item.getArticleId()));
+        if (!removed) {
+            throw new ApiException(HttpStatus.NOT_FOUND, "Article not read");
+        }
+
+        userBehaviorRepository.save(document);
+    }
+
     private List<UserBehaviorDocument.ArticleRef> sortHistory(UserBehaviorDocument document, Pageable pageable) {
         var comparator = Comparator.comparing(UserBehaviorDocument.ArticleRef::getTimestamp);
         var order = pageable.getSort().getOrderFor("readAt");
