@@ -338,7 +338,7 @@ const pwaStore = usePWAStore();
 
 const selectedPlan = ref(null);
 const showPaymentModal = ref(false);
-const showUpgradePlans = ref(false);
+const showUpgradePlans = ref(true);
 const {user: userInfo} = storeToRefs(authStore);
 const {canInstall} = storeToRefs(pwaStore);
 
@@ -397,6 +397,7 @@ const selectedPlanPrice = computed(() => {
 
 const selectPlan = (planId) => {
   selectedPlan.value = planId;
+  showPaymentModal.value=true;
 };
 
 const handlePayment = () => {
