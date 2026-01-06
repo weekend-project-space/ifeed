@@ -2,30 +2,28 @@
   <div class="min-h-screen text-gray-900 dark:text-gray-100 transition-colors duration-300 pt-safe">
 
     <!-- Header -->
-    <header
-        class="sticky top-0 z-30 bg-white/95 dark:bg-surface/95 backdrop-blur-sm transition-transform duration-200"
-        :class="[
-          isSidebarCollapsed ? 'lg:pl-16' : 'lg:pl-72',
-          isHeaderHidden ? '-translate-y-full lg:translate-y-0' : 'translate-y-0',
-          !isAtTop ? '' : '',
-          route.name === 'upgrade' ? 'hidden lg:block' : ''
-        ]">
+    <header class="sticky top-0 z-30 bg-white/95 dark:bg-surface/95 backdrop-blur-sm transition-transform duration-200"
+      :class="[
+        isSidebarCollapsed ? 'lg:pl-16' : 'lg:pl-72',
+        isHeaderHidden ? '-translate-y-full lg:translate-y-0' : 'translate-y-0',
+        !isAtTop ? '' : '',
+        route.name === 'upgrade' ? 'hidden lg:block' : ''
+      ]">
       <div class="flex items-center justify-between gap-3 px-4 py-3 lg:px-5 lg:py-2">
         <!-- Left: Logo (mobile) + Sidebar toggle (desktop) -->
         <div class="flex items-center gap-3">
           <!-- Mobile Logo -->
           <RouterLink :to="{ name: 'home' }" class="flex items-center gap-2 lg:hidden">
-            <img class="h-8 w-8 rounded-2xl" src="/logo.svg" alt="iFeed"/>
+            <img class="h-8 w-8 rounded-2xl" src="/logo.svg" alt="iFeed" />
             <span class="text-lg font-semibold">IFeed</span>
           </RouterLink>
 
           <!-- Desktop sidebar toggle -->
-          <button
-              type="button"
-              class="hidden lg:flex h-10 w-10 items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition"
-              @click="toggleSidebar">
+          <button type="button"
+            class="hidden lg:flex h-10 w-10 items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition"
+            @click="toggleSidebar">
             <svg class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" :d="icons.menu"/>
+              <path stroke-linecap="round" stroke-linejoin="round" :d="icons.menu" />
             </svg>
           </button>
         </div>
@@ -33,62 +31,51 @@
         <!-- Center: Desktop Search Bar -->
         <div class="hidden lg:flex flex-1 max-w-2xl mx-auto">
           <div class="relative w-full group">
-            <input
-                v-model="search"
-                type="search"
-                placeholder="搜索文章、标签、订阅..."
-                class="w-full h-10 pl-24 pr-14 rounded-full border bg-white dark:bg-gray-900 text-base transition-all duration-200"
-                :class="[
-                  searchFocused
-                    ? 'border-transparent shadow-lg ring-1 ring-gray-300 dark:ring-gray-700'
-                    : 'border-gray-300 dark:border-gray-700 hover:shadow-md hover:border-gray-400 dark:hover:border-gray-600'
-                ]"
-                @focus="searchFocused = true"
-                @blur="searchFocused = false"
-                @keyup.enter="handleSearch"/>
+            <input v-model="search" type="search" placeholder="搜索文章、标签、订阅..."
+              class="w-full h-10 pl-24 pr-14 rounded-full border bg-white dark:bg-gray-900 text-base transition-all duration-200"
+              :class="[
+                searchFocused
+                  ? 'border-transparent shadow-lg ring-1 ring-gray-300 dark:ring-gray-700'
+                  : 'border-gray-300 dark:border-gray-700 hover:shadow-md hover:border-gray-400 dark:hover:border-gray-600'
+              ]" @focus="searchFocused = true" @blur="searchFocused = false" @keyup.enter="handleSearch" />
 
             <!-- Source Selector (replaces search icon) -->
             <div class="absolute left-3 top-1/2 -translate-y-1/2" ref="searchSourceRef">
-              <button
-                  type="button"
-                  class="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium transition-colors hover:bg-gray-100 dark:hover:bg-gray-800"
-                  :class="searchFocused ? 'text-primary' : 'text-gray-600 dark:text-gray-400'"
-                  @click="toggleSourceDropdown">
+              <button type="button"
+                class="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium transition-colors hover:bg-gray-100 dark:hover:bg-gray-800"
+                :class="searchFocused ? 'text-primary' : 'text-gray-600 dark:text-gray-400'"
+                @click="toggleSourceDropdown">
                 {{ searchSource === 'owner' ? '订阅' : '发现' }}
                 <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
                 </svg>
               </button>
 
               <!-- Dropdown -->
-              <div
-                  v-if="showSourceDropdown"
-                  class="absolute top-full mt-1 left-0 w-20 bg-white dark:bg-gray-900 rounded-lg shadow-lg ring-1 ring-gray-200 dark:ring-gray-800 overflow-hidden z-50">
-                <button
-                    type="button"
-                    class="w-full px-3 py-2 text-xs text-left hover:bg-gray-100 dark:hover:bg-gray-800 transition"
-                    :class="{ 'bg-gray-50 dark:bg-gray-850 font-medium': searchSource === 'owner' }"
-                    @click="selectSource('owner')">
+              <div v-if="showSourceDropdown"
+                class="absolute top-full mt-1 left-0 w-20 bg-white dark:bg-gray-900 rounded-lg shadow-lg ring-1 ring-gray-200 dark:ring-gray-800 overflow-hidden z-50">
+                <button type="button"
+                  class="w-full px-3 py-2 text-xs text-left hover:bg-gray-100 dark:hover:bg-gray-800 transition"
+                  :class="{ 'bg-gray-50 dark:bg-gray-850 font-medium': searchSource === 'owner' }"
+                  @click="selectSource('owner')">
                   订阅
                 </button>
-                <button
-                    type="button"
-                    class="w-full px-3 py-2 text-xs text-left hover:bg-gray-100 dark:hover:bg-gray-800 transition"
-                    :class="{ 'bg-gray-50 dark:bg-gray-850 font-medium': searchSource === 'global' }"
-                    @click="selectSource('global')">
+                <button type="button"
+                  class="w-full px-3 py-2 text-xs text-left hover:bg-gray-100 dark:hover:bg-gray-800 transition"
+                  :class="{ 'bg-gray-50 dark:bg-gray-850 font-medium': searchSource === 'global' }"
+                  @click="selectSource('global')">
                   发现
                 </button>
               </div>
             </div>
 
             <!-- Search Button -->
-            <button
-                type="button"
-                class="absolute right-2 top-1/2 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-full transition-colors"
-                :class="search ? 'bg-primary text-primary-foreground hover:bg-primary/90' : 'text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'"
-                @click="handleSearch">
+            <button type="button"
+              class="absolute right-2 top-1/2 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-full transition-colors"
+              :class="search ? 'bg-primary text-primary-foreground hover:bg-primary/90' : 'text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'"
+              @click="handleSearch">
               <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" :d="icons.search"/>
+                <path stroke-linecap="round" stroke-linejoin="round" :d="icons.search" />
               </svg>
             </button>
           </div>
@@ -100,56 +87,51 @@
           <div class="flex items-center gap-2" id="header-action"></div>
 
           <!-- Mobile search + avatar -->
-          <div v-show="route.name!='article'" class="flex items-center gap-2 lg:hidden">
-            <button
-                type="button"
-                class="flex h-10 w-10 items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition"
-                @click="openSearchPage">
+          <div v-show="route.name != 'article'" class="flex items-center gap-2 lg:hidden">
+            <button type="button"
+              class="flex h-10 w-10 items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition"
+              @click="openSearchPage">
               <svg class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" :d="icons.search"/>
+                <path stroke-linecap="round" stroke-linejoin="round" :d="icons.search" />
               </svg>
             </button>
             <router-link to="/upgrade">
-              <img v-if="user&&user.avatarUrl" :src="user.avatarUrl" class="h-9 w-9 rounded-full bg-primary"/>
-              <div
-                  v-else
-                  class="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-semibold">
+              <img v-if="user && user.avatarUrl" :src="user.avatarUrl" class="h-9 w-9 rounded-full bg-primary" />
+              <div v-else
+                class="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-semibold">
                 {{ userInitials }}
               </div>
             </router-link>
           </div>
 
           <!-- Desktop actions -->
-          <div v-show="route.name!='article'" class="hidden lg:flex items-center gap-2" >
+          <div v-show="route.name != 'article'" class="hidden lg:flex items-center gap-2">
             <!-- Theme Toggle -->
-            <button
-                type="button"
-                class="flex h-10 w-10 items-center justify-center rounded-full hover:bg-secondary/20 transition"
-                @click="toggleTheme">
+            <button type="button"
+              class="flex h-10 w-10 items-center justify-center rounded-full hover:bg-secondary/20 transition"
+              @click="toggleTheme">
               <svg v-if="isDark" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.5"
-                   viewBox="0 0 24 24">
+                viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round"
-                      d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z"/>
+                  d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z" />
               </svg>
               <svg v-else class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round"
-                      d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z"/>
+                  d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z" />
               </svg>
             </button>
 
             <!-- Add Subscription Button -->
-            <RouterLink
-                :to="{ name: 'discover' }"
-                class="hidden sm:flex items-center gap-2 h-10 px-4 rounded-full bg-secondary/5 text-secondary hover:bg-secondary/20 text-sm font-medium transition">
+            <RouterLink :to="{ name: 'discover' }"
+              class="hidden sm:flex items-center gap-2 h-10 px-4 rounded-full bg-secondary/5 text-secondary hover:bg-secondary/20 text-sm font-medium transition">
               <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M12 5v14M5 12h14"></path>
               </svg>
               订阅
             </RouterLink>
 
-            <RouterLink
-                :to="{ name: 'discover' }"
-                class="flex sm:hidden h-10 w-10 items-center justify-center rounded-full hover:bg-secondary/20 transition">
+            <RouterLink :to="{ name: 'discover' }"
+              class="flex sm:hidden h-10 w-10 items-center justify-center rounded-full hover:bg-secondary/20 transition">
               <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M12 5v14M5 12h14"></path>
               </svg>
@@ -158,22 +140,21 @@
             <!-- User Menu (YouTube Style - Pure CSS Hover) -->
             <div class="relative group hidden md:block">
               <router-link to="/upgrade">
-                <img v-if="user&&user.avatarUrl" :src="user.avatarUrl" class="h-9 w-9 rounded-full bg-primary"/>
-                <div
-                    v-else
-                    class="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-semibold cursor-pointer group-hover:ring-2 group-hover:ring-primary/30 transition-all">
+                <img v-if="user && user.avatarUrl" :src="user.avatarUrl" class="h-9 w-9 rounded-full bg-primary" />
+                <div v-else
+                  class="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-semibold cursor-pointer group-hover:ring-2 group-hover:ring-primary/30 transition-all">
                   {{ userInitials }}
                 </div>
               </router-link>
               <!-- Dropdown Menu -->
               <div
-                  class="absolute right-0 mt-2 w-64 origin-top-right rounded-xl bg-white dark:bg-gray-900 shadow-lg ring-1 ring-black ring-opacity-5 overflow-hidden z-50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 transform scale-95 group-hover:scale-100">
+                class="absolute right-0 mt-2 w-64 origin-top-right rounded-xl bg-white dark:bg-gray-900 shadow-lg ring-1 ring-black ring-opacity-5 overflow-hidden z-50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 transform scale-95 group-hover:scale-100">
                 <!-- User Info Section -->
                 <div class="px-4 py-3 border-b border-gray-200 dark:border-gray-800">
                   <div class="flex items-center gap-3">
-                    <img v-if="user&&user.avatarUrl" :src="user.avatarUrl" class="h-10 w-10 rounded-full bg-primary"/>
+                    <img v-if="user && user.avatarUrl" :src="user.avatarUrl" class="h-10 w-10 rounded-full bg-primary" />
                     <div v-else
-                         class="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-semibold">
+                      class="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-semibold">
                       {{ userInitials }}
                     </div>
                     <div class="flex-1 min-w-0">
@@ -189,23 +170,21 @@
 
                 <!-- Menu Items -->
                 <div class="py-1">
-                  <RouterLink
-                      to="/upgrade"
-                      class="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition">
+                  <RouterLink to="/upgrade"
+                    class="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition">
                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/>
+                        d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
                     </svg>
                     升级套餐
                   </RouterLink>
 
-                  <RouterLink
-                      to="/feeds/channels"
-                      class="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition">
+                  <RouterLink to="/feeds/channels"
+                    class="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition">
                     <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round"
-                            d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 010 .255c-.007.378.138.75.43.99l1.005.828c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 010-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.281z"/>
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                        d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 010 .255c-.007.378.138.75.43.99l1.005.828c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 010-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.281z" />
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                     </svg>
                     管理订阅
                   </RouterLink>
@@ -213,13 +192,13 @@
 
                 <!-- Logout Section -->
                 <div v-if="user" class="border-t border-gray-200 dark:border-gray-800 py-1">
-                  <button
-                      type="button"
-                      class="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 dark:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 transition"
-                      @click="handleLogout">
+                  <button type="button"
+                    class="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 dark:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 transition"
+                    @click="handleLogout">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+                        d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1">
+                      </path>
                     </svg>
                     退出登录
                   </button>
@@ -233,35 +212,26 @@
 
     <!-- Full Screen Search Page (Mobile) -->
     <transition name="search-slide">
-      <div
-          v-if="showMobileSearch"
-          class="fixed inset-0 z-50 bg-white dark:bg-gray-950 lg:hidden">
+      <div v-if="showMobileSearch" class="fixed inset-0 z-50 bg-white dark:bg-gray-950 lg:hidden">
         <div class="flex flex-col h-full">
           <!-- Search Header -->
           <div class="flex items-center gap-3 px-4 py-3 border-b border-gray-200 dark:border-gray-800">
-            <button
-                type="button"
-                class="flex h-10 w-10 items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition"
-                @click="closeMobileSearch">
+            <button type="button"
+              class="flex h-10 w-10 items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition"
+              @click="closeMobileSearch">
               <svg class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
               </svg>
             </button>
             <div class="flex-1 relative">
-              <input
-                  ref="mobileSearchInput"
-                  v-model="search"
-                  type="search"
-                  placeholder="搜索文章、标签、订阅..."
-                  class="w-full h-11 pl-4 pr-12 rounded-full border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition"
-                  @keyup.enter="handleSearchAndClose"/>
-              <button
-                  v-if="search"
-                  type="button"
-                  class="absolute right-2 top-1/2 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-full bg-primary text-white hover:bg-primary/90 transition"
-                  @click="handleSearchAndClose">
+              <input ref="mobileSearchInput" v-model="search" type="search" placeholder="搜索文章、标签、订阅..."
+                class="w-full h-11 pl-4 pr-12 rounded-full border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition"
+                @keyup.enter="handleSearchAndClose" />
+              <button v-if="search" type="button"
+                class="absolute right-2 top-1/2 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-full bg-primary text-white hover:bg-primary/90 transition"
+                @click="handleSearchAndClose">
                 <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" :d="icons.search"/>
+                  <path stroke-linecap="round" stroke-linejoin="round" :d="icons.search" />
                 </svg>
               </button>
             </div>
@@ -269,18 +239,14 @@
 
           <!-- Search Source Tabs -->
           <div class="flex gap-2 px-4 py-3 border-b border-gray-200 dark:border-gray-800">
-            <button
-                type="button"
-                class="flex-1 py-2 px-4 rounded-full text-sm font-medium transition"
-                :class="searchSource === 'owner' ? 'bg-primary text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300'"
-                @click="searchSource = 'owner'">
+            <button type="button" class="flex-1 py-2 px-4 rounded-full text-sm font-medium transition"
+              :class="searchSource === 'owner' ? 'bg-primary text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300'"
+              @click="searchSource = 'owner'">
               我的订阅
             </button>
-            <button
-                type="button"
-                class="flex-1 py-2 px-4 rounded-full text-sm font-medium transition"
-                :class="searchSource === 'global' ? 'bg-primary text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300'"
-                @click="searchSource = 'global'">
+            <button type="button" class="flex-1 py-2 px-4 rounded-full text-sm font-medium transition"
+              :class="searchSource === 'global' ? 'bg-primary text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300'"
+              @click="searchSource = 'global'">
               全局发现
             </button>
           </div>
@@ -292,14 +258,13 @@
               <div v-if="recentSearches.length > 0">
                 <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">最近搜索</h3>
                 <div class="space-y-2">
-                  <button
-                      v-for="term in recentSearches"
-                      :key="term"
-                      type="button"
-                      class="flex items-center gap-3 w-full px-4 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition"
-                      @click="searchFromHistory(term)">
-                    <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                  <button v-for="term in recentSearches" :key="term" type="button"
+                    class="flex items-center gap-3 w-full px-4 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition"
+                    @click="searchFromHistory(term)">
+                    <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" stroke-width="2"
+                      viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                     <span class="flex-1 text-left text-gray-700 dark:text-gray-300">{{ term }}</span>
                   </button>
@@ -314,78 +279,68 @@
     <!-- Layout Container -->
     <div class="flex" :class="isSidebarCollapsed ? 'lg:pl-16' : 'lg:pl-72'">
       <!-- Desktop Sidebar -->
-      <aside
-          :class="[
-          'fixed left-0 top-[0px] bottom-0 z-30 hidden lg:block border-r border-gray-200 dark:border-gray-800 transition-all duration-200',
-          isSidebarCollapsed ? 'w-16' : 'w-72'
-        ]">
+      <aside :class="[
+        'fixed left-0 top-[0px] bottom-0 z-30 hidden lg:block border-r border-gray-200 dark:border-gray-800 transition-all duration-200',
+        isSidebarCollapsed ? 'w-15' : 'w-72'
+      ]">
         <div class="flex h-full flex-col overflow-hidden py-4">
 
-          <RouterLink :to="{ name: 'home' }" class="flex items-center text-lg  px-4 pt-0 pb-5 text-gray-700 dark:text-gray-300"
-                      :class=" isSidebarCollapsed ? 'justify-center px-2' : 'gap-3 px-3'">
-            <img class="h-7 w-7 rounded-2xl opacity-70 dark:invert" src="/logo.svg" alt="iFeed"/>
+          <RouterLink :to="{ name: 'home' }"
+            class="flex items-center text-lg  px-4 pt-0 pb-5 text-gray-700 dark:text-gray-300"
+            :class="isSidebarCollapsed ? 'justify-center px-2' : 'gap-3 px-3'">
+            <img class="h-7 w-7 rounded-2xl opacity-70 dark:invert" src="/logo.svg" alt="iFeed" />
 
             <span v-if="!isSidebarCollapsed" class="flex items-center gap-2">
               IFeed
               <span>
-              <span class="bg-secondary text-white shadow-md  rounded-full px-1 text-[8px]  opacity-60 font-medium ">Beta</span>
-           </span>
+                <span
+                  class="bg-secondary text-white shadow-md  rounded-full px-1 text-[8px]  opacity-60 font-medium ">Beta</span>
+              </span>
             </span>
           </RouterLink>
           <nav class="flex-1 overflow-y-auto px-2 " :class="{ 'space-y-1': isSidebarCollapsed }">
             <div v-for="(section, index) in navSections" :key="section.id" class="mb-3  space-y-0.5"
-                 v-show="!(isSidebarCollapsed&&section?.id=='subscriptions')">
-              <RouterLink
-                  v-if="section.title && !isSidebarCollapsed"
-                  :to="section.to"
-                  class="flex items-center gap-1 px-3 py-2.5 rounded-lg text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 transition-colors duration-150 cursor-pointer"
-                  :class="[
-                    isSectionActive(section)
-                      ? 'bg-primary/10 dark:bg-primary/20 text-text font-semibold '
-                      : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800']"
-              >
+              v-show="!(isSidebarCollapsed && section?.id == 'subscriptions')">
+              <RouterLink v-if="section.title && !isSidebarCollapsed" :to="section.to"
+                class="flex items-center gap-1 px-3 py-2.5 rounded-lg text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 transition-colors duration-150 cursor-pointer"
+                :class="[
+                  isSectionActive(section)
+                    ? 'bg-primary/10 dark:bg-primary/20 text-text font-semibold '
+                    : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800']">
                 <span>{{ section.title }}</span>
                 <svg class="h-3 w-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
                 </svg>
               </RouterLink>
               <div class="space-y-0.5">
-                <component
-                    v-for="item in section.items"
-                    :is="item.to ? 'RouterLink' : 'button'"
-                    :key="item.id"
-                    v-bind="item.to ? { to: item.to } : { type: 'button' }"
-                    class="flex w-full items-center rounded-lg py-2.5 text-sm font-medium transition"
-                    :class="[
+                <component v-for="item in section.items" :is="item.to ? 'RouterLink' : 'button'" :key="item.id"
+                  v-bind="item.to ? { to: item.to } : { type: 'button' }"
+                  class="flex w-full items-center rounded-lg py-2.5 text-sm font-medium transition" :class="[
                     isSidebarCollapsed ? 'justify-center px-2' : 'gap-3 px-3',
                     isActiveItem(item)
                       ? 'bg-primary/10 dark:bg-primary/20 text-text font-semibold '
                       : item.danger
                         ? 'text-red-500 hover:bg-red-50 dark:hover:bg-red-950'
                         : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
-                  ]"
-                    :title="isSidebarCollapsed ? item.label : undefined"
-                    @click="handleNavItemClick(item)">
-                  <span
-                      v-if="item.icon"
-                      class="flex h-6 w-6 items-center justify-center rounded-lg">
+                  ]" :title="isSidebarCollapsed ? item.label : undefined" @click="handleNavItemClick(item)">
+                  <span v-if="item.icon" class="flex h-6 w-6 items-center justify-center rounded-lg">
                     <svg class="h-6 w-6" :viewBox="item.icon.viewBox ?? '0 0 24 24'"
-                         :fill="item.icon.stroke ? 'none' : 'currentColor'"
-                         :stroke="item.icon.stroke ? 'currentColor' : 'none'"
-                         :stroke-width="item.icon.stroke ? 1.5 : undefined"
-                         :stroke-linecap="item.icon.stroke ? 'round' : undefined"
-                         :stroke-linejoin="item.icon.stroke ? 'round' : undefined">
-                      <path v-for="path in item.icon.paths" :key="path" :d="path"/>
+                      :fill="item.icon.stroke ? 'none' : 'currentColor'"
+                      :stroke="item.icon.stroke ? 'currentColor' : 'none'"
+                      :stroke-width="item.icon.stroke ? 1.5 : undefined"
+                      :stroke-linecap="item.icon.stroke ? 'round' : undefined"
+                      :stroke-linejoin="item.icon.stroke ? 'round' : undefined">
+                      <path v-for="path in item.icon.paths" :key="path" :d="path" />
                     </svg>
                   </span>
-                  <img v-else-if="item.avatar" :src="item.avatar" class="h-6 w-6 rounded-full "/>
+                  <img v-else-if="item.avatar" :src="item.avatar" class="h-6 w-6 rounded-full " />
                   <span v-else-if="item.avatarText"
-                        class="flex h-6 w-6 items-center justify-center rounded-full text-xs font-semibold"
-                        :class="item.accent ?? 'bg-primary text-primary-foreground'">
+                    class="flex h-6 w-6 items-center justify-center rounded-full text-xs font-semibold"
+                    :class="item.accent ?? 'bg-primary text-primary-foreground'">
                     {{ item.avatarText }}
                   </span>
                   <span v-if="!isSidebarCollapsed" class="truncate">{{ item.label }}</span>
-                  <span v-if="item.badge && !isSidebarCollapsed" class="ml-auto flex h-1 w-1 rounded-full bg-primary"/>
+                  <span v-if="item.badge && !isSidebarCollapsed" class="ml-auto flex h-1 w-1 rounded-full bg-primary" />
                 </component>
               </div>
             </div>
@@ -394,54 +349,46 @@
       </aside>
 
       <!-- Main Content -->
-      <main
-          class="flex-1 min-w-0 sm:px-6 sm:pt-6"
-          :class="[
-            route.name !== 'article-detail' ? 'min-h-[calc(100vh-5em)] pb-24 lg:pb-24' : 'min-h-[calc(100vh-5em)] pb-28 lg:pb-24',
-            route.name === 'feedsSubscriptions' ? 'pt-0 px-0' : 'px-1 pt-5'
-          ]">
+      <main class="flex-1 min-w-0 sm:px-6 sm:pt-6" :class="[
+        route.name !== 'article-detail' ? 'min-h-[calc(100vh-5em)] pb-24 lg:pb-24' : 'min-h-[calc(100vh-5em)] pb-28 lg:pb-24',
+        route.name === 'feedsSubscriptions' ? 'pt-0 px-0' : 'px-1 pt-5'
+      ]">
         <!-- Subscriptions Horizontal Scroll (only on feedsSubscriptions page) -->
         <div v-if="route.name === 'feedsSubscriptions' && subscriptionsStore.items.length > 0"
-             class="lg:hidden border-b border-gray-200 dark:border-gray-800 py-3">
+          class="lg:hidden border-b border-gray-200 dark:border-gray-800 py-3">
           <div class="overflow-x-scroll scrollbar-hide px-4" style="-webkit-overflow-scrolling: touch;">
             <div class="flex gap-5 py-1">
-              <RouterLink
-                  v-for="subscription in subscriptionsStore.items"
-                  :key="subscription.feedId"
-                  :to="{ name: 'feedsSubscriptions', query: { feedId: subscription.feedId } }"
-                  class="flex flex-col items-center gap-1.5 flex-shrink-0 w-[3rem] group">
+              <RouterLink v-for="subscription in subscriptionsStore.items" :key="subscription.feedId"
+                :to="{ name: 'feedsSubscriptions', query: { feedId: subscription.feedId } }"
+                class="flex flex-col items-center gap-1.5 flex-shrink-0 w-[3rem] group">
                 <!-- Avatar with Badge -->
                 <div class="relative">
-                  <img
-                      v-if="subscription.avatar"
-                      :src="subscription.avatar"
-                      :alt="getSubscriptionLabel(subscription)"
-                      class="w-9 h-9 rounded-full object-cover ring-2 transition-all"
-                      :class="!subscription.isRead ? 'ring-primary ring-offset-2' : 'ring-transparent group-hover:ring-gray-300 dark:group-hover:ring-gray-700'"/>
-                  <div
-                      v-else
-                      class="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold ring-2 transition-all"
-                      :class="[
-                        getSubscriptionAccent(subscription),
-                        !subscription.isRead ? 'ring-primary ring-offset-2' : 'ring-transparent group-hover:ring-gray-300 dark:group-hover:ring-gray-700'
-                      ]">
+                  <img v-if="subscription.avatar" :src="subscription.avatar" :alt="getSubscriptionLabel(subscription)"
+                    class="w-9 h-9 rounded-full object-cover ring-2 transition-all"
+                    :class="!subscription.isRead ? 'ring-primary ring-offset-2' : 'ring-transparent group-hover:ring-gray-300 dark:group-hover:ring-gray-700'" />
+                  <div v-else
+                    class="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold ring-2 transition-all"
+                    :class="[
+                      getSubscriptionAccent(subscription),
+                      !subscription.isRead ? 'ring-primary ring-offset-2' : 'ring-transparent group-hover:ring-gray-300 dark:group-hover:ring-gray-700'
+                    ]">
                     {{ getSubscriptionInitials(subscription) }}
                   </div>
                   <!-- Unread Indicator -->
-                  <span
-                      v-if="!subscription.isRead"
-                      class="absolute bottom-0 right-0 w-3 h-3 bg-primary rounded-full ring-2 ring-white dark:ring-gray-950"></span>
+                  <span v-if="!subscription.isRead"
+                    class="absolute bottom-0 right-0 w-3 h-3 bg-primary rounded-full ring-2 ring-white dark:ring-gray-950"></span>
                   <!-- Error Indicator -->
-                  <span
-                      v-if="hasSubscriptionError(subscription)"
-                      class="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center shadow-md">
-                    <svg class="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                  <span v-if="hasSubscriptionError(subscription)"
+                    class="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center shadow-md">
+                    <svg class="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" stroke-width="2.5"
+                      viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
                     </svg>
                   </span>
                 </div>
                 <!-- Label -->
-                <span class="text-[11px] text-center text-gray-700 dark:text-gray-300 line-clamp-2 w-full leading-tight">
+                <span
+                  class="text-[11px] text-center text-gray-700 dark:text-gray-300 line-clamp-2 w-full leading-tight">
                   {{ getSubscriptionLabel(subscription) }}
                 </span>
               </RouterLink>
@@ -451,72 +398,66 @@
 
         <div :class="route.name === 'feedsSubscriptions' ? 'px-1 pt-5 sm:px-6 sm:pt-6' : ''">
           <global-audio-player>
-            <router-view/>
+            <router-view />
           </global-audio-player>
         </div>
       </main>
     </div>
 
     <!-- Mobile Bottom Tab Bar -->
-    <nav v-show="route.name!=='article'" class="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-gray-950/95 backdrop-blur-lg border-t border-gray-200 dark:border-gray-800 pb-safe">
+    <nav v-show="route.name !== 'article'"
+      class="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-gray-950/95 backdrop-blur-lg border-t border-gray-200 dark:border-gray-800 pb-safe">
       <div class="flex items-center justify-around h-16 px-2">
         <!-- Home Tab -->
-        <RouterLink
-            :to="{ name: 'home' }"
-            class="flex flex-col items-center justify-center flex-1 gap-1 py-2 transition-colors"
-            :class="isTabActive('home') ? 'text-primary' : 'text-gray-600 dark:text-gray-400'">
+        <RouterLink :to="{ name: 'home' }"
+          class="flex flex-col items-center justify-center flex-1 gap-1 py-2 transition-colors"
+          :class="isTabActive('home') ? 'text-primary' : 'text-gray-600 dark:text-gray-400'">
           <svg class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" :d="icons.home"/>
+            <path stroke-linecap="round" stroke-linejoin="round" :d="icons.home" />
           </svg>
           <span class="text-[10px] font-medium">首页</span>
         </RouterLink>
 
         <!-- Subscriptions Tab -->
-        <RouterLink
-            :to="{ name: 'feedsSubscriptions' }"
-            class="flex flex-col items-center justify-center flex-1 gap-1 py-2 transition-colors relative"
-            :class="isTabActive('feedsSubscriptions') ? 'text-primary' : 'text-gray-600 dark:text-gray-400'">
+        <RouterLink :to="{ name: 'feedsSubscriptions' }"
+          class="flex flex-col items-center justify-center flex-1 gap-1 py-2 transition-colors relative"
+          :class="isTabActive('feedsSubscriptions') ? 'text-primary' : 'text-gray-600 dark:text-gray-400'">
           <svg class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" :d="icons.inbox"/>
+            <path stroke-linecap="round" stroke-linejoin="round" :d="icons.inbox" />
           </svg>
           <span class="text-[10px] font-medium">订阅</span>
           <span v-if="hasUnreadSubscriptions" class="absolute top-1 right-1/4 h-2 w-2 rounded-full bg-red-500"></span>
         </RouterLink>
 
         <!-- Discover Tab (Center with larger icon) -->
-        <RouterLink
-            :to="{ name: 'discover' }"
-            class="flex flex-col items-center justify-center flex-1 gap-1 py-2 -mt-2 transition-colors">
-          <div
-              class="flex items-center justify-center h-12 w-12 rounded-full transition-all"
-              :class="isTabActive('discover') ? 'bg-primary text-white shadow-lg' : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'">
+        <RouterLink :to="{ name: 'discover' }"
+          class="flex flex-col items-center justify-center flex-1 gap-1 py-2 -mt-2 transition-colors">
+          <div class="flex items-center justify-center h-12 w-12 rounded-full transition-all"
+            :class="isTabActive('discover') ? 'bg-primary text-white shadow-lg' : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'">
             <svg class="h-7 w-7" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" :d="icons.plus"/>
+              <path stroke-linecap="round" stroke-linejoin="round" :d="icons.plus" />
             </svg>
           </div>
         </RouterLink>
 
         <!-- Collections Tab -->
-        <RouterLink
-            :to="{ name: 'collections' }"
-            class="flex flex-col items-center justify-center flex-1 gap-1 py-2 transition-colors"
-            :class="isTabActive('collections') ? 'text-primary' : 'text-gray-600 dark:text-gray-400'">
+        <RouterLink :to="{ name: 'collections' }"
+          class="flex flex-col items-center justify-center flex-1 gap-1 py-2 transition-colors"
+          :class="isTabActive('collections') ? 'text-primary' : 'text-gray-600 dark:text-gray-400'">
           <svg class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" :d="icons.bookmark"/>
+            <path stroke-linecap="round" stroke-linejoin="round" :d="icons.bookmark" />
           </svg>
           <span class="text-[10px] font-medium">收藏</span>
         </RouterLink>
 
         <!-- Profile Tab -->
-        <RouterLink
-            :to="{ name: 'upgrade' }"
-            class="flex flex-col items-center justify-center flex-1 gap-1 py-2 transition-colors"
-            :class="isTabActive('upgrade') ? 'text-primary' : 'text-gray-600 dark:text-gray-400'">
+        <RouterLink :to="{ name: 'upgrade' }"
+          class="flex flex-col items-center justify-center flex-1 gap-1 py-2 transition-colors"
+          :class="isTabActive('upgrade') ? 'text-primary' : 'text-gray-600 dark:text-gray-400'">
           <div class="relative">
-            <img v-if="user&&user.avatarUrl" :src="user.avatarUrl" class="h-6 w-6 rounded-full"/>
-            <div
-                v-else
-                class="flex h-6 w-6 items-center justify-center rounded-full bg-gray-200 dark:bg-gray-700 text-[10px] font-semibold">
+            <img v-if="user && user.avatarUrl" :src="user.avatarUrl" class="h-6 w-6 rounded-full" />
+            <div v-else
+              class="flex h-6 w-6 items-center justify-center rounded-full bg-gray-200 dark:bg-gray-700 text-[10px] font-semibold">
               {{ userInitials }}
             </div>
           </div>
@@ -528,14 +469,14 @@
 </template>
 
 <script setup lang="ts">
-import {computed, onMounted, onUnmounted, ref, watch} from 'vue';
-import {useRoute, useRouter} from 'vue-router';
-import type {RouteLocationNormalizedLoaded, RouteLocationRaw} from 'vue-router';
-import {storeToRefs} from 'pinia';
-import {useAuthStore} from '../stores/auth';
-import {useThemeStore} from '../stores/theme';
-import {useSubscriptionsStore} from '../stores/subscriptions';
-import {useMixFeedsStore} from "../stores/mixFeeds";
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
+import type { RouteLocationNormalizedLoaded, RouteLocationRaw } from 'vue-router';
+import { storeToRefs } from 'pinia';
+import { useAuthStore } from '../stores/auth';
+import { useThemeStore } from '../stores/theme';
+import { useSubscriptionsStore } from '../stores/subscriptions';
+import { useMixFeedsStore } from "../stores/mixFeeds";
 import GlobalAudioPlayer from "../components/GlobalAudioPlayer.vue";
 // Icon Components
 const icons = {
@@ -559,8 +500,8 @@ const themeStore = useThemeStore();
 const subscriptionsStore = useSubscriptionsStore();
 const mixFeedStore = useMixFeedsStore();
 
-const {user} = storeToRefs(authStore);
-const {isDark} = storeToRefs(themeStore);
+const { user } = storeToRefs(authStore);
+const { isDark } = storeToRefs(themeStore);
 
 const searchSourceRef = ref<HTMLElement | null>(null);
 const isSidebarCollapsed = ref(localStorage.getItem('sidebar-collapsed') === 'true');
@@ -611,7 +552,7 @@ const baseNavSections: NavSection[] = [
       {
         id: 'home',
         label: '首页',
-        to: {name: 'home' as const},
+        to: { name: 'home' as const },
         icon: {
           stroke: true,
           paths: [icons.home],
@@ -653,23 +594,23 @@ const subscriptionNavSection = computed<NavSection>(() => {
 
   const entries = subscriptionsStore.items.map((s) => {
     const label =
-        s.title?.trim() ||
-        (() => {
-          const candidate = s.siteUrl || s.url;
-          if (!candidate) return '订阅源';
-          try {
-            return new URL(candidate).hostname || candidate;
-          } catch {
-            return candidate;
-          }
-        })();
+      s.title?.trim() ||
+      (() => {
+        const candidate = s.siteUrl || s.url;
+        if (!candidate) return '订阅源';
+        try {
+          return new URL(candidate).hostname || candidate;
+        } catch {
+          return candidate;
+        }
+      })();
 
     const initials =
-        Array.from(label).slice(0, 2).join('').toUpperCase() || 'F';
+      Array.from(label).slice(0, 2).join('').toUpperCase() || 'F';
 
     const danger = Boolean((s.failureCount ?? 0) > 0 || s.fetchError?.trim());
 
-    return {subscription: s, label, initials, danger};
+    return { subscription: s, label, initials, danger };
   });
 
   entries.sort((a, b) => {
@@ -682,13 +623,13 @@ const subscriptionNavSection = computed<NavSection>(() => {
   const items: NavItem[] = visibleEntries.map((meta, idx) => {
     const s = meta.subscription;
     const accent = meta.danger
-        ? 'bg-red-100 text-red-600 dark:bg-red-950 dark:text-red-400 border border-red-300 dark:border-red-800'
-        : accentPalette[idx % accentPalette.length];
+      ? 'bg-red-100 text-red-600 dark:bg-red-950 dark:text-red-400 border border-red-300 dark:border-red-800'
+      : accentPalette[idx % accentPalette.length];
 
     return {
       id: `sub-${s.feedId}`,
       label: meta.label,
-      to: {name: 'feed' as const, params: {feedId: s.feedId}},
+      to: { name: 'feed' as const, params: { feedId: s.feedId } },
       avatar: s.avatar,
       avatarText: meta.initials,
       accent,
@@ -720,7 +661,7 @@ const subscriptionNavSection = computed<NavSection>(() => {
     id: 'subscriptions',
     title: '订阅',
     to: { name: 'feedsSubscriptions' as const },
-    activeMatch: (current) => current.name === 'feedsSubscriptions' ,
+    activeMatch: (current) => current.name === 'feedsSubscriptions',
     items
   };
 });
@@ -736,7 +677,7 @@ const navSections = computed<NavSection[]>(() => {
       {
         id: 'history',
         label: '历史记录',
-        to: {name: 'history' as const},
+        to: { name: 'history' as const },
         icon: {
           stroke: true,
           paths: [icons.clock],
@@ -747,7 +688,7 @@ const navSections = computed<NavSection[]>(() => {
       {
         id: 'library',
         label: '收藏夹',
-        to: {name: 'collections' as const},
+        to: { name: 'collections' as const },
         icon: {
           stroke: true,
           paths: [icons.bookmark],
@@ -786,10 +727,10 @@ const userInitials = computed(() => {
   const username = user.value?.username ?? '';
   if (!username) return 'U';
   return username
-      .split(/\s+/)
-      .map((part) => part.charAt(0).toUpperCase())
-      .join('')
-      .slice(0, 2);
+    .split(/\s+/)
+    .map((part) => part.charAt(0).toUpperCase())
+    .join('')
+    .slice(0, 2);
 });
 
 const toggleSourceDropdown = () => {
@@ -890,7 +831,7 @@ const hasSubscriptionError = (subscription: any): boolean => {
 const handleSearch = () => {
   const keyword = search.value.trim();
   const currentType =
-      route.name === 'search' && typeof route.query.type === 'string' ? route.query.type : undefined;
+    route.name === 'search' && typeof route.query.type === 'string' ? route.query.type : undefined;
 
   const feedId = typeof route.query.feedId === 'string' ? route.query.feedId : undefined;
   const tag = typeof route.query.tags === 'string' ? route.query.tags : undefined;
@@ -901,7 +842,7 @@ const handleSearch = () => {
     if (feedId) query.feedId = feedId;
     if (tag) query.tags = tag;
     if (category) query.category = category;
-    router.push({name: 'home', query});
+    router.push({ name: 'home', query });
     return;
   }
 
@@ -913,12 +854,12 @@ const handleSearch = () => {
   if (feedId) query.feedId = feedId;
   if (tag) query.tags = tag;
   if (category) query.category = category;
-  router.push({name: 'search', query});
+  router.push({ name: 'search', query });
 };
 
 const handleLogout = async () => {
   await authStore.logout();
-  router.replace({name: 'auth'});
+  router.replace({ name: 'auth' });
 };
 
 const toggleTheme = () => {
@@ -946,11 +887,11 @@ const isSectionActive = (section: NavSection): boolean => {
 };
 
 watch(
-    () => route.query.q,
-    (value) => {
-      search.value = typeof value === 'string' ? value : '';
-    },
-    {immediate: true}
+  () => route.query.q,
+  (value) => {
+    search.value = typeof value === 'string' ? value : '';
+  },
+  { immediate: true }
 );
 
 const handleScroll = () => {
@@ -993,9 +934,9 @@ watch(showSourceDropdown, (isOpen) => {
 onMounted(async () => {
   if (typeof window !== 'undefined') {
     lastScrollY.value = window.scrollY || window.pageYOffset || 0;
-    window.addEventListener('scroll', handleScroll, {passive: true});
+    window.addEventListener('scroll', handleScroll, { passive: true });
   }
-  if(authStore.isAuthenticated){
+  if (authStore.isAuthenticated) {
     await subscriptionsStore.fetchSubscriptions();
     mixFeedStore.clearMyMixFeeds();
   }

@@ -134,30 +134,6 @@
     </div>
 
 
-    <!-- Delete Confirmation Dialog -->
-    <div v-if="showDeleteDialog" class="fixed inset-0 z-50 flex items-center justify-center p-4" @click.self="showDeleteDialog = false">
-      <div class="absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
-      <div class="relative bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-sm w-full p-6 space-y-4">
-        <h3 class="text-lg font-semibold text-text">删除记录</h3>
-        <p class="text-sm text-text-secondary">确定要删除这条阅读记录吗？</p>
-        <div class="flex gap-3 justify-end">
-          <button
-              @click="showDeleteDialog = false"
-              class="px-4 py-2 text-sm font-medium text-text-secondary hover:bg-surface-container rounded-lg transition-colors"
-          >
-            取消
-          </button>
-          <button
-              @click="confirmDelete"
-              :disabled="deleting"
-              class="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors disabled:opacity-50"
-          >
-            {{ deleting ? '删除中...' : '删除' }}
-          </button>
-        </div>
-      </div>
-    </div>
-
   </div>
 </template>
 
@@ -166,18 +142,11 @@ import { computed, onMounted, ref } from 'vue';
 import { storeToRefs } from 'pinia';
 import { useHistoryStore } from '../stores/history';
 import { useAuthStore } from '../stores/auth';
+import { confirm } from '../composables/confirm';
 
 const historyStore = useHistoryStore();
 const authStore = useAuthStore();
 const { loading, items, page, total, hasNextPage, hasPreviousPage, error } = storeToRefs(historyStore);
-
-// 删除相关状态
-const showDeleteDialog = ref(false);
-const deleting = ref(false);
-const itemToDelete = ref<string | null>(null);
-
-// 菜单相关状态
-const activeDropdown = ref<string | null>(null);
 
 // 抽象的加载方法，供页面其它地方调用
 const loadData = async (targetPage: number, options?: { scrollToTop?: boolean }) => {
@@ -212,7 +181,6 @@ const prevPage = async () => {
 
 // 在新标签页打开
 const handleOpenInNewTab = (item: any) => {
-  activeDropdown.value = null;
   if (item?.articleId) {
     const url = `/articles/${item.articleId}`;
     window.open(url, '_blank');
@@ -221,26 +189,18 @@ const handleOpenInNewTab = (item: any) => {
 
 
 // 处理删除菜单项
-const handleDeleteItem = (item: any) => {
-  activeDropdown.value = null;
-  if (item) {
-    itemToDelete.value = item.articleId;
-    showDeleteDialog.value = true;
-  }
-};
-
-const confirmDelete = async () => {
-  if (!itemToDelete.value) return;
-
-  deleting.value = true;
+const handleDeleteItem = async  (item: any) => {
+  if (!item?.articleId) return;
   try {
-    await historyStore.deleteHistoryEntry(itemToDelete.value);
-    showDeleteDialog.value = false;
-    itemToDelete.value = null;
-  } catch (err) {
-    console.error('删除失败:', err);
-  } finally {
-    deleting.value = false;
+    const confirmed = await confirm({
+      title: '删除记录',
+      description: '确定要删除这条阅读记录吗？'
+    });
+    if (confirmed) {
+      await historyStore.deleteHistoryEntry(item.articleId);
+    }
+  } catch {
+    // 用户取消，无需操作
   }
 };
 

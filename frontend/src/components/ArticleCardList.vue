@@ -16,44 +16,75 @@
   </div>
   <div v-else-if="items.length > 0" :class="compact ? 'space-y-2 sm:space-y-2.5' : 'space-y-4 sm:space-y-5'">
     <article v-for="item in items" :key="getItemKey(item)">
-      <router-link
-          :to="`/articles/${item[keyField]}`"
+      <div
           :class="[
-            'group flex flex-col sm:flex-row hover:bg-surface-container/50 -mx-2 px-2 rounded-lg transition-colors',
-            compact ? 'gap-2 sm:gap-3 py-1.5' : 'gap-3 sm:gap-4 py-2'
+            'group relative sm:flex sm:items-start hover:bg-surface-container/50 -mx-2 px-2 rounded-lg transition-colors',
+            compact ? 'py-1.5' : 'py-2'
           ]"
       >
-        <!-- Thumbnail -->
-        <div :class="[
-          'relative flex-shrink-0 rounded-lg overflow-hidden bg-surface-container',
-          compact ? 'w-full sm:w-24 h-24 sm:h-16' : 'w-full sm:w-52 h-40 sm:h-32'
-        ]">
-          <img
-              v-if="shouldShowImage(item)"
-              :src="item.thumbnail"
-              :alt="item.title || '文章缩略图'"
-              class="w-full h-full object-cover"
-              loading="lazy"
-              referrerpolicy="no-referrer"
-              @error="handleImageError(item)"
-          />
-          <div v-else class="w-full h-full flex items-center justify-center">
-            <slot name="empty-thumbnail" :item="item">
-              <svg :class="['text-text-muted', compact ? 'w-6 h-6 sm:w-7 sm:h-7' : 'w-8 h-8 sm:w-10 sm:h-10']" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-                <circle cx="8.5" cy="8.5" r="1.5"/>
-                <polyline points="21 15 16 10 5 21"/>
-              </svg>
-            </slot>
+        <router-link
+            :to="`/articles/${item[keyField]}`"
+            :class="[
+              'flex-1 flex flex-col sm:flex-row',
+              compact ? 'gap-2 sm:gap-3' : 'gap-3 sm:gap-4'
+            ]"
+        >
+          <!-- Thumbnail -->
+          <div :class="[
+            'relative flex-shrink-0 rounded-lg overflow-hidden bg-surface-container',
+            compact ? 'w-full sm:w-24 h-24 sm:h-16' : 'w-full sm:w-52 h-40 sm:h-32'
+          ]">
+            <img
+                v-if="shouldShowImage(item)"
+                :src="item.thumbnail"
+                :alt="item.title || '文章缩略图'"
+                class="w-full h-full object-cover"
+                loading="lazy"
+                referrerpolicy="no-referrer"
+                @error="handleImageError(item)"
+            />
+            <div v-else class="w-full h-full flex items-center justify-center">
+              <slot name="empty-thumbnail" :item="item">
+                <svg :class="['text-text-muted', compact ? 'w-6 h-6 sm:w-7 sm:h-7' : 'w-8 h-8 sm:w-10 sm:h-10']" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                  <circle cx="8.5" cy="8.5" r="1.5"/>
+                  <polyline points="21 15 16 10 5 21"/>
+                </svg>
+              </slot>
+            </div>
           </div>
 
-          <!-- Action Button (Mobile) -->
+          <!-- Content -->
+          <div class="flex-1 min-w-0 flex flex-col py-0 sm:py-0.5">
+            <h3 :class="[
+              'font-normal text-text line-clamp-2 leading-normal',
+              compact ? 'text-xs sm:text-sm mb-1' : 'text-sm sm:text-base mb-1.5 sm:mb-2'
+            ]">
+              {{ item.title || '未命名文章' }}
+            </h3>
+
+            <div :class="[
+              'flex items-center gap-1.5 text-text-secondary',
+              compact ? 'text-xs mb-1' : 'text-xs sm:text-sm mb-1.5 sm:mb-2'
+            ]">
+              <span v-if="item.feedTitle" class="truncate">{{ item.feedTitle }}</span>
+              <span v-if="item.feedTitle && getMetaText(item)" class="flex-shrink-0">•</span>
+              <span v-if="getMetaText(item)" class="flex-shrink-0">{{ getMetaText(item) }}</span>
+            </div>
+
+            <p v-if="item.summary && !compact" class="text-xs sm:text-sm text-text-secondary line-clamp-2 leading-relaxed">
+              {{ item.summary }}
+            </p>
+          </div>
+        </router-link>
+
+        <!-- Action Button (Mobile) -->
+        <div v-if="showAction" class="sm:hidden absolute top-2 right-2 z-20">
           <button
-              v-if="showAction"
               @click.stop.prevent="onActionClick(item, $event)"
               :aria-expanded="activeDropdown === getItemKey(item)"
               :class="[
-                'sm:hidden absolute top-2 right-2 bg-black/60 backdrop-blur-sm hover:bg-black/80 rounded-full transition-all',
+                'bg-black/60 backdrop-blur-sm hover:bg-black/80 rounded-full transition-all relative z-20',
                 compact ? 'p-1.5' : 'p-2'
               ]"
               :aria-label="actionLabel"
@@ -65,57 +96,7 @@
                 <circle cx="12" cy="19" r="1.5"/>
               </svg>
             </slot>
-            <div
-                v-if="hasDropdownSlot && activeDropdown === getItemKey(item)"
-                @click.stop
-                class="absolute right-0 top-full mt-1 w-44 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-1 z-50"
-            >
-              <slot name="action-dropdown" :item="item" :close="closeDropdown"></slot>
-            </div>
           </button>
-        </div>
-
-        <!-- Content -->
-        <div class="flex-1 min-w-0 flex flex-col py-0 sm:py-0.5">
-          <h3 :class="[
-            'font-normal text-text line-clamp-2 leading-normal',
-            compact ? 'text-xs sm:text-sm mb-1' : 'text-sm sm:text-base mb-1.5 sm:mb-2'
-          ]">
-            {{ item.title || '未命名文章' }}
-          </h3>
-
-          <div :class="[
-            'flex items-center gap-1.5 text-text-secondary',
-            compact ? 'text-xs mb-1' : 'text-xs sm:text-sm mb-1.5 sm:mb-2'
-          ]">
-            <span v-if="item.feedTitle" class="truncate">{{ item.feedTitle }}</span>
-            <span v-if="item.feedTitle && getMetaText(item)" class="flex-shrink-0">•</span>
-            <span v-if="getMetaText(item)" class="flex-shrink-0">{{ getMetaText(item) }}</span>
-          </div>
-
-          <p v-if="item.summary && !compact" class="text-xs sm:text-sm text-text-secondary line-clamp-2 leading-relaxed">
-            {{ item.summary }}
-          </p>
-        </div>
-
-        <!-- Action Button (Desktop) -->
-        <button
-            v-if="showAction"
-            @click.stop.prevent="onActionClick(item, $event)"
-            :aria-expanded="activeDropdown === getItemKey(item)"
-            :class="[
-              'hidden sm:block self-start opacity-0 group-hover:opacity-100 hover:bg-surface-container rounded-full transition-all relative z-20',
-              compact ? 'p-1.5' : 'p-2'
-            ]"
-            :aria-label="actionLabel"
-        >
-          <slot name="action-icon" :item="item">
-            <svg :class="['text-text-secondary', compact ? 'w-4 h-4' : 'w-5 h-5']" viewBox="0 0 24 24" fill="currentColor">
-              <circle cx="12" cy="12" r="1.5"/>
-              <circle cx="12" cy="5" r="1.5"/>
-              <circle cx="12" cy="19" r="1.5"/>
-            </svg>
-          </slot>
           <div
               v-if="hasDropdownSlot && activeDropdown === getItemKey(item)"
               @click.stop.prevent
@@ -123,8 +104,36 @@
           >
             <slot name="action-dropdown" :item="item" :close="closeDropdown"></slot>
           </div>
-        </button>
-      </router-link>
+        </div>
+
+        <!-- Action Button (Desktop) -->
+        <div v-if="showAction" class="hidden sm:flex self-start ml-2 relative">
+          <button
+              @click.stop.prevent="onActionClick(item, $event)"
+              :aria-expanded="activeDropdown === getItemKey(item)"
+              :class="[
+                'opacity-0 group-hover:opacity-100 hover:bg-surface-container rounded-full transition-all relative z-20',
+                compact ? 'p-1.5' : 'p-2'
+              ]"
+              :aria-label="actionLabel"
+          >
+            <slot name="action-icon" :item="item">
+              <svg :class="['text-text-secondary', compact ? 'w-4 h-4' : 'w-5 h-5']" viewBox="0 0 24 24" fill="currentColor">
+                <circle cx="12" cy="12" r="1.5"/>
+                <circle cx="12" cy="5" r="1.5"/>
+                <circle cx="12" cy="19" r="1.5"/>
+              </svg>
+            </slot>
+          </button>
+          <div
+              v-if="hasDropdownSlot && activeDropdown === getItemKey(item)"
+              @click.stop.prevent
+              class="absolute right-0 top-full mt-1 w-44 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-1 z-50"
+          >
+            <slot name="action-dropdown" :item="item" :close="closeDropdown"></slot>
+          </div>
+        </div>
+      </div>
     </article>
   </div>
   <div v-else class="flex flex-col items-center justify-center py-12 sm:py-16 text-center">
@@ -135,7 +144,7 @@
     </svg>
     <p class="text-sm sm:text-base text-text-secondary">暂无文章</p>
   </div>
-  <div v-if="activeDropdown" @click="closeDropdown" class="fixed inset-0 z-0"></div>
+  <div v-if="hasDropdownSlot && activeDropdown" @click="closeDropdown" class="fixed inset-0 z-0"></div>
 </template>
 
 <script setup lang="ts">
@@ -191,7 +200,9 @@ const closeDropdown = () => {
 };
 
 const onActionClick = (item: ArticleItem, event: MouseEvent) => {
-  toggleDropdown(getItemKey(item));
+  if (hasDropdownSlot.value) {
+    toggleDropdown(getItemKey(item));
+  }
   emit('action', item, event);
 };
 

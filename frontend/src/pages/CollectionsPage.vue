@@ -7,18 +7,20 @@
       </div>
 
       <!-- Unauthenticated State -->
-      <div v-if="!authStore.isAuthenticated" class="flex flex-col items-center justify-center py-16 sm:py-20 text-center">
-        <div class="w-20 h-20 sm:w-24 sm:h-24 mb-4 sm:mb-6 flex items-center justify-center rounded-full bg-surface-container">
-          <svg class="w-10 h-10 sm:w-12 sm:h-12 text-text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/>
+      <div v-if="!authStore.isAuthenticated"
+        class="flex flex-col items-center justify-center py-16 sm:py-20 text-center">
+        <div
+          class="w-20 h-20 sm:w-24 sm:h-24 mb-4 sm:mb-6 flex items-center justify-center rounded-full bg-surface-container">
+          <svg class="w-10 h-10 sm:w-12 sm:h-12 text-text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="1.5">
+            <path
+              d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z" />
           </svg>
         </div>
         <h2 class="text-lg sm:text-xl font-semibold text-text mb-2">请先登录</h2>
         <p class="text-xs sm:text-sm text-text-secondary px-4 mb-6">登录后即可查看和管理你的收藏</p>
-        <router-link
-            to="/auth"
-            class="inline-block px-6 py-2.5 bg-secondary text-white rounded-full hover:bg-secondary-hover transition-colors text-sm font-medium"
-        >
+        <router-link to="/auth"
+          class="inline-block px-6 py-2.5 bg-secondary text-white rounded-full hover:bg-secondary-hover transition-colors text-sm font-medium">
           前往登录
         </router-link>
       </div>
@@ -30,21 +32,12 @@
           <div class="text-xs sm:text-sm text-text-secondary">
             {{ totalText }}
           </div>
-          <button
-              @click="refresh"
-              :disabled="loading"
-              class="p-2 hover:bg-surface-container rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              aria-label="刷新收藏列表"
-          >
-            <svg
-                class="w-5 h-5 text-text-secondary transition-transform"
-                :class="{ 'animate-spin': loading }"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-            >
-              <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
+          <button @click="refresh" :disabled="loading"
+            class="p-2 hover:bg-surface-container rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            aria-label="刷新收藏列表">
+            <svg class="w-5 h-5 text-text-secondary transition-transform" :class="{ 'animate-spin': loading }"
+              viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2" />
             </svg>
           </button>
         </div>
@@ -52,38 +45,43 @@
         <!-- Error State -->
         <div v-if="error" class="mb-4 p-3 sm:p-4 bg-red-50 border border-red-200 rounded-lg">
           <div class="flex items-center gap-2 text-xs sm:text-sm text-red-800">
-            <svg class="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="12" cy="12" r="10"/>
-              <line x1="12" y1="8" x2="12" y2="12"/>
-              <line x1="12" y1="16" x2="12.01" y2="16"/>
+            <svg class="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="2">
+              <circle cx="12" cy="12" r="10" />
+              <line x1="12" y1="8" x2="12" y2="12" />
+              <line x1="12" y1="16" x2="12.01" y2="16" />
             </svg>
             <span>{{ error }}</span>
           </div>
         </div>
 
         <!-- Collection Items -->
-        <article-card-list
-            v-if="loading || items.length"
-            :loading="loading"
-            :items="items"
-            meta-field="collectedAt"
-            meta-prefix="收藏于 "
-            action-label="取消收藏"
-            @action="item=>remove(item.articleId)"
-        >
-          <template #action-icon>
-            <svg class="w-5 h-5 text-white sm:text-text-secondary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <polyline points="3 6 5 6 21 6"/>
-              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
-            </svg>
+        <article-card-list v-if="loading || items.length" :loading="loading" :items="items" meta-field="collectedAt"
+          meta-prefix="收藏于 " action-label="取消收藏">
+
+          <template #action-dropdown="{ item, close }">
+            <button @click.stop.prevent="handleOpenInNewTab(item); close()"
+              class="w-full px-4 py-2 text-left text-sm text-text hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center gap-2">
+              在新标签页打开
+            </button>
+
+            <div class="border-t border-gray-200 dark:border-gray-700 my-1"></div>
+
+            <button @click.stop.prevent="handleRemove(item); close()"
+              class="w-full px-4 py-2 text-left text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors flex items-center gap-2">
+              取消收藏
+            </button>
           </template>
         </article-card-list>
 
         <!-- Empty State -->
-        <div v-else-if="!items.length && !loading" class="flex flex-col items-center justify-center py-16 sm:py-20 text-center">
-          <div class="w-20 h-20 sm:w-24 sm:h-24 mb-4 sm:mb-6 flex items-center justify-center rounded-full bg-surface-container">
-            <svg class="w-10 h-10 sm:w-12 sm:h-12 text-text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-              <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+        <div v-else-if="!items.length && !loading"
+          class="flex flex-col items-center justify-center py-16 sm:py-20 text-center">
+          <div
+            class="w-20 h-20 sm:w-24 sm:h-24 mb-4 sm:mb-6 flex items-center justify-center rounded-full bg-surface-container">
+            <svg class="w-10 h-10 sm:w-12 sm:h-12 text-text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="1.5">
+              <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
             </svg>
           </div>
           <h2 class="text-lg sm:text-xl font-semibold text-text mb-2">还没有收藏的文章</h2>
@@ -91,18 +89,12 @@
         </div>
 
         <!-- Pagination -->
-        <pagination
-            v-if="items.length && !loading"
-            :current-page="page"
-            :has-previous-page="hasPreviousPage"
-            :has-next-page="hasNextPage"
-            :disabled="loading"
-            @prev-page="prevPage"
-            @next-page="nextPage"
-        />
+        <pagination v-if="items.length && !loading" :current-page="page" :has-previous-page="hasPreviousPage"
+          :has-next-page="hasNextPage" :disabled="loading" @prev-page="prevPage" @next-page="nextPage" />
       </template>
     </div>
   </div>
+
 </template>
 
 <script setup lang="ts">
@@ -110,10 +102,11 @@ import { computed, onMounted } from 'vue';
 import { storeToRefs } from 'pinia';
 import { useCollectionsStore } from '../stores/collections';
 import { useAuthStore } from '../stores/auth';
-
+import { confirm } from '../composables/confirm';
 const collectionsStore = useCollectionsStore();
 const authStore = useAuthStore();
 const { items, page, total, loading, hasNextPage, hasPreviousPage, error } = storeToRefs(collectionsStore);
+
 
 // 抽象的加载方法，供页面其它地方调用
 const loadData = async (targetPage: number, options?: { scrollToTop?: boolean }) => {
@@ -145,24 +138,34 @@ const prevPage = async () => {
   await loadData(Math.max(1, page.value - 1), { scrollToTop: true });
 };
 
-const remove = async (articleId: string) => {
-  try {
-    await collectionsStore.removeCollection(articleId);
-    // 如果当前页没有内容了且有上一页，自动跳转到上一页
-    if (!items.value.length && hasPreviousPage.value) {
-      await loadData(Math.max(1, page.value - 1));
-    }
-  } catch (err) {
-    console.error('取消收藏失败:', err);
+const handleOpenInNewTab = (item: any) => {
+  if (item?.articleId) {
+    const url = `/articles/${item.articleId}`;
+    window.open(url, '_blank');
   }
 };
 
-const handleImageError = (e: Event) => {
-  (e.target as HTMLImageElement).style.display = 'none';
+const handleRemove = async  (item: any) => {
+  if (!item?.articleId) return;
+  try {
+    const confirmed = await confirm({
+      title: '取消收藏',
+      description: '确定要取消收藏这篇文章吗？'
+    });
+    if (confirmed) {
+      await collectionsStore.removeCollection(item.articleId);
+      // 如果当前页没有内容了且有上一页，自动跳转到上一页
+      if (!items.value.length && hasPreviousPage.value) {
+        await loadData(Math.max(1, page.value - 1));
+      }
+    }
+  } catch {
+    // 用户取消，无需操作
+  }
 };
 
 const totalText = computed(() =>
-    (total.value === null || total.value === 0) ? '暂无收藏' : `共 ${total.value} 条收藏`
+  (total.value === null || total.value === 0) ? '暂无收藏' : `共 ${total.value} 条收藏`
 );
 
 onMounted(refresh);
