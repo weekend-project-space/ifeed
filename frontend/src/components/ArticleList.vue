@@ -307,7 +307,7 @@
             <!-- 标题 + 摘要 -->
             <p class="flex-1 min-w-0 text-sm truncate">
               <span class="text-gray-900 dark:text-gray-100 font-medium">{{ item.title }}</span>
-              <span v-if="item.summary" class="text-gray-500 dark:text-gray-400 ml-2">{{ item.summary }}</span>
+<!--              <span v-if="item.summary" class="text-gray-500 dark:text-gray-400 ml-2">{{ item.summary }}</span>-->
             </p>
             <!-- 时间 -->
             <span class="flex-shrink-0 text-xs text-gray-400 dark:text-gray-500 pt-0.5">
