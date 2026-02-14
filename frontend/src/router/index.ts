@@ -16,6 +16,8 @@ import FeedSubscriptionsPage from '../pages/FeedSubscriptionsPage.vue';
 import FeedChannelsPage from '../pages/SubscriptionsListPage.vue';
 import AdminPage from "../pages/AdminPage.vue";
 import UpgradePage from "../pages/UpgradePage.vue";
+import RadarPage from '../pages/RadarPage.vue';
+import RadarTopicPage from '../pages/RadarTopicPage.vue';
 import {useAuthStore} from '../stores/auth';
 
 const router = createRouter({
@@ -91,6 +93,17 @@ const router = createRouter({
                     path: 'admin',
                     name: 'admin',
                     component: AdminPage,
+                },
+                {
+                    path: 'radar',
+                    name: 'radar',
+                    component: RadarPage,
+                },
+                {
+                    path: 'radar/topics/:topicId',
+                    name: 'radarTopic',
+                    component: RadarTopicPage,
+                    props: true
                 }
             ]
         }

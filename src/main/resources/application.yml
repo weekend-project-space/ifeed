@@ -8,7 +8,7 @@ spring:
     password: ${PG_PASSWORD:0123.}
     driver-class-name: org.postgresql.Driver
     hikari:
-      maximum-pool-size: 200
+      maximum-pool-size: 30
       connection-timeout: 30000
   threads:
     virtual:
@@ -106,6 +106,17 @@ app:
       freshness-time-weight: 0.3
       freshness-lambda: 0.5
       similarity-threshold: 0.3
+
+  radar:
+    fixed-delay: PT1H
+    initial-delay: PT1M
+    window-hours: 72
+    similarity-threshold: 0.3
+    neighbors: 10
+    min-cluster-size: 5
+    max-topics: 12
+    snapshot-ttl: PT2H
+    include-global: true
   # 召回
   recall:
     preference:

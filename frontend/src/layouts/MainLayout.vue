@@ -485,6 +485,7 @@ const icons = {
   inbox: 'M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10',
   clock: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z',
   bookmark: 'M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z',
+  radar: 'M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0 M12 12m-6 0a6 6 0 1 0 12 0a6 6 0 1 0 -12 0 M12 12m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0 M12 12l7-2 M19 10a1 1 0 1 1-2 0a1 1 0 0 1 2 0',
   adjustments: 'M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4',
   chevronUp: 'M5 15l7-7 7 7',
   chevronDown: 'M19 9l-7 7-7-7',
@@ -674,6 +675,17 @@ const navSections = computed<NavSection[]>(() => {
     to: { name: 'upgrade' as const },
     activeMatch: (current) => current.name === 'upgrade',
     items: [
+      {
+        id: 'radar',
+        label: '热点雷达',
+        to: { name: 'radar' as const },
+        icon: {
+          stroke: true,
+          paths: [icons.radar],
+          viewBox: '0 0 24 24'
+        },
+        activeMatch: (current) => current.name === 'radar' || current.name === 'radarTopic'
+      },
       {
         id: 'history',
         label: '历史记录',
