@@ -36,6 +36,11 @@ public class ArticleEnhancedService {
 
     private final ArticleEnrichmentService articleEnrichmentService;
 
+    /**
+     * 文章增强，嵌入+文本 方便搜索，导图+大纲方便了解内容细节
+     *
+     * @param article
+     */
     @Transactional
     public void enhanced(Article article) {
         if (aiProviderProperties.isEnabled()) {
@@ -59,6 +64,13 @@ public class ArticleEnhancedService {
             article.setEmbeddingGenerated(true);
             articleRepository.save(article);
         }
+    }
+
+    @Transactional
+    public ArticleEnrichment enrichSync(Article article) {
+        ArticleEnrichment enrichment = articleEnrichmentService.enrichArticle(article, true);
+        aeRepository.save(enrichment);
+        return enrichment;
     }
 
     private String title(Integer feedId) {

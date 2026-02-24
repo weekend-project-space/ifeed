@@ -4,8 +4,10 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.bitmagic.ifeed.api.response.ArticleDetailResponse;
+import org.bitmagic.ifeed.api.response.ArticleEnrichResponse;
 import org.bitmagic.ifeed.api.response.ArticleSummaryResponse;
 import org.bitmagic.ifeed.api.response.UserSubscriptionInsightResponse;
+import org.bitmagic.ifeed.application.embedding.ArticleEnhancedService;
 import org.bitmagic.ifeed.api.util.IdentifierUtils;
 import org.bitmagic.ifeed.application.recommendation.RecRequest;
 import org.bitmagic.ifeed.application.recommendation.RecResponse;
@@ -51,6 +53,7 @@ public class ArticleController {
 
     private final ArticleService articleService;
     private final ArticleEnrichmentService articleEnrichmentService;
+    private final ArticleEnhancedService articleEnhancedService;
     private final UserCollectionService userCollectionService;
     private final RecommendationService recommendationService;
 
@@ -160,6 +163,17 @@ public class ArticleController {
                 tags,
                 collected);
         return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/{articleId}/enrich")
+    public ResponseEntity<ArticleEnrichResponse> enrichOnDemand(@AuthenticationPrincipal UserPrincipal principal,
+                                                                @PathVariable String articleId) {
+        if (principal == null || User.Plan.FREE.equals(principal.getCurrentPlan())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+        var article = articleService.getArticle(IdentifierUtils.parseUuid(articleId, "article id"));
+        var enrichment = articleEnhancedService.enrichSync(article);
+        return ResponseEntity.ok(new ArticleEnrichResponse(enrichment.getAiSummary(), enrichment.getMindMap()));
     }
 
     private ArticleSummaryResponse toSummaryResponse(ArticleSummaryView article) {

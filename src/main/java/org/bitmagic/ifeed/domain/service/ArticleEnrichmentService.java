@@ -53,6 +53,11 @@ public class ArticleEnrichmentService {
      * 为文章生成 AI 增强信息
      */
     public ArticleEnrichment enrichArticle(Article article) {
+        return enrichArticle(article, false);
+    }
+
+
+    public ArticleEnrichment enrichArticle(Article article, boolean genAllTop) {
         Assert.notNull(article, "article must not be null");
         log.debug("开始为文章生成增强信息: id={}, title={}", article.getId(), article.getTitle());
 
@@ -89,7 +94,7 @@ public class ArticleEnrichmentService {
 
         ArticleEnrichment.Rating rating = ArticleEnrichment.Rating.valueOf(finalGrade);
         enrichment.setRating(rating);
-        if (!ArticleEnrichment.Rating.D.equals(rating)) {
+        if (genAllTop ? !ArticleEnrichment.Rating.D.equals(rating) : ArticleEnrichment.Rating.A.equals(rating) || ArticleEnrichment.Rating.B.equals(rating)) {
             // 4. 生成AI增强内容
             log.debug("开始生成AI增强内容: articleId={}", article.getId());
             if (Strings.isBlank(enrichment.getAiSummary())) {
@@ -97,8 +102,9 @@ public class ArticleEnrichmentService {
                 String mindMap = generateMindMap(article);
                 enrichment.setAiSummary(aiSummary);
                 enrichment.setMindMap(mindMap);
-                log.info("文章增强信息生成完成: articleId={}, finalGrade={}, " +
+                log.info("文章增强信息生成完成: [{}] articleId={}, finalGrade={}, " +
                                 "summaryLength={}, hasMindMap={}",
+                        article.getTitle(),
                         article.getId(),
                         finalGrade,
                         aiSummary != null ? aiSummary.length() : 0,
@@ -113,7 +119,6 @@ public class ArticleEnrichmentService {
 
         return enrichment;
     }
-
 
     public ArticleEnrichment getEnrichment(Long articleId) {
         return enrichmentRepository.findById(articleId).orElse(null);

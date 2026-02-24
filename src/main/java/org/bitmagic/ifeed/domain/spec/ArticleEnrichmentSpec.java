@@ -4,7 +4,6 @@ import org.bitmagic.ifeed.domain.model.ArticleEnrichment;
 import org.bitmagic.ifeed.infrastructure.spec.Spec;
 import org.springframework.data.jpa.domain.Specification;
 
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -12,7 +11,7 @@ import java.util.List;
  * @date 2025/12/17
  **/
 public interface ArticleEnrichmentSpec {
-    List<ArticleEnrichment.Rating> TOPS = Arrays.asList(ArticleEnrichment.Rating.values()).stream().filter(rating -> !ArticleEnrichment.Rating.D.equals(rating)).toList();
+    List<ArticleEnrichment.Rating> TOPS = List.of(ArticleEnrichment.Rating.A, ArticleEnrichment.Rating.B, ArticleEnrichment.Rating.C);
 
     static Specification<ArticleEnrichment> toTop() {
         return Spec.<ArticleEnrichment>on()

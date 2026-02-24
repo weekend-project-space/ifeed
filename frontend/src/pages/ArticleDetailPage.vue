@@ -153,7 +153,7 @@
         <div class="max-w-screen-md mx-auto px-6">
           <nav class="flex gap-8" role="tablist">
             <button
-                @click="activeMainTab = 'content'"
+                @click="handleTabSwitch('content')"
                 :class="['py-4 text-sm font-medium transition-colors relative', activeMainTab === 'content' ? 'text-gray-900 dark:text-gray-100' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100']"
                 role="tab"
                 :aria-selected="activeMainTab === 'content'"
@@ -165,7 +165,7 @@
             </button>
             <button
                 v-if="article.summary || article.requiresUpgrade"
-                @click="activeMainTab = 'summary'"
+                @click="handleTabSwitch('summary')"
                 :class="['py-4 text-sm font-medium transition-colors relative', activeMainTab === 'summary' ? 'text-gray-900 dark:text-gray-100' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100']"
                 role="tab"
                 :aria-selected="activeMainTab === 'summary'"
@@ -177,7 +177,7 @@
             </button>
             <button
                 v-if="article.mindMap || article.requiresUpgrade"
-                @click="activeMainTab = 'mindmap'"
+                @click="handleTabSwitch('mindmap')"
                 :class="['py-4 text-sm font-medium transition-colors relative', activeMainTab === 'mindmap' ? 'text-gray-900 dark:text-gray-100' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100']"
                 role="tab"
                 :aria-selected="activeMainTab === 'mindmap'"
@@ -231,7 +231,14 @@
 
         <!-- Summary Tab -->
         <div v-show="activeMainTab === 'summary'" role="tabpanel" class="animate-fade-in">
-          <div v-if="article.summary" class="prose-custom">
+          <div v-if="isEnriching" class="flex flex-col items-center justify-center py-24 gap-4">
+            <svg class="w-8 h-8 animate-spin text-gray-400 dark:text-gray-600" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/>
+            </svg>
+            <p class="text-sm text-gray-500 dark:text-gray-400">AI 正在生成摘要...</p>
+          </div>
+          <div v-else-if="article.summary" class="prose-custom">
             <div
                 class="flex items-start gap-3 p-4 bg-gray-50 dark:bg-gray-900 rounded-lg mb-8 border border-gray-200 dark:border-gray-800">
               <svg class="w-5 h-5 text-gray-600 dark:text-gray-400 flex-shrink-0 mt-0.5" fill="none"
@@ -266,12 +273,19 @@
 
         <!-- Mindmap Tab -->
         <div v-show="activeMainTab === 'mindmap'" role="tabpanel" class="animate-fade-in">
-          <div v-show="mindmapMarkdown"
+          <div v-if="isEnriching" class="flex flex-col items-center justify-center py-24 gap-4">
+            <svg class="w-8 h-8 animate-spin text-gray-400 dark:text-gray-600" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/>
+            </svg>
+            <p class="text-sm text-gray-500 dark:text-gray-400">AI 正在生成思维导图...</p>
+          </div>
+          <div v-else-if="mindmapMarkdown"
                class="rounded-lg overflow-hidden bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800">
             <iframe ref="mindmapFrame" src="/md2mindmap.html" class="w-full"
                     :style="`max-height: 500vh; height: ${mindmapHeight}vh;`" frameborder="0" @load="sendMindmapData"/>
           </div>
-          <div v-if="!mindmapMarkdown" class="text-center py-24">
+          <div v-else class="text-center py-24">
             <div
                 class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 dark:bg-gray-800 mb-4">
               <svg class="w-8 h-8 text-gray-400 dark:text-gray-600" fill="none" stroke="currentColor"
@@ -323,6 +337,7 @@ import {useRecommendArticlesStore} from '../stores/articles/recommendArticles'
 import MediaAttachment from "../components/MediaAttachment.vue";
 import ArticleCardList from "../components/ArticleCardList.vue";
 import {useAuthStore} from "../stores/auth";
+import {md2html} from "../utils/markdown";
 
 interface Props {
   id: string;
@@ -344,6 +359,7 @@ const mindmapFrame = ref<HTMLIFrameElement | null>(null);
 const abortControllerRef = ref<AbortController | null>(null);
 const activeMainTab = ref<'content' | 'summary' | 'mindmap'>('content');
 const mindmapMarkdown = ref('');
+const isEnriching = ref(false);
 const linkCopied = ref(false);
 const lazyLoadObserver = ref<IntersectionObserver | null>(null);
 const headerActionExists = ref(false);
@@ -438,6 +454,33 @@ const handleScroll = throttle(() => {
   }
 
 }, 100);
+
+const handleTabSwitch = async (tab: 'content' | 'summary' | 'mindmap') => {
+  activeMainTab.value = tab;
+  if (tab === 'content') return;
+  if (tab === 'summary' && article.value?.summary) return;
+  if (tab === 'mindmap' && mindmapMarkdown.value) return;
+  if (!authStore.isAuthenticated || authStore.user?.currentPlan === 'FREE') return;
+  if (isEnriching.value) return;
+
+  isEnriching.value = true;
+  try {
+    const res = await articlesStore.enrich(props.id);
+    if (articlesStore.currentArticle) {
+      articlesStore.currentArticle.summary = md2html(res.summary);
+      articlesStore.currentArticle.mindMap = res.mindMap;
+    }
+    mindmapMarkdown.value = res.mindMap ?? '';
+    if (tab === 'mindmap' && mindmapMarkdown.value) {
+      await nextTick();
+      setTimeout(sendMindmapData, 200);
+    }
+  } catch (err) {
+    console.warn('AI 增强获取失败', err);
+  } finally {
+    isEnriching.value = false;
+  }
+};
 
 const loadArticle = async (articleId: string) => {
   if (!articleId) return;
