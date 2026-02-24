@@ -55,6 +55,7 @@ public class ArticleEnhancedService {
                         article.getPublishedAt()
                 );
             }
+            aeRepository.save(enrichment);
             article.setEmbeddingGenerated(true);
             articleRepository.save(article);
         }

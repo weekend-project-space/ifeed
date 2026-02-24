@@ -71,7 +71,7 @@ public class ArticleEnrichmentService {
         if ("D".equals(contentGrade) || "E".equals(contentGrade) || "F".equals(contentGrade)) {
             log.debug("文章质量过低({}级)，跳过AI增强: articleId={}", contentGrade, article.getId());
             enrichment.setRating(ArticleEnrichment.Rating.D);
-            return enrichmentRepository.save(enrichment);
+            return enrichment;
         }
 //        有3/5 在D
         String finalGrade = contentGrade;
