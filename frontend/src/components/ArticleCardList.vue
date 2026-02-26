@@ -79,7 +79,7 @@
         </router-link>
 
         <!-- Action Button (Mobile) -->
-        <div v-if="showAction" class="sm:hidden absolute top-2 right-2 z-20">
+        <div v-if="showAction" class="sm:hidden absolute top-2 right-2 z-10">
           <button
               @click.stop.prevent="onActionClick(item, $event)"
               :aria-expanded="activeDropdown === getItemKey(item)"

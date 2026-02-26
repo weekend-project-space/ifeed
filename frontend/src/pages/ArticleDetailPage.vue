@@ -149,7 +149,7 @@
       </header>
 
       <!-- Tabs Navigation - Clean Style -->
-      <div v-if="article.summary||article.mindMap||article.requiresUpgrade" class=" border-b border-gray-200 dark:border-gray-800 sticky top-0 backdrop-blur-md z-10" >
+      <div v-if="article.summary||article.mindMap||article.requiresUpgrade" class=" border-b  bg-white/95 dark:bg-gray-950/95  border-gray-200 dark:border-gray-800 sticky top-0 backdrop-blur-md z-20" >
         <div class="max-w-screen-md mx-auto px-6">
           <nav class="flex gap-8" role="tablist">
             <button
