@@ -260,7 +260,7 @@ const readFeed = async () => {
 }
 
 onMounted(() => {
-  if (sessionStorage.getItem('origin-list') != route.path) {
+  if (sessionStorage.getItem('origin-list') != route.fullPath) {
     loadData();
     subscriptionStore.fetchInsights();
   }

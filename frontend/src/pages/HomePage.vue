@@ -93,7 +93,7 @@ const prevPage = () => {
 };
 
 onMounted(() => {
-  if (sessionStorage.getItem('origin-list') != route.path) {
+  if (sessionStorage.getItem('origin-list') != route.fullPath) {
     loadRecommendations(currentPage.value);
   }
   sessionStorage.removeItem('origin-list')

@@ -121,7 +121,7 @@ router.beforeEach(async (to: any, from: any) => {
         }
     }
     if (to.name == 'article') {
-        sessionStorage.setItem('origin-list', from.path)
+        sessionStorage.setItem('origin-list', from.fullPath)
     }
     // if (to.name !== 'auth' && !auth.isAuthenticated) {
     //     return {name: 'auth', query: {redirect: to.fullPath}};
