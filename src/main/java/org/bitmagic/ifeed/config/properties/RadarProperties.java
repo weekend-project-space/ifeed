@@ -31,6 +31,6 @@ public class RadarProperties {
     private int maxTopics = 12;
 
     /** Snapshot TTL. */
-    private Duration snapshotTtl = Duration.ofHours(2);
+    private Duration snapshotTtl = Duration.ofHours(24);
 }
 

@@ -23,7 +23,7 @@ export interface RadarItemDto {
   publishedAt?: string;
   tags?: string[];
   score?: number;
-  timeAgo?: string;
+  relativeTime?: string;
 }
 
 export type PageResponseWithMeta<T> = SlimPageResponse<T> & {

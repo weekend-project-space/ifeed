@@ -7,7 +7,7 @@
         isSidebarCollapsed ? 'lg:pl-16' : 'lg:pl-72',
         isHeaderHidden ? '-translate-y-full lg:translate-y-0' : 'translate-y-0',
         !isAtTop ? '' : '',
-        route.name === 'upgrade' ? 'hidden lg:block' : ''
+        route.name === 'home' || route.name === 'article' ? '' : 'hidden lg:block'
       ]">
       <div class="flex items-center justify-between gap-3 px-4 py-3 lg:px-5 lg:py-2">
         <!-- Left: Logo (mobile) + Sidebar toggle (desktop) -->

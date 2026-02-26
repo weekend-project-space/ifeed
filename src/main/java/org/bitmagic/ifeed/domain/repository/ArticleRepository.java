@@ -222,6 +222,9 @@ public interface ArticleRepository extends JpaRepository<Article, Long>, JpaSpec
             """)
     List<ArticleContent> findArticleContentByIds(@Param("ids") Collection<Long> ids);
 
+    @Query("select a.id, a.content from Article a where a.id in (:ids)")
+    List<Object[]> findContentsByArticleIds(@Param("ids") Collection<Long> ids);
+
     @Query("select a.id, a.publishedAt from Article a where a.id in (:ids)")
     List<Object[]> findPublishedAtByIdIn(@Param("ids") Collection<Long> ids);
 

@@ -10,13 +10,14 @@ public record RadarItemResponse(
         String articleId,
         String title,
         String summary,
+        String content,
         String thumbnail,
         String enclosure,
         @JsonProperty("feedTitle") String feedTitle,
         @JsonProperty("publishedAt") String publishedAt,
         List<String> tags,
         double score,
-        @JsonProperty("timeAgo") String timeAgo
+        @JsonProperty("relativeTime") String relativeTime
 ) {
 }
 

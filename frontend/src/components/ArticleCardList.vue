@@ -160,6 +160,7 @@ interface ArticleItem {
   collectedAt?: string;
   readAt?: string;
   timeAgo?: string;
+  relativeTime?: string;
 }
 
 interface Props {
@@ -167,7 +168,7 @@ interface Props {
   loading: boolean;
   showAction?: boolean;
   actionLabel?: string;
-  metaField?: 'collectedAt' | 'readAt' | 'timeAgo' | 'custom';
+  metaField?: 'collectedAt' | 'readAt' | 'timeAgo' | 'relativeTime' | 'custom';
   metaPrefix?: string;
   keyField?: keyof ArticleItem;
   compact?: boolean;
@@ -214,6 +215,7 @@ const getItemKey = (item: ArticleItem): string => {
 
 const getMetaText = (item: ArticleItem): string => {
   if (props.metaField === 'custom') return '';
+  if (item.relativeTime) return item.relativeTime;
   if (item.timeAgo) return item.timeAgo;
   const timestamp = item[props.metaField as keyof ArticleItem] as string | undefined;
   if (!timestamp) return '';

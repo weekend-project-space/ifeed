@@ -54,7 +54,7 @@ public class RadarQueryService {
         ));
     }
 
-    public PageResponse<RadarItemResponse> topicDetail(String snapshotId, UUID topicId, Pageable pageable) {
+    public PageResponse<RadarItemResponse> topicDetail(String snapshotId, UUID topicId, boolean includeContent, Pageable pageable) {
         RadarSnapshot snapshot = snapshotService.resolveSnapshot(snapshotId);
 
         RadarTopic topic = topicRepository.findById(topicId)
@@ -69,18 +69,25 @@ public class RadarQueryService {
         Map<Long, ArticleSummaryView> summaries = articleRepository.findArticleSummariesByIds(articleIds).stream()
                 .collect(Collectors.toMap(ArticleSummaryView::articleId, v -> v));
 
+        Map<Long, String> contents = Collections.emptyMap();
+        if (includeContent && !articleIds.isEmpty()) {
+            contents = articleRepository.findContentsByArticleIds(articleIds).stream()
+                    .collect(Collectors.toMap(row -> (Long) row[0], row -> (String) row[1]));
+        }
+
+        final Map<Long, String> resolvedContents = contents;
         List<RadarItemResponse> items = refs.getContent().stream().map(ref -> {
             ArticleSummaryView view = summaries.get(ref.getArticleId());
             if (view == null) {
                 return null;
             }
-            return toItemResponse(view, ref.getScore());
+            return toItemResponse(view, ref.getScore(), includeContent ? resolvedContents.get(ref.getArticleId()) : null);
         }).filter(Objects::nonNull).toList();
 
         Page<RadarItemResponse> itemPage = new PageImpl<>(items, pageable, refs.getTotalElements());
         Map<String, Object> meta = new HashMap<>();
         meta.put("snapshotId", snapshot.getSnapshotId());
-        meta.put("includeContent", false);
+        meta.put("includeContent", includeContent);
         meta.put("topic", toTopicResponse(topic));
         return PageResponse.from(itemPage, meta);
     }
@@ -108,11 +115,12 @@ public class RadarQueryService {
         }
     }
 
-    private RadarItemResponse toItemResponse(ArticleSummaryView view, double score) {
+    private RadarItemResponse toItemResponse(ArticleSummaryView view, double score, String content) {
         return new RadarItemResponse(
                 view.id().toString(),
                 view.title(),
                 view.summary(),
+                content,
                 view.thumbnail(),
                 view.enclosure(),
                 view.feedTitle(),

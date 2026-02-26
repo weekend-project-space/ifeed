@@ -8,7 +8,6 @@ import org.bitmagic.ifeed.domain.model.Article;
 import org.bitmagic.ifeed.domain.model.value.MixFeedFilterConfig;
 import org.bitmagic.ifeed.domain.repository.ArticleRepository;
 import org.bitmagic.ifeed.domain.repository.MixFeedRepository;
-import org.bitmagic.ifeed.domain.spec.ArticleSpecs;
 import org.bitmagic.ifeed.domain.spec.MixFeedSpecs;
 import org.bitmagic.ifeed.infrastructure.util.TaskUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -64,7 +63,7 @@ public class FeedIngestionScheduler {
 
     @Scheduled(initialDelayString = "${app.rss.fetcher.initial-delay:PT10S}",
             fixedDelayString = "${app.rss.fetcher.fixed-delay:PT30M}")
-    public void refreshFeeds() {
+    public void fetchSaveFeeds() {
         long start = System.currentTimeMillis();
 
         var feedIds = ingestionService.getFeedIds(

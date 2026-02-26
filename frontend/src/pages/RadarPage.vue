@@ -12,7 +12,8 @@
 
       <!-- Controls -->
       <div class="flex items-center justify-between mb-4 sm:mb-6 gap-3">
-        <div class="flex items-center gap-2">
+        <div></div>
+<!--        <div class="flex items-center gap-2">
           <button
             type="button"
             class="px-3 py-1.5 text-sm font-medium rounded-lg transition-colors whitespace-nowrap"
@@ -37,7 +38,7 @@
           >
             24h
           </button>
-        </div>
+        </div>-->
 
         <div class="flex items-center gap-2">
 

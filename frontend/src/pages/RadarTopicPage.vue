@@ -77,7 +77,7 @@
         v-if="topicLoading || items.length"
         :loading="topicLoading"
         :items="items"
-        meta-field="timeAgo"
+        meta-field="relativeTime"
         :show-action="false"
       />
 

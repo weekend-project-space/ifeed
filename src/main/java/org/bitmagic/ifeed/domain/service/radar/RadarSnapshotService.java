@@ -37,7 +37,7 @@ public class RadarSnapshotService {
         }
 
         RadarSnapshot snapshot = snapshotRepository.findById(snapshotId)
-                .orElseThrow(() -> new ApiException(HttpStatus.GONE, "SNAPSHOT_EXPIRED"));
+                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "SNAPSHOT_NOT_FOUND"));
         if (snapshot.getExpiresAt() != null && snapshot.getExpiresAt().isBefore(now)) {
             throw new ApiException(HttpStatus.GONE, "SNAPSHOT_EXPIRED");
         }
