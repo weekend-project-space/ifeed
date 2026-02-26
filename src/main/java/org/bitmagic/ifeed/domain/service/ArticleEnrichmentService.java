@@ -102,7 +102,7 @@ public class ArticleEnrichmentService {
                 String mindMap = generateMindMap(article);
                 enrichment.setAiSummary(aiSummary);
                 enrichment.setMindMap(mindMap);
-                log.info("文章增强信息生成完成: [{}] articleId={}, finalGrade={}, " +
+                log.info("文章增强信息生成完成: title=[{}] articleId={}, finalGrade={}, " +
                                 "summaryLength={}, hasMindMap={}",
                         article.getTitle(),
                         article.getId(),
@@ -112,7 +112,8 @@ public class ArticleEnrichmentService {
             }
 
         } else {
-            log.info("文章增强信息生成完成: articleId={}, finalGrade={}, ",
+            log.info("文章增强信息生成完成: title=[{}] articleId={}, finalGrade={}, ",
+                    article.getTitle(),
                     article.getId(),
                     finalGrade);
         }
