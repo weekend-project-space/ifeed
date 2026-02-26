@@ -25,9 +25,6 @@ public interface FeedRepository extends JpaRepository<Feed, Integer>, JpaSpecifi
             """)
     List<Feed> searchByQuery(@Param("query") String query, Pageable pageable);
 
-    // Discovery feature methods
-    Page<Feed> findByCategory(String category, Pageable pageable);
-
     @Query("""
             select f.category, count(f)
             from Feed f
