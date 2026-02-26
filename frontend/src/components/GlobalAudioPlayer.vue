@@ -392,7 +392,7 @@ const loadState = () => {
         isMinimized.value = state.isMinimized;
       }
 
-      console.log('播放器状态已恢复');
+      // console.log('播放器状态已恢复');
     }
   } catch (error) {
     console.error('加载播放器状态失败:', error);

@@ -20,7 +20,7 @@
 
           <!-- Desktop sidebar toggle -->
           <button type="button"
-            class="hidden lg:flex h-10 w-10 items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition"
+            class="hidden lg:flex h-10 w-10 items-center justify-center rounded-full hover:bg-surface-container/60 transition"
             @click="toggleSidebar">
             <svg class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" :d="icons.menu" />
@@ -42,7 +42,7 @@
             <!-- Source Selector (replaces search icon) -->
             <div class="absolute left-3 top-1/2 -translate-y-1/2" ref="searchSourceRef">
               <button type="button"
-                class="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium transition-colors hover:bg-gray-100 dark:hover:bg-gray-800"
+                class="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium transition-colors hover:bg-surface-container/60"
                 :class="searchFocused ? 'text-primary' : 'text-gray-600 dark:text-gray-400'"
                 @click="toggleSourceDropdown">
                 {{ searchSource === 'owner' ? '订阅' : '发现' }}
@@ -55,13 +55,13 @@
               <div v-if="showSourceDropdown"
                 class="absolute top-full mt-1 left-0 w-20 bg-white dark:bg-gray-900 rounded-lg shadow-lg ring-1 ring-gray-200 dark:ring-gray-800 overflow-hidden z-50">
                 <button type="button"
-                  class="w-full px-3 py-2 text-xs text-left hover:bg-gray-100 dark:hover:bg-gray-800 transition"
+                  class="w-full px-3 py-2 text-xs text-left hover:bg-surface-container/60 transition"
                   :class="{ 'bg-gray-50 dark:bg-gray-850 font-medium': searchSource === 'owner' }"
                   @click="selectSource('owner')">
                   订阅
                 </button>
                 <button type="button"
-                  class="w-full px-3 py-2 text-xs text-left hover:bg-gray-100 dark:hover:bg-gray-800 transition"
+                  class="w-full px-3 py-2 text-xs text-left hover:bg-surface-container/60 transition"
                   :class="{ 'bg-gray-50 dark:bg-gray-850 font-medium': searchSource === 'global' }"
                   @click="selectSource('global')">
                   发现
@@ -72,7 +72,7 @@
             <!-- Search Button -->
             <button type="button"
               class="absolute right-2 top-1/2 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-full transition-colors"
-              :class="search ? 'bg-primary text-primary-foreground hover:bg-primary/90' : 'text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'"
+              :class="search ? 'bg-primary text-primary-foreground hover:bg-primary/90' : 'text-gray-400 hover:bg-surface-container/60'"
               @click="handleSearch">
               <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" :d="icons.search" />
@@ -89,7 +89,7 @@
           <!-- Mobile search + avatar -->
           <div v-show="route.name != 'article'" class="flex items-center gap-2 lg:hidden">
             <button type="button"
-              class="flex h-10 w-10 items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition"
+              class="flex h-10 w-10 items-center justify-center rounded-full hover:bg-surface-container/60 transition"
               @click="openSearchPage">
               <svg class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" :d="icons.search" />
@@ -171,7 +171,7 @@
                 <!-- Menu Items -->
                 <div class="py-1">
                   <RouterLink to="/upgrade"
-                    class="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition">
+                    class="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-surface-container/60 transition">
                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
@@ -180,7 +180,7 @@
                   </RouterLink>
 
                   <RouterLink to="/feeds/channels"
-                    class="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition">
+                    class="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-surface-container/60 transition">
                     <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round"
                         d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 010 .255c-.007.378.138.75.43.99l1.005.828c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 010-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.281z" />
@@ -217,7 +217,7 @@
           <!-- Search Header -->
           <div class="flex items-center gap-3 px-4 py-3 border-b border-gray-200 dark:border-gray-800">
             <button type="button"
-              class="flex h-10 w-10 items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition"
+              class="flex h-10 w-10 items-center justify-center rounded-full hover:bg-surface-container/60 transition"
               @click="closeMobileSearch">
               <svg class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
@@ -259,7 +259,7 @@
                 <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">最近搜索</h3>
                 <div class="space-y-2">
                   <button v-for="term in recentSearches" :key="term" type="button"
-                    class="flex items-center gap-3 w-full px-4 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition"
+                    class="flex items-center gap-3 w-full px-4 py-3 rounded-lg hover:bg-surface-container/60 transition"
                     @click="searchFromHistory(term)">
                     <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" stroke-width="2"
                       viewBox="0 0 24 24">
@@ -306,7 +306,7 @@
                 :class="[
                   isSectionActive(section)
                     ? 'bg-primary/10 dark:bg-primary/20 text-text font-semibold '
-                    : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800']">
+                    : 'text-gray-700 dark:text-gray-300 hover:bg-surface-container/60']">
                 <span>{{ section.title }}</span>
                 <svg class="h-3 w-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
@@ -321,7 +321,7 @@
                       ? 'bg-primary/10 dark:bg-primary/20 text-text font-semibold '
                       : item.danger
                         ? 'text-red-500 hover:bg-red-50 dark:hover:bg-red-950'
-                        : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
+                        : 'text-gray-700 dark:text-gray-300 hover:bg-surface-container/60'
                   ]" :title="isSidebarCollapsed ? item.label : undefined" @click="handleNavItemClick(item)">
                   <span v-if="item.icon" class="flex h-6 w-6 items-center justify-center rounded-lg">
                     <svg class="h-6 w-6" :viewBox="item.icon.viewBox ?? '0 0 24 24'"
@@ -417,17 +417,16 @@
           </svg>
           <span class="text-[10px] font-medium">首页</span>
         </RouterLink>
-
-        <!-- Subscriptions Tab -->
-        <RouterLink :to="{ name: 'feedsSubscriptions' }"
-          class="flex flex-col items-center justify-center flex-1 gap-1 py-2 transition-colors relative"
-          :class="isTabActive('feedsSubscriptions') ? 'text-primary' : 'text-gray-600 dark:text-gray-400'">
+        <!-- Collections Tab -->
+        <RouterLink :to="{ name: 'radar' }"
+                    class="flex flex-col items-center justify-center flex-1 gap-1 py-2 transition-colors"
+                    :class="isTabActive('radar') ? 'text-primary' : 'text-gray-600 dark:text-gray-400'">
           <svg class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" :d="icons.inbox" />
+            <path stroke-linecap="round" stroke-linejoin="round" :d="icons.radar" />
           </svg>
-          <span class="text-[10px] font-medium">订阅</span>
-          <span v-if="hasUnreadSubscriptions" class="absolute top-1 right-1/4 h-2 w-2 rounded-full bg-red-500"></span>
+          <span class="text-[10px] font-medium">雷达</span>
         </RouterLink>
+
 
         <!-- Discover Tab (Center with larger icon) -->
         <RouterLink :to="{ name: 'discover' }"
@@ -440,14 +439,15 @@
           </div>
         </RouterLink>
 
-        <!-- Collections Tab -->
-        <RouterLink :to="{ name: 'collections' }"
-          class="flex flex-col items-center justify-center flex-1 gap-1 py-2 transition-colors"
-          :class="isTabActive('collections') ? 'text-primary' : 'text-gray-600 dark:text-gray-400'">
+        <!-- Subscriptions Tab -->
+        <RouterLink :to="{ name: 'feedsSubscriptions' }"
+                    class="flex flex-col items-center justify-center flex-1 gap-1 py-2 transition-colors relative"
+                    :class="isTabActive('feedsSubscriptions') ? 'text-primary' : 'text-gray-600 dark:text-gray-400'">
           <svg class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" :d="icons.bookmark" />
+            <path stroke-linecap="round" stroke-linejoin="round" :d="icons.inbox" />
           </svg>
-          <span class="text-[10px] font-medium">收藏</span>
+          <span class="text-[10px] font-medium">订阅</span>
+          <span v-if="hasUnreadSubscriptions" class="absolute top-1 right-1/4 h-2 w-2 rounded-full bg-red-500"></span>
         </RouterLink>
 
         <!-- Profile Tab -->
@@ -565,6 +565,17 @@ const baseNavSections: NavSection[] = [
           return current.name === 'home' && view !== 'shorts' && !section;
         }
       },
+      {
+        id: 'radar',
+        label: '热点雷达',
+        to: { name: 'radar' as const },
+        icon: {
+          stroke: true,
+          paths: [icons.radar],
+          viewBox: '0 0 24 24'
+        },
+        activeMatch: (current) => current.name === 'radar' || current.name === 'radarTopic'
+      },
       //
       // {
       //   id: 'feedsSubscriptions',
@@ -675,17 +686,7 @@ const navSections = computed<NavSection[]>(() => {
     to: { name: 'upgrade' as const },
     activeMatch: (current) => current.name === 'upgrade',
     items: [
-      {
-        id: 'radar',
-        label: '热点雷达',
-        to: { name: 'radar' as const },
-        icon: {
-          stroke: true,
-          paths: [icons.radar],
-          viewBox: '0 0 24 24'
-        },
-        activeMatch: (current) => current.name === 'radar' || current.name === 'radarTopic'
-      },
+
       {
         id: 'history',
         label: '历史记录',

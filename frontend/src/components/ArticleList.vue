@@ -5,8 +5,8 @@
     <header class="flex flex-wrap items-center justify-between gap-4 px-4">
       <div class="flex items-center gap-3">
         <template v-if="title">
-          <h1 class="text-xl font-normal text-gray-900 dark:text-gray-100" >
-            {{title}}
+          <h1 class="text-xl font-normal text-gray-900 dark:text-gray-100">
+            {{ title }}
             <small v-text="subtitle"> </small>
           </h1>
           <button
@@ -37,10 +37,11 @@
             :class="btnClass(view === 'magazine')"
             title="杂志视图"
             aria-label="杂志视图">
-          <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" :stroke-width="view === 'magazine' ? 2.5 : 2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h8m-8 4h5m-5 5h8m-8 4h5" />
-            <rect x="15" y="4" width="5" height="5" rx="1" />
-            <rect x="15" y="14" width="5" height="5" rx="1" />
+          <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+               :stroke-width="view === 'magazine' ? 2.5 : 2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h8m-8 4h5m-5 5h8m-8 4h5"/>
+            <rect x="15" y="4" width="5" height="5" rx="1"/>
+            <rect x="15" y="14" width="5" height="5" rx="1"/>
           </svg>
         </button>
         <button
@@ -48,8 +49,10 @@
             :class="btnClass(view === 'card')"
             title="卡片视图"
             aria-label="卡片视图">
-          <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" :stroke-width="view === 'card' ? 2.5 : 2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+          <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+               :stroke-width="view === 'card' ? 2.5 : 2">
+            <path stroke-linecap="round" stroke-linejoin="round"
+                  d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
           </svg>
         </button>
         <button
@@ -57,8 +60,9 @@
             :class="btnClass(view === 'only-title')"
             title="仅标题视图"
             aria-label="仅标题视图">
-          <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" :stroke-width="view === 'only-title' ? 2.5 : 2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M4 8h16M4 16h16" />
+          <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+               :stroke-width="view === 'only-title' ? 2.5 : 2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 8h16M4 16h16"/>
           </svg>
         </button>
       </div>
@@ -86,7 +90,8 @@
             <div class="hidden md:block h-4 w-full bg-surface-container rounded"></div>
             <div class="hidden md:block h-4 w-3/4 bg-surface-container rounded"></div>
           </div>
-          <div class="w-20 h-20 md:w-48 md:h-32 lg:w-56 lg:h-36 bg-surface-container rounded-lg md:rounded-xl flex-shrink-0"></div>
+          <div
+              class="w-20 h-20 md:w-48 md:h-32 lg:w-56 lg:h-36 bg-surface-container rounded-lg md:rounded-xl flex-shrink-0"></div>
         </div>
       </div>
 
@@ -124,8 +129,7 @@
             <article
                 class="flex flex-row items-start gap-3 md:gap-6
              p-4 md:p-5 rounded-2xl transition-all duration-300 cursor-pointer
-             active:bg-gray-50 dark:active:bg-gray-800/50
-             md:hover:bg-gray-50 dark:md:hover:bg-gray-800/50
+             active:bg-surface-container/60  hover:bg-surface-container/60
              focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
             >
               <!-- 文字内容 -->
@@ -210,9 +214,9 @@
                     stroke-linejoin="round"
                     aria-hidden="true"
                 >
-                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
-                  <circle cx="8.5" cy="8.5" r="1.5" />
-                  <polyline points="21 15 16 10 5 21" />
+                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                  <circle cx="8.5" cy="8.5" r="1.5"/>
+                  <polyline points="21 15 16 10 5 21"/>
                 </svg>
               </figure>
             </article>
@@ -230,12 +234,12 @@
               :key="item.id"
               :to="{ name: 'article', params: { id: item.id } }"
               class="group relative flex h-full cursor-pointer flex-col overflow-hidden rounded-xl p-3
-                     active:bg-gray-100 dark:active:bg-gray-700/50
+                     active:bg-surface-container/60 dark:bg-surface-container/60
                      focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
             <article>
               <!-- 原有的 hover 背景效果 -->
               <span
-                  class="pointer-events-none absolute inset-0 origin-center scale-50 rounded-xl h-1/5 bg-primary/5 transition-transform duration-200 ease-out group-hover:scale-[1.02] group-hover:h-full"></span>
+                  class="pointer-events-none absolute inset-0 origin-center scale-50 rounded-xl h-1/5 bg-surface-container transition-transform duration-200 ease-out group-hover:scale-[1.02] group-hover:h-full"></span>
 
               <figure class="relative aspect-video w-full overflow-hidden bg-gray-100 dark:bg-gray-800 rounded-xl">
                 <img
@@ -249,7 +253,8 @@
                 <div
                     v-else
                     class="flex h-full w-full flex-col items-center justify-center text-gray-400 dark:text-gray-600 gap-2">
-                  <svg class="w-12 h-12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                  <svg class="w-12 h-12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
+                       stroke-linecap="round" stroke-linejoin="round">
                     <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
                     <circle cx="8.5" cy="8.5" r="1.5"/>
                     <polyline points="21 15 16 10 5 21"/>
@@ -274,7 +279,8 @@
                   {{ item.summary }}
                 </p>
 
-                <footer v-if="item.tags?.length" class="flex flex-wrap gap-3 mt-auto text-xs text-gray-500 dark:text-gray-500">
+                <footer v-if="item.tags?.length"
+                        class="flex flex-wrap gap-3 mt-auto text-xs text-gray-500 dark:text-gray-500">
                   <button
                       v-for="tag in item.tags"
                       :key="tag"
@@ -297,8 +303,7 @@
               :to="{ name: 'article', params: { id: item.id } }"
               class="flex items-start gap-3 px-4 py-2.5
                      transition-colors cursor-pointer
-                     hover:bg-gray-50 dark:hover:bg-gray-800/50
-                     active:bg-gray-100 dark:active:bg-gray-700/50
+                     active:bg-surface-container/60  hover:bg-surface-container/60 rounded-xl
                      focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
             <!-- 来源 -->
             <span class="flex-shrink-0 w-20 md:w-24 text-xs text-gray-500 dark:text-gray-400 truncate pt-0.5">
@@ -307,7 +312,7 @@
             <!-- 标题 + 摘要 -->
             <p class="flex-1 min-w-0 text-sm truncate">
               <span class="text-gray-900 dark:text-gray-100 font-medium">{{ item.title }}</span>
-<!--              <span v-if="item.summary" class="text-gray-500 dark:text-gray-400 ml-2">{{ item.summary }}</span>-->
+              <!--              <span v-if="item.summary" class="text-gray-500 dark:text-gray-400 ml-2">{{ item.summary }}</span>-->
             </p>
             <!-- 时间 -->
             <span class="flex-shrink-0 text-xs text-gray-400 dark:text-gray-500 pt-0.5">
@@ -321,7 +326,7 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, ref, watch } from 'vue'
+import {reactive, ref, watch} from 'vue'
 
 export interface ArticleListItemProps {
   id: string
@@ -358,7 +363,8 @@ function setView(v: ViewMode) {
   view.value = v
   try {
     localStorage.setItem(STORAGE_KEY, v)
-  } catch {}
+  } catch {
+  }
 }
 
 function btnClass(active: boolean) {

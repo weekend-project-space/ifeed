@@ -1,5 +1,5 @@
 <template>
-  <div class="mx-auto max-w-screen-xl px-0 py-8 sm:px-6">
+  <div class="max-w-screen-lg mx-auto px-4 sm:px-6 py-6 sm:py-8">
 
 
     <article-list
@@ -30,16 +30,16 @@
             <!-- Info & Actions -->
             <div class="flex-1 min-w-0 space-y-3">
               <div>
-                <h1 class="text-2xl font-normal text-gray-900 dark:text-gray-100 mb-1">
+                <h1 class="text-2xl sm:text-3xl font-bold text-text mb-1">
                   {{ channelTitle }}
                 </h1>
-                <p class="text-sm text-gray-600 dark:text-gray-400 ">
+                <p class="text-sm text-text-secondary">
                   {{ detail?.description }} 最近更新 {{ latestUpdateText }} · 最近抓取 {{ lastFetchedText }}
                 </p>
               </div>
 
               <!-- Stats -->
-              <div class="flex flex-wrap gap-4 text-sm text-gray-600 dark:text-gray-400">
+              <div class="flex flex-wrap gap-4 text-sm text-text-secondary">
               <span class="flex items-center gap-1.5" v-if="detail?.sources?.length ?? 0 ">
                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -71,7 +71,7 @@
               <span
                   v-for="sourceId in detail.sources"
                   :key="sourceId"
-                  class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-900 rounded-full"
+                  class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-text-secondary bg-surface-container rounded-full"
               >
                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -86,7 +86,7 @@
               <div class="flex flex-wrap gap-2">
                 <button
                     type="button"
-                    class="px-4 py-2 text-sm font-medium rounded-full transition-colors"
+                    class="px-4 py-2 text-sm font-medium rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     :class="detail?.subscribed
                   ? 'text-secondary bg-secondary/10 hover:bg-secondary/20'
                   : 'text-white bg-secondary hover:bg-secondary/90'"
@@ -100,7 +100,7 @@
                     :href="detail.siteUrl"
                     target="_blank"
                     rel="noopener noreferrer"
-                    class="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
+                    class="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-text-secondary bg-surface-container rounded-full hover:bg-surface-container/70 transition-colors">
                   访问网站
                   <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -108,7 +108,7 @@
                   </svg>
                 </a>
               </div>
-              <div v-if="detail?.url" class="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-500">
+              <div v-if="detail?.url" class="flex items-center gap-2 text-xs text-text-muted">
                 <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/>
@@ -138,7 +138,7 @@
         <div
             v-if="selectedTagDisplay"
             class="mb-6 flex items-center justify-between gap-4 p-3 bg-secondary/5 border border-secondary/20 rounded-lg">
-        <span class="text-sm text-gray-700 dark:text-gray-300">
+        <span class="text-sm text-text-secondary">
           标签筛选：<span class="font-medium text-secondary">{{ selectedTagDisplay }}</span>
         </span>
           <button

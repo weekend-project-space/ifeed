@@ -1,7 +1,7 @@
 <template>
   <div class="">
     <!-- Loading State - Skeleton -->
-    <div v-if="articlesStore.loading" class="max-w-screen-md mx-auto px-3 sm:px-6 py-12 animate-pulse">
+    <div v-if="articlesStore.loading" class="max-w-screen-md  mx-auto px-3 sm:px-6 py-12 animate-pulse">
       <!-- Header Skeleton -->
       <div class="space-y-6 mb-12">
         <div class="h-12 bg-gray-200 dark:bg-gray-800 rounded-lg w-3/4"></div>
@@ -27,7 +27,7 @@
     </div>
 
     <!-- Error State -->
-    <div v-else-if="errorMessage" class="max-w-screen-md mx-auto px-3 sm:px-6 py-12">
+    <div v-else-if="errorMessage" class="max-w-screen-md  mx-auto  px-3 sm:px-6 py-12">
       <div class="rounded-lg bg-red-50 dark:bg-red-900/10 p-6 border border-red-100 dark:border-red-900/20">
         <div class="flex items-start gap-4">
           <div
@@ -51,9 +51,9 @@
     </div>
 
     <!-- Article Content -->
-    <article v-else-if="article">
+    <article v-else-if="article" class="max-w-screen-md  mx-auto ">
       <!-- Header Section - Medium Style -->
-      <header class="max-w-screen-md mx-auto px-3 sm:px-6 pt-12 pb-8">
+      <header class="pt-12 pb-8">
         <!-- Title -->
         <h1 class="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 dark:text-gray-50 leading-tight mb-6 font-serif break-words">
           {{ article.title }}
@@ -107,7 +107,7 @@
         </div>
 
         <!-- Action Bar -->
-        <div class="flex items-center justify-between py-4 border-y border-gray-200 dark:border-gray-800">
+        <div class="flex items-center justify-between py-4 border-y  border-gray-100 dark:border-gray-800">
           <div class="flex items-center gap-3">
             <!-- Tags -->
             <div v-if="article.tags && article.tags.length" class="flex flex-wrap gap-2">
@@ -122,35 +122,34 @@
           <!-- Collect Button -->
           <template v-if="headerActionExists">
             <Teleport to="#header-action">
-              <button class="px-4 py-2 text-sm font-medium rounded-full transition-all inline-flex items-center gap-2"
-                      :class=" 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100 hover:bg-gray-200 dark:hover:bg-gray-700'"
+              <button class="flex h-10 w-10 items-center justify-center text-sm font-medium rounded-full transition-all inline-flex items-center gap-2 text-gray-900 dark:text-gray-100 hover:bg-gray-200 dark:hover:bg-gray-700"
                       @click="toggleCollection">
-                <svg class="w-4 h-4" :class="article.collected ? 'fill-current' : 'fill-none'" stroke="currentColor"
+                <svg class="w-5 h-5" :class="article.collected ? 'fill-current' : 'fill-none'" stroke="currentColor"
                      stroke-width="2" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round"
                         d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/>
                 </svg>
-                {{ article.collected ? '已收藏' : '收藏' }}
               </button>
             </Teleport>
           </template>
-          <button v-else
-                  class="px-4 py-2 text-sm font-medium rounded-full transition-all inline-flex items-center gap-2"
-                  :class="'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100 hover:bg-gray-200 dark:hover:bg-gray-700'"
-                  @click="toggleCollection">
+          <button
+                  class="p-2 text-sm font-medium rounded-full transition-all inline-flex items-center gap-2 text-gray-900 dark:text-gray-100 hover:bg-gray-200 dark:hover:bg-gray-700"
+                  @click="toggleCollection"
+                  title="收藏"
+                  aria-label="收藏">
             <svg class="w-4 h-4" :class="article.collected ? 'fill-current' : 'fill-none'" stroke="currentColor"
                  stroke-width="2" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round"
                     d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/>
             </svg>
-            {{ article.collected ? '已收藏' : '收藏' }}
           </button>
         </div>
       </header>
 
       <!-- Tabs Navigation - Clean Style -->
-      <div v-if="article.summary||article.mindMap||article.requiresUpgrade" class=" border-b  bg-white/95 dark:bg-gray-950/95  border-gray-200 dark:border-gray-800 sticky top-0 backdrop-blur-md z-20" >
-        <div class="max-w-screen-md mx-auto px-6">
+      <div v-if="article.summary||article.mindMap||article.requiresUpgrade"
+           class=" border-b  bg-white/95 dark:bg-gray-950/95  border-gray-200 dark:border-gray-800 sticky top-0 backdrop-blur-md z-20">
+        <div class="max-w-screen-lg mx-auto px-3">
           <nav class="flex gap-8" role="tablist">
             <button
                 @click="handleTabSwitch('content')"
@@ -192,11 +191,12 @@
       </div>
 
       <!-- Tab Content -->
-      <div class="max-w-screen-md mx-auto px-3 sm:px-6 py-12">
+      <div class="py-12">
         <!-- Content Tab -->
         <div v-show="activeMainTab === 'content'" role="tabpanel" class="animate-fade-in">
           <!-- Media Attachment -->
-          <media-attachment v-if="article.enclosure" mode="global"  :url="article.enclosure" :type="article.enclosureType"
+          <media-attachment v-if="article.enclosure" mode="global" :url="article.enclosure"
+                            :type="article.enclosureType"
                             :title="article.title" :artist="article.feedTitle || article.author" :track-id="article.id"
                             :cover-image="article.thumbnail" class="mb-12 rounded-lg overflow-hidden"/>
 
@@ -305,14 +305,14 @@
       </div>
 
       <!-- Recommended Articles Section -->
-      <div v-if="detailsItems.length > 0" class="bg-gray-50 dark:bg-gray-900/50 py-16">
-        <div class="max-w-screen-md mx-auto px-3 sm:px-6">
-          <h2 class="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-8">推荐阅读</h2>
-          <article-card-list :items="detailsItems" :loading="detailsLoading" key-field="id" compact/>
-        </div>
-      </div>
-    </article>
 
+    </article>
+    <div v-if="detailsItems.length > 0" class="bg-gray-50 dark:bg-gray-900/50 py-16">
+      <div class="max-w-screen-md  mx-auto  px-3 sm:px-6">
+        <h2 class="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-8">推荐阅读</h2>
+        <article-card-list :items="detailsItems" :loading="detailsLoading" key-field="id" compact/>
+      </div>
+    </div>
     <!-- Not Found State -->
     <div v-else class="flex flex-col items-center justify-center py-32">
       <div class="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gray-100 dark:bg-gray-800 mb-4">

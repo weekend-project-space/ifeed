@@ -1,12 +1,12 @@
 <template>
   <div class="min-h-screen ">
-    <div class="max-w-screen-xl  mx-auto px-2 sm:px-6 lg:px-8 py-8">
+    <div class="max-w-screen-lg mx-auto px-4 sm:px-6 py-8">
       <!-- Header -->
       <div class="mb-8">
-        <h1 class="text-3xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
+        <h1 class="text-2xl sm:text-3xl font-bold text-text mb-2">
           发现订阅源
         </h1>
-        <p class="text-gray-600 dark:text-gray-400">
+        <p class="text-sm text-text-secondary">
           浏览并订阅你感兴趣的内容源
         </p>
       </div>
@@ -65,7 +65,7 @@
             <rect x="14" y="14" width="7" height="7" rx="1"/>
             <rect x="3" y="14" width="7" height="7" rx="1"/>
           </svg>
-          <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100">
+          <h2 class="text-lg font-semibold text-text">
             分类
           </h2>
         </div>
@@ -94,7 +94,7 @@
       <!-- Feed Grid -->
       <div>
         <div class="flex items-center justify-between mb-6">
-          <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100">
+          <h2 class="text-lg font-semibold text-text">
             {{ selectedCategoryName }}
           </h2>
           <div class="flex items-center gap-2">
@@ -189,7 +189,7 @@
                   feed.subscribed
                     ? 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
                     : 'bg-secondary text-white hover:bg-secondary/90',
-                  'w-full py-2.5 rounded-full font-medium text-sm transition-colors disabled:opacity-50'
+                  'w-full py-2.5 rounded-full font-medium text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
                 ]"
             >
               <span v-if="subscribing === feed.id" class="flex items-center justify-center gap-2">
@@ -244,7 +244,7 @@
                         feed.subscribed
                           ? 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
                           : 'bg-secondary text-white hover:bg-secondary/90',
-                        'px-6 py-2 rounded-full font-medium text-sm transition-colors disabled:opacity-50 flex-shrink-0'
+                        'px-6 py-2 rounded-full font-medium text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0'
                       ]"
                   >
                     <span v-if="subscribing === feed.id" class="flex items-center gap-2">

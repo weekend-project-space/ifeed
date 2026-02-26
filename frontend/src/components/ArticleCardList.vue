@@ -5,7 +5,7 @@
     <div v-for="i in 3" :key="i" class="flex flex-col sm:flex-row gap-3 sm:gap-4 animate-pulse">
       <div :class="[
         'bg-surface-container rounded-lg flex-shrink-0',
-        compact ? 'w-full sm:w-24 h-20 sm:h-16' : 'w-full sm:w-52 h-40 sm:h-32'
+        compact ? 'w-full sm:w-24 h-24 sm:h-16' : 'w-full sm:w-52 h-40 sm:h-32'
       ]"></div>
       <div class="flex-1 space-y-2 sm:space-y-3 py-1 sm:py-2">
         <div :class="['bg-surface-container rounded w-3/4', compact ? 'h-3 sm:h-4' : 'h-4 sm:h-5']"></div>
@@ -18,7 +18,7 @@
     <article v-for="item in items" :key="getItemKey(item)">
       <div
           :class="[
-            'group relative sm:flex sm:items-start hover:bg-surface-container/50 -mx-2 px-2 rounded-lg transition-colors',
+            'group relative sm:flex sm:items-start hover:bg-surface-container/60 -mx-2 px-2 rounded-lg transition-colors',
             compact ? 'py-1.5' : 'py-2'
           ]"
       >
@@ -112,7 +112,7 @@
               @click.stop.prevent="onActionClick(item, $event)"
               :aria-expanded="activeDropdown === getItemKey(item)"
               :class="[
-                'opacity-0 group-hover:opacity-100 hover:bg-surface-container rounded-full transition-all relative z-20',
+                'opacity-0 group-hover:opacity-100 hover:bg-surface-container/60 rounded-full transition-all relative z-20',
                 compact ? 'p-1.5' : 'p-2'
               ]"
               :aria-label="actionLabel"

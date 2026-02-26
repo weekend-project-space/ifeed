@@ -1,12 +1,12 @@
 <template>
   <div class="min-h-screen">
-    <div class="max-w-screen-lg mx-auto px-4 sm:px-6 py-5 sm:py-8">
+    <div class="max-w-screen-lg mx-auto px-3 sm:px-6 py-4 sm:py-6">
 
       <!-- Header -->
-      <div class="flex items-start justify-between mb-7 sm:mb-9">
+      <div class="flex items-start justify-between mb-6 sm:mb-8">
         <div>
-          <h1 class="text-2xl sm:text-3xl font-bold tracking-tight text-text">热点雷达</h1>
-          <p class="text-sm text-text-secondary mt-1">
+          <h1 class="text-2xl sm:text-3xl font-bold text-text">热点雷达</h1>
+          <p class="text-sm text-text-secondary mt-3">
             过去 {{ windowHoursText }}h
             <span v-if="generatedAtText" class="before:content-['·'] before:mx-1.5">{{ generatedAtText }}</span>
           </p>
@@ -103,6 +103,7 @@
           </div>
         </router-link>
 
+        <div v-if="hasPreviousPage || hasNextPage" class="pt-3">
           <pagination
             :current-page="page"
             :has-previous-page="hasPreviousPage"
@@ -111,6 +112,7 @@
             @prev-page="prevPage"
             @next-page="nextPage"
           />
+        </div>
       </div>
 
       <!-- Empty State -->
