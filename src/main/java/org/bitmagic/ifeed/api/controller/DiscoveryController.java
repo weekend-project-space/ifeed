@@ -41,7 +41,7 @@ public class DiscoveryController {
             @RequestParam(required = false) String category,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
-            @RequestParam(defaultValue = "popular") String sort) {
+            @RequestParam(defaultValue = "active") String sort) {
 
         // Validate and limit size
         size = Math.min(Math.max(size, 1), 100);

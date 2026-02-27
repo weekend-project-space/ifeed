@@ -2,19 +2,16 @@ package org.bitmagic.ifeed.infrastructure.feed.fetch;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
+import okhttp3.ResponseBody;
 import org.bitmagic.ifeed.config.properties.RssFetcherProperties;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Component;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
-
-import static org.bitmagic.ifeed.config.properties.RssFetcherProperties.Cache.CACHE_NAME;
 
 @Slf4j
 @Component
@@ -22,14 +19,12 @@ import static org.bitmagic.ifeed.config.properties.RssFetcherProperties.Cache.CA
 public class DefaultHttpFetcher implements HttpFetcher {
 
     private static final int MAX_FEED_BYTES = 10 * 1024 * 1024; // 10MB
-
     private static final String DEFAULT_USER_AGENT = "Mozilla/5.0 (compatible; RssBot/1.0)";
 
-    private final HttpClient rssHttpClient;
+    private final OkHttpClient rssHttpClient;
     private final RssFetcherProperties properties;
 
     @Override
-    @Cacheable(cacheNames = CACHE_NAME, key = "#feedUrl", unless = "#result == null")
     public byte[] fetch(String feedUrl) throws IOException, InterruptedException {
         int attempt = 0;
         IOException lastError = null;
@@ -38,24 +33,26 @@ public class DefaultHttpFetcher implements HttpFetcher {
             attempt++;
             try {
                 log.debug("Fetching RSS (attempt {}/{}): {}", attempt, properties.getMaxRetries(), feedUrl);
-                HttpRequest request = HttpRequest.newBuilder()
-                        .uri(URI.create(feedUrl))
-                        .timeout(properties.getReadTimeout())
+                Request request = new Request.Builder()
+                        .url(feedUrl)
                         .header("Accept", "application/rss+xml, application/atom+xml, application/xml, text/xml, */*")
                         .header("User-Agent", DEFAULT_USER_AGENT)
-                        .GET()
                         .build();
 
-                HttpResponse<InputStream> response = rssHttpClient.send(request, HttpResponse.BodyHandlers.ofInputStream());
-                if (response.statusCode() >= 400) {
-                    throw new IOException("HTTP " + response.statusCode());
+                try (Response response = rssHttpClient.newCall(request).execute()) {
+                    if (!response.isSuccessful()) {
+                        throw new IOException("HTTP " + response.code());
+                    }
+                    ResponseBody body = response.body();
+                    byte[] bytes = readBodySafe(body);
+                    log.debug("Fetched {} bytes from {}", bytes.length, feedUrl);
+                    return bytes;
                 }
 
-                byte[] bytes = readAllBytesSafe(response.body());
-                log.debug("Fetched {} bytes from {}", bytes.length, feedUrl);
-                return bytes;
-
             } catch (IOException e) {
+                if (isNonRetryable(e)) {
+                    throw e;
+                }
                 lastError = e;
                 log.warn("Attempt {}/{} failed for {}: {}", attempt, properties.getMaxRetries(), feedUrl, e.toString());
                 if (attempt < properties.getMaxRetries()) {
@@ -67,18 +64,15 @@ public class DefaultHttpFetcher implements HttpFetcher {
         throw new IOException("Exhausted retries for " + feedUrl, lastError);
     }
 
-    private void backoff(int attempt) throws InterruptedException {
-        long delay = 1000L * (1L << (attempt - 1));
-        try {
-            Thread.sleep(delay);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw e;
-        }
+    private boolean isNonRetryable(IOException e) {
+        String msg = e.getMessage();
+        return msg != null && msg.startsWith("HTTP 4");
     }
 
-    private byte[] readAllBytesSafe(InputStream inputStream) throws IOException {
-        try (InputStream is = inputStream; ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+    private byte[] readBodySafe(ResponseBody body) throws IOException {
+        if (body == null) return new byte[0];
+        try (InputStream is = body.byteStream();
+             ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
             byte[] buffer = new byte[8192];
             int len;
             long total = 0;
@@ -90,6 +84,16 @@ public class DefaultHttpFetcher implements HttpFetcher {
                 }
             }
             return baos.toByteArray();
+        }
+    }
+
+    private void backoff(int attempt) throws InterruptedException {
+        long delay = Math.min(1000L * (1L << (attempt - 1)), 8000);
+        try {
+            Thread.sleep(delay);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw e;
         }
     }
 }

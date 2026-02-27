@@ -518,7 +518,7 @@ const loadFeeds = async () => {
     if (searchQuery.value.trim()) {
       params.q = searchQuery.value.trim();
     } else {
-      params.sort = 'popular';
+      // params.sort = 'popular';
     }
     
     if (selectedCategory.value !== 'all') {

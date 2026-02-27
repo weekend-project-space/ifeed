@@ -105,7 +105,7 @@ public class FeedIngestionScheduler {
         long duration = (System.currentTimeMillis() - start) / 1000;
         log.info("Feed refresh completed: {} success, {} failed, {}s",
                 fetchSuccess.get(), feedIds.size() - fetchSuccess.get(), duration);
-        refreshMixFeeds();
+//        refreshMixFeeds();
     }
 
 
