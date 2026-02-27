@@ -51,7 +51,7 @@
     </div>
 
     <!-- Article Content -->
-    <article v-else-if="article" class="max-w-screen-md  mx-auto ">
+    <article v-else-if="article" class="max-w-screen-md  mx-auto  px-3 sm:px-6 ">
       <!-- Header Section - Medium Style -->
       <header class="pt-12 pb-8">
         <!-- Title -->
@@ -283,7 +283,7 @@
           <div v-else-if="mindmapMarkdown"
                class="rounded-lg overflow-hidden bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800">
             <iframe ref="mindmapFrame" src="/md2mindmap.html" class="w-full"
-                    :style="`max-height: 500vh; height: ${mindmapHeight}vh;`" frameborder="0" @load="sendMindmapData"/>
+                    :style="`max-height: 500rem; height: ${mindmapHeight}rem;`" frameborder="0" @load="sendMindmapData"/>
           </div>
           <div v-else class="text-center py-24">
             <div
@@ -373,7 +373,7 @@ const article = computed(() => currentArticle.value);
 const mindmapHeight = computed(() => {
   if (!mindmapMarkdown.value) return 50;
   const lines = mindmapMarkdown.value.split('\n').length;
-  return Math.max(50, Math.min(lines * 1.5, 500));
+  return Math.max(50, Math.min(lines * 1.1, 500));
 });
 
 // 计算阅读时间
