@@ -307,12 +307,6 @@
       <!-- Recommended Articles Section -->
 
     </article>
-    <div v-if="detailsItems.length > 0" class="bg-gray-50 dark:bg-gray-900/50 py-16">
-      <div class="max-w-screen-md  mx-auto  px-3 sm:px-6">
-        <h2 class="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-8">推荐阅读</h2>
-        <article-card-list :items="detailsItems" :loading="detailsLoading" key-field="id" compact/>
-      </div>
-    </div>
     <!-- Not Found State -->
     <div v-else class="flex flex-col items-center justify-center py-32">
       <div class="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gray-100 dark:bg-gray-800 mb-4">
@@ -324,6 +318,13 @@
       <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">未找到文章</h3>
       <p class="text-gray-500 dark:text-gray-400">该文章可能已被删除或不存在</p>
     </div>
+    <div v-if="detailsItems.length > 0" class="bg-gray-50 dark:bg-gray-900/50 py-16">
+      <div class="max-w-screen-md  mx-auto  px-3 sm:px-6">
+        <h2 class="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-8">推荐阅读</h2>
+        <article-card-list :items="detailsItems" :loading="detailsLoading" key-field="id" compact/>
+      </div>
+    </div>
+
   </div>
 </template>
 
