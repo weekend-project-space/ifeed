@@ -14,9 +14,12 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Component;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * @author yangrd
@@ -33,12 +36,13 @@ public class JpaItemProvider implements ItemProvider {
     @Cacheable(cacheNames = "ITEMS", key = "#userContext.userId() + '_' + #type.name() + '_' + #k", unless = "#result == null")
     @Override
     public List<ScoredId> ls(UserContext userContext, ScoredLsType type, Integer k) {
+        Instant from = Instant.now().minus(Duration.ofDays(7));
         long currentTimeMillis = System.currentTimeMillis();
-        int pageSize = k / 3 * 2;
-        PageRequest pageable = ScoredLsType.LATEST.equals(type) ? PageRequest.of(0, pageSize, Sort.by(Sort.Order.desc("id"))) : PageRequest.ofSize(pageSize);
-        List<ArticleEnrichment> content = new ArrayList<>(articleEnrichmentRepository.findByUser(userContext.getUserId(), pageable).getContent());
-        if (ScoredLsType.RANDOM.equals(type) || ScoredLsType.HOT.equals(type)) {
-            content.addAll(articleEnrichmentRepository.findByUser(null, PageRequest.ofSize(k / 3)).getContent());
+        int pageSize = k / 2;
+        PageRequest pageable = ScoredLsType.LATEST.equals(type) ? PageRequest.of(0, pageSize, Sort.by(Sort.Order.desc("id"))) : PageRequest.of(0, pageSize, Sort.by(Sort.Order.asc("rating")));
+        List<ArticleEnrichment> content = new ArrayList<>(articleEnrichmentRepository.findByUser(userContext.getUserId(), from, pageable).getContent());
+        if (content.isEmpty()) {
+            content.addAll(articleEnrichmentRepository.findByUser(null, from, pageable).getContent());
         }
         log.debug("{} time: {}", type.name(), System.currentTimeMillis() - currentTimeMillis);
         List<ScoredId> scoredIds = content.stream().map(article -> new ScoredId(article.getId(), ScoreMerger.gradeToScore(article.getRating().name()), Map.of("rating", article.getRating()))).toList();

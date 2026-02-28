@@ -9,6 +9,8 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.Instant;
+
 /**
  * @author yangrd
  * @date 2025/12/15
@@ -23,10 +25,11 @@ public interface ArticleEnrichmentRepository extends JpaRepository<ArticleEnrich
                 null ,
                 e.createdAt,
                 e.updatedAt)
-            from Article a
-            right join ArticleEnrichment  e on e.id = a.id
+            from ArticleEnrichment  e
+            left join Article a on e.id = a.id
             where 
                 e.rating != 'D'
+                 and e.createdAt >= coalesce(:start, e.createdAt)
                 and (:ownerId is null or exists (
                     select 1
                     from UserSubscription us
@@ -37,10 +40,11 @@ public interface ArticleEnrichmentRepository extends JpaRepository<ArticleEnrich
               ))
             """, countQuery = """
             select count(a)
-            from Article a
-            right join ArticleEnrichment  e on e.id = a.id
+            from ArticleEnrichment  e
+            left join Article a on e.id = a.id
             where  
                  e.rating != 'D'
+                and e.createdAt >= coalesce(:start, e.createdAt)
                 and (:ownerId is null or exists (
                     select 1
                     from UserSubscription us
@@ -52,5 +56,6 @@ public interface ArticleEnrichmentRepository extends JpaRepository<ArticleEnrich
             """)
     Page<ArticleEnrichment> findByUser(
             @Param("ownerId") Integer ownerId,
+            @Param("start") Instant start,
             Pageable pageable);
 }
