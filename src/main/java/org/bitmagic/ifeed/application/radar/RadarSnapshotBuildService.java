@@ -2,6 +2,8 @@ package org.bitmagic.ifeed.application.radar;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.util.Strings;
 import org.bitmagic.ifeed.config.properties.RadarProperties;
 import org.bitmagic.ifeed.domain.model.Article;
 import org.bitmagic.ifeed.domain.model.radar.RadarSnapshot;
@@ -11,6 +13,8 @@ import org.bitmagic.ifeed.domain.record.ArticleEmbeddingRecord;
 import org.bitmagic.ifeed.domain.repository.ArticleEmbeddingRepository;
 import org.bitmagic.ifeed.domain.repository.ArticleRepository;
 import org.bitmagic.ifeed.domain.service.radar.RadarTopicNamingService;
+import org.bitmagic.ifeed.infrastructure.ai.NSFWService;
+import org.bitmagic.ifeed.infrastructure.ai.rerank.RerankerModel;
 import org.bitmagic.ifeed.infrastructure.util.JSON;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -31,6 +35,7 @@ public class RadarSnapshotBuildService {
     private final ArticleEmbeddingRepository articleEmbeddingRepository;
     private final RadarSnapshotSaveService saveService;
     private final RadarTopicNamingService topicNamingService;
+    private final NSFWService nsfwService;
 
     public void build() {
         log.info("Starting radar snapshot build");
@@ -209,7 +214,9 @@ public class RadarSnapshotBuildService {
                     .map(Article::getTitle)
                     .toList();
             var named = topicNamingService.nameTopic(titles);
-
+            if (nsfwService.isNSFW(Strings.join(titles, ','))) {
+                continue;
+            }
             RadarTopic topic = new RadarTopic();
             topic.setTopicId(topicId);
             topic.setSnapshotId(snapshotId);
@@ -249,7 +256,7 @@ public class RadarSnapshotBuildService {
         double dot = 0.0, normA = 0.0, normB = 0.0;
         int len = Math.min(a.length, b.length);
         for (int k = 0; k < len; k++) {
-            dot  += (double) a[k] * b[k];
+            dot += (double) a[k] * b[k];
             normA += (double) a[k] * a[k];
             normB += (double) b[k] * b[k];
         }

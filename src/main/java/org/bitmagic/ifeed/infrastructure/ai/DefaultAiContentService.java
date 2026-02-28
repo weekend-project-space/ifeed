@@ -8,6 +8,7 @@ import org.bitmagic.ifeed.infrastructure.StopWorldHolder;
 import org.bitmagic.ifeed.infrastructure.TermUtils;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -16,7 +17,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Slf4j
-@Service
+@Component
 @RequiredArgsConstructor
 public class DefaultAiContentService implements AiContentService {
 

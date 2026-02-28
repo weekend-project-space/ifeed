@@ -2,6 +2,7 @@ package org.bitmagic.ifeed.domain.service;
 
 
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.util.Strings;
 import org.bitmagic.ifeed.config.PromptProvider;
 import org.bitmagic.ifeed.domain.model.Article;
@@ -15,7 +16,6 @@ import org.bitmagic.ifeed.infrastructure.score.ContentQualityEvaluator;
 import org.bitmagic.ifeed.infrastructure.score.ScoreMerger;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
 
 import java.util.Map;
@@ -248,12 +248,7 @@ public class ArticleEnrichmentService {
      * 截断内容（避免超过 token 限制）
      */
     private String truncateContent(String content, int maxLength) {
-        if (content == null) {
-            return "";
-        }
-        return content.length() > maxLength
-                ? content.substring(0, maxLength) + "..."
-                : content;
+        return StringUtils.truncate(content, maxLength);
     }
 
     public static String removeImagesAndLinks(String md) {

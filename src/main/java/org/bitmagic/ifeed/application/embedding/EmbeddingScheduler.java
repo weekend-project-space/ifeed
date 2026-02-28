@@ -55,8 +55,8 @@ public class EmbeddingScheduler {
     public void documentEmbedding() {
         log.info("begin init article embedding");
         try {
-            Stream.iterate(0, i -> i + 1).limit(20).forEach(i -> {
-                articleRepository.findAll(ArticleSpecs.noEmbeddingSpec(), PageRequest.of(i, 100)).stream().parallel().forEach(article -> {
+            Stream.iterate(0, i -> i + 1).limit(5).forEach(i -> {
+                articleRepository.findAll(ArticleSpecs.noEmbeddingSpec(), PageRequest.of(i, 300)).stream().parallel().forEach(article -> {
                     try {
                         articleEnhancedService.enhanced(article);
                         log.debug("init embedding :{}", article.getTitle());
