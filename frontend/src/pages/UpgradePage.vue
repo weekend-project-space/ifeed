@@ -359,41 +359,53 @@ const standardFeatures = [
   '订阅 300 个 RSS 源',
   '每天 AI 处理 30 篇文章',
   '创建 2 个订阅源',
-  '2 个 Webhook 推送',
   '智能摘要和关键信息提取',
-  '内容分类和标签管理'
+  '内容分类和标签管理',
+  '文章思维导图',
+  '语义搜索',
+  // '2 个 Webhook 推送',       // TODO: Webhook 功能未实现
 ];
 
 const proFeatures = [
   '订阅 2000 个 RSS 源',
   '每天 AI 处理 100 篇文章',
   '创建 6 个订阅源',
-  '6 个 Webhook 推送',
-  'API 访问权限',
+  '智能推荐（多路召回+重排）',
+  '文章思维导图',
+  '语义搜索',
   '优先客户支持',
-  '多语言翻译',
-  '自定义 AI 提示词',
-  '导出功能（PDF/Markdown）'
+  // '每天 AI 处理 100 篇文章', // TODO: 后端未实现每日配额限制
+  // '6 个 Webhook 推送',        // TODO: Webhook 功能未实现
+  // 'API 访问权限',             // TODO: 未实现
+  // '多语言翻译',               // TODO: 未实现
+  // '自定义 AI 提示词',         // TODO: 未实现
+  // '导出功能（PDF/Markdown）',  // TODO: 未实现
 ];
 
 const freeFeatures = [
   '订阅 60 个 RSS 源',
   '每天 AI 处理 3 篇文章',
-  '1 个 Webhook 推送',
   '基础摘要功能',
-  '标准更新频率（每 2 小时）'
+  '内容分类和标签',
+  '关键词搜索',
+  // '1 个 Webhook 推送',       // TODO: Webhook 功能未实现
+  // '标准更新频率（每 2 小时）', // TODO: 更新频率未按套餐区分
 ];
 
 const comparisonData = [
   {feature: 'RSS 订阅源数量', free: '60 个', standard: '300 个', pro: '2000 个'},
   {feature: 'AI 处理文章数/天', free: '3 篇', standard: '30 篇', pro: '100 篇'},
   {feature: '创建订阅源', free: '—', standard: '2 个', pro: '6 个'},
-  {feature: 'Webhook 推送', free: '1 个', standard: '2 个', pro: '6 个'},
-  {feature: '智能摘要', free: '✓', standard: '✓', pro: '✓'},
-  {feature: '关键信息提取', free: '—', standard: '✓', pro: '✓'},
-  {feature: '多语言翻译', free: '—', standard: '—', pro: '✓'},
-  {feature: 'API 访问', free: '—', standard: '—', pro: '✓'},
-  {feature: '自定义 AI 提示词', free: '—', standard: '—', pro: '✓'}
+  {feature: '智能摘要', free: '基础', standard: '✓', pro: '✓'},
+  {feature: '内容分类和标签', free: '✓', standard: '✓', pro: '✓'},
+  {feature: '文章思维导图', free: '—', standard: '✓', pro: '✓'},
+  {feature: '搜索', free: '关键词', standard: '关键词 + 语义', pro: '关键词 + 语义'},
+  {feature: '智能推荐', free: '基础', standard: '基础', pro: '多路召回+重排'},
+  // {feature: 'AI 处理文章数/天', free: '3 篇', standard: '30 篇', pro: '100 篇'},  // TODO: 未实现
+  // {feature: 'Webhook 推送', free: '1 个', standard: '2 个', pro: '6 个'},          // TODO: 未实现
+  // {feature: '多语言翻译', free: '—', standard: '—', pro: '✓'},                     // TODO: 未实现
+  // {feature: 'API 访问', free: '—', standard: '—', pro: '✓'},                       // TODO: 未实现
+  // {feature: '自定义 AI 提示词', free: '—', standard: '—', pro: '✓'},               // TODO: 未实现
 ];
 
 const selectedPlanName = computed(() => {

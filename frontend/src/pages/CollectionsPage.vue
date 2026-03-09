@@ -56,7 +56,7 @@
         </div>
 
         <!-- Collection Items -->
-        <article-card-list v-if="loading || items.length" :loading="loading" :items="items" meta-field="collectedAt"
+        <article-card-list v-if="loading || items.length" :loading="loading" show-action :items="items" meta-field="collectedAt"
           meta-prefix="收藏于 " action-label="取消收藏">
 
           <template #action-dropdown="{ item, close }">

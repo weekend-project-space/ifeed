@@ -115,8 +115,8 @@
         </div>
       </div>
 
-      <div v-else-if="view === 'social'" class="max-w-xl mx-auto divide-y divide-gray-200 dark:divide-gray-800">
-        <div v-for="i in 8" :key="`tl-skel-${i}`" class="animate-pulse px-4 py-4 space-y-3">
+      <div v-else-if="view === 'social'" class="max-w-screen-md mx-auto">
+        <div v-for="i in 8" :key="`tl-skel-${i}`" class="animate-pulse px-4 py-5 space-y-3">
           <div class="flex items-center gap-3">
             <div class="w-8 h-8 rounded-full bg-surface-container flex-shrink-0"></div>
             <div class="h-3 w-24 bg-surface-container rounded"></div>
@@ -354,20 +354,18 @@
               v-for="item in items"
               :key="item.id"
               :to="{ name: 'article', params: { id: item.id } }"
-              class="relative block px-4 py-5 transition-colors cursor-pointer rounded-xl
+              class="social-divider relative block px-4 py-5 transition-colors cursor-pointer rounded-xl
                      hover:bg-surface-container/40
-                     after:absolute after:bottom-0 after:left-4 after:right-4
-                     after:h-px after:bg-gray-200/60 dark:after:bg-gray-800/60
                      last:after:hidden
                      focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
           >
             <article class="flex gap-3">
               <!-- 头像 -->
-              <img v-if="item.feedAvatar"
+              <img v-if="item.feedAvatar && !avatarErrorMap[item.id]"
                    :src="item.feedAvatar"
                    :alt="item.feedTitle"
                    class="flex-shrink-0 w-8 h-8 rounded-full object-cover mt-0.5"
-                   @error="(e: Event) => (e.target as HTMLImageElement).style.display = 'none'"
+                   @error="avatarErrorMap[item.id] = true"
               />
               <div v-else
                    class="flex-shrink-0 w-8 h-8 rounded-full bg-primary/10 text-primary
@@ -485,11 +483,15 @@ function btnClass(active: boolean) {
 }
 
 const thumbErrorMap = reactive<Record<string, boolean>>({})
+const avatarErrorMap = reactive<Record<string, boolean>>({})
 
 watch(() => props.items, (newItems) => {
   const present = new Set(newItems.map(i => i.id))
   Object.keys(thumbErrorMap).forEach(k => {
     if (!present.has(k)) delete thumbErrorMap[k]
+  })
+  Object.keys(avatarErrorMap).forEach(k => {
+    if (!present.has(k)) delete avatarErrorMap[k]
   })
 })
 </script>
@@ -503,5 +505,20 @@ watch(() => props.items, (newItems) => {
 .fade-enter-from,
 .fade-leave-to {
   opacity: 0
+}
+
+.social-divider::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 1rem;
+  right: 1rem;
+  height: 1px;
+  background: rgb(229 231 235 / 0.6);
+}
+
+:root.dark .social-divider::after,
+.dark .social-divider::after {
+  background: rgb(31 41 55 / 0.6);
 }
 </style>

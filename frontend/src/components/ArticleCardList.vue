@@ -144,7 +144,7 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  showAction: true,
+  showAction: false,
   actionLabel: '选项',
   metaField: 'readAt',
   metaPrefix: '',
