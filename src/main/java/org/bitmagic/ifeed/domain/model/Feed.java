@@ -37,6 +37,9 @@ public class Feed {
     @Column(name = "title", length = 255)
     private String title;
 
+    @Column(name = "icon")
+    private String icon;
+
     @Column(name = "description", length = 255)
     private String description;
 

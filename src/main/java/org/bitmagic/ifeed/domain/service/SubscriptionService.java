@@ -2,6 +2,7 @@ package org.bitmagic.ifeed.domain.service;
 
 import lombok.RequiredArgsConstructor;
 import org.bitmagic.ifeed.api.request.SubscriptionRequest;
+import org.bitmagic.ifeed.config.Const;
 import org.bitmagic.ifeed.domain.model.Feed;
 import org.bitmagic.ifeed.domain.model.MixFeed;
 import org.bitmagic.ifeed.domain.model.SourceType;
@@ -180,6 +181,7 @@ public class SubscriptionService {
                 .url(feedUrl)
                 .siteUrl(siteUrl)
                 .title(title)
+                .icon(Const.FAVICON_TEMPLATE.formatted(extractHost(siteUrl)))
                 .build();
 
         return feedRepository.save(feed);

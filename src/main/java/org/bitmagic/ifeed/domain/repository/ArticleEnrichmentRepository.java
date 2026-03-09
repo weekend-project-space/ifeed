@@ -1,7 +1,6 @@
 package org.bitmagic.ifeed.domain.repository;
 
 import org.bitmagic.ifeed.domain.model.ArticleEnrichment;
-import org.bitmagic.ifeed.domain.record.ArticleSummaryView;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;

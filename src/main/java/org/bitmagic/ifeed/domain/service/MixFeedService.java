@@ -199,6 +199,7 @@ public class MixFeedService {
                 article.getLink(),
                 article.getSummary(),
                 article.getFeed() != null ? article.getFeed().getTitle() : null,
+                article.getFeed() != null ? article.getFeed().getIcon() : null,
                 article.getPublishedAt(),
                 article.getTags(),
                 article.getThumbnail(),

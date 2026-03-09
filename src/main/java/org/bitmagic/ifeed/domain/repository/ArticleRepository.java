@@ -31,6 +31,7 @@ public interface ArticleRepository extends JpaRepository<Article, Long>, JpaSpec
                 a.link,
                 a.summary,
                 f.title,
+                f.icon,
                 a.publishedAt,
                 a.tags,
                 a.thumbnail,
@@ -81,6 +82,7 @@ public interface ArticleRepository extends JpaRepository<Article, Long>, JpaSpec
                 a.link,
                 a.summary,
                 f.title,
+                f.icon,
                 a.publishedAt,
                 a.tags,
                 a.thumbnail,
@@ -172,8 +174,8 @@ public interface ArticleRepository extends JpaRepository<Article, Long>, JpaSpec
               and (coalesce(a.category, '') <> '')
             """)
     Long countOwnerWithin(@Param("ownerId") Integer ownerId,
-                                                 @Param("fromTs") Instant fromTs,
-                                                 @Param("toTs") Instant toTs);
+                          @Param("fromTs") Instant fromTs,
+                          @Param("toTs") Instant toTs);
 
     /**
      * Fetch raw tag JSON strings for later in-memory aggregation, for articles
@@ -201,6 +203,7 @@ public interface ArticleRepository extends JpaRepository<Article, Long>, JpaSpec
                 a.link,
                 a.summary,
                 f.title,
+                f.icon,
                 a.publishedAt,
                 a.tags,
                 a.thumbnail,

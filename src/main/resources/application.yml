@@ -108,10 +108,10 @@ app:
       similarity-threshold: 0.3
 
   radar:
-    fixed-delay: PT1H
+    fixed-delay: PT6H
     initial-delay: PT1M
     window-hours: 72
-    similarity-threshold: 0.3
+    similarity-threshold: 0.7
     neighbors: 10
     min-cluster-size: 5
     max-topics: 12

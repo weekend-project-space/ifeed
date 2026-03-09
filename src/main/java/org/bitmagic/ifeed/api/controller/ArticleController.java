@@ -188,6 +188,7 @@ public class ArticleController {
                 article.thumbnail(),
                 article.enclosure(),
                 resolveFeedTitle(article.feedTitle()),
+                article.feedAvatar(),
                 formatTimestamp(article.publishedAt()),
                 tags,
                 DateUtils.formatRelativeTime(publishedAt));

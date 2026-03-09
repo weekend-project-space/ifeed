@@ -122,14 +122,13 @@ public class FeedController {
     private FeedDetailResponse toFeedResponse(FeedService.FeedDetail detail, boolean subscribed) {
         var feed = detail.feed();
         var failureCount = feed.getFailureCount() == null ? 0 : feed.getFailureCount();
-        var host = extractHost(feed.getSiteUrl());
         return new FeedDetailResponse(
                 feed.getUid().toString(),
                 feed.getTitle(),
                 feed.getDescription(),
                 feed.getUrl(),
                 feed.getSiteUrl(),
-                "https://favicon.im/%s".formatted(host),
+                feed.getIcon(),
                 feed.getLastFetched(),
                 feed.getLastUpdated(),
                 detail.articleCount(),
@@ -157,24 +156,5 @@ public class FeedController {
                 0, // MixFeed doesn't have failureCount
                 null, // MixFeed doesn't have fetchError
                 "MIX_FEED", mixFeed.config().getSourceFeeds().values());
-    }
-
-    private String extractHost(String url) {
-        if (url == null || url.isBlank()) {
-            return null;
-        }
-        try {
-            var uri = new URI(url.trim());
-            if (uri.getHost() != null && !uri.getHost().isBlank()) {
-                return uri.getHost();
-            }
-            var path = uri.getPath();
-            if (path != null && !path.isBlank()) {
-                return path;
-            }
-        } catch (URISyntaxException ignored) {
-            return url;
-        }
-        return url;
     }
 }

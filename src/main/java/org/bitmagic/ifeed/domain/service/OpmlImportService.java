@@ -7,6 +7,7 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.bitmagic.ifeed.api.request.OpmlImportConfirmRequest;
 import org.bitmagic.ifeed.api.response.*;
+import org.bitmagic.ifeed.config.Const;
 import org.bitmagic.ifeed.domain.model.Feed;
 import org.bitmagic.ifeed.domain.model.SourceType;
 import org.bitmagic.ifeed.domain.model.User;
@@ -32,7 +33,7 @@ import java.util.stream.Stream;
 @RequiredArgsConstructor
 public class OpmlImportService {
 
-    private static final String FAVICON_TEMPLATE = "https://favicon.im/%s";
+    private static final String FAVICON_TEMPLATE = Const.FAVICON_TEMPLATE;
 
     private final FeedRepository feedRepository;
     private final UserSubscriptionRepository userSubscriptionRepository;
@@ -82,8 +83,8 @@ public class OpmlImportService {
         Set<Integer> existingFeedIds = feedMap.values().stream()
                 .map(Feed::getId).collect(Collectors.toSet());
         Set<Integer> subscribedFeedIds = userSubscriptionRepository.findAll(
-                UserSubscriptionSpecs.userAndSourceTypeAndSourceIdsActive(user.getId(), SourceType.FEED,
-                        existingFeedIds))
+                        UserSubscriptionSpecs.userAndSourceTypeAndSourceIdsActive(user.getId(), SourceType.FEED,
+                                existingFeedIds))
                 .stream().map(UserSubscription::getSourceId).collect(Collectors.toSet());
 
         long usedQuota = userSubscriptionRepository.countByUserAndActiveTrue(user);
@@ -127,8 +128,8 @@ public class OpmlImportService {
                 .collect(Collectors.toSet());
 
         Set<Integer> subscribedFeedIds = userSubscriptionRepository.findAll(
-                UserSubscriptionSpecs.userAndSourceTypeAndSourceIdsActive(user.getId(), SourceType.FEED,
-                        existingFeedIds))
+                        UserSubscriptionSpecs.userAndSourceTypeAndSourceIdsActive(user.getId(), SourceType.FEED,
+                                existingFeedIds))
                 .stream()
                 .map(UserSubscription::getSourceId)
                 .collect(Collectors.toSet());
@@ -155,6 +156,7 @@ public class OpmlImportService {
                     .url(url)
                     .siteUrl(siteUrl)
                     .title(title)
+                    .icon(FAVICON_TEMPLATE.formatted(extractHost(siteUrl)))
                     .build();
 
             newFeeds.add(feed);

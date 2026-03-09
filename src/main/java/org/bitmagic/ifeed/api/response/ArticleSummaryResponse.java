@@ -12,8 +12,9 @@ public record ArticleSummaryResponse(
         String summary,
         String thumbnail,
         String enclosure,
-        @JsonProperty("feedTitle") String feedTitle,
-        @JsonProperty("publishedAt") String publishedAt,
+        String feedTitle,
+        String feedAvatar,
+        String publishedAt,
         List<String> tags,
-        @JsonProperty("timeAgo") String timeAgo) {
+        String timeAgo) {
 }
