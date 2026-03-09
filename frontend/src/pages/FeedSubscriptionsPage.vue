@@ -253,7 +253,7 @@ const clearCategoryFilter = () => {
 
 const readFeed = async () => {
   const canRead = subscriptionsStore.items.filter(item => !item.isRead && item.feedId == currentFeedId.value).length
-  if (canRead > 0) {
+  if (canRead > 0 && currentFeedId.value) {
     await readFeedStore.recordFeedRead(currentFeedId.value);
     await subscriptionsStore.fetchSubscriptions();
   }

@@ -358,24 +358,59 @@
           class="lg:hidden border-b border-gray-200 dark:border-gray-800 py-3">
           <div class="overflow-x-scroll scrollbar-hide px-4" style="-webkit-overflow-scrolling: touch;">
             <div class="flex gap-5 py-1">
+              <!-- 全部 -->
+              <RouterLink
+                :to="{ name: 'feedsSubscriptions' }"
+                class="flex flex-col items-center gap-1.5 flex-shrink-0 w-[3rem] group">
+                <div class="relative">
+                  <div
+                    class="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold ring-2 transition-all"
+                    :class="!route.query.feedId
+                      ? 'bg-primary text-primary-foreground ring-primary ring-offset-2'
+                      : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 ring-transparent group-hover:ring-gray-300 dark:group-hover:ring-gray-700'">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+                    </svg>
+                  </div>
+                </div>
+                <span class="text-[11px] text-center text-gray-700 dark:text-gray-300 leading-tight">全部</span>
+              </RouterLink>
+
               <RouterLink v-for="subscription in subscriptionsStore.items" :key="subscription.feedId"
                 :to="{ name: 'feedsSubscriptions', query: { feedId: subscription.feedId } }"
                 class="flex flex-col items-center gap-1.5 flex-shrink-0 w-[3rem] group">
                 <!-- Avatar with Badge -->
                 <div class="relative">
-                  <img v-if="subscription.avatar" :src="subscription.avatar" :alt="getSubscriptionLabel(subscription)"
+                  <img v-if="subscription.avatar && !subscriptionAvatarErrors[subscription.feedId]"
+                    :src="subscription.avatar" :alt="getSubscriptionLabel(subscription)"
                     class="w-9 h-9 rounded-full object-cover ring-2 transition-all"
-                    :class="!subscription.isRead ? 'ring-primary ring-offset-2' : 'ring-transparent group-hover:ring-gray-300 dark:group-hover:ring-gray-700'" />
+                    :class="route.query.feedId === subscription.feedId
+                      ? 'ring-primary ring-offset-2'
+                      : !subscription.isRead
+                        ? 'ring-primary ring-offset-2'
+                        : 'ring-transparent group-hover:ring-gray-300 dark:group-hover:ring-gray-700'"
+                    @error="subscriptionAvatarErrors[subscription.feedId] = true" />
                   <div v-else
                     class="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold ring-2 transition-all"
                     :class="[
                       getSubscriptionAccent(subscription),
-                      !subscription.isRead ? 'ring-primary ring-offset-2' : 'ring-transparent group-hover:ring-gray-300 dark:group-hover:ring-gray-700'
+                      route.query.feedId === subscription.feedId
+                        ? 'ring-primary ring-offset-2'
+                        : !subscription.isRead
+                          ? 'ring-primary ring-offset-2'
+                          : 'ring-transparent group-hover:ring-gray-300 dark:group-hover:ring-gray-700'
                     ]">
                     {{ getSubscriptionInitials(subscription) }}
                   </div>
-                  <!-- Unread Indicator -->
-                  <span v-if="!subscription.isRead"
+                  <!-- Selected Indicator -->
+                  <span v-if="route.query.feedId === subscription.feedId"
+                    class="absolute bottom-0 right-0 w-3 h-3 bg-primary rounded-full ring-2 ring-white dark:ring-gray-950 flex items-center justify-center">
+                    <svg class="w-2 h-2 text-white" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                    </svg>
+                  </span>
+                  <!-- Unread Indicator (only when not selected) -->
+                  <span v-else-if="!subscription.isRead"
                     class="absolute bottom-0 right-0 w-3 h-3 bg-primary rounded-full ring-2 ring-white dark:ring-gray-950"></span>
                   <!-- Error Indicator -->
                   <span v-if="hasSubscriptionError(subscription)"
@@ -388,7 +423,10 @@
                 </div>
                 <!-- Label -->
                 <span
-                  class="text-[11px] text-center text-gray-700 dark:text-gray-300 line-clamp-2 w-full leading-tight">
+                  class="text-[11px] text-center line-clamp-2 w-full leading-tight transition-colors"
+                  :class="route.query.feedId === subscription.feedId
+                    ? 'text-primary font-medium'
+                    : 'text-gray-700 dark:text-gray-300'">
                   {{ getSubscriptionLabel(subscription) }}
                 </span>
               </RouterLink>
@@ -469,7 +507,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
+import { computed, onMounted, onUnmounted, reactive, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import type { RouteLocationNormalizedLoaded, RouteLocationRaw } from 'vue-router';
 import { storeToRefs } from 'pinia';
@@ -517,6 +555,7 @@ const isAtTop = ref(true);
 const lastScrollY = ref(0);
 const mobileSearchInput = ref<HTMLInputElement | null>(null);
 const recentSearches = ref<string[]>(JSON.parse(localStorage.getItem('recent-searches') || '[]'));
+const subscriptionAvatarErrors = reactive<Record<string, boolean>>({});
 
 type NavIcon = {
   paths: string[];

@@ -56,6 +56,17 @@
           </svg>
         </button>
         <button
+            @click="setView('social')"
+            :class="btnClass(view === 'social')"
+            title="社交视图"
+            aria-label="社交视图">
+          <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+               :stroke-width="view === 'social' ? 2.5 : 2">
+            <path stroke-linecap="round" stroke-linejoin="round"
+                  d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+          </svg>
+        </button>
+        <button
             @click="setView('only-title')"
             :class="btnClass(view === 'only-title')"
             title="仅标题视图"
@@ -65,6 +76,7 @@
             <path stroke-linecap="round" stroke-linejoin="round" d="M4 8h16M4 16h16"/>
           </svg>
         </button>
+
       </div>
     </header>
 
@@ -100,6 +112,22 @@
           <div class="h-3 w-20 md:w-24 bg-surface-container rounded flex-shrink-0"></div>
           <div class="h-4 flex-1 bg-surface-container rounded"></div>
           <div class="h-3 w-12 bg-surface-container rounded flex-shrink-0"></div>
+        </div>
+      </div>
+
+      <div v-else-if="view === 'social'" class="max-w-xl mx-auto divide-y divide-gray-200 dark:divide-gray-800">
+        <div v-for="i in 8" :key="`tl-skel-${i}`" class="animate-pulse px-4 py-4 space-y-3">
+          <div class="flex items-center gap-3">
+            <div class="w-8 h-8 rounded-full bg-surface-container flex-shrink-0"></div>
+            <div class="h-3 w-24 bg-surface-container rounded"></div>
+            <div class="h-3 w-12 bg-surface-container rounded"></div>
+          </div>
+          <div class="space-y-2 pl-11">
+            <div class="h-4 w-4/5 bg-surface-container rounded"></div>
+            <div class="h-3 w-full bg-surface-container rounded"></div>
+            <div class="h-3 w-2/3 bg-surface-container rounded"></div>
+            <div v-if="i % 2 === 0" class="h-48 w-full bg-surface-container rounded-xl mt-2"></div>
+          </div>
         </div>
       </div>
     </section>
@@ -138,7 +166,7 @@
                 <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-1 md:gap-2">
                   <h3
                       class="text-base font-normal text-gray-900 dark:text-gray-100
-                   line-clamp-2 flex-1 md:pr-4"
+                   line-clamp-1 md:line-clamp-2 flex-1 md:pr-4"
                   >
                     {{ item.title }}
                   </h3>
@@ -154,8 +182,8 @@
 
                 <!-- 摘要 -->
                 <p
-                    class="hidden md:block text-sm leading-relaxed text-gray-600 dark:text-gray-400
-                 line-clamp-2"
+                    class="text-sm leading-relaxed text-gray-600 dark:text-gray-400
+                 line-clamp-2 md:line-clamp-4"
                 >
                   {{ item.summary }}
                 </p>
@@ -296,7 +324,7 @@
         </div>
 
         <!-- Title only view -->
-        <div v-else key="view-only-title">
+        <div v-else-if="view === 'only-title'" key="view-only-title">
           <router-link
               v-for="item in items"
               :key="item.id"
@@ -312,12 +340,90 @@
             <!-- 标题 + 摘要 -->
             <p class="flex-1 min-w-0 text-sm truncate">
               <span class="text-gray-900 dark:text-gray-100 font-medium">{{ item.title }}</span>
-              <!--              <span v-if="item.summary" class="text-gray-500 dark:text-gray-400 ml-2">{{ item.summary }}</span>-->
             </p>
             <!-- 时间 -->
             <span class="flex-shrink-0 text-xs text-gray-400 dark:text-gray-500 pt-0.5">
               {{ item.timeAgo }}
             </span>
+          </router-link>
+        </div>
+
+        <!-- Social view (X / Reddit style) -->
+        <div v-else key="view-social" class="max-w-screen-md mx-auto">
+          <router-link
+              v-for="item in items"
+              :key="item.id"
+              :to="{ name: 'article', params: { id: item.id } }"
+              class="relative block px-4 py-5 transition-colors cursor-pointer rounded-xl
+                     hover:bg-surface-container/40
+                     after:absolute after:bottom-0 after:left-4 after:right-4
+                     after:h-px after:bg-gray-200/60 dark:after:bg-gray-800/60
+                     last:after:hidden
+                     focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+          >
+            <article class="flex gap-3">
+              <!-- 头像 -->
+              <img v-if="item.feedAvatar"
+                   :src="item.feedAvatar"
+                   :alt="item.feedTitle"
+                   class="flex-shrink-0 w-8 h-8 rounded-full object-cover mt-0.5"
+                   @error="(e: Event) => (e.target as HTMLImageElement).style.display = 'none'"
+              />
+              <div v-else
+                   class="flex-shrink-0 w-8 h-8 rounded-full bg-primary/10 text-primary
+                          flex items-center justify-center text-xs font-bold select-none mt-0.5">
+                {{ item.feedTitle?.charAt(0)?.toUpperCase() }}
+              </div>
+
+              <!-- 主体 -->
+              <div class="flex-1 min-w-0 space-y-1.5">
+                <!-- 来源 + 时间 -->
+                <div class="flex items-center gap-2 text-xs">
+                  <span class="text-gray-500 dark:text-gray-400 truncate">{{ item.feedTitle }}</span>
+                  <span class="text-gray-400 dark:text-gray-600 flex-shrink-0">&middot;</span>
+                  <span class="text-gray-500 dark:text-gray-500 flex-shrink-0 text-xs">{{ item.timeAgo }}</span>
+                </div>
+
+                <!-- 标题 -->
+                <h3 class="text-[15px] font-normal leading-snug text-gray-900 dark:text-gray-100">
+                  {{ item.title }}
+                </h3>
+
+                <!-- 摘要 -->
+                <p v-if="item.summary"
+                   class="text-sm leading-relaxed text-gray-600 dark:text-gray-400"
+                   :class="item.thumbnail && !thumbErrorMap[item.id] ? 'line-clamp-3' : 'line-clamp-6'">
+                  {{ item.summary }}
+                </p>
+
+                <!-- 图片 -->
+                <figure
+                    v-if="item.thumbnail && !thumbErrorMap[item.id]"
+                    class="mt-2 aspect-video overflow-hidden rounded-xl border border-gray-200 dark:border-gray-700/50
+                           bg-gray-100 dark:bg-gray-800">
+                  <img
+                      :src="item.thumbnail"
+                      :alt="item.title"
+                      loading="lazy"
+                      decoding="async"
+                      class="w-full h-full object-cover"
+                      @error="thumbErrorMap[item.id] = true"
+                  />
+                </figure>
+
+                <!-- 标签 -->
+                <div v-if="item.tags?.length" class="flex flex-wrap gap-x-3 gap-y-1 pt-1">
+                  <button
+                      v-for="tag in item.tags"
+                      :key="tag"
+                      type="button"
+                      @click.stop.prevent="emit('select-tag', tag)"
+                      class="text-xs text-primary hover:underline transition-colors">
+                    #{{ tag }}
+                  </button>
+                </div>
+              </div>
+            </article>
           </router-link>
         </div>
       </transition>
@@ -333,6 +439,7 @@ export interface ArticleListItemProps {
   title: string
   summary: string
   feedTitle: string
+  feedAvatar?: string
   timeAgo: string
   tags?: string[]
   thumbnail?: string
@@ -340,11 +447,12 @@ export interface ArticleListItemProps {
 
 const props = withDefaults(defineProps<{
   title: string
-  subtitle: string
+  subtitle?: string
   items: ArticleListItemProps[]
   loading?: boolean
   emptyMessage?: string
 }>(), {
+  subtitle: '',
   loading: false,
   emptyMessage: '暂无文章，添加订阅后即可看到推荐内容。'
 })
@@ -354,7 +462,7 @@ const emit = defineEmits<{
   'select-tag': [tag: string]
 }>()
 
-type ViewMode = 'magazine' | 'card' | 'only-title'
+type ViewMode = 'magazine' | 'card' | 'only-title' | 'social'
 const STORAGE_KEY = 'article_feed_view_mode'
 const saved = localStorage.getItem(STORAGE_KEY) as ViewMode | null
 const view = ref<ViewMode>(saved ?? 'magazine')

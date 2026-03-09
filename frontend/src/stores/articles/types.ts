@@ -12,6 +12,7 @@ export interface ArticleDto {
     enclosureType?: string;
     feedId?: string;
     feedTitle?: string;
+    feedAvatar?: string;
     author?: string;
     publishedAt?: string;
     tags?: string[];
@@ -26,6 +27,7 @@ export interface ArticleListItem {
     thumbnail?: string;
     enclosure?: string;
     feedTitle: string;
+    feedAvatar: string;
     publishedAt?: string;
     timeAgo: string;
     tags: string[];
@@ -54,6 +56,7 @@ export const normalizeArticle = (article: ArticleDto): ArticleListItem => {
         thumbnail: article.thumbnail,
         enclosure: article.enclosure,
         feedTitle,
+        feedAvatar: article.feedAvatar ?? '',
         publishedAt,
         timeAgo: formatRelativeTime(publishedAt ?? Date.now()),
         tags: Array.from(new Set(tags)).slice(0, 6),
