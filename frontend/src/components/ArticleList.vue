@@ -416,7 +416,7 @@
                       :key="tag"
                       type="button"
                       @click.stop.prevent="emit('select-tag', tag)"
-                      class="text-xs text-primary hover:underline transition-colors">
+                      class="text-xs text-gray-500 dark:text-gray-400  hover:underline transition-colors">
                     #{{ tag }}
                   </button>
                 </div>
