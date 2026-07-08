@@ -7,6 +7,7 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.bitmagic.ifeed.api.request.OpmlImportConfirmRequest;
 import org.bitmagic.ifeed.api.response.*;
+import org.bitmagic.ifeed.config.Const;
 import org.bitmagic.ifeed.domain.model.Feed;
 import org.bitmagic.ifeed.domain.model.SourceType;
 import org.bitmagic.ifeed.domain.model.User;
@@ -32,8 +33,7 @@ import java.util.stream.Stream;
 @RequiredArgsConstructor
 public class OpmlImportService {
 
-    private static final String FAVICON_TEMPLATE = "https://favicon.im/%s";
-    private static final int USER_SUBSCRIPTION_QUOTA = 500;
+    private static final String FAVICON_TEMPLATE = Const.FAVICON_TEMPLATE;
 
     private final FeedRepository feedRepository;
     private final UserSubscriptionRepository userSubscriptionRepository;
@@ -75,20 +75,20 @@ public class OpmlImportService {
 
         // 2. 批量查询已存在的 Feed
         Set<String> feedUrls = unique.stream().map(o -> o.getXmlUrl().trim())
-                .collect(java.util.stream.Collectors.toSet());
+                .collect(Collectors.toSet());
         Map<String, Feed> feedMap = feedRepository.findAll(FeedSpecs.urlIn(feedUrls)).stream()
-                .collect(java.util.stream.Collectors.toMap(Feed::getUrl, f -> f));
+                .collect(Collectors.toMap(Feed::getUrl, f -> f));
 
         // 3. 批量查询用户已订阅的 FeedId
         Set<Integer> existingFeedIds = feedMap.values().stream()
-                .map(Feed::getId).collect(java.util.stream.Collectors.toSet());
+                .map(Feed::getId).collect(Collectors.toSet());
         Set<Integer> subscribedFeedIds = userSubscriptionRepository.findAll(
-                UserSubscriptionSpecs.userAndSourceTypeAndSourceIdsActive(user.getId(), SourceType.FEED,
-                        existingFeedIds))
-                .stream().map(UserSubscription::getSourceId).collect(java.util.stream.Collectors.toSet());
+                        UserSubscriptionSpecs.userAndSourceTypeAndSourceIdsActive(user.getId(), SourceType.FEED,
+                                existingFeedIds))
+                .stream().map(UserSubscription::getSourceId).collect(Collectors.toSet());
 
         long usedQuota = userSubscriptionRepository.countByUserAndActiveTrue(user);
-        int remainingQuota = (int) Math.max(0, USER_SUBSCRIPTION_QUOTA - usedQuota);
+        int remainingQuota = (int) Math.max(0, user.getCurrentPlan().getMaxSubscriptions() - usedQuota);
 
         List<OpmlPreviewFeedResponse> feeds = unique.stream()
                 .map(o -> toPreviewFeed(o, feedMap.get(o.getXmlUrl().trim()), subscribedFeedIds.contains(
@@ -128,8 +128,8 @@ public class OpmlImportService {
                 .collect(Collectors.toSet());
 
         Set<Integer> subscribedFeedIds = userSubscriptionRepository.findAll(
-                UserSubscriptionSpecs.userAndSourceTypeAndSourceIdsActive(user.getId(), SourceType.FEED,
-                        existingFeedIds))
+                        UserSubscriptionSpecs.userAndSourceTypeAndSourceIdsActive(user.getId(), SourceType.FEED,
+                                existingFeedIds))
                 .stream()
                 .map(UserSubscription::getSourceId)
                 .collect(Collectors.toSet());
@@ -156,6 +156,7 @@ public class OpmlImportService {
                     .url(url)
                     .siteUrl(siteUrl)
                     .title(title)
+                    .icon(FAVICON_TEMPLATE.formatted(extractHost(siteUrl)))
                     .build();
 
             newFeeds.add(feed);
@@ -171,7 +172,7 @@ public class OpmlImportService {
         List<OpmlImportSkippedResponse> skipped = new ArrayList<>();
 
         long usedQuota = userSubscriptionRepository.countByUserAndActiveTrue(user);
-        int remainingQuota = (int) Math.max(0, USER_SUBSCRIPTION_QUOTA - usedQuota);
+        int remainingQuota = (int) Math.max(0, user.getCurrentPlan().getMaxSubscriptions() - usedQuota);
         int imported = 0;
 
         for (String url : selectedUrls) {

@@ -14,7 +14,6 @@
 
     <!-- 文章列表 -->
     <article-list
-        title="智能推荐"
         subtitle="实时为你刷新阅读灵感"
         :items="items"
         :loading="articlesLoading"
@@ -94,7 +93,7 @@ const prevPage = () => {
 };
 
 onMounted(() => {
-  if (sessionStorage.getItem('origin-list') != route.path) {
+  if (sessionStorage.getItem('origin-list') != route.fullPath) {
     loadRecommendations(currentPage.value);
   }
   sessionStorage.removeItem('origin-list')

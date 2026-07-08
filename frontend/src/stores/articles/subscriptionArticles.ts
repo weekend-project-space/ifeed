@@ -41,6 +41,7 @@ export const useSubscriptionArticlesStore = defineStore('subscriptionArticles', 
         sort?: string;
         tags?: string | null;
         category?: string | null
+        feedId?:string | null
     }) => {
         loading.value = true;
         error.value = null;
@@ -60,7 +61,8 @@ export const useSubscriptionArticlesStore = defineStore('subscriptionArticles', 
                         size: nextSize,
                         sort: override?.sort ?? 'publishedAt,desc',
                         tags: nextTag ?? undefined,
-                        category: nextCategory ?? undefined
+                        category: nextCategory ?? undefined,
+                        feedId:override.feedId
                     }
                 }
             );

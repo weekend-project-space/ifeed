@@ -45,7 +45,7 @@ public class MixFeedService {
         if (!StringUtils.hasText(name)) {
             throw new ApiException(HttpStatus.BAD_REQUEST, "MixFeed name is required");
         }
-        checkMixFeedCountLimit(user.getId());
+        checkMixFeedCountLimit(user);
         String filterConfigJson = serializeFilterConfig(filterConfig);
         MixFeed mixFeed = MixFeed.builder()
                 .user(user)
@@ -161,7 +161,7 @@ public class MixFeedService {
      * Get filtered articles for a MixFeed based on user's own Feed subscriptions
      */
     @Transactional(readOnly = true)
-    public Page<ArticleSummaryView> getFilteredArticles(UUID mixFeedUid, Integer userId, Pageable pageable) {
+    public Page<ArticleSummaryView> getFilteredArticles(UUID mixFeedUid, Set<String> tags, Integer userId, Pageable pageable) {
         MixFeed mixFeed = getById(mixFeedUid);
 
         // Check access
@@ -184,7 +184,7 @@ public class MixFeedService {
         Instant toDate = config.getDateRange() != null ? config.getDateRange().getTo() : null;
 
         // Build Specification
-        Specification<Article> spec = MixFeedSpecs.mixFeedArticles(sourceFeedIds, fromDate, toDate, includeKeywords, excludeKeywords);
+        Specification<Article> spec = MixFeedSpecs.mixFeedArticles(sourceFeedIds, fromDate, toDate, tags, includeKeywords, excludeKeywords);
 
         // Execute query and map results
         return articleRepository.findAll(spec, pageable).map(this::toSummaryView);
@@ -199,6 +199,7 @@ public class MixFeedService {
                 article.getLink(),
                 article.getSummary(),
                 article.getFeed() != null ? article.getFeed().getTitle() : null,
+                article.getFeed() != null ? article.getFeed().getIcon() : null,
                 article.getPublishedAt(),
                 article.getTags(),
                 article.getThumbnail(),
@@ -215,11 +216,11 @@ public class MixFeedService {
         return 0;
     }
 
-    private void checkMixFeedCountLimit(Integer userId) {
-        long count = mixFeedRepository.count(MixFeedSpecs.toSpec(userId));
-        if (count >= MAX_USER_MIX_FEEDS) {
+    private void checkMixFeedCountLimit(User user) {
+        long count = mixFeedRepository.count(MixFeedSpecs.toSpec(user.getId()));
+        if (count >= user.getCurrentPlan().getMaxCreatedMixFeed()) {
             throw new ApiException(HttpStatus.BAD_REQUEST,
-                    String.format("Maximum %d MixFeeds allowed per user", MAX_USER_MIX_FEEDS));
+                    String.format("Maximum %d MixFeeds allowed per user", user.getCurrentPlan().getMaxCreatedMixFeed()));
         }
     }
 

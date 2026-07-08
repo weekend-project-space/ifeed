@@ -29,18 +29,16 @@ import java.util.Objects;
 @Service
 public class SearchRetrievalService {
 
-    private final UserSubscriptionRepository userSubscriptionRepository;
     private final ArticleService articleService;
     private final SearchRetrievalProperties properties;
     private final RetrievalPipeline retrievalPipeline;
 
-    public SearchRetrievalService(VectorStoreTurbo vectorStore, UserSubscriptionRepository userSubscriptionRepository, ArticleService articleService, TextSearchRetrievalHandler textSearchRetrievalHandler, SearchRetrievalProperties properties) {
-        this.userSubscriptionRepository = userSubscriptionRepository;
+    public SearchRetrievalService(VectorRetrievalHandler vectorRetrievalHandler, ArticleService articleService, TextSearchRetrievalHandler textSearchRetrievalHandler, SearchRetrievalProperties properties) {
         this.articleService = articleService;
         this.properties = properties;
         this.retrievalPipeline = new MultiChannelRetrievalPipeline(properties.getFreshnessTimeWeight(), properties.getFreshnessLambda()).
                 addHandler(textSearchRetrievalHandler, properties.getBm25Weight())
-                .addHandler(new VectorRetrievalHandler(vectorStore, userSubscriptionRepository), properties.getVectorWeight());
+                .addHandler(vectorRetrievalHandler, properties.getVectorWeight());
     }
 
     public Page<ArticleSummaryView> hybridSearch(Integer userId,
@@ -59,16 +57,20 @@ public class SearchRetrievalService {
         return data;
     }
 
+    public List<DocScore> execute(RetrievalContext context) {
+        return retrievalPipeline.execute(context);
+    }
+
 
     /**
-     * 对查询执行混合检索：BM25 + 向量召回，并融合得分返回分页结果
+     * 对查询执行混合检索：textSearch + 向量召回，并融合得分返回分页结果
      * 返回融合后的文章 ID 列表。
      */
-    public List<DocScore> hybridSearch(Integer userId,
-                                       float[] queryEmbedding,
-                                       String query,
-                                       boolean includeGlobal,
-                                       int maxSize) {
+    private List<DocScore> hybridSearch(Integer userId,
+                                        float[] queryEmbedding,
+                                        String query,
+                                        boolean includeGlobal,
+                                        int maxSize) {
         int safeSize = maxSize <= 0 ? properties.getFusionTopK() : maxSize;
         String normalizedQuery = StringUtils.hasText(query) ? query.trim() : null;
         int desired = Math.max(properties.getBm25TopK(), safeSize);
@@ -76,14 +78,12 @@ public class SearchRetrievalService {
             return Collections.emptyList();
         }
 
-        List<Integer> feedIds = includeGlobal ? Collections.emptyList() : userSubscriptionRepository.findActiveFeedIdsByUserId(userId);
         log.debug("Hybrid search(IDs) start: user={}, includeGlobal={}, maxSize={}, query='{}'", userId, includeGlobal, safeSize, normalizedQuery);
-        if (!includeGlobal && CollectionUtils.isEmpty(feedIds)) {
-            return Collections.emptyList();
-        }
-        List<DocScore> docScores = retrievalPipeline.execute(RetrievalContext.builder().query(normalizedQuery).embedding(queryEmbedding).threshold(properties.getSimilarityThreshold()).userId(userId).topK(desired).build());
+
+        List<DocScore> docScores = retrievalPipeline.execute(RetrievalContext.builder().query(normalizedQuery).threshold(properties.getSimilarityThreshold()).includeGlobal(includeGlobal).userId(userId).topK(desired).build());
         log.debug("Hybrid search(IDs) complete: user={}, query='{}', returnCount={}", userId, normalizedQuery, docScores.size());
         return docScores;
     }
+
 
 }

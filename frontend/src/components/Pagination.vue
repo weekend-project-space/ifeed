@@ -2,6 +2,7 @@
   <nav
       class="flex items-center justify-center gap-2 mt-6 sm:mt-8 pt-4 sm:pt-6 border-t border-outline/10"
       aria-label="分页导航"
+      v-if="hasPreviousPage || hasNextPage"
   >
     <button
         @click="handlePrevPage"

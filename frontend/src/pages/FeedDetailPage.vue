@@ -1,36 +1,45 @@
 <template>
-  <div class="mx-auto max-w-7xl px-0 py-8 sm:px-6">
-    <!-- Channel Header -->
-    <section class="mb-8 space-y-4">
-      <!-- Channel Info -->
-      <div class="flex items-start gap-4">
-        <!-- Avatar -->
-        <div class="flex-shrink-0">
-          <img
-              v-if="detail?.avatar"
-              :src="detail.avatar"
-              class="h-16 w-16 rounded-full bg-gray-100 dark:bg-gray-800 object-cover"
-              alt="频道头像"/>
-          <div
-              v-else
-              class="flex h-16 w-16 items-center justify-center rounded-full bg-secondary/10 text-2xl font-semibold text-secondary">
-            {{ channelInitial }}
-          </div>
-        </div>
+  <div class="max-w-screen-lg mx-auto px-4 sm:px-6 py-6 sm:py-8">
 
-        <!-- Info & Actions -->
-        <div class="flex-1 min-w-0 space-y-3">
-          <div>
-            <h1 class="text-2xl font-normal text-gray-900 dark:text-gray-100 mb-1">
-              {{ channelTitle }}
-            </h1>
-            <p class="text-sm text-gray-600 dark:text-gray-400 ">
-              {{ detail?.description }} 最近更新 {{ latestUpdateText }} · 最近抓取 {{ lastFetchedText }}
-            </p>
-          </div>
 
-          <!-- Stats -->
-          <div class="flex flex-wrap gap-4 text-sm text-gray-600 dark:text-gray-400">
+    <article-list
+        :items="items"
+        :loading="articlesLoading"
+        empty-message="该频道暂时没有文章，稍后再来看看。"
+        @select-tag="handleSelectTag"
+        @refresh="refreshArticles">
+      <template #header>
+        <!-- Channel Header -->
+        <section class="mb-8 space-y-4">
+          <!-- Channel Info -->
+          <div class="flex items-start gap-4">
+            <!-- Avatar -->
+            <div class="flex-shrink-0">
+              <img
+                  v-if="detail?.avatar"
+                  :src="detail.avatar"
+                  class="h-16 w-16 rounded-full bg-gray-100 dark:bg-gray-800 object-cover"
+                  alt="频道头像"/>
+              <div
+                  v-else
+                  class="flex h-16 w-16 items-center justify-center rounded-full bg-secondary/10 text-2xl font-semibold text-secondary">
+                {{ channelInitial }}
+              </div>
+            </div>
+
+            <!-- Info & Actions -->
+            <div class="flex-1 min-w-0 space-y-3">
+              <div>
+                <h1 class="text-2xl sm:text-3xl font-bold text-text mb-1">
+                  {{ channelTitle }}
+                </h1>
+                <p class="text-sm text-text-secondary">
+                  {{ detail?.description }} 最近更新 {{ latestUpdateText }} · 最近抓取 {{ lastFetchedText }}
+                </p>
+              </div>
+
+              <!-- Stats -->
+              <div class="flex flex-wrap gap-4 text-sm text-text-secondary">
               <span class="flex items-center gap-1.5" v-if="detail?.sources?.length ?? 0 ">
                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -38,7 +47,7 @@
                 </svg>
                 {{ detail?.sources.length ?? 0 }} 个来源
               </span>
-            <span class="flex items-center gap-1.5" v-else>
+                <span class="flex items-center gap-1.5" v-else>
                 <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
@@ -46,23 +55,23 @@
                 {{ detail?.articleCount ?? 0 }} 篇文章
               </span>
 
-            <span class="flex items-center gap-1.5">
+                <span class="flex items-center gap-1.5">
                 <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
                 </svg>
                 {{ detail?.subscriberCount ?? 0 }} 订阅者
               </span>
-          </div>
+              </div>
 
-          <!-- Sources (for MixFeed) -->
-          <div v-if="detail?.sources && detail.sources.length > 0" class="space-y-2">
-            <!--            <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300">来源订阅 ({{ detail.sources.length }})</h3>-->
-            <div class="flex flex-wrap gap-2">
+              <!-- Sources (for MixFeed) -->
+              <div v-if="detail?.sources && detail.sources.length > 0" class="space-y-2">
+                <!--            <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300">来源订阅 ({{ detail.sources.length }})</h3>-->
+                <div class="flex flex-wrap gap-2">
               <span
                   v-for="sourceId in detail.sources"
                   :key="sourceId"
-                  class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-900 rounded-full"
+                  class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-text-secondary bg-surface-container rounded-full"
               >
                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -70,101 +79,91 @@
                 </svg>
                 {{ sourceId }}
               </span>
-            </div>
-          </div>
+                </div>
+              </div>
 
-          <!-- Actions -->
-          <div class="flex flex-wrap gap-2">
-            <button
-                type="button"
-                class="px-4 py-2 text-sm font-medium rounded-full transition-colors"
-                :class="detail?.subscribed
+              <!-- Actions -->
+              <div class="flex flex-wrap gap-2">
+                <button
+                    type="button"
+                    class="px-4 py-2 text-sm font-medium rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    :class="detail?.subscribed
                   ? 'text-secondary bg-secondary/10 hover:bg-secondary/20'
                   : 'text-white bg-secondary hover:bg-secondary/90'"
-                :disabled="subscriptionSubmitting || feedLoading"
-                @click="toggleSubscription">
-              {{ detail?.subscribed ? '已订阅' : '订阅' }}
-            </button>
+                    :disabled="subscriptionSubmitting || feedLoading"
+                    @click="toggleSubscription">
+                  {{ detail?.subscribed ? '已订阅' : '订阅' }}
+                </button>
 
-            <a
-                v-if="detail?.siteUrl"
-                :href="detail.siteUrl"
-                target="_blank"
-                rel="noopener noreferrer"
-                class="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
-              访问网站
-              <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                      d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
-              </svg>
-            </a>
-          </div>
-          <div v-if="detail?.url" class="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-500">
-            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/>
-            </svg>
-            <span class="truncate">{{ detail.url }}</span>
-          </div>
-          <!-- Error Warning -->
-          <div
-              v-if="hasFetchIssue"
-              class="flex items-start gap-2 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-sm text-red-700 dark:text-red-400">
-            <svg class="h-5 w-5 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-              <path fill-rule="evenodd"
-                    d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
-                    clip-rule="evenodd"/>
-            </svg>
-            <span class="truncate">{{ fetchIssueLabel }}</span>
-          </div>
+                <a
+                    v-if="detail?.siteUrl"
+                    :href="detail.siteUrl"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-text-secondary bg-surface-container rounded-full hover:bg-surface-container/70 transition-colors">
+                  访问网站
+                  <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+                  </svg>
+                </a>
+              </div>
+              <div v-if="detail?.url" class="flex items-center gap-2 text-xs text-text-muted">
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/>
+                </svg>
+                <span class="truncate">{{ detail.url }}</span>
+              </div>
+              <!-- Error Warning -->
+              <div
+                  v-if="hasFetchIssue"
+                  class="flex items-start gap-2 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-sm text-red-700 dark:text-red-400">
+                <svg class="h-5 w-5 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd"
+                        d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                        clip-rule="evenodd"/>
+                </svg>
+                <span class="truncate">{{ fetchIssueLabel }}</span>
+              </div>
 
-          <p v-if="feedError" class="text-sm text-red-600 dark:text-red-400">
-            {{ feedError }}
-          </p>
-        </div>
-      </div>
-    </section>
+              <p v-if="feedError" class="text-sm text-red-600 dark:text-red-400">
+                {{ feedError }}
+              </p>
+            </div>
+          </div>
+        </section>
 
-    <!-- Tag Filter -->
-    <div
-        v-if="selectedTagDisplay"
-        class="mb-6 flex items-center justify-between gap-4 p-3 bg-secondary/5 border border-secondary/20 rounded-lg">
-        <span class="text-sm text-gray-700 dark:text-gray-300">
+        <!-- Tag Filter -->
+        <div
+            v-if="selectedTagDisplay"
+            class="mb-6 flex items-center justify-between gap-4 p-3 bg-secondary/5 border border-secondary/20 rounded-lg">
+        <span class="text-sm text-text-secondary">
           标签筛选：<span class="font-medium text-secondary">{{ selectedTagDisplay }}</span>
         </span>
-      <button
-          class="text-sm font-medium text-secondary hover:underline"
-          @click="clearTag">
-        清除
-      </button>
-    </div>
+          <button
+              class="text-sm font-medium text-secondary hover:underline"
+              @click="clearTag">
+            清除
+          </button>
+        </div>
+      </template>
+    </article-list>
 
-    <!-- Articles Section -->
-    <section class="space-y-6">
-      <article-list
-          title="文章列表"
-          subtitle=""
-          :items="items"
-          :loading="articlesLoading"
-          empty-message="该频道暂时没有文章，稍后再来看看。"
-          @select-tag="handleSelectTag"
-          @refresh="refreshArticles"/>
+    <p v-if="articleError" class="text-sm text-red-600 dark:text-red-400">
+      {{ articleError }}
+    </p>
 
-      <p v-if="articleError" class="text-sm text-red-600 dark:text-red-400">
-        {{ articleError }}
-      </p>
-
-      <!-- Pagination -->
-      <pagination
-          v-if="items.length && !articlesLoading"
-          :current-page="page"
-          :has-previous-page="hasPreviousPage"
-          :has-next-page="hasNextPage"
-          :disabled="articlesLoading"
-          @prev-page="prevPage"
-          @next-page="nextPage"
-      />
-    </section>
+    <!-- Pagination -->
+    <pagination
+        v-if="items.length && !articlesLoading"
+        :current-page="page"
+        :has-previous-page="hasPreviousPage"
+        :has-next-page="hasNextPage"
+        :disabled="articlesLoading"
+        @prev-page="prevPage"
+        @next-page="nextPage"
+    />
   </div>
 </template>
 
@@ -401,7 +400,6 @@ const readFeed = async () => {
     await readFeedStore.recordFeedRead(currentFeedId.value);
     await subscriptionsStore.fetchSubscriptions();
   }
-
 }
 </script>
 

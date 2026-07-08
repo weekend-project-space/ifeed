@@ -1,12 +1,12 @@
 <template>
   <div class="min-h-screen ">
-    <div class="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8 py-8">
+    <div class="max-w-screen-lg mx-auto px-4 sm:px-6 py-8">
       <!-- Header -->
       <div class="mb-8">
-        <h1 class="text-3xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
+        <h1 class="text-2xl sm:text-3xl font-bold text-text mb-2">
           发现订阅源
         </h1>
-        <p class="text-gray-600 dark:text-gray-400">
+        <p class="text-sm text-text-secondary">
           浏览并订阅你感兴趣的内容源
         </p>
       </div>
@@ -65,7 +65,7 @@
             <rect x="14" y="14" width="7" height="7" rx="1"/>
             <rect x="3" y="14" width="7" height="7" rx="1"/>
           </svg>
-          <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100">
+          <h2 class="text-lg font-semibold text-text">
             分类
           </h2>
         </div>
@@ -94,7 +94,7 @@
       <!-- Feed Grid -->
       <div>
         <div class="flex items-center justify-between mb-6">
-          <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100">
+          <h2 class="text-lg font-semibold text-text">
             {{ selectedCategoryName }}
           </h2>
           <div class="flex items-center gap-2">
@@ -139,7 +139,7 @@
               class="group bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-200 dark:border-gray-700 hover:shadow-lg hover:border-secondary/50 transition-all duration-200"
           >
             <!-- Feed Header -->
-            <div class="flex items-start gap-4 mb-4">
+            <router-link :to="'/feeds/'+feed.id" class="flex items-start gap-4 mb-4">
               <img
                   :src="feed.favicon"
                   :alt="feed.name"
@@ -154,7 +154,7 @@
                   {{ feed.url }}
                 </p>
               </div>
-            </div>
+            </router-link>
 
             <!-- Feed Description -->
             <p class="text-sm text-gray-600 dark:text-gray-400 line-clamp-3 mb-4 h-[60px]">
@@ -189,7 +189,7 @@
                   feed.subscribed
                     ? 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
                     : 'bg-secondary text-white hover:bg-secondary/90',
-                  'w-full py-2.5 rounded-full font-medium text-sm transition-colors disabled:opacity-50'
+                  'w-full py-2.5 rounded-full font-medium text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
                 ]"
             >
               <span v-if="subscribing === feed.id" class="flex items-center justify-center gap-2">
@@ -214,16 +214,19 @@
           >
             <div class="flex items-start gap-4">
               <!-- Feed Icon -->
+              <router-link :to="'/feeds/'+feed.id">
               <img
                   :src="feed.favicon"
                   :alt="feed.name"
                   class="w-14 h-14 rounded-full object-cover bg-gray-100 dark:bg-gray-700 flex-shrink-0"
                   @error="handleImageError"
               />
+              </router-link>
 
               <!-- Feed Info -->
               <div class="flex-1 min-w-0">
                 <div class="flex items-start justify-between gap-4 mb-2">
+                  <router-link :to="'/feeds/'+feed.id">
                   <div class="flex-1 min-w-0">
                     <h3 class="text-base font-semibold text-gray-900 dark:text-gray-100 mb-1 line-clamp-1 group-hover:text-secondary transition-colors">
                       {{ feed.name }}
@@ -232,7 +235,7 @@
                       {{ feed.url }}
                     </p>
                   </div>
-                  
+                  </router-link>
                   <!-- Subscribe Button -->
                   <button
                       @click="toggleSubscribe(feed)"
@@ -241,7 +244,7 @@
                         feed.subscribed
                           ? 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
                           : 'bg-secondary text-white hover:bg-secondary/90',
-                        'px-6 py-2 rounded-full font-medium text-sm transition-colors disabled:opacity-50 flex-shrink-0'
+                        'px-6 py-2 rounded-full font-medium text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0'
                       ]"
                   >
                     <span v-if="subscribing === feed.id" class="flex items-center gap-2">
@@ -515,7 +518,7 @@ const loadFeeds = async () => {
     if (searchQuery.value.trim()) {
       params.q = searchQuery.value.trim();
     } else {
-      params.sort = 'popular';
+      // params.sort = 'popular';
     }
     
     if (selectedCategory.value !== 'all') {

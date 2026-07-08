@@ -9,6 +9,7 @@ import org.bitmagic.ifeed.domain.model.value.FeedCategory;
 import org.bitmagic.ifeed.domain.repository.ArticleRepository;
 import org.bitmagic.ifeed.domain.repository.FeedRepository;
 import org.bitmagic.ifeed.domain.repository.UserSubscriptionRepository;
+import org.bitmagic.ifeed.domain.spec.FeedSpecs;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -69,9 +70,9 @@ public class DiscoveryService {
         // Fetch feeds
         Page<Feed> feedPage;
         if (category != null && !category.equals("all") && FeedCategory.isValidCode(category)) {
-            feedPage = feedRepository.findByCategory(category, pageable);
+            feedPage = feedRepository.findAll(FeedSpecs.specLastUpdatedNotNull(category), pageable);
         } else {
-            feedPage = feedRepository.findAll(pageable);
+            feedPage = feedRepository.findAll(FeedSpecs.specLastUpdatedNotNull(null), pageable);
         }
 
         // Get subscription status for all feeds
@@ -161,8 +162,8 @@ public class DiscoveryService {
             case "recent" -> Sort.by(Sort.Direction.DESC, "id");
             case "active" -> Sort.by(Sort.Direction.DESC, "lastUpdated");
             default -> // popular: featured first, then by subscriber count (we'll sort in memory for
-                       // now)
-                Sort.by(Sort.Direction.DESC, "featured");
+                // now)
+                    Sort.by(Sort.Direction.DESC, "featured");
         };
 
         return PageRequest.of(page, size, sort);

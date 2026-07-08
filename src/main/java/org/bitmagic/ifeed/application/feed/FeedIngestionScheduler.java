@@ -8,7 +8,6 @@ import org.bitmagic.ifeed.domain.model.Article;
 import org.bitmagic.ifeed.domain.model.value.MixFeedFilterConfig;
 import org.bitmagic.ifeed.domain.repository.ArticleRepository;
 import org.bitmagic.ifeed.domain.repository.MixFeedRepository;
-import org.bitmagic.ifeed.domain.spec.ArticleSpecs;
 import org.bitmagic.ifeed.domain.spec.MixFeedSpecs;
 import org.bitmagic.ifeed.infrastructure.util.TaskUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,6 +20,7 @@ import org.springframework.stereotype.Component;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -63,7 +63,7 @@ public class FeedIngestionScheduler {
 
     @Scheduled(initialDelayString = "${app.rss.fetcher.initial-delay:PT10S}",
             fixedDelayString = "${app.rss.fetcher.fixed-delay:PT30M}")
-    public void refreshFeeds() {
+    public void fetchSaveFeeds() {
         long start = System.currentTimeMillis();
 
         var feedIds = ingestionService.getFeedIds(
@@ -129,7 +129,7 @@ public class FeedIngestionScheduler {
                     Instant toDate = config.getDateRange() != null ? config.getDateRange().getTo() : null;
 
                     // Build Specification
-                    Specification<Article> spec = MixFeedSpecs.mixFeedArticles(sourceFeedIds, fromDate, toDate, includeKeywords, excludeKeywords);
+                    Specification<Article> spec = MixFeedSpecs.mixFeedArticles(sourceFeedIds, fromDate, toDate, Collections.emptySet(), includeKeywords, excludeKeywords);
                     List<Article> articles = articleRepository.findAll(spec, PageRequest.of(0, 1, Sort.by(Sort.Order.desc("publishedAt")))).getContent();
                     if (!articles.isEmpty()) {
                         mixFeed.setLastFetched(Instant.now());

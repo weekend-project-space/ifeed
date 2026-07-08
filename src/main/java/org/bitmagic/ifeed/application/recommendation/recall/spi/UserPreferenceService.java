@@ -7,7 +7,7 @@ import java.util.List;
  */
 public interface UserPreferenceService {
 
-    List<AttributePreference> topAttributes(Integer userId, int limit);
+    List<AttributePreference> topAttributes(Integer userId, int lookback, int limit);
 
     record AttributePreference(String attributeKey, String attributeValue, double weight) {
     }

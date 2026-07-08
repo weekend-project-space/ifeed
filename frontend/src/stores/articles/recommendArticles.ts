@@ -1,11 +1,12 @@
-import { computed, ref } from 'vue';
-import { defineStore } from 'pinia';
-import { request, RequestOptions } from '@/api/client';
-import type { PageResponse } from '@/types/api';
+import {computed, ref} from 'vue';
+import {defineStore} from 'pinia';
+import {request, RequestOptions} from '@/api/client';
+import type {PageResponse} from '@/types/api';
 import {ArticleDto, ArticleListItem, normalizeArticle} from "./types";
 
 export const useRecommendArticlesStore = defineStore('recommendArticles', () => {
     const items = ref<ArticleListItem[]>([]);
+    const detailsItems = ref<ArticleListItem[]>([]);
     const loading = ref(false);
     const error = ref<string | null>(null);
     const page = ref(1);
@@ -57,6 +58,26 @@ export const useRecommendArticlesStore = defineStore('recommendArticles', () => 
         }
     };
 
+    const fetchDetailsArticles = async (articleId: string,override?: {
+        topK: number ;
+    }) => {
+        loading.value = true;
+        error.value = null;
+
+        try {
+            const response = await request<PageResponse<ArticleDto>>(
+                `/api/articles/${articleId}/recommendations`,
+            );
+            detailsItems.value = response.map(normalizeArticle);
+        } catch (err) {
+            const message = err instanceof Error ? err.message : '推荐文章加载失败';
+            error.value = message;
+            throw err;
+        } finally {
+            loading.value = false;
+        }
+    };
+
     return {
         items,
         loading,
@@ -68,5 +89,7 @@ export const useRecommendArticlesStore = defineStore('recommendArticles', () => 
         hasNextPage,
         hasPreviousPage,
         fetchArticles,
+        detailsItems,
+        fetchDetailsArticles,
     };
 });

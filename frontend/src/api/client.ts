@@ -1,3 +1,5 @@
+import {emitUnauthorized} from './auth-events';
+
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? '').replace(/\/$/, '');
 
 // 使用内存存储而非 localStorage
@@ -41,7 +43,7 @@ export interface RequestOptions extends RequestInit {
 }
 
 export async function request<T = unknown>(path: string, options: RequestOptions = {}): Promise<T> {
-    const { query, skipAuth, json, headers, body, signal, ...rest } = options;
+    const {query, skipAuth, json, headers, body, signal, ...rest} = options;
     const url = buildUrl(path, query);
 
     const finalHeaders = new Headers(headers ?? {});
@@ -74,7 +76,9 @@ export async function request<T = unknown>(path: string, options: RequestOptions
             (isJsonResponse && data && typeof data === 'object' && 'message' in data)
                 ? String(data.message)
                 : `HTTP Error ${response.status}`;
-
+        if (response.status === 401) {
+            emitUnauthorized();
+        }
         const error = new Error(errorMessage) as HttpError;
         error.status = response.status;
         error.payload = data;
@@ -86,13 +90,13 @@ export async function request<T = unknown>(path: string, options: RequestOptions
 
 // ✅ 便捷方法都支持 signal
 export const get = <T = unknown>(path: string, options: RequestOptions = {}) =>
-    request<T>(path, { ...options, method: options.method ?? 'GET' });
+    request<T>(path, {...options, method: options.method ?? 'GET'});
 
 export const post = <T = unknown>(path: string, json?: unknown, options: RequestOptions = {}) =>
-    request<T>(path, { ...options, method: 'POST', json });
+    request<T>(path, {...options, method: 'POST', json});
 
 export const put = <T = unknown>(path: string, json?: unknown, options: RequestOptions = {}) =>
-    request<T>(path, { ...options, method: 'PUT', json });
+    request<T>(path, {...options, method: 'PUT', json});
 
 export const del = <T = unknown>(path: string, options: RequestOptions = {}) =>
-    request<T>(path, { ...options, method: 'DELETE' });
+    request<T>(path, {...options, method: 'DELETE'});

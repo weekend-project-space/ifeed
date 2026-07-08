@@ -16,6 +16,8 @@ import org.bitmagic.ifeed.infrastructure.retrieval.impl.TextSearchRetrievalHandl
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -37,7 +39,7 @@ public class JpaInvertedIndex implements InvertedIndex {
     @Autowired
     public JpaInvertedIndex(TextSearchRetrievalHandler textSearchRetrievalHandler, FreshnessCalculator freshnessCalculator, SearchRetrievalProperties properties) {
         this.retrievalPipeline = new MultiChannelRetrievalPipeline(properties.getFreshnessTimeWeight(), properties.getFreshnessLambda())
-                .addHandler(textSearchRetrievalHandler, 1);
+                .addHandler(textSearchRetrievalHandler, 0.7);
         this.freshnessCalculator = freshnessCalculator;
     }
 
@@ -52,6 +54,7 @@ public class JpaInvertedIndex implements InvertedIndex {
         // 按权重排序，权重高的优先
         List<UserPreferenceService.AttributePreference> sorted = attrs.stream()
                 .sorted(Comparator.comparingDouble(UserPreferenceService.AttributePreference::weight).reversed())
+                .limit(k * 2)
                 .toList();
 
 
@@ -60,13 +63,15 @@ public class JpaInvertedIndex implements InvertedIndex {
         Map<Long, Map<String, Object>> metadataMap = new HashMap<>();
 
         int topK = ((Double) (k / sorted.size() * 1.5)).intValue();
+        topK = topK < 1 ? 1 : topK;
 
         for (UserPreferenceService.AttributePreference attr : sorted) {
 
             RetrievalContext context = RetrievalContext.builder()
                     .includeGlobal(true)
                     .query(attr.attributeValue())
-                    .topK(topK)
+                    .dateRange(RetrievalContext.DateRange.of(Instant.now().minus(7, ChronoUnit.DAYS), Instant.now().plus(1, ChronoUnit.DAYS)))
+                    .topK(attr.attributeKey().equals("feedTitle") ? 2 * topK : topK)
                     .threshold(0.12)
                     .build();
 

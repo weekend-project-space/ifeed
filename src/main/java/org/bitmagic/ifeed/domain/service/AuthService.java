@@ -7,16 +7,14 @@ import org.bitmagic.ifeed.domain.repository.UserRepository;
 import org.bitmagic.ifeed.domain.repository.UserSessionRepository;
 import org.bitmagic.ifeed.exception.ApiException;
 import org.bitmagic.ifeed.infrastructure.spec.Spec;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.security.SecureRandom;
+import java.time.Instant;
 import java.util.Base64;
-import java.util.Optional;
-import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -38,6 +36,8 @@ public class AuthService {
         var user = User.builder()
                 .username(username)
                 .passwordHash(passwordEncoder.encode(rawPassword))
+                .currentPlan(User.Plan.FREE)
+                .currentPlanCreatedAt(Instant.now())
                 .build();
 
         user = userRepository.save(user);
@@ -70,7 +70,9 @@ public class AuthService {
                     User u = User.builder()
                             .linuxDoUserId(id)
                             .username(finalUsername)
-                            .passwordHash(null)
+                            .passwordHash(finalUsername)
+                            .currentPlan(User.Plan.FREE)
+                            .currentPlanCreatedAt(Instant.now())
                             .build();
 
                     return userRepository.save(u);
@@ -85,12 +87,7 @@ public class AuthService {
             return;
         }
 
-        userSessionRepository.findByToken(token).ifPresent(userSessionRepository::delete);
-    }
-
-    @Cacheable(cacheNames = "USERS", key = "#p0", unless = "#result == null")
-    public Optional<User> findUserById(Integer userId) {
-        return userRepository.findById(userId);
+        userSessionRepository.deleteByToken(token);
     }
 
     private AuthToken issueToken(User user) {

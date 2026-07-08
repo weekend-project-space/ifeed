@@ -8,6 +8,8 @@ import org.bitmagic.ifeed.domain.service.ArticleService;
 import org.bitmagic.ifeed.application.search.SearchRetrievalService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -38,7 +40,7 @@ public class SearchController {
                                                              @RequestParam String query,
                                                              @RequestParam(required = false, defaultValue = TYPE_KEYWORD) String type,
 
-                                                             @RequestParam(required = false, defaultValue = SOURCE_OWNER) String source, Pageable pageable) {
+                                                             @RequestParam(required = false, defaultValue = SOURCE_OWNER) String source,@PageableDefault(sort = "id", direction = Sort.Direction.DESC) Pageable pageable) {
         ensureAuthenticated(principal);
         if (query == null || query.isBlank()) {
             throw new ApiException(HttpStatus.BAD_REQUEST, "Query must not be blank");

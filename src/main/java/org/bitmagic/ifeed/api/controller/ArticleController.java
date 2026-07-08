@@ -4,21 +4,28 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.bitmagic.ifeed.api.response.ArticleDetailResponse;
+import org.bitmagic.ifeed.api.response.ArticleEnrichResponse;
 import org.bitmagic.ifeed.api.response.ArticleSummaryResponse;
 import org.bitmagic.ifeed.api.response.UserSubscriptionInsightResponse;
+import org.bitmagic.ifeed.application.embedding.ArticleEnhancedService;
 import org.bitmagic.ifeed.api.util.IdentifierUtils;
 import org.bitmagic.ifeed.application.recommendation.RecRequest;
 import org.bitmagic.ifeed.application.recommendation.RecResponse;
 import org.bitmagic.ifeed.application.recommendation.RecommendationService;
 import org.bitmagic.ifeed.config.security.UserPrincipal;
+import org.bitmagic.ifeed.domain.model.ArticleEnrichment;
+import org.bitmagic.ifeed.domain.model.Feed;
+import org.bitmagic.ifeed.domain.model.User;
 import org.bitmagic.ifeed.domain.record.ArticleSummaryView;
 import org.bitmagic.ifeed.domain.repository.FeedRepository;
 import org.bitmagic.ifeed.domain.repository.MixFeedRepository;
+import org.bitmagic.ifeed.domain.service.ArticleEnrichmentService;
 import org.bitmagic.ifeed.domain.service.ArticleService;
 import org.bitmagic.ifeed.domain.service.MixFeedService;
 import org.bitmagic.ifeed.domain.service.UserCollectionService;
 import org.bitmagic.ifeed.exception.ApiException;
 import org.bitmagic.ifeed.infrastructure.util.DateUtils;
+import org.bitmagic.ifeed.infrastructure.util.FaviconResolver;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -45,6 +52,8 @@ public class ArticleController {
     private static final String SOURCE_GLOBAL = "global";
 
     private final ArticleService articleService;
+    private final ArticleEnrichmentService articleEnrichmentService;
+    private final ArticleEnhancedService articleEnhancedService;
     private final UserCollectionService userCollectionService;
     private final RecommendationService recommendationService;
 
@@ -55,12 +64,11 @@ public class ArticleController {
 
     @GetMapping
     public ResponseEntity<Page<ArticleSummaryResponse>> listArticles(@AuthenticationPrincipal UserPrincipal principal,
-            @RequestParam(required = false) String feedId,
-            @RequestParam(required = false, name = "tags") String tags,
-            @RequestParam(required = false, name = "category") String category,
-            @RequestParam(required = false, defaultValue = SOURCE_OWNER) String source,
-            @PageableDefault(sort = "publishedAt", direction = Sort.Direction.DESC) Pageable pageable) {
-        ensureAuthenticated(principal);
+                                                                     @RequestParam(required = false) String feedId,
+                                                                     @RequestParam(required = false, name = "tags") String tags,
+                                                                     @RequestParam(required = false, name = "category") String category,
+                                                                     @RequestParam(required = false, defaultValue = SOURCE_OWNER) String source,
+                                                                     @PageableDefault(sort = "publishedAt", direction = Sort.Direction.DESC) Pageable pageable) {
         var normalizedTags = parseTags(tags);
         var normalizedCategory = normalizeCategory(category);
         var normalizedSource = normalizeSource(source);
@@ -70,26 +78,27 @@ public class ArticleController {
         Page<ArticleSummaryView> articlePage;
 
         // If feedId is provided, auto-detect Feed or MixFeed
+        Integer userId = Objects.nonNull(principal) ? principal.getId() : 0;
         if (feedUuid != null) {
             // Try Feed first
             var feedOpt = feedRepository.findByUid(feedUuid);
             if (feedOpt.isPresent()) {
                 // Regular Feed - use existing logic
-                articlePage = articleService.listArticles(principal.getId(),
+                articlePage = articleService.listArticles(userId,
                         feedUuid, normalizedTags, normalizedCategory, includeGlobal, pageable);
             } else {
                 // Try MixFeed
                 var mixFeedOpt = mixFeedRepository.findByUid(feedUuid);
                 if (mixFeedOpt.isPresent()) {
                     // MixFeed - use MixFeedService filtered articles
-                    articlePage = mixFeedService.getFilteredArticles(feedUuid, principal.getId(), pageable);
+                    articlePage = mixFeedService.getFilteredArticles(feedUuid, normalizedTags, userId, pageable);
                 } else {
                     throw new ApiException(HttpStatus.NOT_FOUND, "Feed or MixFeed not found");
                 }
             }
         } else {
             // No feedId - use existing logic
-            articlePage = articleService.listArticles(principal.getId(),
+            articlePage = articleService.listArticles(userId,
                     null, normalizedTags, normalizedCategory, includeGlobal, pageable);
         }
 
@@ -98,10 +107,21 @@ public class ArticleController {
 
     @GetMapping("/recommendations")
     public ResponseEntity<Page<RecResponse>> rec(@AuthenticationPrincipal UserPrincipal principal,
-            @RequestParam(defaultValue = "0") Integer page,
-            @RequestParam(required = false) Integer size) {
+                                                 @RequestParam(defaultValue = "0") Integer page,
+                                                 @RequestParam(required = false, defaultValue = "20") Integer size) {
+        Integer userId = Objects.nonNull(principal) ? principal.getId() : 0;
         return ResponseEntity.ok(recommendationService
-                .recommend(new RecRequest(principal.getId(), "home", Map.of(), Map.of()), page, size));
+                .recommend(new RecRequest(userId, "home", Map.of(), Map.of()), page, size));
+    }
+
+    @GetMapping("/{articleId}/recommendations")
+    public ResponseEntity<List<RecResponse>> rec(@AuthenticationPrincipal UserPrincipal principal,
+                                                 @PathVariable String articleId,
+                                                 @RequestParam(required = false, defaultValue = "6") Integer topK) {
+        Integer userId = Objects.nonNull(principal) ? principal.getId() : 0;
+        Long itemId = articleService.getArticle(IdentifierUtils.parseUuid(articleId, "article id")).getId();
+        return ResponseEntity.ok(recommendationService
+                .recommend(new RecRequest(userId, "details", Map.of(), Map.of("itemId", itemId)), topK));
     }
 
     @GetMapping("/insights")
@@ -110,35 +130,52 @@ public class ArticleController {
             @RequestParam(required = false) String from,
             @RequestParam(required = false) String to,
             @RequestParam(required = false, defaultValue = "20") Integer top) {
-        ensureAuthenticated(principal);
+        Integer userId = Objects.nonNull(principal) ? principal.getId() : 0;
         var toTs = (to == null || to.isBlank()) ? Instant.now() : Instant.parse(to.trim());
         var fromTs = (from == null || from.isBlank()) ? toTs.minus(Duration.ofDays(30)) : Instant.parse(from.trim());
-        var resp = articleService.insights(principal.getId(), fromTs, toTs, top);
+        var resp = articleService.insights(userId, fromTs, toTs, top);
         return ResponseEntity.ok(resp);
     }
 
     @GetMapping("/{articleId}")
     public ResponseEntity<ArticleDetailResponse> getArticle(@AuthenticationPrincipal UserPrincipal principal,
-            @PathVariable String articleId) {
-        ensureAuthenticated(principal);
+                                                            @PathVariable String articleId) {
         var article = articleService.getArticle(IdentifierUtils.parseUuid(articleId, "article id"));
         var tags = extractTags(article.getTags());
-        var collected = userCollectionService.isCollected(principal.getId(), article.getUid());
+//        内容只要有增强默认所有人都可以看
+//        ArticleEnrichment enrichment = Objects.isNull(principal) || User.Plan.FREE.equals(principal.getCurrentPlan()) ? null : articleEnrichmentService.getEnrichment(article.getId());
+        ArticleEnrichment enrichment = articleEnrichmentService.getEnrichment(article.getId());
+        var collected = Objects.nonNull(principal) && userCollectionService.isCollected(principal.getId(), article.getUid());
+        Feed feed = article.getFeed();
         var response = new ArticleDetailResponse(
                 article.getUid().toString(),
                 article.getTitle(),
                 article.getContent(),
-                article.getSummary(),
+                Objects.nonNull(enrichment) ? enrichment.getAiSummary() : null,
+                Objects.nonNull(enrichment) ? enrichment.getMindMap() : null,
+                articleEnrichmentService.requiresUpgrade(article.getId()),
                 article.getLink(),
                 article.getThumbnail(),
                 article.getEnclosure(),
                 article.getEnclosureType(),
-                article.getFeed().getUid().toString(),
-                resolveFeedTitle(article.getFeed() == null ? null : article.getFeed().getTitle()),
+                feed.getUid().toString(),
+                resolveFeedTitle(feed.getTitle()),
+                FaviconResolver.resolve(feed.getSiteUrl(), feed.getUrl()),
                 formatTimestamp(article.getPublishedAt()),
                 tags,
                 collected);
         return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/{articleId}/enrich")
+    public ResponseEntity<ArticleEnrichResponse> enrichOnDemand(@AuthenticationPrincipal UserPrincipal principal,
+                                                                @PathVariable String articleId) {
+        if (principal == null || User.Plan.FREE.equals(principal.getCurrentPlan())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+        var article = articleService.getArticle(IdentifierUtils.parseUuid(articleId, "article id"));
+        var enrichment = articleEnhancedService.enrichSync(article);
+        return ResponseEntity.ok(new ArticleEnrichResponse(enrichment.getAiSummary(), enrichment.getMindMap()));
     }
 
     private ArticleSummaryResponse toSummaryResponse(ArticleSummaryView article) {
@@ -151,6 +188,7 @@ public class ArticleController {
                 article.thumbnail(),
                 article.enclosure(),
                 resolveFeedTitle(article.feedTitle()),
+                article.feedAvatar(),
                 formatTimestamp(article.publishedAt()),
                 tags,
                 DateUtils.formatRelativeTime(publishedAt));
@@ -178,11 +216,6 @@ public class ArticleController {
         return instant == null ? null : instant.toString();
     }
 
-    private void ensureAuthenticated(UserPrincipal principal) {
-        if (principal == null) {
-            throw new ApiException(HttpStatus.UNAUTHORIZED, "Unauthorized");
-        }
-    }
 
     private UUID parseFeedId(String feedId) {
         if (feedId == null || feedId.isBlank()) {

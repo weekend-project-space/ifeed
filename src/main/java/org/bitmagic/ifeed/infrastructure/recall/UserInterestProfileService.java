@@ -53,13 +53,13 @@ public class UserInterestProfileService implements UserPreferenceService {
     private boolean extractEntities;
 
     @Override
-    public List<AttributePreference> topAttributes(Integer userId, int limit) {
+    public List<AttributePreference> topAttributes(Integer userId, int lookback, int limit) {
         if (userId == null || limit <= 0) {
             return List.of();
         }
 
         return dataAccessor.getUserBehavior(userId)
-                .map(doc -> computeTopPreferences(doc, limit))
+                .map(doc -> computeTopPreferences(doc, limit, lookback < 1 ? this.lookback : lookback))
                 .orElseGet(() -> {
                     log.debug("No user behavior found for userId: {}", userId);
                     return List.of();
@@ -67,18 +67,18 @@ public class UserInterestProfileService implements UserPreferenceService {
     }
 
     private List<AttributePreference> computeTopPreferences(
-            UserBehaviorDocument document, int limit) {
+            UserBehaviorDocument document, int limit, int lookBack) {
 
         // 使用共享的过滤和排序逻辑
         List<UserBehaviorDocument.ArticleRef> readHistory = dataAccessor.filterAndSortRefs(
                 document.getReadHistory(),
                 readWindowDays,
-                lookback);
-
-        List<UserBehaviorDocument.ArticleRef> collections = dataAccessor.filterAndSortRefs(
+                lookBack);
+        // 过滤太低（一般用于文章详情页面的推荐）不启用收藏历史，
+        List<UserBehaviorDocument.ArticleRef> collections = lookBack < 10 ? Collections.emptyList() : dataAccessor.filterAndSortRefs(
                 document.getCollections(),
                 collectionWindowDays,
-                lookback);
+                lookBack);
 
         if (readHistory.isEmpty() && collections.isEmpty()) {
             log.debug("No valid read history or collections for user {}", document.getId());
@@ -252,6 +252,8 @@ public class UserInterestProfileService implements UserPreferenceService {
         }
     }
 
+    private static final Set<String> STOP_WORDS = Set.of("HTTPS", "HTTP", "COM");
+
     /**
      * 累加 Tag 分数
      */
@@ -270,6 +272,7 @@ public class UserInterestProfileService implements UserPreferenceService {
             if (tagList != null) {
                 tagList.stream()
                         .filter(tag -> tag != null && !tag.isEmpty())
+                        .filter(tag -> !STOP_WORDS.contains(tag.toUpperCase()))
                         .forEach(tag -> scores.merge(tag, score, Double::sum));
             }
         } catch (Exception e) {
@@ -332,7 +335,7 @@ public class UserInterestProfileService implements UserPreferenceService {
 
         try {
             List<String> entities = keywordExtractor.extractEntities(
-                    article.title(), article.summary());
+                    article.title(), article.summary()).stream().filter(tag -> !STOP_WORDS.contains(tag.toUpperCase())).toList();
 
             for (String entity : entities) {
                 if (entity != null && !entity.isBlank()) {

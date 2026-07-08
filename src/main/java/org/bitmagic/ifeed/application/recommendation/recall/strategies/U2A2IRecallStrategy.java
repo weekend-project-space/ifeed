@@ -8,8 +8,10 @@ import org.bitmagic.ifeed.application.recommendation.recall.model.UserContext;
 import org.bitmagic.ifeed.application.recommendation.recall.spi.InvertedIndex;
 import org.bitmagic.ifeed.application.recommendation.recall.spi.ScoredId;
 import org.bitmagic.ifeed.application.recommendation.recall.spi.UserPreferenceService;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
+import org.springframework.cache.CacheManager;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -24,13 +26,16 @@ public class U2A2IRecallStrategy implements RecallStrategy {
 
     private final UserPreferenceService preferenceService;
     private final InvertedIndex invertedIndex;
+    private final CacheManager cacheManager;
     private final int attributeLimit;
 
     public U2A2IRecallStrategy(UserPreferenceService preferenceService,
                                InvertedIndex invertedIndex,
+                               CacheManager cacheManager,
                                @Value("${recall.u2a2i.attribute-limit:30}") int attributeLimit) {
         this.preferenceService = preferenceService;
         this.invertedIndex = invertedIndex;
+        this.cacheManager = cacheManager;
         this.attributeLimit = Math.max(1, attributeLimit); // 至少为1
     }
 
@@ -44,16 +49,24 @@ public class U2A2IRecallStrategy implements RecallStrategy {
         if (context.userId() == null || limit <= 0) {
             return List.of();
         }
+//        回溯最近 多少条
+        int lookback = context.scene().equals("home") ? -1 : 1;
+        if (context.scene().equals("home")) {
+            return cacheManager.getCache("U2A2I").get(context.getUserId(), () -> getItemCandidates(context, limit, lookback));
+        } else {
+            return getItemCandidates(context, limit, lookback);
+        }
+    }
 
+    private @NotNull List<ItemCandidate> getItemCandidates(UserContext context, int limit, int lookback) {
         List<UserPreferenceService.AttributePreference> attributes =
-                preferenceService.topAttributes(context.userId(), attributeLimit);
+                preferenceService.topAttributes(context.userId(), lookback, attributeLimit);
 
         log.debug("U2A2I top attributes for user {}: {}", context.userId(), attributes);
 
         if (attributes.isEmpty()) {
             return List.of();
         }
-
         try {
             List<ScoredId> hits = invertedIndex.query(attributes, limit);
             return hits.stream()

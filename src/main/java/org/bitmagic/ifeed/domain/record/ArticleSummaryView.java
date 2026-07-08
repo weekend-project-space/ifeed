@@ -13,6 +13,7 @@ public record ArticleSummaryView(
         String link,
         String summary,
         String feedTitle,
+        String feedAvatar,
         Instant publishedAt,
         String tags,
         String thumbnail,

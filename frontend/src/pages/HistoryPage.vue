@@ -1,146 +1,139 @@
-<!--history.vue-->
 <template>
   <div class="">
-    <div class="max-w-4xl mx-auto px-4 sm:px-6 py-4 sm:py-6">
+    <div class="max-w-screen-lg mx-auto px-3 sm:px-6 py-4 sm:py-6">
       <!-- Page Header -->
       <div class="mb-6 sm:mb-8">
-        <h1 class="text-2xl sm:text-3xl font-bold text-text">阅读历史</h1>
+        <h1 class="text-2xl sm:text-3xl font-bold text-text">阅读记录</h1>
       </div>
 
-      <!-- Controls Bar -->
-      <div class="flex items-center justify-between mb-4 sm:mb-6">
-        <div class="text-xs sm:text-sm text-text-secondary">
-          {{ totalText }}
-        </div>
-        <button
-            @click="refresh"
-            :disabled="loading"
-            class="p-2 hover:bg-surface-container rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            aria-label="刷新阅读历史"
-        >
-          <svg
-              xmlns="http://www.w3.org/2000/svg"
-              class="w-5 h-5 text-text-secondary transition-transform"
-              :class="{ 'animate-spin': loading }"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-          >
-            <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
-          </svg>
-        </button>
-      </div>
-
-      <!-- Error State -->
-      <div v-if="error" class="mb-4 p-3 sm:p-4 bg-red-50 border border-red-200 rounded-lg">
-        <div class="flex items-center gap-2 text-xs sm:text-sm text-red-800">
-          <svg class="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="10"/>
-            <line x1="12" y1="8" x2="12" y2="12"/>
-            <line x1="12" y1="16" x2="12.01" y2="16"/>
-          </svg>
-          <span>{{ error }}</span>
-        </div>
-      </div>
-
-      <!-- Empty State -->
-      <div v-if="!items.length && !loading" class="flex flex-col items-center justify-center py-16 sm:py-20 text-center">
+      <!-- Unauthenticated State -->
+      <div v-if="!authStore.isAuthenticated" class="flex flex-col items-center justify-center py-16 sm:py-20 text-center">
         <div class="w-20 h-20 sm:w-24 sm:h-24 mb-4 sm:mb-6 flex items-center justify-center rounded-full bg-surface-container">
           <svg class="w-10 h-10 sm:w-12 sm:h-12 text-text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
-            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/>
           </svg>
         </div>
-        <h2 class="text-lg sm:text-xl font-semibold text-text mb-2">还没有阅读记录</h2>
-        <p class="text-xs sm:text-sm text-text-secondary px-4">开始阅读文章后，你的历史记录将显示在这里</p>
+        <h2 class="text-lg sm:text-xl font-semibold text-text mb-2">请先登录</h2>
+        <p class="text-xs sm:text-sm text-text-secondary px-4 mb-6">登录后即可查看你的阅读记录</p>
+        <router-link
+            to="/auth"
+            class="inline-block px-6 py-2.5 bg-secondary text-white rounded-full hover:bg-secondary-hover transition-colors text-sm font-medium"
+        >
+          前往登录
+        </router-link>
       </div>
 
-      <!-- Date Sections -->
-      <div v-else class="space-y-6 sm:space-y-8">
-        <section v-for="group in groupedByDate" :key="group.label" class="space-y-3 sm:space-y-4">
-          <h2 class="text-sm sm:text-base font-medium text-text">{{ group.label }}</h2>
+      <!-- Authenticated Content -->
+      <template v-else>
+        <!-- Controls Bar -->
+        <div class="flex items-center justify-between mb-4 sm:mb-6">
+          <div class="text-xs sm:text-sm text-text-secondary">
+            {{ totalText }}
+          </div>
+          <div class="flex items-center gap-2">
 
-          <article v-for="entry in group.items" :key="`${entry.articleId}-${entry.readAt}`">
-            <router-link
-                :to="`/articles/${entry.articleId}`"
-                class="group flex flex-col sm:flex-row gap-3 sm:gap-4 hover:bg-surface-container/50 -mx-2 px-2 py-2 rounded-lg transition-colors"
+            <button
+                @click="refresh"
+                :disabled="loading"
+                class="p-2 hover:bg-surface-container rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                aria-label="刷新阅读历史"
             >
-              <!-- Thumbnail -->
-              <div class="relative flex-shrink-0 w-full sm:w-52 h-40 sm:h-32 rounded-lg overflow-hidden bg-surface-container">
-                <img
-                    v-if="entry.thumbnail"
-                    :src="entry.thumbnail"
-                    :alt="entry.title || '文章缩略图'"
-                    class="w-full h-full object-cover"
-                    loading="lazy"
-                    referrerpolicy="no-referrer"
-                    @error="handleImageError"
-                />
-                <div v-else class="w-full h-full flex items-center justify-center">
-                  <svg class="w-8 h-8 sm:w-10 sm:h-10 text-text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                    <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
-                    <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
-                  </svg>
-                </div>
-
-                <!-- Menu Button (Mobile) -->
-                <button
-                    @click.stop.prevent="handleMenuClick(entry)"
-                    class="sm:hidden absolute top-2 right-2 p-2 bg-black/60 backdrop-blur-sm hover:bg-black/80 rounded-full transition-all"
-                    aria-label="文章选项菜单"
-                >
-                  <svg class="w-5 h-5 text-white" viewBox="0 0 24 24" fill="currentColor">
-                    <circle cx="12" cy="12" r="1.5"/>
-                    <circle cx="12" cy="5" r="1.5"/>
-                    <circle cx="12" cy="19" r="1.5"/>
-                  </svg>
-                </button>
-              </div>
-
-              <!-- Content -->
-              <div class="flex-1 min-w-0 flex flex-col py-0 sm:py-1">
-                <h3 class="text-sm sm:text-base font-normal text-text line-clamp-2 mb-1.5 sm:mb-2 leading-normal">
-                  {{ entry.title || '未命名文章' }}
-                </h3>
-                <div class="flex items-center gap-1.5 text-xs sm:text-sm text-text-secondary mb-1.5 sm:mb-2">
-                  <span v-if="entry.feedTitle" class="truncate">{{ entry.feedTitle }}</span>
-                  <span v-if="entry.feedTitle" class="flex-shrink-0">•</span>
-                  <span class="flex-shrink-0">{{ formatRelativeTime(entry.readAt) }}</span>
-                </div>
-                <p v-if="entry.summary" class="text-xs sm:text-sm text-text-secondary line-clamp-2 leading-relaxed">
-                  {{ entry.summary }}
-                </p>
-              </div>
-
-              <!-- Menu Button (Desktop) -->
-              <button
-                  @click.stop.prevent="handleMenuClick(entry)"
-                  class="hidden sm:block self-start p-2 opacity-0 group-hover:opacity-100 hover:bg-surface-container rounded-full transition-all"
-                  aria-label="文章选项菜单"
+              <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="w-5 h-5 text-text-secondary transition-transform"
+                  :class="{ 'animate-spin': loading }"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
               >
-                <svg class="w-5 h-5 text-text-secondary" viewBox="0 0 24 24" fill="currentColor">
-                  <circle cx="12" cy="12" r="1.5"/>
-                  <circle cx="12" cy="5" r="1.5"/>
-                  <circle cx="12" cy="19" r="1.5"/>
-                </svg>
-              </button>
-            </router-link>
-          </article>
-        </section>
-      </div>
+                <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
+              </svg>
+            </button>
+          </div>
+        </div>
 
-      <!-- Pagination -->
-      <pagination
-          v-if="items.length && !loading"
-          :current-page="page"
-          :has-previous-page="hasPreviousPage"
-          :has-next-page="hasNextPage"
-          :disabled="loading"
-          @prev-page="prevPage"
-          @next-page="nextPage"
-      />
+        <!-- Error State -->
+        <div v-if="error" class="mb-4 p-3 sm:p-4 bg-red-50 border border-red-200 rounded-lg">
+          <div class="flex items-center gap-2 text-xs sm:text-sm text-red-800">
+            <svg class="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="12" y1="8" x2="12" y2="12"/>
+              <line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+            <span>{{ error }}</span>
+          </div>
+        </div>
+
+        <!-- Empty State -->
+        <div v-if="!items.length && !loading" class="flex flex-col items-center justify-center py-16 sm:py-20 text-center">
+          <div class="w-20 h-20 sm:w-24 sm:h-24 mb-4 sm:mb-6 flex items-center justify-center rounded-full bg-surface-container">
+            <svg class="w-10 h-10 sm:w-12 sm:h-12 text-text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+              <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+            </svg>
+          </div>
+          <h2 class="text-lg sm:text-xl font-semibold text-text mb-2">还没有阅读记录</h2>
+          <p class="text-xs sm:text-sm text-text-secondary px-4">开始阅读文章后，你的历史记录将显示在这里</p>
+        </div>
+
+        <!-- Date Sections -->
+        <div v-else class="space-y-6 sm:space-y-8">
+          <section v-for="group in groupedByDate" :key="group.label" class="space-y-3 sm:space-y-4">
+            <h2 class="text-sm sm:text-base font-medium text-text">{{ group.label }}</h2>
+
+            <article-card-list
+                :loading="loading"
+                :items="group.items"
+                meta-field="readAt"
+                :show-action="true"
+                action-label="文章选项菜单"
+            >
+              <template #empty-thumbnail>
+                <svg class="w-8 h-8 sm:w-10 sm:h-10 text-text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
+                  <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+                </svg>
+              </template>
+
+              <!-- Dropdown Menu -->
+              <template #action-dropdown="{ item, close }">
+                <button
+                    @click.stop.prevent="handleOpenInNewTab(item); close()"
+                    class="w-full px-4 py-2 text-left text-sm text-text hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center gap-2"
+                >
+
+                  在新标签页打开
+                </button>
+
+                <div class="border-t border-gray-200 dark:border-gray-700 my-1"></div>
+
+                <button
+                    @click.stop.prevent="handleDeleteItem(item); close()"
+                    class="w-full px-4 py-2 text-left text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors flex items-center gap-2"
+                >
+                  删除
+                </button>
+              </template>
+
+            </article-card-list>
+          </section>
+        </div>
+
+        <!-- Pagination -->
+        <pagination
+            v-if="items.length && !loading"
+            :current-page="page"
+            :has-previous-page="hasPreviousPage"
+            :has-next-page="hasNextPage"
+            :disabled="loading"
+            @prev-page="prevPage"
+            @next-page="nextPage"
+        />
+      </template>
     </div>
+
+
   </div>
 </template>
 
@@ -148,47 +141,69 @@
 import { computed, onMounted, ref } from 'vue';
 import { storeToRefs } from 'pinia';
 import { useHistoryStore } from '../stores/history';
-import { formatRelativeTime } from '../utils/datetime';
+import { useAuthStore } from '../stores/auth';
+import { confirm } from '../composables/confirm';
 
 const historyStore = useHistoryStore();
-const { loading, items, page, total, hasNextPage, hasPreviousPage, error} = storeToRefs(historyStore);
+const authStore = useAuthStore();
+const { loading, items, page, total, hasNextPage, hasPreviousPage, error } = storeToRefs(historyStore);
+
+// 抽象的加载方法，供页面其它地方调用
+const loadData = async (targetPage: number, options?: { scrollToTop?: boolean }) => {
+  if (loading.value || !authStore.isAuthenticated) return;
+
+  try {
+    await historyStore.fetchHistory({ page: targetPage });
+
+    if (options?.scrollToTop) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  } catch (err) {
+    console.error('加载阅读历史失败:', err);
+    throw err;
+  }
+};
 
 const refresh = async () => {
-  if (loading.value) return;
-  try {
-    await historyStore.fetchHistory({ page: 0 });
-  } catch (err) {
-    console.error('阅读历史刷新失败:', err);
-  }
+  await loadData(0);
 };
 
 const nextPage = async () => {
-  if (!hasNextPage.value || loading.value) return;
-  try {
-    await historyStore.fetchHistory({ page: page.value + 1 });
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  } catch (err) {
-    console.error('加载下一页失败:', err);
-  }
+  if (!hasNextPage.value) return;
+  await loadData(page.value + 1, { scrollToTop: true });
 };
 
 const prevPage = async () => {
-  if (!hasPreviousPage.value || loading.value) return;
-  try {
-    await historyStore.fetchHistory({ page: Math.max(1, page.value - 1) });
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  } catch (err) {
-    console.error('加载上一页失败:', err);
+  if (!hasPreviousPage.value) return;
+  await loadData(Math.max(1, page.value - 1), { scrollToTop: true });
+};
+
+
+// 在新标签页打开
+const handleOpenInNewTab = (item: any) => {
+  if (item?.articleId) {
+    const url = `/articles/${item.articleId}`;
+    window.open(url, '_blank');
   }
 };
 
-const handleImageError = (e: Event) => {
-  (e.target as HTMLImageElement).style.display = 'none';
+
+// 处理删除菜单项
+const handleDeleteItem = async  (item: any) => {
+  if (!item?.articleId) return;
+  try {
+    const confirmed = await confirm({
+      title: '删除记录',
+      description: '确定要删除这条阅读记录吗？'
+    });
+    if (confirmed) {
+      await historyStore.deleteHistoryEntry(item.articleId);
+    }
+  } catch {
+    // 用户取消，无需操作
+  }
 };
 
-const handleMenuClick = (entry: any) => {
-  console.log('菜单点击:', entry);
-};
 
 const totalText = computed(() =>
     (total.value === null || total.value === 0) ? '暂无记录' : `共 ${total.value} 条记录`

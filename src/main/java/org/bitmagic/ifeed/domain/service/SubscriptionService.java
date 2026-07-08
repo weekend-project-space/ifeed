@@ -2,6 +2,7 @@ package org.bitmagic.ifeed.domain.service;
 
 import lombok.RequiredArgsConstructor;
 import org.bitmagic.ifeed.api.request.SubscriptionRequest;
+import org.bitmagic.ifeed.config.Const;
 import org.bitmagic.ifeed.domain.model.Feed;
 import org.bitmagic.ifeed.domain.model.MixFeed;
 import org.bitmagic.ifeed.domain.model.SourceType;
@@ -39,7 +40,9 @@ public class SubscriptionService {
     public UserSubscription subscribe(User user, SubscriptionRequest request) {
         SourceType type;
         Integer sourceId;
-
+        long usedQuota = subscriptionRepository.countByUserAndActiveTrue(user);
+        int remainingQuota = (int) Math.max(0, user.getCurrentPlan().getMaxSubscriptions() - usedQuota);
+        Assert.isTrue(remainingQuota > 0, "Exceeding the subscription limit, please upgrade your plan");
         // If sourceId is provided, try to find by UUID (Feed or MixFeed)
         if (StringUtils.hasText(request.feedId())) {
             UUID uuid;
@@ -178,6 +181,7 @@ public class SubscriptionService {
                 .url(feedUrl)
                 .siteUrl(siteUrl)
                 .title(title)
+                .icon(Const.FAVICON_TEMPLATE.formatted(extractHost(siteUrl)))
                 .build();
 
         return feedRepository.save(feed);

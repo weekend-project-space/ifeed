@@ -1,14 +1,14 @@
 spring:
   application:
     name: IFeed
-    version: 0.1.0
+    version: 0.1.1
   datasource:
     url: jdbc:postgresql://${PG:127.0.0.1}:${PG_PORT:5432}/${PG_DATABASE:i_feed}
     username: ${PG_USERNAME:i_feed}
     password: ${PG_PASSWORD:0123.}
     driver-class-name: org.postgresql.Driver
     hikari:
-      maximum-pool-size: 200
+      maximum-pool-size: 30
       connection-timeout: 30000
   threads:
     virtual:
@@ -30,9 +30,9 @@ spring:
         api-key: ${app.ai.provider.embedding.api-key}
     vectorstore:
       pgvector:
-        initialize-schema: true
-        table-name: article_embeddings
-        index-type: ${VECTOR_INDEX_TYPE:IVFFLAT}
+        initialize-schema: false
+        table-name: vector_store
+        index-type: ${VECTOR_INDEX_TYPE:HNSW}
         distance-type: ${VECTOR_DISTANCE_TYPE:COSINE_DISTANCE}
         dimensions: ${app.ai.provider.embedding.options.dimensions}
         id-type: serial
@@ -46,6 +46,8 @@ spring:
   mvc:
     pathmatch:
       matching-strategy: ant_path_matcher
+  profiles:
+    active: rel
 app:
   # 定时任务
   rss:
@@ -104,6 +106,17 @@ app:
       freshness-time-weight: 0.3
       freshness-lambda: 0.5
       similarity-threshold: 0.3
+
+  radar:
+    fixed-delay: PT6H
+    initial-delay: PT1M
+    window-hours: 72
+    similarity-threshold: 0.7
+    neighbors: 10
+    min-cluster-size: 5
+    max-topics: 12
+    snapshot-ttl: PT2H
+    include-global: true
   # 召回
   recall:
     preference:
@@ -120,8 +133,8 @@ app:
       client-id: ${OAUTH_LINUX_DO_CLIENT_ID:xxx}
       client-secret: ${OAUTH_LINUX_DO_CLIENT_SECRET:xxx}
       redirect-uri: ${OAUTH_LINUX_DO_REDIRECT_URI:https://www.ifeed.cc/auth}
-management:
-  endpoints:
-    web:
-      exposure:
-        include: health,info,metrics,threaddump
+#management:
+#  endpoints:
+#    web:
+#      exposure:
+#        include: health,info,metrics,threaddump

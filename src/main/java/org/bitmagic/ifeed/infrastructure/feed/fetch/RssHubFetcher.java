@@ -2,15 +2,15 @@ package org.bitmagic.ifeed.infrastructure.feed.fetch;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
 import org.bitmagic.ifeed.config.properties.RssFetcherProperties;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
@@ -34,7 +34,7 @@ public class RssHubFetcher implements HttpFetcher {
     private final ConcurrentHashMap<String, Boolean> rssHubCache = new ConcurrentHashMap<>();
 
     private final DefaultHttpFetcher defaultHttpFetcher;
-    private final HttpClient rssHttpClient;
+    private final OkHttpClient rssHttpClient;
     private final RssFetcherProperties properties;
     private final Random random = new Random();
 
@@ -102,20 +102,17 @@ public class RssHubFetcher implements HttpFetcher {
             String configUrl = baseUrl + RSS_HUB_CONFIG_PATH;
             log.debug("Checking if {} is RSSHub via {}", feedUrl, configUrl);
 
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(configUrl))
-                    .timeout(properties.getReadTimeout())
+            Request request = new Request.Builder()
+                    .url(configUrl)
                     .header("User-Agent", DEFAULT_USER_AGENT)
-                    .GET()
                     .build();
-
-            HttpResponse<String> response = rssHttpClient.send(request, HttpResponse.BodyHandlers.ofString());
-            boolean isRssHub = response.statusCode() == 200;
-
-            // 缓存结果
-            rssHubCache.put(baseUrl, isRssHub);
-            log.debug("{} is {}RSSHub (cached)", baseUrl, isRssHub ? "" : "NOT ");
-            return isRssHub;
+            try (Response response = rssHttpClient.newCall(request).execute()) {
+                boolean isRssHub = response.code() == 200;
+                // 缓存结果
+                rssHubCache.put(baseUrl, isRssHub);
+                log.debug("{} is {}RSSHub (cached)", baseUrl, isRssHub ? "" : "NOT ");
+                return isRssHub;
+            }
 
         } catch (Exception e) {
             log.debug("Failed to check RSSHub config for {}: {}", feedUrl, e.toString());

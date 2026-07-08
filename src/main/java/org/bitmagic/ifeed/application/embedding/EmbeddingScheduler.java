@@ -7,7 +7,6 @@ import org.bitmagic.ifeed.domain.repository.UserRepository;
 import org.bitmagic.ifeed.domain.spec.ArticleSpecs;
 import org.springframework.cache.CacheManager;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -18,7 +17,7 @@ import java.util.stream.Stream;
 @RequiredArgsConstructor
 public class EmbeddingScheduler {
 
-    private final ArticleEmbeddingService articleEmbeddingService;
+    private final ArticleEnhancedService articleEnhancedService;
 
     private final UserEmbeddingService userEmbeddingService;
 
@@ -56,10 +55,10 @@ public class EmbeddingScheduler {
     public void documentEmbedding() {
         log.info("begin init article embedding");
         try {
-            Stream.iterate(0, i -> i + 1).limit(50).forEach(i -> {
-                articleRepository.findAll(ArticleSpecs.noEmbeddingSpec(), PageRequest.of(i, 10)).stream().parallel().forEach(article -> {
+            Stream.iterate(0, i -> i + 1).limit(5).forEach(i -> {
+                articleRepository.findAll(ArticleSpecs.noEmbeddingSpec(), PageRequest.of(i, 300)).stream().parallel().forEach(article -> {
                     try {
-                        articleEmbeddingService.buildArticleEmbedding(article);
+                        articleEnhancedService.enhanced(article);
                         log.debug("init embedding :{}", article.getTitle());
                     } catch (RuntimeException e) {
                         log.warn("init article embedding", e);

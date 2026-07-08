@@ -14,6 +14,7 @@ import org.bitmagic.ifeed.domain.model.User;
 import org.bitmagic.ifeed.domain.service.AuthService;
 import org.bitmagic.ifeed.domain.service.MixFeedService;
 import org.bitmagic.ifeed.domain.service.SubscriptionService;
+import org.bitmagic.ifeed.domain.service.UserService;
 import org.bitmagic.ifeed.exception.ApiException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -33,7 +34,7 @@ import java.util.stream.Collectors;
 public class MixFeedController {
 
     private final MixFeedService mixFeedService;
-    private final AuthService authService;
+    private final UserService userService;
     private final SubscriptionService subscriptionService;
 
     @PostMapping
@@ -98,7 +99,7 @@ public class MixFeedController {
         if (principal == null) {
             throw new ApiException(HttpStatus.UNAUTHORIZED, "Unauthorized");
         }
-        return authService.findUserById(principal.getId())
+        return userService.findUserById(principal.getId())
                 .orElseThrow(() -> new ApiException(HttpStatus.UNAUTHORIZED, "User not found"));
     }
 

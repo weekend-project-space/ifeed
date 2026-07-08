@@ -1,9 +1,12 @@
 package org.bitmagic.ifeed;
 
 import org.bitmagic.ifeed.config.properties.RssFetcherProperties;
+import org.bitmagic.ifeed.domain.repository.UserSubscriptionRepository;
 import org.bitmagic.ifeed.infrastructure.FreshnessCalculator;
 import org.bitmagic.ifeed.infrastructure.retrieval.impl.TextSearchRetrievalHandler;
+import org.bitmagic.ifeed.infrastructure.retrieval.impl.VectorRetrievalHandler;
 import org.bitmagic.ifeed.infrastructure.text.search.pg.PgTextSearchStore;
+import org.bitmagic.ifeed.infrastructure.vector.VectorStoreTurbo;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.boot.SpringApplication;
@@ -20,9 +23,12 @@ import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.ViewControllerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
-import java.net.http.HttpClient;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+
+import okhttp3.ConnectionPool;
+import okhttp3.OkHttpClient;
 
 @SpringBootApplication
 @EnableScheduling
@@ -36,7 +42,7 @@ public class IFeedApplication {
         public void addCorsMappings(CorsRegistry registry) {
 
             registry.addMapping("/api/**")
-                    .allowedOrigins("https://www.ifeed.cc", "http://localhost:5173")
+                    .allowedOrigins("https://www.ifeed.cc", "http://localhost:5173", "http://192.168.8.57:5173")
                     .allowedMethods("PUT", "DELETE", "POST", "GET", "PATCH", "OPTIONS")
                     .allowedHeaders("*")
                     .allowCredentials(true).maxAge(3600);
@@ -82,15 +88,23 @@ public class IFeedApplication {
     }
 
     @Bean
-    public TextSearchRetrievalHandler bm25RetrievalHandler(PgTextSearchStore pgTextSearchStore) {
+    public TextSearchRetrievalHandler textSearchRetrievalHandler(PgTextSearchStore pgTextSearchStore) {
         return new TextSearchRetrievalHandler(pgTextSearchStore);
     }
 
     @Bean
-    public HttpClient rssHttpClient(RssFetcherProperties properties) {
-        return HttpClient.newBuilder()
+    public VectorRetrievalHandler vectorRetrievalHandler(VectorStoreTurbo vectorStoreTurbo, UserSubscriptionRepository userSubscriptionRepository) {
+        return new VectorRetrievalHandler(vectorStoreTurbo, userSubscriptionRepository);
+    }
+
+    @Bean
+    public OkHttpClient rssHttpClient(RssFetcherProperties properties) {
+        return new OkHttpClient.Builder()
                 .connectTimeout(properties.getConnectTimeout())
-                .followRedirects(HttpClient.Redirect.NORMAL)
+                .readTimeout(properties.getReadTimeout())
+                .followRedirects(true)
+                .connectionPool(new ConnectionPool(
+                        properties.getThreadPoolSize(), 30, TimeUnit.SECONDS))
                 .build();
     }
 

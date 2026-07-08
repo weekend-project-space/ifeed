@@ -25,6 +25,10 @@ export const useArticlesStore = defineStore('articles', () => {
         }
     };
 
+    const enrich = async (articleId: string): Promise<{ summary: string; mindMap: string }> => {
+        return request(`/api/articles/${articleId}/enrich`, {method: 'POST'});
+    };
+
     const recordHistory = async (articleId: string) => {
         if (!articleId || historyTracker.value.has(articleId)) {
             return;
@@ -51,5 +55,6 @@ export const useArticlesStore = defineStore('articles', () => {
         fetchArticleById,
         clearCurrentArticle,
         recordHistory,
+        enrich,
     };
 });

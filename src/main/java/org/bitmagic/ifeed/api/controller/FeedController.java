@@ -6,19 +6,16 @@ import org.bitmagic.ifeed.api.response.FeedDetailResponse;
 import org.bitmagic.ifeed.api.response.SubscriptionSearchResponse;
 import org.bitmagic.ifeed.api.util.IdentifierUtils;
 import org.bitmagic.ifeed.config.security.UserPrincipal;
-import org.bitmagic.ifeed.domain.document.UserBehaviorDocument;
 import org.bitmagic.ifeed.domain.model.Feed;
 import org.bitmagic.ifeed.domain.model.MixFeed;
 import org.bitmagic.ifeed.domain.model.SourceType;
 import org.bitmagic.ifeed.domain.model.value.UserSubscription;
 import org.bitmagic.ifeed.domain.repository.FeedRepository;
 import org.bitmagic.ifeed.domain.repository.MixFeedRepository;
-import org.bitmagic.ifeed.domain.repository.UserBehaviorRepository;
 import org.bitmagic.ifeed.domain.service.FeedService;
 import org.bitmagic.ifeed.domain.service.MixFeedService;
 import org.bitmagic.ifeed.domain.service.SubscriptionService;
 import org.bitmagic.ifeed.exception.ApiException;
-import org.bitmagic.ifeed.infrastructure.spec.Spec;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -27,9 +24,8 @@ import org.springframework.web.bind.annotation.*;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @RestController
@@ -47,21 +43,21 @@ public class FeedController {
     public ResponseEntity<FeedDetailResponse> getFeed(
             @AuthenticationPrincipal UserPrincipal principal,
             @PathVariable String feedId) {
-        ensureAuthenticated(principal);
 
         var uuid = IdentifierUtils.parseUuid(feedId, "feed id");
         // Try to find Feed first
         var feedOpt = feedRepository.findByUid(uuid);
+        Integer userId = Objects.nonNull(principal) ? principal.getId() : null;
         if (feedOpt.isPresent()) {
             var detail = feedService.getFeedDetail(uuid);
-            var subscribed = feedService.isSubscribed(principal.getId(), detail.feed());
+            var subscribed = feedService.isSubscribed(userId, detail.feed());
             return ResponseEntity.ok(toFeedResponse(detail, subscribed));
         }
         // If not found as Feed, try MixFeed
         var mixFeedOpt = mixFeedRepository.findByUid(uuid);
         if (mixFeedOpt.isPresent()) {
-            var detail = mixFeedService.getDetail(uuid, principal.getId());
-            var subscribed = mixFeedService.isSubscribed(principal.getId(), detail.mixFeed());
+            var detail = mixFeedService.getDetail(uuid, userId);
+            var subscribed = mixFeedService.isSubscribed(userId, detail.mixFeed());
             return ResponseEntity.ok(toMixFeedResponse(detail, subscribed));
         }
 
@@ -69,6 +65,7 @@ public class FeedController {
         throw new ApiException(HttpStatus.NOT_FOUND, "Feed or MixFeed not found");
     }
 
+    @Deprecated
     @GetMapping("/search")
     public ResponseEntity<List<SubscriptionSearchResponse>> search(
             @AuthenticationPrincipal UserPrincipal principal,
@@ -106,6 +103,7 @@ public class FeedController {
         return ResponseEntity.ok(responses);
     }
 
+    @Deprecated
     @GetMapping("/lookup")
     public ResponseEntity<FeedDetailResponse> lookupFeed(@AuthenticationPrincipal UserPrincipal principal,
                                                          @RequestParam String feedUrl) {
@@ -124,14 +122,13 @@ public class FeedController {
     private FeedDetailResponse toFeedResponse(FeedService.FeedDetail detail, boolean subscribed) {
         var feed = detail.feed();
         var failureCount = feed.getFailureCount() == null ? 0 : feed.getFailureCount();
-        var host = extractHost(feed.getSiteUrl());
         return new FeedDetailResponse(
                 feed.getUid().toString(),
                 feed.getTitle(),
                 feed.getDescription(),
                 feed.getUrl(),
                 feed.getSiteUrl(),
-                "https://favicon.im/%s".formatted(host),
+                feed.getIcon(),
                 feed.getLastFetched(),
                 feed.getLastUpdated(),
                 detail.articleCount(),
@@ -159,24 +156,5 @@ public class FeedController {
                 0, // MixFeed doesn't have failureCount
                 null, // MixFeed doesn't have fetchError
                 "MIX_FEED", mixFeed.config().getSourceFeeds().values());
-    }
-
-    private String extractHost(String url) {
-        if (url == null || url.isBlank()) {
-            return null;
-        }
-        try {
-            var uri = new URI(url.trim());
-            if (uri.getHost() != null && !uri.getHost().isBlank()) {
-                return uri.getHost();
-            }
-            var path = uri.getPath();
-            if (path != null && !path.isBlank()) {
-                return path;
-            }
-        } catch (URISyntaxException ignored) {
-            return url;
-        }
-        return url;
     }
 }

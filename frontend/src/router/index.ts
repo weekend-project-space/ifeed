@@ -1,4 +1,6 @@
-import { createRouter, createWebHistory } from 'vue-router';
+import {createRouter, createWebHistory} from 'vue-router';
+import {onUnauthorized} from '@/api/auth-events';
+import {setAuthToken} from '@/api/client'
 import AuthPage from '../pages/AuthPage.vue';
 // import HomePage from '../pages/HomePage.vue';
 import SearchPage from '../pages/SearchPage.vue';
@@ -12,7 +14,11 @@ import FeedDetailPage from '../pages/FeedDetailPage.vue';
 import HomePage from '../pages/HomePage.vue';
 import FeedSubscriptionsPage from '../pages/FeedSubscriptionsPage.vue';
 import FeedChannelsPage from '../pages/SubscriptionsListPage.vue';
-import { useAuthStore } from '../stores/auth';
+import AdminPage from "../pages/AdminPage.vue";
+import UpgradePage from "../pages/UpgradePage.vue";
+import RadarPage from '../pages/RadarPage.vue';
+import RadarTopicPage from '../pages/RadarTopicPage.vue';
+import {useAuthStore} from '../stores/auth';
 
 const router = createRouter({
     history: createWebHistory(),
@@ -74,8 +80,29 @@ const router = createRouter({
                 },
                 {
                     path: 'articles/:id',
-                    name: 'article-detail',
+                    name: 'article',
                     component: ArticleDetailPage,
+                    props: true
+                },
+                {
+                    path: 'upgrade',
+                    name: 'upgrade',
+                    component: UpgradePage,
+                },
+                {
+                    path: 'admin',
+                    name: 'admin',
+                    component: AdminPage,
+                },
+                {
+                    path: 'radar',
+                    name: 'radar',
+                    component: RadarPage,
+                },
+                {
+                    path: 'radar/topics/:topicId',
+                    name: 'radarTopic',
+                    component: RadarTopicPage,
                     props: true
                 }
             ]
@@ -83,9 +110,9 @@ const router = createRouter({
     ]
 });
 
-router.beforeEach(async (to: any) => {
+router.beforeEach(async (to: any, from: any) => {
     const auth = useAuthStore();
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo({top: 0, behavior: 'smooth'});
     if (!auth.initialized && auth.token) {
         try {
             await auth.fetchUser();
@@ -93,16 +120,33 @@ router.beforeEach(async (to: any) => {
             console.warn('用户信息初始化失败', err);
         }
     }
-
-    if (to.name !== 'auth' && !auth.isAuthenticated) {
-        return { name: 'auth', query: { redirect: to.fullPath } };
+    if (to.name == 'article') {
+        sessionStorage.setItem('origin-list', from.fullPath)
     }
-
-    if (to.name === 'auth' && auth.isAuthenticated) {
-        return { name: 'home' };
-    }
+    // if (to.name !== 'auth' && !auth.isAuthenticated) {
+    //     return {name: 'auth', query: {redirect: to.fullPath}};
+    // }
+    //
+    // if (to.name === 'auth' && auth.isAuthenticated) {
+    //     return {name: 'home'};
+    // }
 
     return true;
+});
+
+
+// ⭐ 只注册一次
+onUnauthorized(async () => {
+    setAuthToken(null);
+
+    if (router.currentRoute.value.path !== '/auth') {
+        await router.replace({
+            path: '/auth',
+            query: {
+                redirect: router.currentRoute.value.fullPath
+            }
+        });
+    }
 });
 
 export default router;

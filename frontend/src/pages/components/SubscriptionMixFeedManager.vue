@@ -196,11 +196,11 @@
               <div>
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">选择订阅源</label>
                 <div class="max-h-48 overflow-y-auto border border-gray-200 dark:border-gray-700 rounded-lg p-3 space-y-2">
-                  <div v-if="!subscriptionsStore.items.length" class="text-sm text-gray-500 text-center py-2">
+                  <div v-if="!items.length" class="text-sm text-gray-500 text-center py-2">
                     暂无订阅源
                   </div>
                   <div
-                      v-for="sub in subscriptionsStore.items"
+                      v-for="sub in items"
                       :key="sub.feedId"
                       class="flex items-center gap-2"
                   >
@@ -324,6 +324,7 @@ const editingId = ref<string | null>(null);
 const feedToDelete = ref<MixFeedListResponse | null>(null);
 const activeDropdown = ref<string | null>(null);
 const isRefreshing = ref(false);
+const items = computed(()=>subscriptionsStore.items.filter(item=>item.type=='FEED'))
 
 const form = ref<MixFeedRequest>({
   name: '',
