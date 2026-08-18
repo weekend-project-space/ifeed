@@ -35,10 +35,18 @@ public class PgTextSearchStore implements TextSearchStore {
             String textSearchConfig) {
         this.jdbcTemplate = jdbcTemplate;
         this.namedJdbcTemplate = new NamedParameterJdbcTemplate(jdbcTemplate);
-        this.tableName = tableName;
-        this.textSearchConfig = textSearchConfig != null ? textSearchConfig : "simple";
+        this.tableName = validateIdentifier(tableName, "table name");
+        this.textSearchConfig = validateIdentifier(
+                textSearchConfig != null ? textSearchConfig : "simple", "text search config");
         this.objectMapper = new ObjectMapper();
         initializeTable();
+    }
+
+    private static String validateIdentifier(String identifier, String type) {
+        if (identifier == null || !identifier.matches("^[a-zA-Z_][a-zA-Z0-9_]*$")) {
+            throw new IllegalArgumentException("Invalid " + type + ": " + identifier);
+        }
+        return identifier;
     }
 
     /**
@@ -223,7 +231,11 @@ public class PgTextSearchStore implements TextSearchStore {
                 .addValue("topK", request.topK());
 
         if (request.filterExpression() != null) {
-            sql += " AND " + request.filterExpression().toFilterString();
+            String filterSql = request.filterExpression().toFilterString();
+            if (filterSql.contains("'") && !filterSql.contains(":")) {
+                throw new IllegalArgumentException("Filter must use named parameters");
+            }
+            sql += " AND " + filterSql;
             request.filterExpression().addParameters(params);
         }
 

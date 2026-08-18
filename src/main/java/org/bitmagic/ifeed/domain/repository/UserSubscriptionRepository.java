@@ -27,6 +27,19 @@ public interface UserSubscriptionRepository
 
   long countBySourceTypeAndSourceIdAndActiveTrue(SourceType sourceType, Integer sourceId);
 
+  @Query("""
+      select us.sourceId, count(us)
+      from UserSubscription us
+      where us.sourceType = :sourceType
+        and us.sourceId in (:sourceIds)
+        and us.active = true
+      group by us.sourceId
+      """)
+  List<Object[]> countBySourceTypeAndSourceIdsAndActiveTrue(
+      @Param("sourceType") SourceType sourceType,
+      @Param("sourceIds") List<Integer> sourceIds
+  );
+
   boolean existsByUserIdAndSourceTypeAndSourceIdAndActiveTrue(Integer userId, SourceType sourceType, Integer sourceId);
 
   @Query("select us.sourceId from UserSubscription us where us.user.id = :userId and us.sourceType = 'FEED' and us.active = true")

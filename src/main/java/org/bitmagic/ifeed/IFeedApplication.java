@@ -42,7 +42,7 @@ public class IFeedApplication {
         public void addCorsMappings(CorsRegistry registry) {
 
             registry.addMapping("/api/**")
-                    .allowedOrigins("https://www.ifeed.cc", "http://localhost:5173", "http://192.168.8.57:5173")
+                    .allowedOrigins("https://www.ifeed.cc", "https://ifeed.cc", "http://localhost:5173", "http://192.168.8.57:5173")
                     .allowedMethods("PUT", "DELETE", "POST", "GET", "PATCH", "OPTIONS")
                     .allowedHeaders("*")
                     .allowCredentials(true).maxAge(3600);

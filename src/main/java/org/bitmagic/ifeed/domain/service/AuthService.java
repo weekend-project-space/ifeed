@@ -38,6 +38,7 @@ public class AuthService {
                 .passwordHash(passwordEncoder.encode(rawPassword))
                 .currentPlan(User.Plan.FREE)
                 .currentPlanCreatedAt(Instant.now())
+                .role(User.UserRole.USER)
                 .build();
 
         user = userRepository.save(user);

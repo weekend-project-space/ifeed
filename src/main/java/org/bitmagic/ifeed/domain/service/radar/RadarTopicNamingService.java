@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -19,6 +20,8 @@ public class RadarTopicNamingService {
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     private final ChatClient chatClient;
+
+    private final ChatModel chatModel;
 
     public TopicNameResult nameTopic(List<String> titles) {
         String joined = titles.stream().filter(StringUtils::hasText).limit(10).collect(Collectors.joining("\n"));
@@ -36,7 +39,7 @@ public class RadarTopicNamingService {
             if (!StringUtils.hasText(content)) {
                 return fallback(titles);
             }
-            JsonNode node = OBJECT_MAPPER.readTree(content);
+            JsonNode node = OBJECT_MAPPER.readTree(content.substring(content.indexOf("{"), content.lastIndexOf("}")+1));
             String title = node.path("title").asText(null);
             String description = node.path("description").asText(null);
             List<String> keywords = OBJECT_MAPPER.convertValue(node.path("keywords"), OBJECT_MAPPER.getTypeFactory().constructCollectionType(List.class, String.class));
@@ -57,5 +60,9 @@ public class RadarTopicNamingService {
     }
 
     public record TopicNameResult(String title, String description, List<String> keywords) {
+    }
+
+    public static void main(String[] args) {
+        System.out.println( "123465".substring(1,5));
     }
 }

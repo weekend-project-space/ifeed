@@ -42,8 +42,17 @@ public class User {
 
     private Instant currentPlanCreatedAt;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "role", nullable = false, length = 20)
+    private UserRole role;
+
     {
         currentPlan = Plan.FREE;
+        role = UserRole.USER;
+    }
+
+    public enum UserRole {
+        USER, ADMIN
     }
 
     @AllArgsConstructor

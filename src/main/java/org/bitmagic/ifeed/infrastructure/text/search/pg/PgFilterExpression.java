@@ -25,7 +25,15 @@ public record PgFilterExpression(String expression, Map<String, Object> paramete
         parameters.forEach(params::addValue);
     }
 
+    private static String validateFieldName(String field) {
+        if (field == null || !field.matches("^[a-zA-Z_][a-zA-Z0-9_]*$")) {
+            throw new IllegalArgumentException("Invalid field name: " + field);
+        }
+        return field;
+    }
+
     public static PgFilterExpression eq(String field, Object value) {
+        validateFieldName(field);
         return new PgFilterExpression(
                 String.format("metadata->>'%s' = :filter_%s", field, field),
                 Map.of("filter_" + field, value.toString())
@@ -33,6 +41,7 @@ public record PgFilterExpression(String expression, Map<String, Object> paramete
     }
 
     public static PgFilterExpression contains(String field, Object value) {
+        validateFieldName(field);
         return new PgFilterExpression(
                 String.format("metadata @> :filter_%s::jsonb", field),
                 Map.of("filter_" + field, String.format("{\"%s\":\"%s\"}", field, value))
@@ -40,6 +49,7 @@ public record PgFilterExpression(String expression, Map<String, Object> paramete
     }
 
     public static PgFilterExpression gt(String field, Number value) {
+        validateFieldName(field);
         return new PgFilterExpression(
                 String.format("(metadata->>'%s')::numeric > :filter_%s", field, field),
                 Map.of("filter_" + field, value)
@@ -54,6 +64,7 @@ public record PgFilterExpression(String expression, Map<String, Object> paramete
     }
 
     public static PgFilterExpression in(String field, Collection<?> values) {
+        validateFieldName(field);
         if (values == null || values.isEmpty()) {
             throw new IllegalArgumentException("Values collection cannot be null or empty");
         }

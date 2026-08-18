@@ -40,13 +40,13 @@ class ArticleServiceTest {
     @Test
     void saveAllAndFlush() {
 
-        Stream.iterate(0, i -> i + 1).skip(12000).limit(15000).forEach(i -> {
+        Stream.iterate(0, i -> i + 1).skip(0).limit(3000).forEach(i -> {
 //            Specification<Article> specification = Spec.<Article>on().and((root, query, criteriaBuilder) -> {
 //                return criteriaBuilder.equal(root.get("feed").get("id"), 107);
 //            }).build();
-            List<Article> articles = articleRepository.findAll( PageRequest.of(i, 10, Sort.by(Sort.Direction.ASC, "id"))).getContent();
+            List<Article> articles = articleRepository.findAll( PageRequest.of(i, 100, Sort.by(Sort.Direction.ASC, "id"))).getContent();
             articles.forEach(article -> {
-                ContentCleaner.Content content = ContentCleaner.clean(article.getContent());
+                ContentCleaner.Content content = ContentCleaner.clean(article.getDescription());
                 if(StringUtils.isNotBlank(content.textContent())) {
 //                    article.setContent(content.mdContent());
 //                    log.info(content.mdContent());

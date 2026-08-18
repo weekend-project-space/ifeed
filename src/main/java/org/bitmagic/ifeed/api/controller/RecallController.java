@@ -4,7 +4,11 @@ import lombok.RequiredArgsConstructor;
 import org.bitmagic.ifeed.application.recommendation.recall.core.RecallEngine;
 import org.bitmagic.ifeed.application.recommendation.recall.model.RecallRequest;
 import org.bitmagic.ifeed.application.recommendation.recall.model.RecallResponse;
+import org.bitmagic.ifeed.config.security.UserPrincipal;
+import org.bitmagic.ifeed.exception.ApiException;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -30,20 +34,23 @@ public class RecallController {
      * 查询用户在指定场景下的召回候选，支持通过参数控制交织与多样化。
      */
     @GetMapping("/candidates")
-    public RecallResponse candidates(@RequestParam("userId") Integer userId,
+    public RecallResponse candidates(@AuthenticationPrincipal UserPrincipal principal,
                                      @RequestParam(value = "scene", defaultValue = "home") String scene,
                                      @RequestParam(value = "topK", defaultValue = "50") int topK,
                                      @RequestParam(value = "diversityKey", required = false) String diversityKey,
                                      @RequestParam(value = "diversityLimit", required = false) Integer diversityLimit,
                                      @RequestParam(value = "diversityFillOverflow", required = false) Boolean diversityFillOverflow,
                                      @RequestParam(value = "interleaveChannels", required = false) Boolean interleaveChannels) {
+        if (principal == null) {
+            throw new ApiException(HttpStatus.UNAUTHORIZED, "Authentication required");
+        }
         Map<String, Object> filters = new HashMap<>();
         Optional.ofNullable(diversityKey).ifPresent(key -> filters.put("diversityKey", key));
         Optional.ofNullable(diversityLimit).ifPresent(limit -> filters.put("diversityLimit", limit));
         Optional.ofNullable(diversityFillOverflow).ifPresent(flag -> filters.put("diversityFillOverflow", flag));
         Optional.ofNullable(interleaveChannels).ifPresent(flag -> filters.put("interleaveChannels", flag));
 
-        RecallRequest request = new RecallRequest(userId, scene, topK, filters, false, Instant.now());
+        RecallRequest request = new RecallRequest(principal.getId(), scene, topK, filters, false, Instant.now());
         return recallEngine.recall(request);
     }
 }

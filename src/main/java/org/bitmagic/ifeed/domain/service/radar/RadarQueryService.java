@@ -3,6 +3,7 @@ package org.bitmagic.ifeed.domain.service.radar;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.bitmagic.ifeed.api.response.PageResponse;
 import org.bitmagic.ifeed.api.response.radar.RadarItemResponse;
 import org.bitmagic.ifeed.api.response.radar.RadarTopicResponse;
@@ -26,6 +27,7 @@ import org.springframework.stereotype.Service;
 import java.util.*;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class RadarQueryService {
@@ -110,7 +112,8 @@ public class RadarQueryService {
         }
         try {
             return OBJECT_MAPPER.readValue(rawJson, TAGS_TYPE);
-        } catch (Exception ignored) {
+        } catch (Exception e) {
+            log.warn("Failed to parse keywords JSON: {}", rawJson, e);
             return Collections.emptyList();
         }
     }
@@ -137,7 +140,8 @@ public class RadarQueryService {
         }
         try {
             return OBJECT_MAPPER.readValue(raw, TAGS_TYPE);
-        } catch (Exception ex) {
+        } catch (Exception e) {
+            log.warn("Failed to parse tags JSON: {}", raw, e);
             return Collections.emptyList();
         }
     }

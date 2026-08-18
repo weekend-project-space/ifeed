@@ -2,6 +2,7 @@ package org.bitmagic.ifeed.application.embedding;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.bitmagic.ifeed.application.radar.RadarSnapshotBuildService;
 import org.bitmagic.ifeed.domain.repository.ArticleRepository;
 import org.bitmagic.ifeed.domain.repository.UserRepository;
 import org.bitmagic.ifeed.domain.spec.ArticleSpecs;
@@ -26,6 +27,8 @@ public class EmbeddingScheduler {
     private final ArticleRepository articleRepository;
 
     private final CacheManager cacheManager;
+
+    private final RadarSnapshotBuildService buildService;
 
     @Scheduled(initialDelayString = "${app.embedding.user.initial-delay:PT10S}",
             fixedDelayString = "${app.embedding.user.fixed-delay:PT30M}")
@@ -55,8 +58,8 @@ public class EmbeddingScheduler {
     public void documentEmbedding() {
         log.info("begin init article embedding");
         try {
-            Stream.iterate(0, i -> i + 1).limit(5).forEach(i -> {
-                articleRepository.findAll(ArticleSpecs.noEmbeddingSpec(), PageRequest.of(i, 300)).stream().parallel().forEach(article -> {
+            Stream.iterate(0, i -> i + 1).limit(10).forEach(i -> {
+                articleRepository.findAll(ArticleSpecs.noEmbeddingSpec(), PageRequest.of(i, 300)).stream().forEach(article -> {
                     try {
                         articleEnhancedService.enhanced(article);
                         log.debug("init embedding :{}", article.getTitle());
@@ -69,6 +72,7 @@ public class EmbeddingScheduler {
             log.warn("article embedding", e);
         }
         log.info("end init article embedding");
+        buildService.build();
     }
 
 

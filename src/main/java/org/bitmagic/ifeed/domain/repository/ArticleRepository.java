@@ -143,6 +143,14 @@ public interface ArticleRepository extends JpaRepository<Article, Long>, JpaSpec
 
     Optional<Article> findTopByFeedOrderByPublishedAtDesc(Feed feed);
 
+    @Query("""
+            select a.feed.id, count(a), max(a.publishedAt)
+            from Article a
+            where a.feed.id in (:feedIds)
+            group by a.feed.id
+            """)
+    List<Object[]> getArticleStatsByFeedIds(@Param("feedIds") List<Integer> feedIds);
+
     /**
      * Count categories for articles visible to the owner (their active
      * subscriptions), within time window.

@@ -10,6 +10,7 @@ import org.bitmagic.ifeed.exception.ApiException;
 import org.bitmagic.ifeed.config.security.UserPrincipal;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -32,13 +33,8 @@ public class UserController {
     }
 
     @PostMapping("/plan")
+    @PreAuthorize("hasRole('ADMIN')")
     public void updateUserPlan(@AuthenticationPrincipal UserPrincipal principal, @RequestBody UserReq req) {
-        if (principal == null) {
-            throw new ApiException(HttpStatus.UNAUTHORIZED, "Unauthorized");
-        }
-        if (!principal.getUsername().equals("yangrd")) {
-            throw new ApiException(HttpStatus.FORBIDDEN, "FORBIDDEN");
-        }
         userRepository.findByUsername(req.getUsername()).ifPresent(user -> {
             user.changePlan(req.getPlan());
             userService.updateUser(user);

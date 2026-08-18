@@ -49,12 +49,23 @@ public class PgVectorStoreTurbo implements VectorStoreTurbo {
         String nativeFilterExpression = request.getFilterExpression() != null ? this.filterExpressionConverter.convertExpression(request.getFilterExpression()) : "";
         String jsonPathFilter = "";
         if (StringUtils.hasText(nativeFilterExpression)) {
-            jsonPathFilter = " AND metadata::jsonb @@ '" + nativeFilterExpression + "'::jsonpath ";
+            String sanitized = sanitizeJsonPathExpression(nativeFilterExpression);
+            jsonPathFilter = " AND metadata::jsonb @@ '" + sanitized + "'::jsonpath ";
         }
 
         double distance = 1.0 - request.getSimilarityThreshold();
         PGvector queryEmbedding = this.getQueryEmbedding(request.getEmbedding());
         return this.jdbcTemplate.query(String.format(this.getDistanceType().similaritySearchSqlTemplate, this.getFullyQualifiedTableName(), jsonPathFilter), new DocumentRowMapper(this.objectMapper), new Object[]{queryEmbedding, queryEmbedding, distance, request.getTopK()});
+    }
+
+    private static String sanitizeJsonPathExpression(String expression) {
+        if (expression == null || expression.isBlank()) {
+            return "";
+        }
+        if (!expression.matches("^[\\$\\.\\[\\]\\w\\s\"'@?*<>=!&|(),]+$")) {
+            throw new IllegalArgumentException("Invalid filter expression");
+        }
+        return expression;
     }
 
 

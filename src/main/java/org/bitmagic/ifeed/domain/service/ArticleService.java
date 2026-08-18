@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.*;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -37,13 +38,20 @@ public class ArticleService {
 
     public void saveAllAndFlush(List<Article> articles) {
         articleRepository.saveAllAndFlush(articles);
+
+        Set<Integer> feedIds = articles.stream()
+                .map(a -> a.getFeed().getId())
+                .collect(Collectors.toSet());
+        Map<Integer, Feed> feedMap = feedRepository.findAllById(feedIds)
+                .stream()
+                .collect(Collectors.toMap(Feed::getId, Function.identity()));
+
         textSearchStore.add(articles.stream().map(a -> {
+            Feed feed = feedMap.get(a.getFeed().getId());
             Map<String, Object> metadata = new HashMap<>();
             metadata.put("title", a.getTitle() != null ? a.getTitle() : "");
             metadata.put("category", a.getCategory() != null ? a.getCategory() : "");
-            metadata.put("feedTitle", feedRepository.findById(a.getFeed().getId())
-                    .map(Feed::getTitle)
-                    .orElse(""));
+            metadata.put("feedTitle", feed != null ? feed.getTitle() : "");
             metadata.put("tags", a.getTags() != null ? String.join(" ", JSON.fromJson(a.getTags(), TAGS_TYPE)) : "");
             metadata.put("summary", a.getSummary() != null ? a.getSummary() : "");
             metadata.put("pubDate", a.getPublishedAt() != null ? a.getPublishedAt().getEpochSecond() : 0L);

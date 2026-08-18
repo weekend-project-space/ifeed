@@ -14,8 +14,11 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.time.Instant;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -52,14 +55,30 @@ public class FeedService {
         return feedRepository.searchByQuery(normalized, PageRequest.of(0, 20));
     }
 
+    public List<FeedDetail> buildDetails(List<Feed> feeds) {
+        if (feeds.isEmpty()) return Collections.emptyList();
+
+        List<Integer> feedIds = feeds.stream().map(Feed::getId).toList();
+
+        Map<Integer, Object[]> articleStats = articleRepository.getArticleStatsByFeedIds(feedIds)
+                .stream().collect(Collectors.toMap(row -> (Integer) row[0], row -> row));
+
+        Map<Integer, Long> subscriberCounts = userSubscriptionRepository
+                .countBySourceTypeAndSourceIdsAndActiveTrue(SourceType.FEED, feedIds)
+                .stream().collect(Collectors.toMap(row -> (Integer) row[0], row -> (Long) row[1]));
+
+        return feeds.stream().map(feed -> {
+            Object[] stats = articleStats.get(feed.getId());
+            long articleCount = stats != null ? (Long) stats[1] : 0;
+            Instant latestPublished = stats != null && stats[2] != null
+                    ? (Instant) stats[2] : feed.getLastUpdated();
+            long subscriberCount = subscriberCounts.getOrDefault(feed.getId(), 0L);
+            return new FeedDetail(feed, articleCount, subscriberCount, latestPublished);
+        }).toList();
+    }
+
     private FeedDetail buildDetail(Feed feed) {
-        var articleCount = articleRepository.countByFeed(feed);
-        var subscriberCount = userSubscriptionRepository.countBySourceTypeAndSourceIdAndActiveTrue(SourceType.FEED,
-                feed.getId());
-        var latestPublishedAt = articleRepository.findTopByFeedOrderByPublishedAtDesc(feed)
-                .map(article -> article.getPublishedAt())
-                .orElse(feed.getLastUpdated());
-        return new FeedDetail(feed, articleCount, subscriberCount, latestPublishedAt);
+        return buildDetails(List.of(feed)).getFirst();
     }
 
     @Transactional(readOnly = true)
