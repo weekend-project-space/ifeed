@@ -1,6 +1,6 @@
-import {createRouter, createWebHistory} from 'vue-router';
-import {onUnauthorized} from '@/api/auth-events';
-import {setAuthToken} from '@/api/client'
+import { createRouter, createWebHistory } from 'vue-router';
+import { onUnauthorized } from '@/api/auth-events';
+import { setAuthToken } from '@/api/client'
 import AuthPage from '../pages/AuthPage.vue';
 // import HomePage from '../pages/HomePage.vue';
 import SearchPage from '../pages/SearchPage.vue';
@@ -18,7 +18,10 @@ import AdminPage from "../pages/AdminPage.vue";
 import UpgradePage from "../pages/UpgradePage.vue";
 import RadarPage from '../pages/RadarPage.vue';
 import RadarTopicPage from '../pages/RadarTopicPage.vue';
-import {useAuthStore} from '../stores/auth';
+import { useAuthStore } from '../stores/auth';
+// router/index.ts
+
+import { trackPageView } from '@/utils/analytics'
 
 const router = createRouter({
     history: createWebHistory(),
@@ -112,7 +115,7 @@ const router = createRouter({
 
 router.beforeEach(async (to: any, from: any) => {
     const auth = useAuthStore();
-    window.scrollTo({top: 0, behavior: 'smooth'});
+    window.scrollTo({ top: 0, behavior: 'smooth' });
     if (!auth.initialized && auth.token) {
         try {
             await auth.fetchUser();
@@ -134,6 +137,9 @@ router.beforeEach(async (to: any, from: any) => {
     return true;
 });
 
+router.afterEach((to) => {
+    trackPageView(to.fullPath)
+})
 
 // ⭐ 只注册一次
 onUnauthorized(async () => {
