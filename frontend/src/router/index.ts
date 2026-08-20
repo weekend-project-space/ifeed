@@ -138,7 +138,7 @@ router.beforeEach(async (to: any, from: any) => {
 });
 
 router.afterEach((to) => {
-    trackPageView(to.fullPath)
+    trackPageView(to)
 })
 
 // ⭐ 只注册一次
