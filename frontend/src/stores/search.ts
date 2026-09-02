@@ -25,7 +25,7 @@ export const useSearchStore = defineStore('search', () => {
     const total = ref<number | null>(null);
     const totalPages = ref<number | null>(null);
     const currentQuery = ref('');
-    const currentType = ref<SearchType>('keyword');
+    const currentType = ref<SearchType>('semantic');
 
     const hasNextPage = computed(() => {
         if (totalPages.value === null) {

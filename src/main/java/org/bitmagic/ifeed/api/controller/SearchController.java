@@ -38,14 +38,14 @@ public class SearchController {
     @GetMapping
     public ResponseEntity<Page<SearchResultResponse>> search(@AuthenticationPrincipal UserPrincipal principal,
                                                              @RequestParam String query,
-                                                             @RequestParam(required = false, defaultValue = TYPE_KEYWORD) String type,
+                                                             @RequestParam(required = false, defaultValue = TYPE_SEMANTIC) String type,
 
                                                              @RequestParam(required = false, defaultValue = SOURCE_OWNER) String source,@PageableDefault(sort = "id", direction = Sort.Direction.DESC) Pageable pageable) {
         ensureAuthenticated(principal);
         if (query == null || query.isBlank()) {
             throw new ApiException(HttpStatus.BAD_REQUEST, "Query must not be blank");
         }
-        var normalizedType = type == null ? TYPE_KEYWORD : type.trim().toLowerCase(Locale.ROOT);
+        var normalizedType = type == null ? TYPE_SEMANTIC : type.trim().toLowerCase(Locale.ROOT);
         if (!TYPE_KEYWORD.equals(normalizedType) && !TYPE_SEMANTIC.equals(normalizedType)) {
             throw new ApiException(HttpStatus.BAD_REQUEST, "Unsupported search type");
         }

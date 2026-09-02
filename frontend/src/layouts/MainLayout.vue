@@ -902,7 +902,7 @@ const handleSearch = () => {
     q: keyword,
     source: searchSource.value
   };
-  if (currentType === 'semantic') query.type = currentType;
+  if (currentType === 'keyword') query.type = currentType;
   if (feedId) query.feedId = feedId;
   if (tag) query.tags = tag;
   if (category) query.category = category;

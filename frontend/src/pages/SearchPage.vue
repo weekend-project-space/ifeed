@@ -171,7 +171,7 @@ const buildSearchQuery = (overrides?: { page?: number; type?: SearchType }) => {
   }
 
   const nextType = overrides?.type ?? searchType.value;
-  if (nextType !== 'keyword') {
+  if (nextType !== 'semantic') {
     query.type = nextType;
   }
 
