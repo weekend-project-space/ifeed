@@ -7,4 +7,7 @@ package org.bitmagic.ifeed.config;
 public interface Const {
 
     String FAVICON_TEMPLATE = "https://favicon.im/%s";
+
+    //    failureCount
+    int MAX_FAILURE_COUNT = 9;
 }

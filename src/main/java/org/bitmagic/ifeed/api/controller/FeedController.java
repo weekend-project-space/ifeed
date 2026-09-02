@@ -5,6 +5,7 @@ import org.bitmagic.ifeed.api.converter.SubscriptionViewConverter;
 import org.bitmagic.ifeed.api.response.FeedDetailResponse;
 import org.bitmagic.ifeed.api.response.SubscriptionSearchResponse;
 import org.bitmagic.ifeed.api.util.IdentifierUtils;
+import org.bitmagic.ifeed.config.Const;
 import org.bitmagic.ifeed.config.security.UserPrincipal;
 import org.bitmagic.ifeed.domain.model.Feed;
 import org.bitmagic.ifeed.domain.model.MixFeed;
@@ -134,8 +135,8 @@ public class FeedController {
                 detail.articleCount(),
                 detail.subscriberCount(),
                 subscribed,
-                failureCount,
-                feed.getFetchError(),
+                failureCount < Const.MAX_FAILURE_COUNT ? 0 : failureCount,
+                failureCount < Const.MAX_FAILURE_COUNT ? null : feed.getFetchError(),
                 "FEED", null);
     }
 

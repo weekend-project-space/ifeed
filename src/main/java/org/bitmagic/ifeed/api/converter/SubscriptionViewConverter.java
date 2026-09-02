@@ -2,6 +2,7 @@ package org.bitmagic.ifeed.api.converter;
 
 import org.bitmagic.ifeed.api.response.SubscriptionResponse;
 import org.bitmagic.ifeed.api.response.SubscriptionSearchResponse;
+import org.bitmagic.ifeed.config.Const;
 import org.bitmagic.ifeed.domain.model.Feed;
 import org.bitmagic.ifeed.domain.model.MixFeed;
 import org.bitmagic.ifeed.domain.model.SourceType;
@@ -38,8 +39,8 @@ public class SubscriptionViewConverter {
                 feed.getLastFetched(),
                 feed.getLastUpdated(),
                 hasUnread || readTime.isAfter(lastUpdated),
-                failureCount < 3 ? 0 : failureCount,
-                failureCount < 3 ? null : feed.getFetchError(),
+                failureCount < Const.MAX_FAILURE_COUNT ? 0 : failureCount,
+                failureCount < Const.MAX_FAILURE_COUNT ? null : feed.getFetchError(),
                 SourceType.FEED.name(),
                 info.faviconUrl());
     }
