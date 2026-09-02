@@ -213,8 +213,14 @@ public class RadarSnapshotBuildService {
                     .filter(Objects::nonNull)
                     .map(Article::getTitle)
                     .toList();
+            Set<String> urls = cluster.stream()
+                    .map(byId::get)
+                    .filter(Objects::nonNull)
+                    .map(Article::getLink)
+                    .collect(Collectors.toSet());
             var named = topicNamingService.nameTopic(titles);
-            if (nsfwService.isNSFW(Strings.join(titles, ','))) {
+
+            if (nsfwService.isNSFW(urls) || nsfwService.isNSFW(Strings.join(titles, ','))) {
                 continue;
             }
             RadarTopic topic = new RadarTopic();
