@@ -32,7 +32,6 @@ public class ArticleService {
     private final ArticleRepository articleRepository;
     private final FeedRepository feedRepository;
     private final TextSearchStore textSearchStore;
-    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
     private static final TypeReference<List<String>> TAGS_TYPE = new TypeReference<>() {
     };
 
