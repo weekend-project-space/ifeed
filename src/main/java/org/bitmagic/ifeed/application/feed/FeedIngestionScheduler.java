@@ -62,12 +62,12 @@ public class FeedIngestionScheduler {
     }
 
     @Scheduled(initialDelayString = "${app.rss.fetcher.initial-delay:PT10S}",
-            fixedDelayString = "${app.rss.fetcher.fixed-delay:PT30M}")
+            fixedDelayString = "${app.rss.fetcher.fixed-delay:PT60M}")
     public void fetchSaveFeeds() {
         long start = System.currentTimeMillis();
 
         var feedIds = ingestionService.getFeedIds(
-                feed -> LocalDateTime.now().getDayOfYear() % 3 == 0 || feed.getFailureCount() > 10
+                feed -> LocalDateTime.now().getDayOfYear() % 3 == 0 || feed.getFailureCount() < 10
         );
 
         if (feedIds.isEmpty()) {
@@ -81,13 +81,15 @@ public class FeedIngestionScheduler {
         AtomicInteger fetchSuccess = new AtomicInteger(0);
         AtomicInteger failed = new AtomicInteger(0);
         CountDownLatch latch = new CountDownLatch(feedIds.size());
-
+        AtomicInteger step = new AtomicInteger(0);
         // 构造任务列表
         List<Runnable> tasks = feedIds.stream()
                 .map(feedId -> (Runnable) () -> {
                     if (ingestionService.ingestFeed(feedId).orElse(false)) {
                         fetchSuccess.incrementAndGet();
                     }
+                    step.incrementAndGet();
+                    log.debug("Processor: {}/{}/{}.", fetchSuccess.get(), step.get(), feedIds.size());
                 })
                 .toList();
 

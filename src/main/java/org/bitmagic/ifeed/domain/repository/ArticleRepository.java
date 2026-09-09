@@ -91,8 +91,6 @@ public interface ArticleRepository extends JpaRepository<Article, Long>, JpaSpec
             left join a.feed f
             where (lower(a.title) like :term
                or lower(a.author) like :term
-               or lower(a.summary) like :term
-               or lower(a.category) like :term
                or lower(a.tags) like :term)
               and (:ownerId is null or exists (
                     select 1
@@ -106,8 +104,7 @@ public interface ArticleRepository extends JpaRepository<Article, Long>, JpaSpec
             select count(a)
             from Article a
             where (lower(a.title) like :term
-               or lower(a.summary) like :term
-               or lower(a.category) like :term
+               or lower(a.author) like :term
                or lower(a.tags) like :term)
               and (:ownerId is null or exists (
                     select 1

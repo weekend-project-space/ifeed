@@ -221,6 +221,7 @@ public class RadarSnapshotBuildService {
             var named = topicNamingService.nameTopic(titles);
 
             if (nsfwService.isNSFW(urls) || nsfwService.isNSFW(Strings.join(titles, ','))) {
+                log.info("titles: {} is NSFW, but not NSFW", titles);
                 continue;
             }
             RadarTopic topic = new RadarTopic();

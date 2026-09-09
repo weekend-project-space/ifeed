@@ -49,6 +49,7 @@ public class FeedIngestionService {
 
     private boolean fetchFeedSafely(Feed feed) {
         try {
+            log.debug("fetch feed : {}", feed.getTitle());
             var latestContentUpdate = fetchAndProcessFeed(feed);
             applySuccessfulFetchState(feed, latestContentUpdate);
             return true;

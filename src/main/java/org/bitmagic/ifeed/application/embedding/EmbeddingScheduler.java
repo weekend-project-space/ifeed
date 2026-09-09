@@ -11,6 +11,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDateTime;
 import java.util.stream.Stream;
 
 @Slf4j
@@ -72,7 +73,10 @@ public class EmbeddingScheduler {
             log.warn("article embedding", e);
         }
         log.info("end init article embedding");
-        buildService.build();
+//        雷达不需要实时更新
+        if (LocalDateTime.now().getHour() == 9 || LocalDateTime.now().getHour() == 6) {
+            buildService.build();
+        }
     }
 
 
