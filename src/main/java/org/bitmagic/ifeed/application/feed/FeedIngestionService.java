@@ -38,6 +38,7 @@ public class FeedIngestionService {
     public List<UUID> getFeedIds(Predicate<Feed> predicate) {
         return feedRepository.findAll().stream()
                 .filter(predicate)
+                .sorted(Comparator.comparing(Feed::getFailureCount))
                 .map(Feed::getUid)
                 .toList();
     }
@@ -49,12 +50,15 @@ public class FeedIngestionService {
 
     private boolean fetchFeedSafely(Feed feed) {
         try {
-            log.debug("fetch feed : {}", feed.getTitle());
+            log.debug("begin fetch feed : {}", feed.getTitle());
             var latestContentUpdate = fetchAndProcessFeed(feed);
             applySuccessfulFetchState(feed, latestContentUpdate);
+            log.debug("end fetch feed : {}", feed.getTitle());
             return true;
         } catch (Exception ex) {
-            log.warn("Failed to ingest feed: {}", feed.getUrl(), ex);
+//            log.warn("Failed to ingest feed: {}", feed.getUrl(), ex);
+//            log.warn(ex.getMessage(), ex);
+            log.error("error fetch feed {} error: {}", feed.getTitle(), ex.getMessage());
             applyFailedFetchState(feed, ex);
             return false;
         }

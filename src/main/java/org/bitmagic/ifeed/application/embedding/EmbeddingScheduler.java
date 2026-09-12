@@ -3,6 +3,7 @@ package org.bitmagic.ifeed.application.embedding;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.bitmagic.ifeed.application.radar.RadarSnapshotBuildService;
+import org.bitmagic.ifeed.domain.model.User;
 import org.bitmagic.ifeed.domain.repository.ArticleRepository;
 import org.bitmagic.ifeed.domain.repository.UserRepository;
 import org.bitmagic.ifeed.domain.spec.ArticleSpecs;
@@ -12,6 +13,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.stream.Stream;
 
 @Slf4j
@@ -34,9 +36,11 @@ public class EmbeddingScheduler {
     @Scheduled(initialDelayString = "${app.embedding.user.initial-delay:PT10S}",
             fixedDelayString = "${app.embedding.user.fixed-delay:PT30M}")
     public void userEmbedding() {
-        log.info("begin gen user embedding");
+
         try {
-            userRepository.findAll().forEach(user -> {
+            List<User> users = userRepository.findAll();
+            log.info("begin gen user total: {} embedding", users.size());
+            users.forEach(user -> {
                 log.info("init user embedding :{}", user.getUsername());
                 try {
                     userEmbeddingService.rebuildUserEmbedding(user.getId()).ifPresent(userEmbedding -> {

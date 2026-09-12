@@ -67,7 +67,7 @@ public class FeedIngestionScheduler {
         long start = System.currentTimeMillis();
 
         var feedIds = ingestionService.getFeedIds(
-                feed -> LocalDateTime.now().getDayOfYear() % 3 == 0 || feed.getFailureCount() < 10
+                feed -> LocalDateTime.now().getDayOfYear() % 3 == 0 || feed.getFailureCount() < 9
         );
 
         if (feedIds.isEmpty()) {
