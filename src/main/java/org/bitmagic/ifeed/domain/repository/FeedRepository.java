@@ -28,17 +28,18 @@ public interface FeedRepository extends JpaRepository<Feed, Integer>, JpaSpecifi
     @Query("""
             select f.category, count(f)
             from Feed f
+            where f.failureCount < 99
             group by f.category
             """)
     List<Object[]> countByCategory();
 
     @Query("""
             select f from Feed f
-            where f.category = :category
+            where  f.failureCount < 99 and f.category = :category
               and (lower(f.url) like lower(concat('%', :query, '%'))
                or lower(f.siteUrl) like lower(concat('%', :query, '%'))
                or lower(f.title) like lower(concat('%', :query, '%')))
             """)
     List<Feed> searchByQueryAndCategory(@Param("query") String query, @Param("category") String category,
-            Pageable pageable);
+                                        Pageable pageable);
 }

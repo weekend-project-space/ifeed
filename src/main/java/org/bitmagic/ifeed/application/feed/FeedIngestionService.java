@@ -5,6 +5,7 @@ import com.rometools.rome.feed.synd.SyndFeed;
 import com.rometools.rome.io.FeedException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.logging.log4j.util.Strings;
 import org.bitmagic.ifeed.application.feed.info.FeedInfoService;
 import org.bitmagic.ifeed.application.feed.process.ArticleCollector;
 import org.bitmagic.ifeed.domain.model.Article;
@@ -38,6 +39,7 @@ public class FeedIngestionService {
     public List<UUID> getFeedIds(Predicate<Feed> predicate) {
         return feedRepository.findAll().stream()
                 .filter(predicate)
+                .filter(f -> Strings.isNotBlank(f.getDescription()) && !f.getDescription().contains("Invalid RSS Feed") && !f.getTitle().contains("RSS reader not yet whitelisted"))
                 .sorted(Comparator.comparing(Feed::getFailureCount))
                 .map(Feed::getUid)
                 .toList();

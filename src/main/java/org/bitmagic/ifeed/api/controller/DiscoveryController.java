@@ -7,6 +7,9 @@ import org.bitmagic.ifeed.config.security.UserPrincipal;
 import org.bitmagic.ifeed.domain.service.DiscoveryService;
 import org.bitmagic.ifeed.exception.ApiException;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -65,26 +68,19 @@ public class DiscoveryController {
     public ResponseEntity<Page<DiscoveryFeedResponse>> searchFeeds(
             @AuthenticationPrincipal UserPrincipal principal,
             @RequestParam String q,
-            @RequestParam(required = false) String category,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size) {
+            @RequestParam(required = false) String category, @PageableDefault(sort = "lastUpdated", direction = Sort.Direction.DESC) Pageable pageable) {
 
         // Validate query
         if (q == null || q.trim().isEmpty()) {
             throw new ApiException(HttpStatus.BAD_REQUEST, "Search query cannot be empty");
         }
 
-        // Validate and limit size
-        size = Math.min(Math.max(size, 1), 100);
-        page = Math.max(page, 0);
 
         Integer userId = Objects.nonNull(principal) ? principal.getId() : null;
         var result = discoveryService.searchFeeds(
                 userId,
                 q.trim(),
-                category,
-                page,
-                size);
+                category, pageable);
 
         return ResponseEntity.ok(result);
     }

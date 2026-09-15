@@ -103,10 +103,8 @@ public class DiscoveryService {
             Integer userId,
             String query,
             String category,
-            int page,
-            int size) {
+            Pageable pageable) {
         // Build pageable
-        Pageable pageable = PageRequest.of(page, size);
 
         // Search feeds
         Page<Feed> feedPage;
