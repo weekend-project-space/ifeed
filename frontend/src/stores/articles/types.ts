@@ -21,6 +21,7 @@ export interface ArticleDto {
 
 export interface ArticleListItem {
     id: string;
+    feedId?: string;
     title: string;
     summary: string;
     link?: string;
@@ -50,6 +51,7 @@ export const normalizeArticle = (article: ArticleDto): ArticleListItem => {
     const tags = article.tags ?? [];
     return {
         id: String(article.id),
+        feedId: article.feedId,
         title: article.title ?? '未命名文章',
         summary: article.summary ?? '暂无摘要。',
         link: article.link,

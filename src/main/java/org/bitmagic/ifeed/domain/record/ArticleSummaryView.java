@@ -17,5 +17,6 @@ public record ArticleSummaryView(
         Instant publishedAt,
         String tags,
         String thumbnail,
-        String enclosure) {
+        String enclosure,
+        UUID feedId) {
 }

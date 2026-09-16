@@ -203,7 +203,8 @@ public class MixFeedService {
                 article.getPublishedAt(),
                 article.getTags(),
                 article.getThumbnail(),
-                article.getEnclosure());
+                article.getEnclosure(),
+                article.getFeed() != null ? article.getFeed().getUid() : null);
     }
 
     /**

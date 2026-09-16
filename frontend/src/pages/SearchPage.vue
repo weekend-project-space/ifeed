@@ -155,10 +155,12 @@ const hasQuery = computed(() => Boolean(searchQuery.value));
 const searchArticleItems = computed(() =>
   results.value.map((item) => ({
     id: item.id,
+    feedId: item.feedId,
     title: item.title ?? '未命名文章',
     summary: item.summary ?? '暂无摘要',
     thumbnail: item.thumbnail,
     feedTitle: item.feedTitle,
+    feedAvatar: item.feedAvatar,
     timeAgo: item.timeAgo,
   }))
 );

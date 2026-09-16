@@ -16,5 +16,6 @@ public record ArticleSummaryResponse(
         String feedAvatar,
         String publishedAt,
         List<String> tags,
-        String timeAgo) {
+        String timeAgo,
+        String feedId) {
 }

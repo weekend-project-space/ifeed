@@ -191,7 +191,8 @@ public class ArticleController {
                 article.feedAvatar(),
                 formatTimestamp(article.publishedAt()),
                 tags,
-                DateUtils.formatRelativeTime(publishedAt));
+                DateUtils.formatRelativeTime(publishedAt),
+                article.feedId() != null ? article.feedId().toString() : null);
     }
 
     private List<String> extractTags(String raw) {

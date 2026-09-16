@@ -2,7 +2,6 @@ package org.bitmagic.ifeed.application.recommendation;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import java.util.List;
 import java.util.UUID;
 
 /**
@@ -13,6 +12,7 @@ import java.util.UUID;
 public record RecResponse(UUID id,
                           String title,
                           String summary,
+                          UUID feedId,
                           String feedTitle,
                           String feedAvatar,
                           String publishedAt,

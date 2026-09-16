@@ -35,7 +35,8 @@ public interface ArticleRepository extends JpaRepository<Article, Long>, JpaSpec
                 a.publishedAt,
                 a.tags,
                 a.thumbnail,
-                a.enclosure)
+                a.enclosure,
+                f.uid)
             from Article a
             left join a.feed f
             where (:feedUid is null or f.uid = :feedUid)
@@ -86,7 +87,8 @@ public interface ArticleRepository extends JpaRepository<Article, Long>, JpaSpec
                 a.publishedAt,
                 a.tags,
                 a.thumbnail,
-                a.enclosure)
+                a.enclosure,
+                f.uid)
             from Article a
             left join a.feed f
             where (lower(a.title) like :term
@@ -212,7 +214,8 @@ public interface ArticleRepository extends JpaRepository<Article, Long>, JpaSpec
                 a.publishedAt,
                 a.tags,
                 a.thumbnail,
-                a.enclosure)
+                a.enclosure,
+                f.uid)
             from Article a
             left join a.feed f
             where a.id in (:ids)
@@ -223,6 +226,7 @@ public interface ArticleRepository extends JpaRepository<Article, Long>, JpaSpec
             select new org.bitmagic.ifeed.domain.record.ArticleContent(
                 a.id,
                 a.title,
+                a.link,
                 a.publishedAt)
             from Article a
             left join a.feed f

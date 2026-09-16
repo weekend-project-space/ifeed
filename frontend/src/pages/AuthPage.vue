@@ -18,36 +18,36 @@
       </div>
 
       <!-- OAuth 登录按钮 -->
-      <div class="w-full space-y-2 mb-4">
-        <button type="button" class="oauth-btn" @click="handleLinuxDoLogin" :disabled="submitting">
-          <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <defs>
-              <clipPath id="circle-clip">
-                <circle cx="12" cy="12" r="9"/>
-              </clipPath>
-            </defs>
-            <!-- 整个圆形作为容器 -->
-            <g clip-path="url(#circle-clip)">
-              <rect x="3" y="3" width="18" height="6" fill="#000000"/>
-              <rect x="3" y="9" width="18" height="6" fill="#FFFFFF"/>
-              <rect x="3" y="15" width="18" height="6" fill="#FFA500"/>
-            </g>
-            <!-- 圆形边框 -->
-            <circle cx="12" cy="12" r="9" fill="none" stroke="#E5E7EB" stroke-width="0.5"/>
-          </svg>
-          <span>继续使用 Linux DO 登录</span>
-        </button>
-      </div>
+<!--      <div class="w-full space-y-2 mb-4">-->
+<!--        <button type="button" class="oauth-btn" @click="handleLinuxDoLogin" :disabled="submitting">-->
+<!--          <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">-->
+<!--            <defs>-->
+<!--              <clipPath id="circle-clip">-->
+<!--                <circle cx="12" cy="12" r="9"/>-->
+<!--              </clipPath>-->
+<!--            </defs>-->
+<!--            &lt;!&ndash; 整个圆形作为容器 &ndash;&gt;-->
+<!--            <g clip-path="url(#circle-clip)">-->
+<!--              <rect x="3" y="3" width="18" height="6" fill="#000000"/>-->
+<!--              <rect x="3" y="9" width="18" height="6" fill="#FFFFFF"/>-->
+<!--              <rect x="3" y="15" width="18" height="6" fill="#FFA500"/>-->
+<!--            </g>-->
+<!--            &lt;!&ndash; 圆形边框 &ndash;&gt;-->
+<!--            <circle cx="12" cy="12" r="9" fill="none" stroke="#E5E7EB" stroke-width="0.5"/>-->
+<!--          </svg>-->
+<!--          <span>继续使用 Linux DO 登录</span>-->
+<!--        </button>-->
+<!--      </div>-->
 
       <!-- 分隔线 -->
-      <div class="relative w-full my-6 text-center">
-        <div class="absolute inset-0 flex items-center">
-          <div class="w-full border-t border-outline/20"></div>
-        </div>
-        <div class="relative inline-flex bg-surface px-3 text-xs text-text-muted">
-          或
-        </div>
-      </div>
+<!--      <div class="relative w-full my-6 text-center">-->
+<!--        <div class="absolute inset-0 flex items-center">-->
+<!--          <div class="w-full border-t border-outline/20"></div>-->
+<!--        </div>-->
+<!--        <div class="relative inline-flex bg-surface px-3 text-xs text-text-muted">-->
+<!--          或-->
+<!--        </div>-->
+<!--      </div>-->
 
       <!-- 错误提示 -->
       <transition name="fade">

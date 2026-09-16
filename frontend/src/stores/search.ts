@@ -8,10 +8,12 @@ export type Source = "owner" | "global";
 
 export interface SearchResultDto {
     id: string;
+    feedId?: string;
     title?: string;
     summary?: string;
     thumbnail?: string;
     feedTitle?: string;
+    feedAvatar?: string;
     timeAgo?: string;
     score?: number;
 }

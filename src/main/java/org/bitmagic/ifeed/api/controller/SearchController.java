@@ -66,7 +66,8 @@ public class SearchController {
                     article.thumbnail(),
                     article.feedTitle(),
                     formatRelativeTime(article.publishedAt()),
-                    null
+                    null,
+                    article.feedId() != null ? article.feedId().toString() : null
             )));
         }
 
@@ -78,7 +79,8 @@ public class SearchController {
                         article.thumbnail(),
                         article.feedTitle(),
                         formatRelativeTime(article.publishedAt()),
-                        null));
+                        null,
+                        article.feedId() != null ? article.feedId().toString() : null));
         return ResponseEntity.ok(articlePage);
     }
 
