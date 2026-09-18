@@ -27,7 +27,7 @@
         <template #header>
 
           <!-- 分类筛选 -->
-          <header class="mb-6">
+          <header class="mb-6 max-w-screen-lg mx-auto">
             <div class="flex items-center gap-1.5 overflow-x-auto pb-2">
               <button
                   class="px-3 py-1 text-sm font-medium rounded-lg transition-colors whitespace-nowrap"
@@ -165,7 +165,7 @@ const articleError = computed(() => {
 });
 const nextPageError = computed(() => articlesQuery.isFetchNextPageError.value);
 const insightsLoading = computed(() => insightsQuery.isPending.value);
-const topCategories = computed(() => insightsQuery.data.value?.categories ?? []);
+const topCategories = computed(() => insightsQuery.data.value?.categories.slice(0,10) ?? []);
 const loadMoreSentinel = ref<HTMLElement | null>(null);
 let observer: IntersectionObserver | null = null;
 
