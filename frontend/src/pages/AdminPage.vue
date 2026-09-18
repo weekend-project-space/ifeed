@@ -146,7 +146,7 @@
 </template>
 
 <script>
-import { post } from '@/api/client';
+import { updateUserPlan } from '@/api/admin';
 
 export default {
   name: 'UserPlanAdmin',
@@ -195,10 +195,7 @@ export default {
       this.message = null;
 
       try {
-        await post('/api/plan', {
-          username: this.username.trim(),
-          plan: this.selectedPlan
-        });
+        await updateUserPlan(this.username.trim(), this.selectedPlan);
 
         const planLabel = this.plans.find(p => p.value === this.selectedPlan)?.label;
         this.message = {

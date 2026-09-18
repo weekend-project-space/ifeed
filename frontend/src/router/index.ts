@@ -23,6 +23,17 @@ import { useAuthStore } from '../stores/auth';
 
 import { trackPageView } from '@/utils/analytics'
 
+// Route values are decoded once here; pages consume reactive, typed props.
+const routeText = (value: unknown): string => {
+    const first = Array.isArray(value) ? value[0] : value;
+    return typeof first === 'string' ? first.trim() : '';
+};
+
+const routePage = (value: unknown): number => {
+    const parsed = Number(routeText(value));
+    return Number.isFinite(parsed) && parsed > 0 ? Math.max(1, Math.floor(parsed)) : 1;
+};
+
 const router = createRouter({
     history: createWebHistory(),
     scrollBehavior(to, from, savedPosition) {
@@ -48,13 +59,23 @@ const router = createRouter({
                     name: 'home',
                     component: HomePage,
                     props: route => ({
-                        page: Number(route.query.page) || 1
+                        page: routePage(route.query.page)
                     })
                 },
                 {
                     path: 'search',
                     name: 'search',
-                    component: SearchPage
+                    component: SearchPage,
+                    props: route => ({
+                        query: routeText(route.query.q),
+                        type: routeText(route.query.type) === 'keyword' ? 'keyword' : 'semantic',
+                        source: ['owner', 'global'].includes(routeText(route.query.source))
+                            ? routeText(route.query.source) : undefined,
+                        page: routePage(route.query.page),
+                        feedId: routeText(route.query.feedId) || null,
+                        tags: routeText(route.query.tags) || null,
+                        category: routeText(route.query.category) || null,
+                    })
                 },
                 {
                     path: 'discover',
@@ -69,17 +90,25 @@ const router = createRouter({
                 {
                     path: 'collections',
                     name: 'collections',
-                    component: CollectionsPage
+                    component: CollectionsPage,
+                    props: route => ({ page: routePage(route.query.page) })
                 },
                 {
                     path: 'history',
                     name: 'history',
-                    component: HistoryPage
+                    component: HistoryPage,
+                    props: route => ({ page: routePage(route.query.page) })
                 },
                 {
                     path: 'feeds/subscriptions',
                     name: 'feedsSubscriptions',
-                    component: FeedSubscriptionsPage
+                    component: FeedSubscriptionsPage,
+                    props: route => ({
+                        page: routePage(route.query.page),
+                        tags: routeText(route.query.tags) || null,
+                        category: routeText(route.query.category).toLowerCase() || null,
+                        feedId: routeText(route.query.feedId) || null,
+                    })
                 },
                 {
                     path: 'feeds/channels',
@@ -90,13 +119,21 @@ const router = createRouter({
                     path: 'feeds/:feedId',
                     name: 'feed',
                     component: FeedDetailPage,
-                    props: true
+                    props: route => ({
+                        feedId: routeText(route.params.feedId),
+                        page: routePage(route.query.page),
+                        tags: routeText(route.query.tags) || null,
+                    })
                 },
                 {
                     path: 'articles/:id',
                     name: 'article',
                     component: ArticleDetailPage,
-                    props: true
+                    props: route => ({
+                        id: routeText(route.params.id),
+                        tab: ['summary', 'mindmap'].includes(routeText(route.query.tab))
+                            ? routeText(route.query.tab) : 'content',
+                    })
                 },
                 {
                     path: 'upgrade',

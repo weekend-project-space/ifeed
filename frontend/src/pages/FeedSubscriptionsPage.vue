@@ -100,7 +100,7 @@
           :current-page="currentPage"
           :has-previous-page="hasPreviousPage"
           :has-next-page="hasNextPage"
-          :disabled="articlesLoading"
+          :disabled="articlesFetching"
           @prev-page="prevPage"
           @next-page="nextPage"
       />
@@ -109,57 +109,56 @@
 </template>
 
 <script setup lang="ts">
-import {computed, onMounted, watch} from 'vue';
-import {storeToRefs} from 'pinia';
-import {useRoute, useRouter} from 'vue-router';
-import {useSubscriptionArticlesStore} from '../stores/articles/subscriptionArticles';
+import {computed, watch} from 'vue';
+import {useRouter} from 'vue-router';
+import {useMutation} from '@tanstack/vue-query';
 import {useSubscriptionsStore} from "../stores/subscriptions";
 import {useReadFeedStore} from "../stores/readfeed";
+import {normalizeArticle} from '../stores/articles/types';
+import {useSubscriptionArticlesQuery, useSubscriptionInsightsQuery} from '../queries/subscriptionArticles';
 
 defineOptions({name: 'FeedSubscriptionsPage'});
 
 const router = useRouter();
-const route = useRoute();
-const subscriptionStore = useSubscriptionArticlesStore();
+const props = defineProps<{
+  page: number;
+  tags: string | null;
+  category: string | null;
+  feedId: string | null;
+}>();
 const subscriptionsStore = useSubscriptionsStore();
 const readFeedStore = useReadFeedStore();
-
-const {
-  items,
-  hasNextPage,
-  hasPreviousPage,
-  loading: articlesLoading,
-  error: articleError
-} = storeToRefs(subscriptionStore);
-
-const {insights, insightsLoading} = storeToRefs(subscriptionStore);
-
-const topCategories = computed(() => insights.value.categories ?? []);
+const readFeedMutation = useMutation({
+  mutationFn: (feedId: string) => readFeedStore.recordFeedRead(feedId),
+  onSuccess: () => subscriptionsStore.fetchSubscriptions(),
+});
+const readFeedAttempted = new Set<string>();
 
 // 当前页码
-const currentPage = computed(() => {
-  const raw = Array.isArray(route.query.page) ? route.query.page[0] : route.query.page;
-  const parsed = Number(raw);
-  return Number.isFinite(parsed) && parsed > 0 ? parsed : 1;
-});
+const currentPage = computed(() => props.page);
 
 // 当前标签
-const activeTag = computed(() => {
-  const raw = Array.isArray(route.query.tags) ? route.query.tags[0] : route.query.tags;
-  return typeof raw === 'string' && raw.trim() ? raw.trim() : null;
-});
+const activeTag = computed(() => props.tags);
 
 // 当前分类
-const currentCategory = computed(() => {
-  const raw = route.query.category as string | undefined;
-  return raw?.toLowerCase() ?? '';
-});
+const currentCategory = computed(() => props.category);
 
 // 当前订阅源ID
-const currentFeedId = computed(() => {
-  const raw = Array.isArray(route.query.feedId) ? route.query.feedId[0] : route.query.feedId;
-  return typeof raw === 'string' && raw.trim() ? raw.trim() : null;
-});
+const currentFeedId = computed(() => props.feedId);
+
+const articlesQuery = useSubscriptionArticlesQuery(currentPage, activeTag, currentCategory, currentFeedId);
+const insightsQuery = useSubscriptionInsightsQuery();
+const items = computed(() => (
+  articlesQuery.data.value?.content ?? []
+).map(normalizeArticle));
+const articlesLoading = computed(() => articlesQuery.isPending.value);
+const articlesFetching = computed(() => articlesQuery.isFetching.value);
+const articleError = computed(() => articlesQuery.error.value instanceof Error ? articlesQuery.error.value.message : null);
+const totalPages = computed(() => articlesQuery.data.value?.totalPages ?? 0);
+const hasNextPage = computed(() => currentPage.value < totalPages.value);
+const hasPreviousPage = computed(() => currentPage.value > 1);
+const insightsLoading = computed(() => insightsQuery.isPending.value);
+const topCategories = computed(() => insightsQuery.data.value?.categories ?? []);
 
 // 构建查询参数
 const buildQuery = (overrides?: {
@@ -185,25 +184,7 @@ const buildQuery = (overrides?: {
   return query;
 };
 
-// 加载数据
-const loadData = async () => {
-  try {
-    await subscriptionStore.fetchArticles({
-      size: 20,
-      page: currentPage.value,
-      tags: activeTag.value,
-      category: currentCategory.value || undefined,
-      feedId: currentFeedId.value || undefined
-    });
-    if (currentFeedId.value) {
-      await readFeed()
-    }
-  } catch (err) {
-    console.warn('订阅数据加载失败', err);
-  }
-};
-
-const refresh = () => loadData();
+const refresh = () => articlesQuery.refetch();
 
 // 页面跳转
 const navigateToPage = (target: number) => {
@@ -212,11 +193,11 @@ const navigateToPage = (target: number) => {
 };
 
 const nextPage = () => {
-  if (hasNextPage.value) navigateToPage(currentPage.value + 1);
+  if (hasNextPage.value && !articlesFetching.value) navigateToPage(currentPage.value + 1);
 };
 
 const prevPage = () => {
-  if (hasPreviousPage.value) navigateToPage(Math.max(1, currentPage.value - 1));
+  if (hasPreviousPage.value && !articlesFetching.value) navigateToPage(Math.max(1, currentPage.value - 1));
 };
 
 
@@ -254,20 +235,19 @@ const clearCategoryFilter = () => {
 };
 
 const readFeed = async () => {
-  const canRead = subscriptionsStore.items.filter(item => !item.isRead && item.feedId == currentFeedId.value).length
-  if (canRead > 0 && currentFeedId.value) {
-    await readFeedStore.recordFeedRead(currentFeedId.value);
-    await subscriptionsStore.fetchSubscriptions();
+  const feedId = currentFeedId.value;
+  const canRead = feedId && subscriptionsStore.items.some(item => !item.isRead && item.feedId === feedId);
+  if (canRead && feedId && !readFeedMutation.isPending.value && !readFeedAttempted.has(feedId)) {
+    readFeedAttempted.add(feedId);
+    try {
+      await readFeedMutation.mutateAsync(feedId);
+    } catch {
+      readFeedAttempted.delete(feedId);
+    }
   }
 }
 
-onMounted(() => {
-  loadData();
-  subscriptionStore.fetchInsights();
-});
-
-watch(
-    () => [currentPage.value, activeTag.value, currentCategory.value, currentFeedId.value],
-    () => loadData()
-);
+watch([currentFeedId, () => subscriptionsStore.items], () => {
+  void readFeed();
+}, {immediate: true});
 </script>

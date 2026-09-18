@@ -378,9 +378,8 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
-import { request } from '../api/client';
-import type { PageResponse } from '../types/api';
-import type { Category, CategoriesResponse, DiscoveryFeed } from '../types/discovery';
+import { getDiscoveryCategories, listDiscoveryFeeds } from '../api/discovery';
+import type { Category, DiscoveryFeed } from '../api/discovery';
 import { useSubscriptionsStore } from '../stores/subscriptions';
 import SubscriptionsAddManual from './components/SubscriptionsAddManual.vue';
 import SubscriptionsAddOpml from './components/SubscriptionsAddOpml.vue';
@@ -495,7 +494,7 @@ const mapDiscoveryFeedToFeed = (discoveryFeed: DiscoveryFeed): Feed => {
 
 const loadCategories = async () => {
   try {
-    const response = await request<CategoriesResponse>('/api/discovery/categories');
+    const response = await getDiscoveryCategories();
     categories.value = response.categories;
   } catch (error) {
     console.error('Failed to load categories:', error);
@@ -505,28 +504,11 @@ const loadCategories = async () => {
 const loadFeeds = async () => {
   loading.value = true;
   try {
-    // Both browse and search now return Page<DiscoveryFeed>
-    const endpoint = searchQuery.value.trim() 
-      ? '/api/discovery/feeds/search' 
-      : '/api/discovery/feeds';
-    
-    const params: Record<string, any> = {
+    const response = await listDiscoveryFeeds({
       page: currentPage.value,
-      size: 30
-    };
-    
-    if (searchQuery.value.trim()) {
-      params.q = searchQuery.value.trim();
-    } else {
-      // params.sort = 'popular';
-    }
-    
-    if (selectedCategory.value !== 'all') {
-      params.category = selectedCategory.value;
-    }
-    
-    const response = await request<PageResponse<DiscoveryFeed>>(endpoint, {
-      query: params
+      size: 30,
+      query: searchQuery.value,
+      category: selectedCategory.value !== 'all' ? selectedCategory.value : undefined,
     });
     
     feeds.value = response.content.map(mapDiscoveryFeedToFeed);

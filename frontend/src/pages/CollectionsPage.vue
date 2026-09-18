@@ -32,10 +32,10 @@
           <div class="text-xs sm:text-sm text-text-secondary">
             {{ totalText }}
           </div>
-          <button @click="refresh" :disabled="loading"
+          <button @click="refresh" :disabled="isFetching"
             class="p-2 hover:bg-surface-container rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             aria-label="刷新收藏列表">
-            <svg class="w-5 h-5 text-text-secondary transition-transform" :class="{ 'animate-spin': loading }"
+            <svg class="w-5 h-5 text-text-secondary transition-transform" :class="{ 'animate-spin': isFetching }"
               viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2" />
             </svg>
@@ -43,7 +43,7 @@
         </div>
 
         <!-- Error State -->
-        <div v-if="error" class="mb-4 p-3 sm:p-4 bg-red-50 border border-red-200 rounded-lg">
+        <div v-if="errorMessage" class="mb-4 p-3 sm:p-4 bg-red-50 border border-red-200 rounded-lg">
           <div class="flex items-center gap-2 text-xs sm:text-sm text-red-800">
             <svg class="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor"
               stroke-width="2">
@@ -51,12 +51,12 @@
               <line x1="12" y1="8" x2="12" y2="12" />
               <line x1="12" y1="16" x2="12.01" y2="16" />
             </svg>
-            <span>{{ error }}</span>
+            <span>{{ errorMessage }}</span>
           </div>
         </div>
 
         <!-- Collection Items -->
-        <article-card-list v-if="loading || items.length" :loading="loading" show-action :items="items" meta-field="collectedAt"
+        <article-card-list v-if="isPending || items.length" :loading="isPending" show-action :items="items" meta-field="collectedAt"
           meta-prefix="收藏于 " action-label="取消收藏">
 
           <template #action-dropdown="{ item, close }">
@@ -75,7 +75,7 @@
         </article-card-list>
 
         <!-- Empty State -->
-        <div v-else-if="!items.length && !loading"
+        <div v-else-if="!items.length && !isPending"
           class="flex flex-col items-center justify-center py-16 sm:py-20 text-center">
           <div
             class="w-20 h-20 sm:w-24 sm:h-24 mb-4 sm:mb-6 flex items-center justify-center rounded-full bg-surface-container">
@@ -89,8 +89,8 @@
         </div>
 
         <!-- Pagination -->
-        <pagination v-if="items.length && !loading" :current-page="page" :has-previous-page="hasPreviousPage"
-          :has-next-page="hasNextPage" :disabled="loading" @prev-page="prevPage" @next-page="nextPage" />
+        <pagination v-if="items.length && !isPending" :current-page="page" :has-previous-page="hasPreviousPage"
+          :has-next-page="hasNextPage" :disabled="isFetching" @prev-page="prevPage" @next-page="nextPage" />
       </template>
     </div>
   </div>
@@ -98,45 +98,66 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted } from 'vue';
-import { storeToRefs } from 'pinia';
-import { useCollectionsStore } from '../stores/collections';
+import { computed } from 'vue';
+import { useMutation, useQueryClient } from '@tanstack/vue-query';
+import { useRouter } from 'vue-router';
 import { useAuthStore } from '../stores/auth';
 import { confirm } from '../composables/confirm';
-const collectionsStore = useCollectionsStore();
+import { removeCollection } from '../api/collections';
+import type { PageResponse } from '../types/api';
+import { COLLECTIONS_PAGE_SIZE, type CollectionDto, collectionsQueryKey, useCollectionsQuery } from '../queries/collections';
+
+const props = defineProps<{ page: number }>();
+const router = useRouter();
 const authStore = useAuthStore();
-const { items, page, total, loading, hasNextPage, hasPreviousPage, error } = storeToRefs(collectionsStore);
+const queryClient = useQueryClient();
+const userId = computed(() => authStore.user?.userId ?? 'anonymous');
+const page = computed(() => props.page);
+const collectionsQuery = useCollectionsQuery(page);
+const items = computed(() => collectionsQuery.data.value?.content ?? []);
+const total = computed(() => collectionsQuery.data.value?.totalElements ?? 0);
+const isPending = computed(() => collectionsQuery.isPending.value);
+const isFetching = computed(() => collectionsQuery.isFetching.value);
+const errorMessage = computed(() => {
+  const error = collectionsQuery.error.value;
+  return error instanceof Error ? error.message : error ? '收藏列表加载失败' : '';
+});
+const totalPages = computed(() => collectionsQuery.data.value?.totalPages ?? 0);
+const hasNextPage = computed(() => page.value < totalPages.value);
+const hasPreviousPage = computed(() => page.value > 1);
 
+const removeMutation = useMutation({
+  mutationFn: (articleId: string) => removeCollection(articleId),
+  onSuccess: (_, articleId) => {
+    queryClient.setQueryData<PageResponse<CollectionDto>>(collectionsQueryKey(userId.value, page.value), (previous) => {
+      if (!previous) return previous;
+      return {
+        ...previous,
+        content: previous.content.filter(item => item.articleId !== articleId),
+        totalElements: Math.max(0, previous.totalElements - 1),
+        totalPages: Math.max(0, Math.ceil(Math.max(0, previous.totalElements - 1) / COLLECTIONS_PAGE_SIZE)),
+      };
+    });
+    void Promise.all([
+      queryClient.invalidateQueries({ queryKey: ['article'] }),
+      queryClient.invalidateQueries({ queryKey: ['recommendations'] }),
+      queryClient.invalidateQueries({ queryKey: ['search'] }),
+      queryClient.invalidateQueries({ queryKey: ['feedArticles'] }),
+      queryClient.invalidateQueries({ queryKey: ['subscriptionArticles'] }),
+    ]);
+  },
+});
 
-// 抽象的加载方法，供页面其它地方调用
-const loadData = async (targetPage: number, options?: { scrollToTop?: boolean }) => {
-  if (loading.value || !authStore.isAuthenticated) return;
+const refresh = () => collectionsQuery.refetch();
 
-  try {
-    await collectionsStore.fetchCollections({ page: targetPage });
-
-    if (options?.scrollToTop) {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-  } catch (err) {
-    console.error('加载收藏失败:', err);
-    throw err;
-  }
+const navigateToPage = (target: number) => {
+  if (target < 1 || isFetching.value) return;
+  router.push({ name: 'collections', query: target > 1 ? { page: String(target) } : {} });
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 };
 
-const refresh = async () => {
-  await loadData(0);
-};
-
-const nextPage = async () => {
-  if (!hasNextPage.value) return;
-  await loadData(page.value + 1, { scrollToTop: true });
-};
-
-const prevPage = async () => {
-  if (!hasPreviousPage.value) return;
-  await loadData(Math.max(1, page.value - 1), { scrollToTop: true });
-};
+const nextPage = () => hasNextPage.value && navigateToPage(page.value + 1);
+const prevPage = () => hasPreviousPage.value && navigateToPage(Math.max(1, page.value - 1));
 
 const handleOpenInNewTab = (item: any) => {
   if (item?.articleId) {
@@ -145,7 +166,7 @@ const handleOpenInNewTab = (item: any) => {
   }
 };
 
-const handleRemove = async  (item: any) => {
+const handleRemove = async  (item: CollectionDto) => {
   if (!item?.articleId) return;
   try {
     const confirmed = await confirm({
@@ -153,10 +174,9 @@ const handleRemove = async  (item: any) => {
       description: '确定要取消收藏这篇文章吗？'
     });
     if (confirmed) {
-      await collectionsStore.removeCollection(item.articleId);
-      // 如果当前页没有内容了且有上一页，自动跳转到上一页
-      if (!items.value.length && hasPreviousPage.value) {
-        await loadData(Math.max(1, page.value - 1));
+      await removeMutation.mutateAsync(item.articleId);
+      if (items.value.length <= 1 && hasPreviousPage.value) {
+        navigateToPage(Math.max(1, page.value - 1));
       }
     }
   } catch {
@@ -165,8 +185,6 @@ const handleRemove = async  (item: any) => {
 };
 
 const totalText = computed(() =>
-  (total.value === null || total.value === 0) ? '暂无收藏' : `共 ${total.value} 条收藏`
+  total.value === 0 ? '暂无收藏' : `共 ${total.value} 条收藏`
 );
-
-onMounted(refresh);
 </script>

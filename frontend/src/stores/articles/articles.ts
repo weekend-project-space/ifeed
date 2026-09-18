@@ -1,63 +1,32 @@
 import {ref} from 'vue';
 import {defineStore} from 'pinia';
-import {request, RequestOptions} from '@/api/client';
-import {ArticleDto, ArticleDetail, normalizeArticleDetail} from "./types";
+import {enrichArticle, recordArticleHistory} from '@/api/articles';
 
 export const useArticlesStore = defineStore('articles', () => {
-    const currentArticle = ref<ArticleDetail | null>(null);
-    const loading = ref(false);
-    const error = ref<string | null>(null);
     const historyTracker = ref(new Set<string>());
-    let requestSequence = 0;
-
-    const fetchArticleById = async (articleId: string, options?: RequestOptions) => {
-        const requestId = ++requestSequence;
-        loading.value = true;
-        error.value = null;
-        try {
-            const data = await request<ArticleDto>(`/api/articles/${articleId}`, options);
-            if (requestId !== requestSequence) return currentArticle.value;
-            currentArticle.value = normalizeArticleDetail(data);
-            return currentArticle.value;
-        } catch (err) {
-            if (requestId !== requestSequence) return currentArticle.value;
-            const message = err instanceof Error ? err.message : '文章加载失败';
-            error.value = message;
-            throw err;
-        } finally {
-            if (requestId === requestSequence) loading.value = false;
-        }
-    };
+    const historyInFlight = new Set<string>();
 
     const enrich = async (articleId: string): Promise<{ summary: string; mindMap: string }> => {
-        return request(`/api/articles/${articleId}/enrich`, {method: 'POST'});
+        return enrichArticle(articleId);
     };
 
     const recordHistory = async (articleId: string) => {
-        if (!articleId || historyTracker.value.has(articleId)) {
+        if (!articleId || historyTracker.value.has(articleId) || historyInFlight.has(articleId)) {
             return;
         }
-        historyTracker.value.add(articleId);
+        historyInFlight.add(articleId);
         try {
-            await request('/api/user/history', {
-                method: 'POST',
-                json: {articleId}
-            });
+            await recordArticleHistory(articleId);
+            historyTracker.value.add(articleId);
         } catch (err) {
             console.warn('记录阅读历史失败', err);
+            throw err;
+        } finally {
+            historyInFlight.delete(articleId);
         }
-    };
-
-    const clearCurrentArticle = () => {
-        currentArticle.value = null;
     };
 
     return {
-        currentArticle,
-        loading,
-        error,
-        fetchArticleById,
-        clearCurrentArticle,
         recordHistory,
         enrich,
     };

@@ -27,68 +27,47 @@
         :current-page="currentPage"
         :has-previous-page="hasPreviousPage"
         :has-next-page="hasNextPage"
-        :disabled="articlesLoading"
+        :disabled="articlesFetching"
         @prev-page="prevPage"
         @next-page="nextPage"
     />
   </div>
 </template>
 
-<script setup>
-import {onMounted, watch} from 'vue';
+<script setup lang="ts">
+import {computed} from 'vue';
 import {useRoute, useRouter} from 'vue-router';
-import {storeToRefs} from 'pinia';
-import {useRecommendArticlesStore} from '../stores/articles/recommendArticles';
+import {normalizeArticle} from '../stores/articles/types';
+import {useRecommendationsQuery} from '../queries/recommendations';
 
 defineOptions({ name: 'HomePage' });
 
-const props = defineProps({
-  page: { type: Number, default: 1 }
-});
+const props = defineProps<{page: number}>();
 
-const SIZE = 60;
 const route = useRoute();
 const router = useRouter();
-const recommendStore = useRecommendArticlesStore();
+const currentPage = computed(() => props.page);
+const recommendationsQuery = useRecommendationsQuery(currentPage);
+const items = computed(() => (
+  recommendationsQuery.data.value?.content ?? []
+).map(normalizeArticle));
+const articlesLoading = computed(() => recommendationsQuery.isPending.value);
+const articlesFetching = computed(() => recommendationsQuery.isFetching.value);
+const articleError = computed(() => {
+  const error = recommendationsQuery.error.value;
+  return error instanceof Error ? error.message : error ? '推荐文章加载失败' : null;
+});
+const totalPages = computed(() => recommendationsQuery.data.value?.totalPages ?? 0);
+const hasNextPage = computed(() => currentPage.value < totalPages.value);
+const hasPreviousPage = computed(() => currentPage.value > 1);
 
-const {
-  items,
-  loading: articlesLoading,
-  error: articleError,
-  hasNextPage,
-  hasPreviousPage
-} = storeToRefs(recommendStore);
-
-const loadData = async (targetPage = 1) => {
-  try {
-    await recommendStore.fetchArticles({
-      page: Math.max(1, targetPage),
-      size: SIZE
-    });
-  } catch (err) {
-    console.error('加载推荐文章失败:', err);
-  }
-};
-
-const goToPage = (page) => {
+const goToPage = (page: number) => {
   router.push({
     query: { ...route.query, page: Math.max(1, page) }
   });
 };
 
-const refresh = () => loadData(props.page);
-const nextPage = () => hasNextPage.value && goToPage(props.page + 1);
-const prevPage = () => hasPreviousPage.value && goToPage(props.page - 1);
-
-// 仅在 props.page 变化且是用户手动触发时监听
-watch(() => props.page, (newPage) => {
-  loadData(newPage);
-});
-
-// 组件首次挂载时加载，被 keep-alive 缓存后再次后退回来不会重复触发 onMounted
-onMounted(() => {
-  if (items.value.length === 0) {
-    loadData(props.page);
-  }
-});
+const refresh = () => recommendationsQuery.refetch();
+const nextPage = () => hasNextPage.value && goToPage(currentPage.value + 1);
+const prevPage = () => hasPreviousPage.value && goToPage(currentPage.value - 1);
 </script>

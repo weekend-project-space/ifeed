@@ -90,7 +90,7 @@
                     :class="detail?.subscribed
                   ? 'text-secondary bg-secondary/10 hover:bg-secondary/20'
                   : 'text-white bg-secondary hover:bg-secondary/90'"
-                    :disabled="subscriptionSubmitting || feedLoading"
+                    :disabled="subscriptionSubmitting || feedLoading || subscriptionSubmittingMutation"
                     @click="toggleSubscription">
                   {{ detail?.subscribed ? '已订阅' : '订阅' }}
                 </button>
@@ -160,7 +160,7 @@
         :current-page="page"
         :has-previous-page="hasPreviousPage"
         :has-next-page="hasNextPage"
-        :disabled="articlesLoading"
+        :disabled="articlesFetching"
         @prev-page="prevPage"
         @next-page="nextPage"
     />
@@ -168,61 +168,54 @@
 </template>
 
 <script setup lang="ts">
-import {computed, onMounted, watch} from 'vue';
-import {useRoute, useRouter} from 'vue-router';
+import {computed, watch} from 'vue';
+import {useRouter} from 'vue-router';
 import {storeToRefs} from 'pinia';
-import {useFeedArticlesStore} from '../stores/articles/feedArticles';
-import {useFeedStore} from '../stores/feeds';
+import {useMutation, useQueryClient} from '@tanstack/vue-query';
+import {normalizeArticle} from '../stores/articles/types';
+import {useFeedQuery, useFeedArticlesQuery} from '../queries/feed';
 import {useSubscriptionsStore} from '../stores/subscriptions';
 import {useReadFeedStore} from '../stores/readfeed'
 import {formatRelativeTime} from '../utils/datetime';
 
 defineOptions({name: 'FeedDetailPage'});
 
-const route = useRoute();
+const props = defineProps<{
+  feedId: string;
+  page: number;
+  tags: string | null;
+}>();
 const router = useRouter();
-const feedStore = useFeedStore();
-const feedArticlesStore = useFeedArticlesStore();
 const subscriptionsStore = useSubscriptionsStore();
 const readFeedStore = useReadFeedStore();
+const queryClient = useQueryClient();
 
-const {detail, loading: feedLoading, error: feedError} = storeToRefs(feedStore);
-const {
-  items,
-  feedId: storeFeedId,
-  loading: articlesLoading,
-  error: articleError,
-  hasNextPage,
-  hasPreviousPage,
-  page
-} = storeToRefs(feedArticlesStore);
 const {submitting: subscriptionSubmitting} = storeToRefs(subscriptionsStore);
 
-const currentFeedId = computed(() => {
-  const raw = route.params.feedId;
-  if (Array.isArray(raw)) return raw[0] ?? null;
-  return typeof raw === 'string' ? raw : null;
-});
-
-const routePage = computed(() => {
-  const raw = Array.isArray(route.query.page) ? route.query.page[0] : route.query.page;
-  const parsed = Number(raw);
-  return Number.isFinite(parsed) && parsed > 0 ? parsed : 1;
-});
-
-const routeTag = computed(() => {
-  const raw = Array.isArray(route.query.tags) ? route.query.tags[0] : route.query.tags;
-  if (typeof raw === 'string') {
-    const trimmed = raw.trim();
-    if (trimmed.length > 0) return trimmed;
-  }
-  return null;
-});
+const currentFeedId = computed(() => props.feedId);
+const routePage = computed(() => props.page);
+const routeTag = computed(() => props.tags);
 
 const normalizedTag = computed(() => {
   const tag = routeTag.value;
   return tag ? tag.toLowerCase() : null;
 });
+
+const feedQuery = useFeedQuery(currentFeedId);
+const feedArticlesQuery = useFeedArticlesQuery(currentFeedId, routePage, normalizedTag);
+const detail = computed(() => feedQuery.data.value ?? null);
+const items = computed(() => (
+  feedArticlesQuery.data.value?.content ?? []
+).map(normalizeArticle));
+const feedLoading = computed(() => feedQuery.isPending.value);
+const feedError = computed(() => feedQuery.error.value instanceof Error ? feedQuery.error.value.message : null);
+const articlesLoading = computed(() => feedArticlesQuery.isPending.value);
+const articlesFetching = computed(() => feedArticlesQuery.isFetching.value);
+const articleError = computed(() => feedArticlesQuery.error.value instanceof Error ? feedArticlesQuery.error.value.message : null);
+const totalPages = computed(() => feedArticlesQuery.data.value?.totalPages ?? 0);
+const hasNextPage = computed(() => routePage.value < totalPages.value);
+const hasPreviousPage = computed(() => routePage.value > 1);
+const page = routePage;
 
 const selectedTagDisplay = computed(() => routeTag.value);
 
@@ -287,58 +280,7 @@ const buildQuery = (overrides?: { page?: number; tags?: string | null }) => {
   return query;
 };
 
-const fetchArticles = async (targetPage = 1) => {
-  const feedId = currentFeedId.value;
-  if (!feedId) return;
-
-  try {
-    await feedArticlesStore.fetchArticles({
-      page: targetPage,
-      size: 20,
-      sort: 'publishedAt,desc',
-      feedId,
-      tags: normalizedTag.value
-    });
-  } catch (err) {
-    console.warn('频道文章加载失败', err);
-  }
-};
-
-const loadFeed = async () => {
-  const feedId = currentFeedId.value;
-  if (!feedId) {
-    feedStore.clear();
-    return;
-  }
-
-  try {
-    await feedStore.fetchById(feedId);
-    await readFeed();
-  } catch (err) {
-    return;
-  }
-};
-
-onMounted(async () => {
-  if (currentFeedId.value != storeFeedId.value) {
-    await loadFeed();
-    await fetchArticles(routePage.value);
-  }
-
-});
-
-watch([currentFeedId, routePage, normalizedTag], async ([feedId, page]) => {
-  if (!feedId) return;
-  if (currentFeedId.value != storeFeedId.value) {
-    await loadFeed();
-  }
-  await fetchArticles(page || 1);
-}, {immediate: false});
-
-const refreshArticles = async () => {
-  const targetPage = routePage.value || 1;
-  await fetchArticles(targetPage);
-};
+const refreshArticles = () => feedArticlesQuery.refetch();
 
 
 const handleSelectTag = (tag: string) => {
@@ -362,7 +304,7 @@ const clearTag = () => {
 };
 
 const nextPage = () => {
-  if (!hasNextPage.value || !currentFeedId.value) return;
+  if (!hasNextPage.value || !currentFeedId.value || articlesFetching.value) return;
 
   router.push({
     name: 'feed',
@@ -372,7 +314,7 @@ const nextPage = () => {
 };
 
 const prevPage = () => {
-  if (!hasPreviousPage.value || !currentFeedId.value) return;
+  if (!hasPreviousPage.value || !currentFeedId.value || articlesFetching.value) return;
 
   router.push({
     name: 'feed',
@@ -381,26 +323,49 @@ const prevPage = () => {
   });
 };
 
-const toggleSubscription = async () => {
-  if (!detail.value || !currentFeedId.value) return;
-  console.log(detail.value.subscribed)
-  try {
+const subscriptionMutation = useMutation({
+  mutationFn: async () => {
+    if (!detail.value) return;
     if (detail.value.subscribed) {
       await subscriptionsStore.removeSubscription(detail.value.feedId);
     } else {
       await subscriptionsStore.addSubscription(detail.value.url, detail.value.feedId);
     }
-    await feedStore.fetchById(detail.value.feedId);
-  } catch (err) {
-    console.warn('订阅操作失败', err);
+  },
+  onSuccess: async () => {
+    await Promise.all([
+      queryClient.invalidateQueries({queryKey: ['feed']}),
+      queryClient.invalidateQueries({queryKey: ['feedArticles']}),
+      queryClient.invalidateQueries({queryKey: ['subscriptionArticles']}),
+    ]);
+    await feedQuery.refetch();
+  },
+});
+const subscriptionSubmittingMutation = computed(() => subscriptionMutation.isPending.value);
+const toggleSubscription = () => {
+  if (!detail.value || !currentFeedId.value || subscriptionMutation.isPending.value) return;
+  subscriptionMutation.mutate();
+};
+
+const readFeedMutation = useMutation({
+  mutationFn: (feedId: string) => readFeedStore.recordFeedRead(feedId),
+  onSuccess: () => subscriptionsStore.fetchSubscriptions(),
+});
+const readFeedAttempted = new Set<string>();
+const readFeed = async () => {
+  const feedId = currentFeedId.value;
+  const canRead = feedId && subscriptionsStore.items.some(item => !item.isRead && item.feedId === feedId);
+  if (canRead && feedId && !readFeedMutation.isPending.value && !readFeedAttempted.has(feedId)) {
+    readFeedAttempted.add(feedId);
+    try {
+      await readFeedMutation.mutateAsync(feedId);
+    } catch {
+      readFeedAttempted.delete(feedId);
+    }
   }
 };
 
-const readFeed = async () => {
-  const canRead = subscriptionsStore.items.filter(item => !item.isRead && item.feedId == currentFeedId.value).length
-  if (canRead > 0) {
-    await readFeedStore.recordFeedRead(currentFeedId.value);
-    await subscriptionsStore.fetchSubscriptions();
-  }
-}
+watch([() => feedQuery.data.value, () => subscriptionsStore.items], () => {
+  void readFeed();
+}, {immediate: true});
 </script>

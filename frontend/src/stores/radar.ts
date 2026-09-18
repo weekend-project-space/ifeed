@@ -1,34 +1,14 @@
 import { computed, ref } from 'vue';
 import { defineStore } from 'pinia';
-import { request } from '@/api/client';
-import type { SlimPageResponse } from '@/types/api';
+import {
+  getRadarDigest,
+  getRadarTopicDetail,
+  type PageResponseWithMeta,
+  type RadarItemDto,
+  type RadarTopicDto,
+} from '@/api/radar';
 
-export interface RadarTopicDto {
-  topicId: string;
-  title?: string;
-  description?: string;
-  createdAt?: string;
-  updatedAt?: string;
-  articleCount: number;
-  topKeywords?: string[];
-}
-
-export interface RadarItemDto {
-  articleId: string;
-  title?: string;
-  summary?: string;
-  thumbnail?: string;
-  enclosure?: string;
-  feedTitle?: string;
-  publishedAt?: string;
-  tags?: string[];
-  score?: number;
-  relativeTime?: string;
-}
-
-export type PageResponseWithMeta<T> = SlimPageResponse<T> & {
-  meta?: Record<string, unknown>;
-};
+export type { PageResponseWithMeta, RadarItemDto, RadarTopicDto } from '@/api/radar';
 
 export const useRadarStore = defineStore('radar', () => {
   // digest
@@ -67,17 +47,12 @@ export const useRadarStore = defineStore('radar', () => {
     const nextSize = override?.size ?? size.value;
 
     try {
-      const response = await request<PageResponseWithMeta<RadarTopicDto>>(
-        '/api/user/radar/digest',
-        {
-          query: {
-            page: Math.max(0, nextPage - 1),
-            size: nextSize,
-            snapshotId: override?.snapshotId ?? undefined,
-            windowHours: override?.windowHours ?? undefined,
-          }
-        }
-      );
+      const response = await getRadarDigest({
+        page: Math.max(0, nextPage - 1),
+        size: nextSize,
+        snapshotId: override?.snapshotId,
+        windowHours: override?.windowHours,
+      });
 
       const list = Array.isArray(response?.content) ? response.content : [];
       topics.value = list;
@@ -130,16 +105,12 @@ export const useRadarStore = defineStore('radar', () => {
     const nextSize = args.size ?? topicSize.value;
 
     try {
-      const response = await request<PageResponseWithMeta<RadarItemDto>>(
-        `/api/user/radar/topics/${args.topicId}`,
-        {
-          query: {
-            snapshotId: args.snapshotId,
-            page: Math.max(0, nextPage - 1),
-            size: nextSize
-          }
-        }
-      );
+      const response = await getRadarTopicDetail({
+        topicId: args.topicId,
+        snapshotId: args.snapshotId,
+        page: Math.max(0, nextPage - 1),
+        size: nextSize,
+      });
 
       const list = Array.isArray(response?.content) ? response.content : [];
       items.value = list;

@@ -1,23 +1,18 @@
 import {computed, ref} from 'vue';
 import {defineStore} from 'pinia';
-import {request, setAuthToken} from '../api/client';
-
-interface AuthResponse {
-    token: string;
-    userId: string;
-}
-
-interface UserProfile {
-    userId: string;
-    username: string;
-    avatarUrl: string;
-    currentPlan: string;
-}
-
-interface Credentials {
-    username: string;
-    password: string;
-}
+import {setAuthToken} from '../api/client';
+import {
+    getCurrentUser,
+    getLinuxDoAuthUrl as fetchLinuxDoAuthUrl,
+    login as loginRequest,
+    loginWithLinuxDo,
+    logout as logoutRequest,
+    register as registerRequest,
+    type AuthResponse,
+    type Credentials,
+    type UserProfile,
+} from '@/api/auth';
+import {queryClient} from '../queryClient';
 
 const TOKEN_STORAGE_KEY = 'ifeed_token';
 
@@ -52,6 +47,9 @@ export const useAuthStore = defineStore('auth', () => {
     const isAuthenticated = computed(() => Boolean(token.value));
 
     const setToken = (newToken: string | null) => {
+        if (token.value !== newToken) {
+            queryClient.clear();
+        }
         token.value = newToken;
         if (newToken) {
             localStorage.setItem(TOKEN_STORAGE_KEY, newToken);
@@ -65,11 +63,7 @@ export const useAuthStore = defineStore('auth', () => {
         loading.value = true;
         error.value = null;
         try {
-            const response = await request<AuthResponse>('/api/auth/login', {
-                method: 'POST',
-                json: credentials,
-                skipAuth: true
-            });
+            const response = await loginRequest(credentials);
             setToken(response.token);
             await fetchUser();
             return response;
@@ -86,11 +80,7 @@ export const useAuthStore = defineStore('auth', () => {
         loading.value = true;
         error.value = null;
         try {
-            const response = await request<AuthResponse>('/api/auth/register', {
-                method: 'POST',
-                json: credentials,
-                skipAuth: true
-            });
+            const response = await registerRequest(credentials);
             setToken(response.token);
             await fetchUser();
             return response;
@@ -111,12 +101,16 @@ export const useAuthStore = defineStore('auth', () => {
         }
 
         try {
-            const profile = await request<UserProfile>('/api/user');
+            const profile = await getCurrentUser();
+            if (user.value && user.value.userId !== profile.userId) {
+                queryClient.clear();
+            }
             user.value = profile;
             initialized.value = true;
             return profile;
         } catch (err) {
             setToken(null);
+            queryClient.clear();
             user.value = null;
             initialized.value = true;
             throw err;
@@ -126,21 +120,18 @@ export const useAuthStore = defineStore('auth', () => {
     const logout = async () => {
         error.value = null;
         try {
-            await request('/api/auth/logout', {
-                method: 'POST'
-            });
+            await logoutRequest();
         } catch {
         } finally {
             setToken(null);
+            queryClient.clear();
             user.value = null;
         }
     };
 
     const getLinuxDoAuthUrl = async (): Promise<string> => {
         try {
-            const authUrl = await request<string>('/api/auth/linuxdo', {
-                skipAuth: true
-            });
+            const authUrl = await fetchLinuxDoAuthUrl();
             return authUrl;
         } catch (err) {
             const message = extractMessage(err, '获取授权地址失败');
@@ -153,11 +144,7 @@ export const useAuthStore = defineStore('auth', () => {
         loading.value = true;
         error.value = null;
         try {
-            const response = await request<AuthResponse>('/api/auth/linuxdo/callback', {
-                method: 'GET',
-                query: {code},
-                skipAuth: true
-            });
+            const response = await loginWithLinuxDo(code);
             setToken(response.token);
             await fetchUser();
             return response;

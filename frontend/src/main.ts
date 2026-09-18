@@ -1,5 +1,6 @@
 import {createApp} from 'vue';
 import {createPinia} from 'pinia';
+import {VueQueryPlugin} from '@tanstack/vue-query';
 import App from './App.vue';
 import router from './router';
 import './styles/tailwind.css';
@@ -9,12 +10,13 @@ import ArticleCardList from "./components/ArticleCardList.vue";
 import {useThemeStore} from './stores/theme';
 import {usePWAStore} from './stores/pwa';
 import {registerSW} from 'virtual:pwa-register';
+import {queryClient} from './queryClient';
 
 const app = createApp(App);
 const pinia = createPinia();
-
 app.use(pinia);
 app.use(router);
+app.use(VueQueryPlugin, {queryClient});
 app.component('pagination',Pagination)
 app.component('article-list',ArticleList)
 app.component('article-card-list',ArticleCardList)

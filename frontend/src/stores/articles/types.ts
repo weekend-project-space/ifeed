@@ -1,23 +1,8 @@
 import { formatRelativeTime } from '@/utils/datetime';
 import { md2html } from '@/utils/markdown';
+import type { ArticleDto } from '@/api/articles';
 
-export interface ArticleDto {
-    id: string;
-    title: string;
-    summary?: string;
-    content?: string;
-    link?: string;
-    thumbnail?: string;
-    enclosure?: string;
-    enclosureType?: string;
-    feedId?: string;
-    feedTitle?: string;
-    feedAvatar?: string;
-    author?: string;
-    publishedAt?: string;
-    tags?: string[];
-    collected?: boolean;
-}
+export type { ArticleDto } from '@/api/articles';
 
 export interface ArticleListItem {
     id: string;

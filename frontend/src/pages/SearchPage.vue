@@ -70,8 +70,8 @@
         </article-card-list>
 
         <!-- Pagination -->
-        <pagination v-if="searchArticleItems.length > 0 && !searchLoading" :current-page="page"
-          :has-previous-page="hasPreviousPage" :has-next-page="hasNextPage" :disabled="searchLoading"
+        <pagination v-if="searchArticleItems.length > 0 && !searchLoading" :current-page="routePage"
+          :has-previous-page="hasPreviousPage" :has-next-page="hasNextPage" :disabled="searchFetching"
           @prev-page="prevPage" @next-page="nextPage" />
       </div>
 
@@ -110,49 +110,40 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, watch } from 'vue';
-import { storeToRefs } from 'pinia';
-import { useRoute, useRouter } from 'vue-router';
-import { useSearchStore, type SearchType } from '../stores/search';
+import { computed } from 'vue';
+import { useRouter } from 'vue-router';
+import { useSearchQuery, type SearchType, type Source } from '../queries/search';
 
 defineOptions({name: 'SearchPage'});
 
+const props = defineProps<{
+  query: string;
+  type: SearchType;
+  source?: Source;
+  page: number;
+  feedId: string | null;
+  tags: string | null;
+  category: string | null;
+}>();
 const router = useRouter();
-const route = useRoute();
-const searchStore = useSearchStore();
-
-const {
-  results,
-  page,
-  hasNextPage,
-  hasPreviousPage,
-  total,
-  loading: searchLoading,
-  error: searchError
-} = storeToRefs(searchStore);
-
-const searchQuery = computed(() => {
-  const q = route.query.q;
-  return typeof q === 'string' ? q.trim() : '';
-});
-
-const searchType = computed<SearchType>(() => {
-  const type = route.query.type;
-  return type === 'keyword' ? 'keyword' : 'semantic';
-});
-
-const source = computed(() => {
-  const s = route.query.source;
-  return typeof s === 'string' ? s : undefined;
-});
-
-const routePage = computed(() => {
-  const raw = Array.isArray(route.query.page) ? route.query.page[0] : route.query.page;
-  const parsed = Number(raw);
-  return Number.isFinite(parsed) && parsed > 0 ? parsed : 1;
-});
+const searchQuery = computed(() => props.query);
+const searchType = computed(() => props.type);
+const source = computed(() => props.source);
+const routePage = computed(() => props.page);
 
 const hasQuery = computed(() => Boolean(searchQuery.value));
+
+const searchQueryResult = useSearchQuery(searchQuery, searchType, source, routePage);
+const searchLoading = computed(() => searchQueryResult.isPending.value);
+const searchFetching = computed(() => searchQueryResult.isFetching.value);
+const searchError = computed(() => {
+  const error = searchQueryResult.error.value;
+  return error instanceof Error ? error.message : error ? '搜索失败' : null;
+});
+const results = computed(() => searchQueryResult.data.value?.content ?? []);
+const totalPages = computed(() => searchQueryResult.data.value?.totalPages ?? 0);
+const hasNextPage = computed(() => routePage.value < totalPages.value);
+const hasPreviousPage = computed(() => routePage.value > 1);
 
 const searchArticleItems = computed(() =>
   results.value.map((item) => ({
@@ -189,34 +180,16 @@ const buildSearchQuery = (overrides?: { page?: number; type?: SearchType }) => {
     query.page = String(nextPage);
   }
 
-  const feedId = typeof route.query.feedId === 'string' ? route.query.feedId : undefined;
+  const feedId = props.feedId;
   if (feedId) query.feedId = feedId;
 
-  const tag = typeof route.query.tags === 'string' ? route.query.tags : undefined;
+  const tag = props.tags;
   if (tag) query.tags = tag;
 
-  const category = typeof route.query.category === 'string' ? route.query.category : undefined;
+  const category = props.category;
   if (category) query.category = category;
 
   return query;
-};
-
-const loadData = async () => {
-  if (!hasQuery.value) {
-    searchStore.clear();
-    return;
-  }
-
-  try {
-    await searchStore.searchArticles({
-      query: searchQuery.value,
-      source: source.value,
-      page: routePage.value,
-      type: searchType.value
-    });
-  } catch (err) {
-    console.error('搜索数据加载失败:', err);
-  }
 };
 
 const navigateToPage = (target: number) => {
@@ -226,12 +199,12 @@ const navigateToPage = (target: number) => {
 };
 
 const nextPage = () => {
-  if (!hasNextPage.value) return;
+  if (!hasNextPage.value || searchFetching.value) return;
   navigateToPage(routePage.value + 1);
 };
 
 const prevPage = () => {
-  if (!hasPreviousPage.value) return;
+  if (!hasPreviousPage.value || searchFetching.value) return;
   navigateToPage(Math.max(1, routePage.value - 1));
 };
 
@@ -243,13 +216,13 @@ const setSearchType = (type: SearchType) => {
 const goBackToHome = () => {
   const query: Record<string, string> = {};
 
-  const feedId = typeof route.query.feedId === 'string' ? route.query.feedId : undefined;
+  const feedId = props.feedId;
   if (feedId) query.feedId = feedId;
 
-  const tag = typeof route.query.tags === 'string' ? route.query.tags : undefined;
+  const tag = props.tags;
   if (tag) query.tags = tag;
 
-  const category = typeof route.query.category === 'string' ? route.query.category : undefined;
+  const category = props.category;
   if (category) query.category = category;
 
   router.push({ name: 'home', query });
@@ -259,14 +232,4 @@ const handleMenuClick = (item: any) => {
   console.log('菜单点击:', item);
 };
 
-watch(
-  () => [searchQuery.value, source.value, searchType.value, routePage.value],
-  () => {
-    loadData();
-  }
-);
-
-onMounted(() => {
-  loadData();
-});
 </script>

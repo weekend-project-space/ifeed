@@ -1,7 +1,7 @@
 <template>
   <div class="">
     <!-- Loading State - Skeleton -->
-    <div v-if="articlesStore.loading" class="max-w-screen-md  mx-auto px-3 sm:px-6 py-12 animate-pulse">
+    <div v-if="articleLoading" class="max-w-screen-md  mx-auto px-3 sm:px-6 py-12 animate-pulse">
       <!-- Header Skeleton -->
       <div class="space-y-6 mb-12">
         <div class="h-12 bg-gray-200 dark:bg-gray-800 rounded-lg w-3/4"></div>
@@ -27,7 +27,7 @@
     </div>
 
     <!-- Error State -->
-    <div v-else-if="errorMessage" class="max-w-screen-md  mx-auto  px-3 sm:px-6 py-12">
+    <div v-else-if="articleError" class="max-w-screen-md  mx-auto  px-3 sm:px-6 py-12">
       <div class="rounded-lg bg-red-50 dark:bg-red-900/10 p-6 border border-red-100 dark:border-red-900/20">
         <div class="flex items-start gap-4">
           <div
@@ -40,8 +40,8 @@
           </div>
           <div class="flex-1">
             <h3 class="text-sm font-medium text-red-900 dark:text-red-200 mb-1">加载失败</h3>
-            <p class="text-sm text-red-700 dark:text-red-300">{{ errorMessage }}</p>
-            <button @click="loadArticle(props.id)"
+            <p class="text-sm text-red-700 dark:text-red-300">{{ articleError }}</p>
+            <button @click="articleQuery.refetch()"
                     class="mt-3 px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-full transition-colors">
               重试
             </button>
@@ -120,9 +120,14 @@
           </div>
 
           <!-- Collect Button -->
-          <template v-if="headerActionExists">
+          <template v-if="headerActionExists && route.name === 'article'">
             <Teleport to="#header-action">
-              <button class="flex h-10 w-10 items-center justify-center text-sm font-medium rounded-full transition-all inline-flex items-center gap-2 text-gray-900 dark:text-gray-100 hover:bg-gray-200 dark:hover:bg-gray-700"
+              <button
+                      class="flex h-10 w-10 items-center justify-center text-sm font-medium rounded-full transition-all text-gray-900 dark:text-gray-100 hover:bg-gray-200 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                      :disabled="collectionSubmitting"
+                      :title="article.collected ? '取消收藏' : '收藏'"
+                      :aria-label="article.collected ? '取消收藏' : '收藏'"
+                      :aria-pressed="article.collected"
                       @click="toggleCollection">
                 <svg class="w-5 h-5" :class="article.collected ? 'fill-current' : 'fill-none'" stroke="currentColor"
                      stroke-width="2" viewBox="0 0 24 24">
@@ -132,11 +137,14 @@
               </button>
             </Teleport>
           </template>
-          <button
+          <button v-if="!headerActionExists"
                   class="p-2 text-sm font-medium rounded-full transition-all inline-flex items-center gap-2 text-gray-900 dark:text-gray-100 hover:bg-gray-200 dark:hover:bg-gray-700"
+                  :disabled="collectionSubmitting"
+                  :title="article.collected ? '取消收藏' : '收藏'"
+                  :aria-label="article.collected ? '取消收藏' : '收藏'"
+                  :aria-pressed="article.collected"
                   @click="toggleCollection"
-                  title="收藏"
-                  aria-label="收藏">
+          >
             <svg class="w-4 h-4" :class="article.collected ? 'fill-current' : 'fill-none'" stroke="currentColor"
                  stroke-width="2" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round"
@@ -330,20 +338,22 @@
 
 <script setup lang="ts">
 import {computed, nextTick, onBeforeUnmount, onMounted, ref, watch} from 'vue';
-import {storeToRefs} from 'pinia';
+import {useMutation, useQueryClient} from '@tanstack/vue-query';
 import {useRoute, useRouter} from 'vue-router';
 import {useArticlesStore} from '../stores/articles/articles';
 import {useCollectionsStore} from '../stores/collections';
-import {useRecommendArticlesStore} from '../stores/articles/recommendArticles'
 import MediaAttachment from "../components/MediaAttachment.vue";
 import ArticleCardList from "../components/ArticleCardList.vue";
 import {useAuthStore} from "../stores/auth";
 import {md2html} from "../utils/markdown";
+import {normalizeArticle, type ArticleDetail} from '../stores/articles/types';
+import {articleQueryKey, useArticleQuery, useArticleRecommendationsQuery} from '../queries/article';
 
 defineOptions({name: 'ArticleDetailPage'});
 
 interface Props {
   id: string;
+  tab: 'content' | 'summary' | 'mindmap';
 }
 
 const props = defineProps<Props>();
@@ -352,21 +362,14 @@ const route = useRoute();
 const articlesStore = useArticlesStore();
 const collectionsStore = useCollectionsStore();
 const authStore = useAuthStore();
-const recommendArticlesStore = useRecommendArticlesStore();
-const {currentArticle} = storeToRefs(articlesStore);
-const {detailsItems, loading: detailsLoading} = storeToRefs(recommendArticlesStore);
+const queryClient = useQueryClient();
 
-const errorMessage = ref('');
 const scrollTracked = ref(false);
 const articleContentRef = ref<HTMLElement | null>(null);
 const mindmapFrame = ref<HTMLIFrameElement | null>(null);
-const abortControllerRef = ref<AbortController | null>(null);
 type MainTab = 'content' | 'summary' | 'mindmap';
-const normalizeMainTab = (value: unknown): MainTab =>
-  value === 'summary' || value === 'mindmap' ? value : 'content';
-const activeMainTab = ref<MainTab>(normalizeMainTab(route.query.tab));
+const activeMainTab = computed(() => props.tab);
 const mindmapMarkdown = ref('');
-const isEnriching = ref(false);
 const linkCopied = ref(false);
 const lazyLoadObserver = ref<IntersectionObserver | null>(null);
 const headerActionExists = ref(false);
@@ -374,7 +377,22 @@ const headerActionExists = ref(false);
 const SCROLL_PROGRESS_THRESHOLD = 0.3;
 const AVERAGE_WORDS_PER_MINUTE = 200;
 
-const article = computed(() => currentArticle.value);
+const articleId = computed(() => props.id ?? '');
+const userId = computed(() => authStore.user?.userId ?? 'anonymous');
+const currentArticleQueryKey = computed(() => articleQueryKey(userId.value, articleId.value));
+const articleQuery = useArticleQuery(articleId);
+const recommendationsQuery = useArticleRecommendationsQuery(articleId);
+const article = computed(() => articleQuery.data.value ?? null);
+const articleLoading = computed(() => articleQuery.isPending.value);
+const articleError = computed(() => {
+  const error = articleQuery.error.value;
+  return error instanceof Error ? error.message : error ? '文章加载失败,请稍后重试' : '';
+});
+const detailsItems = computed(() => (recommendationsQuery.data.value ?? []).map(normalizeArticle));
+const detailsLoading = computed(() => recommendationsQuery.isPending.value);
+const historyMutation = useMutation({
+  mutationFn: (id: string) => articlesStore.recordHistory(id),
+});
 
 // 计算思维导图高度
 const mindmapHeight = computed(() => {
@@ -449,43 +467,37 @@ const handleScroll = throttle(() => {
   if (authStore.isAuthenticated) {
     if (maxScroll <= 0) {
       scrollTracked.value = true;
-      articlesStore.recordHistory(props.id).catch(err => console.warn('recordHistory failed', err));
+      historyMutation.mutate(articleId.value);
       return;
     }
 
     const progress = scrollTop / maxScroll;
     if (progress > SCROLL_PROGRESS_THRESHOLD) {
       scrollTracked.value = true;
-      articlesStore.recordHistory(props.id).catch(err => console.warn('recordHistory failed', err));
+      historyMutation.mutate(articleId.value);
     }
   }
 
 }, 100);
 
-const handleTabSwitch = async (tab: 'content' | 'summary' | 'mindmap') => {
-  activeMainTab.value = tab;
+const handleTabSwitch = async (tab: MainTab) => {
   const query = {...route.query};
   if (tab === 'content') {
     delete query.tab;
   } else {
     query.tab = tab;
   }
-  if (route.query.tab !== query.tab) {
+  if (props.tab !== tab) {
     await router.push({query});
   }
   if (tab === 'content') return;
   if (tab === 'summary' && article.value?.summary) return;
   if (tab === 'mindmap' && mindmapMarkdown.value) return;
   if (!authStore.isAuthenticated || authStore.user?.currentPlan === 'FREE') return;
-  if (isEnriching.value) return;
+  if (isEnriching.value || enrichMutation.isPending.value) return;
 
-  isEnriching.value = true;
   try {
-    const res = await articlesStore.enrich(props.id);
-    if (articlesStore.currentArticle) {
-      articlesStore.currentArticle.summary = md2html(res.summary);
-      articlesStore.currentArticle.mindMap = res.mindMap;
-    }
+    const res = await enrichMutation.mutateAsync(articleId.value);
     mindmapMarkdown.value = res.mindMap ?? '';
     if (tab === 'mindmap' && mindmapMarkdown.value) {
       await nextTick();
@@ -493,55 +505,48 @@ const handleTabSwitch = async (tab: 'content' | 'summary' | 'mindmap') => {
     }
   } catch (err) {
     console.warn('AI 增强获取失败', err);
-  } finally {
-    isEnriching.value = false;
   }
 };
 
-const loadArticle = async (articleId: string) => {
-  if (!articleId) return;
-  if (abortControllerRef.value) abortControllerRef.value.abort();
-  abortControllerRef.value = new AbortController();
-  const currentController = abortControllerRef.value;
-  errorMessage.value = '';
-  activeMainTab.value = normalizeMainTab(route.query.tab);
-  mindmapMarkdown.value = '';
+const enrichMutation = useMutation({
+  mutationFn: (id: string) => articlesStore.enrich(id),
+  onSuccess: (result) => {
+    queryClient.setQueryData<ArticleDetail>(currentArticleQueryKey.value, (previous) => previous ? {
+      ...previous,
+      summary: md2html(result.summary),
+      mindMap: result.mindMap,
+    } : previous);
+  },
+});
+const isEnriching = computed(() => enrichMutation.isPending.value);
 
-  try {
-    await articlesStore.fetchArticleById(articleId, {signal: currentController.signal});
-    if (currentController.signal.aborted) return;
-    window.scrollTo({top: 0, behavior: 'auto'});
-    await nextTick();
-    scrollTracked.value = false;
-    if (authStore.isAuthenticated) {
-      articlesStore.recordHistory(props.id).catch(err => console.warn('recordHistory failed', err));
-    }
-    mindmapMarkdown.value = article.value.mindMap;
+const collectionMutation = useMutation({
+  mutationFn: (payload: { id: string; collected: boolean }) =>
+    collectionsStore.toggleCollection(payload.id, {
+      collected: payload.collected,
+    }),
+  onSuccess: (_, payload) => {
+    queryClient.setQueryData<ArticleDetail>(currentArticleQueryKey.value, (previous) => previous ? {
+      ...previous,
+      collected: !payload.collected,
+    } : previous);
+    void Promise.all([
+      queryClient.invalidateQueries({queryKey: ['collections']}),
+      queryClient.invalidateQueries({queryKey: ['recommendations']}),
+      queryClient.invalidateQueries({queryKey: ['search']}),
+      queryClient.invalidateQueries({queryKey: ['feedArticles']}),
+      queryClient.invalidateQueries({queryKey: ['subscriptionArticles']}),
+    ]);
+  },
+});
+const collectionSubmitting = computed(() => collectionMutation.isPending.value);
 
-    // 设置图片懒加载
-    setupLazyLoading();
-
-    await recommendArticlesStore.fetchDetailsArticles(articleId);
-  } catch (err) {
-    if (currentController.signal.aborted) return;
-    console.error('文章详情加载失败', err);
-    errorMessage.value = '文章加载失败,请稍后重试';
-  }
-};
-
-const toggleCollection = async () => {
-  if (!props.id || !article.value) return;
-  try {
-    await collectionsStore.toggleCollection(props.id, {
-      title: article.value.title,
-      collected: article.value.collected,
-    });
-    if (articlesStore.currentArticle) {
-      articlesStore.currentArticle.collected = !articlesStore.currentArticle.collected;
-    }
-  } catch (err) {
-    console.warn('收藏操作失败', err);
-  }
+const toggleCollection = () => {
+  if (!article.value || collectionMutation.isPending.value) return;
+  collectionMutation.mutate({
+    id: articleId.value,
+    collected: article.value.collected ?? false,
+  });
 };
 
 const handleTagClick = (tag: string) => {
@@ -643,14 +648,10 @@ const setupLazyLoading = () => {
 onMounted(async () => {
   // 检查 Teleport 目标是否存在
   headerActionExists.value = !!document.querySelector('#header-action');
-
-  await loadArticle(props.id);
   window.addEventListener('scroll', handleScroll, {passive: true});
 });
 
 onBeforeUnmount(() => {
-  if (abortControllerRef.value) abortControllerRef.value.abort();
-
   // 清理 Intersection Observer
   if (lazyLoadObserver.value) {
     lazyLoadObserver.value.disconnect();
@@ -660,15 +661,17 @@ onBeforeUnmount(() => {
   window.removeEventListener('scroll', handleScroll);
 });
 
-watch(() => route.query.tab, (tab) => {
-  activeMainTab.value = normalizeMainTab(tab);
-});
-
-watch(() => props.id, async (newId) => {
-  if (!newId) return;
+watch(() => article.value, async (newArticle) => {
+  if (!newArticle) return;
   scrollTracked.value = false;
-  await loadArticle(newId);
-});
+  mindmapMarkdown.value = newArticle.mindMap ?? '';
+  window.scrollTo({top: 0, behavior: 'auto'});
+  await nextTick();
+  if (authStore.isAuthenticated) {
+    historyMutation.mutate(articleId.value);
+  }
+  setupLazyLoading();
+}, {immediate: true});
 
 watch(activeMainTab, async (newTab) => {
   if (newTab === 'mindmap' && mindmapMarkdown.value) {

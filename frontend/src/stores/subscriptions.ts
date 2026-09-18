@@ -1,54 +1,25 @@
 import { ref } from 'vue';
 import { defineStore } from 'pinia';
-import { request } from '../api/client';
+import {
+    addSubscription as addSubscriptionRequest,
+    confirmOpmlImport as confirmOpmlImportRequest,
+    listSubscriptions,
+    previewOpmlImport as previewOpmlImportRequest,
+    removeSubscription as removeSubscriptionRequest,
+    searchSubscriptions as searchSubscriptionsRequest,
+    type SubscriptionBaseDto,
+    type SubscriptionListItemDto,
+    type SubscriptionSearchResultDto,
+} from '@/api/subscriptions';
 
-export interface SubscriptionBaseDto {
-    feedId: string;
-    title?: string;
-    description?: string;
-    url: string;
-    siteUrl?: string;
-    avatar?: string;
-    lastFetched?: string;
-    lastUpdated?: string;
-    failureCount?: number;
-    fetchError?: string | null;
-}
-
-export interface SubscriptionListItemDto extends SubscriptionBaseDto {
-    isRead?: boolean;
-}
-
-export interface SubscriptionSearchResultDto extends SubscriptionBaseDto {
-    subscriberCount: number;
-    subscribed: boolean;
-}
-
-export interface OpmlPreviewFeedDto {
-    feedUrl: string;
-    title: string;
-    siteUrl: string;
-    avatar?: string | null;
-    alreadySubscribed: boolean;
-    errors: string[];
-}
-
-export interface OpmlPreviewResultDto {
-    feeds: OpmlPreviewFeedDto[];
-    warnings: string[];
-    remainingQuota: number;
-}
-
-export interface OpmlImportSkippedDto {
-    feedUrl: string | null;
-    reason: string;
-}
-
-export interface OpmlImportResultDto {
-    importedCount: number;
-    skipped: OpmlImportSkippedDto[];
-    message: string;
-}
+export type {
+    OpmlImportResultDto,
+    OpmlPreviewFeedDto,
+    OpmlPreviewResultDto,
+    SubscriptionBaseDto,
+    SubscriptionListItemDto,
+    SubscriptionSearchResultDto,
+} from '@/api/subscriptions';
 
 export const useSubscriptionsStore = defineStore('subscriptions', () => {
     const items = ref<SubscriptionListItemDto[]>([]);
@@ -64,7 +35,7 @@ export const useSubscriptionsStore = defineStore('subscriptions', () => {
         loading.value = true;
         error.value = null;
         try {
-            const response = await request<SubscriptionListItemDto[]>('/api/subscriptions');
+            const response = await listSubscriptions();
             items.value = Array.isArray(response)
                 ? response.map((item) => ({
                     ...item,
@@ -91,10 +62,7 @@ export const useSubscriptionsStore = defineStore('subscriptions', () => {
         submitting.value = true;
         error.value = null;
         try {
-            await request('/api/subscriptions', {
-                method: 'POST',
-                json: { feedUrl, feedId }
-            });
+            await addSubscriptionRequest(feedUrl, feedId);
             await fetchSubscriptions();
         } catch (err) {
             const message = err instanceof Error ? err.message : '添加订阅失败';
@@ -109,7 +77,7 @@ export const useSubscriptionsStore = defineStore('subscriptions', () => {
         submitting.value = true;
         error.value = null;
         try {
-            await request(`/api/subscriptions/${feedId}`, { method: 'DELETE' });
+            await removeSubscriptionRequest(feedId);
             items.value = items.value.filter((item) => item.feedId !== feedId);
         } catch (err) {
             const message = err instanceof Error ? err.message : '取消订阅失败';
@@ -133,9 +101,7 @@ export const useSubscriptionsStore = defineStore('subscriptions', () => {
         searchLoading.value = true;
         searchError.value = null;
         try {
-            const response = await request<SubscriptionSearchResultDto[]>('/api/feeds/search', {
-                query: { query: trimmed }
-            });
+            const response = await searchSubscriptionsRequest(trimmed);
             if (activeSearchQuery.value !== trimmed) {
                 return;
             }
@@ -171,12 +137,7 @@ export const useSubscriptionsStore = defineStore('subscriptions', () => {
     };
 
     const previewOpmlImport = async (file: File) => {
-        const formData = new FormData();
-        formData.append('file', file);
-        return await request<OpmlPreviewResultDto>('/api/subscriptions/opml/preview', {
-            method: 'POST',
-            body: formData
-        });
+        return await previewOpmlImportRequest(file);
     };
 
     const confirmOpmlImport = async (feeds: {
@@ -186,12 +147,7 @@ export const useSubscriptionsStore = defineStore('subscriptions', () => {
         avatar?: string | null;
         selected: boolean;
     }[]) => {
-        return await request<OpmlImportResultDto>('/api/subscriptions/opml/confirm', {
-            method: 'POST',
-            json: {
-                feeds
-            }
-        });
+        return await confirmOpmlImportRequest(feeds);
     };
 
     return {

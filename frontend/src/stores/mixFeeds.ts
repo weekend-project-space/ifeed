@@ -1,56 +1,25 @@
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
-import * as api from '../api/client';
+import {
+    createMixFeed as createMixFeedRequest,
+    getMixFeed,
+    listMyMixFeeds,
+    listPublicMixFeeds,
+    removeMixFeed,
+    updateMixFeed as updateMixFeedRequest,
+    type MixFeedDetailResponse,
+    type MixFeedListResponse,
+    type MixFeedRequest,
+} from '@/api/mixFeeds';
 
-export interface KeywordFilter {
-    include?: string[];
-    exclude?: string[];
-}
-
-export interface DateRange {
-    from?: string;
-    to?: string;
-}
-
-export interface MixFeedFilterConfig {
-    sourceFeeds?: Record<string, string>;
-    keywords?: KeywordFilter;
-    dateRange?: DateRange;
-    sortBy?: string;
-    sortOrder?: string;
-}
-
-export interface MixFeedRequest {
-    name: string;
-    description?: string;
-    icon?: string;
-    isPublic?: boolean;
-    filterConfig?: MixFeedFilterConfig;
-}
-
-export interface MixFeedListResponse {
-    id: string;
-    name: string;
-    description?: string;
-    icon?: string;
-    subscriberCount: number;
-    isPublic: boolean;
-    createdAt: string;
-}
-
-export interface MixFeedDetailResponse {
-    id: string;
-    name: string;
-    description?: string;
-    icon?: string;
-    subscriberCount: number;
-    articleCount: number;
-    subscribed: boolean;
-    filterConfig?: MixFeedFilterConfig;
-    isPublic: boolean;
-    createdAt: string;
-    updatedAt?: string;
-}
+export type {
+    DateRange,
+    KeywordFilter,
+    MixFeedDetailResponse,
+    MixFeedFilterConfig,
+    MixFeedListResponse,
+    MixFeedRequest,
+} from '@/api/mixFeeds';
 
 export const useMixFeedsStore = defineStore('mixFeeds', () => {
     const myMixFeeds = ref<MixFeedListResponse[]>([]);
@@ -65,7 +34,7 @@ export const useMixFeedsStore = defineStore('mixFeeds', () => {
         loading.value = true;
         error.value = null;
         try {
-            const data = await api.get<MixFeedListResponse[]>('/api/mix-feeds');
+            const data = await listMyMixFeeds();
             myMixFeeds.value = data;
         } catch (err: any) {
             error.value = err.message || 'Failed to fetch mix feeds';
@@ -79,7 +48,7 @@ export const useMixFeedsStore = defineStore('mixFeeds', () => {
         loading.value = true;
         error.value = null;
         try {
-            await api.post('/api/mix-feeds', request);
+            await createMixFeedRequest(request);
             await fetchMyMixFeeds();
         } catch (err: any) {
             error.value = err.message || 'Failed to create mix feed';
@@ -93,7 +62,7 @@ export const useMixFeedsStore = defineStore('mixFeeds', () => {
         loading.value = true;
         error.value = null;
         try {
-            const data = await api.get<MixFeedDetailResponse>(`/api/mix-feeds/${id}`);
+            const data = await getMixFeed(id);
             currentMixFeed.value = data;
             return data;
         } catch (err: any) {
@@ -108,7 +77,7 @@ export const useMixFeedsStore = defineStore('mixFeeds', () => {
         loading.value = true;
         error.value = null;
         try {
-            await api.put(`/api/mix-feeds/${id}`, request);
+            await updateMixFeedRequest(id, request);
             if (currentMixFeed.value && currentMixFeed.value.id === id) {
                 await fetchMixFeedDetail(id);
             }
@@ -125,7 +94,7 @@ export const useMixFeedsStore = defineStore('mixFeeds', () => {
         loading.value = true;
         error.value = null;
         try {
-            await api.del(`/api/mix-feeds/${id}`);
+            await removeMixFeed(id);
             myMixFeeds.value = myMixFeeds.value.filter((feed) => feed.id !== id);
             if (currentMixFeed.value && currentMixFeed.value.id === id) {
                 currentMixFeed.value = null;
@@ -142,9 +111,7 @@ export const useMixFeedsStore = defineStore('mixFeeds', () => {
         loading.value = true;
         error.value = null;
         try {
-            const data = await api.get<{ content: MixFeedListResponse[] }>('/api/mix-feeds/public', {
-                query: { page, size }
-            });
+            const data = await listPublicMixFeeds(page, size);
             publicMixFeeds.value = data.content;
             return data;
         } catch (err: any) {
