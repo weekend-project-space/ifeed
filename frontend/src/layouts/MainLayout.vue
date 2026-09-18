@@ -292,10 +292,6 @@
 
             <span v-if="!isSidebarCollapsed" class="flex items-center gap-2">
               IFeed
-              <span>
-                <span
-                  class="bg-secondary text-white shadow-md  rounded-full px-1 text-[8px]  opacity-60 font-medium ">Beta</span>
-              </span>
             </span>
           </RouterLink>
           <nav class="flex-1 overflow-y-auto px-2 " :class="{ 'space-y-1': isSidebarCollapsed }">
