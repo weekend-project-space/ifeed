@@ -180,6 +180,7 @@ import {useMutation, useQueryClient} from '@tanstack/vue-query';
 import {normalizeArticle} from '../stores/articles/types';
 import {useFeedQuery, useInfiniteFeedArticlesQuery} from '../queries/feed';
 import {resetInfiniteArticleCaches} from '../queries/articleCache';
+import {useDocumentTitle} from '../composables/documentTitle';
 import {useSubscriptionsStore} from '../stores/subscriptions';
 import {useReadFeedStore} from '../stores/readfeed'
 import {formatRelativeTime} from '../utils/datetime';
@@ -224,6 +225,11 @@ const articleError = computed(() => {
 const nextPageError = computed(() => feedArticlesQuery.isFetchNextPageError.value);
 const loadMoreSentinel = ref<HTMLElement | null>(null);
 let observer: IntersectionObserver | null = null;
+useDocumentTitle(() => (
+  detail.value?.title?.trim()
+  || detail.value?.siteUrl?.trim()
+  || detail.value?.url?.trim()
+));
 
 const selectedTagDisplay = computed(() => routeTag.value);
 

@@ -349,6 +349,7 @@ import {md2html} from "../utils/markdown";
 import {normalizeArticle, type ArticleDetail} from '../stores/articles/types';
 import {articleQueryKey, useArticleQuery, useArticleRecommendationsQuery} from '../queries/article';
 import {updateArticleCollectedCaches} from '../queries/articleCache';
+import {useDocumentTitle} from '../composables/documentTitle';
 
 defineOptions({name: 'ArticleDetailPage'});
 
@@ -391,6 +392,8 @@ const articleError = computed(() => {
 });
 const detailsItems = computed(() => (recommendationsQuery.data.value ?? []).map(normalizeArticle));
 const detailsLoading = computed(() => recommendationsQuery.isPending.value);
+useDocumentTitle(() => article.value?.title);
+
 const historyMutation = useMutation({
   mutationFn: (id: string) => articlesStore.recordHistory(id),
 });
