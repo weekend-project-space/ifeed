@@ -8,20 +8,24 @@ export const useArticlesStore = defineStore('articles', () => {
     const loading = ref(false);
     const error = ref<string | null>(null);
     const historyTracker = ref(new Set<string>());
+    let requestSequence = 0;
 
     const fetchArticleById = async (articleId: string, options?: RequestOptions) => {
+        const requestId = ++requestSequence;
         loading.value = true;
         error.value = null;
         try {
             const data = await request<ArticleDto>(`/api/articles/${articleId}`, options);
+            if (requestId !== requestSequence) return currentArticle.value;
             currentArticle.value = normalizeArticleDetail(data);
             return currentArticle.value;
         } catch (err) {
+            if (requestId !== requestSequence) return currentArticle.value;
             const message = err instanceof Error ? err.message : '文章加载失败';
             error.value = message;
             throw err;
         } finally {
-            loading.value = false;
+            if (requestId === requestSequence) loading.value = false;
         }
     };
 

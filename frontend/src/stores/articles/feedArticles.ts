@@ -14,6 +14,7 @@ export const useFeedArticlesStore = defineStore('feedArticles', () => {
     const totalPages = ref<number | null>(null);
     const feedIdFilter = ref<string | null>(null);
     const tagFilter = ref<string | null>(null);
+    let requestSequence = 0;
 
     const hasNextPage = computed(() => {
         if (totalPages.value === null) {
@@ -31,6 +32,7 @@ export const useFeedArticlesStore = defineStore('feedArticles', () => {
         feedId?: string | null;
         tags?: string | null;
     }) => {
+        const requestId = ++requestSequence;
         loading.value = true;
         error.value = null;
         const nextPage = override?.page ?? page.value;
@@ -53,6 +55,7 @@ export const useFeedArticlesStore = defineStore('feedArticles', () => {
                     }
                 }
             );
+            if (requestId !== requestSequence) return;
             const list = Array.isArray(response?.content) ? response.content : [];
             items.value = list.map(normalizeArticle);
             page.value = (response?.number ?? 0) + 1;
@@ -62,11 +65,12 @@ export const useFeedArticlesStore = defineStore('feedArticles', () => {
             feedIdFilter.value = nextFeedId;
             tagFilter.value = nextTag;
         } catch (err) {
+            if (requestId !== requestSequence) return;
             const message = err instanceof Error ? err.message : '文章加载失败';
             error.value = message;
             throw err;
         } finally {
-            loading.value = false;
+            if (requestId === requestSequence) loading.value = false;
         }
     };
 

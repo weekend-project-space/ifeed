@@ -115,6 +115,8 @@ import { storeToRefs } from 'pinia';
 import { useRoute, useRouter } from 'vue-router';
 import { useSearchStore, type SearchType } from '../stores/search';
 
+defineOptions({name: 'SearchPage'});
+
 const router = useRouter();
 const route = useRoute();
 const searchStore = useSearchStore();

@@ -177,6 +177,8 @@ import {useSubscriptionsStore} from '../stores/subscriptions';
 import {useReadFeedStore} from '../stores/readfeed'
 import {formatRelativeTime} from '../utils/datetime';
 
+defineOptions({name: 'FeedDetailPage'});
+
 const route = useRoute();
 const router = useRouter();
 const feedStore = useFeedStore();
@@ -402,4 +404,3 @@ const readFeed = async () => {
   }
 }
 </script>
-

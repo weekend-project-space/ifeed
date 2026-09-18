@@ -34,14 +34,19 @@
   </div>
 </template>
 
-<script setup lang="ts">
-import {computed, onMounted, watch} from 'vue';
-import {useRouter, useRoute} from 'vue-router';
+<script setup>
+import {onMounted, watch} from 'vue';
+import {useRoute, useRouter} from 'vue-router';
 import {storeToRefs} from 'pinia';
 import {useRecommendArticlesStore} from '../stores/articles/recommendArticles';
 
-const SIZE = 60;
+defineOptions({ name: 'HomePage' });
 
+const props = defineProps({
+  page: { type: Number, default: 1 }
+});
+
+const SIZE = 60;
 const route = useRoute();
 const router = useRouter();
 const recommendStore = useRecommendArticlesStore();
@@ -54,18 +59,10 @@ const {
   hasPreviousPage
 } = storeToRefs(recommendStore);
 
-const currentPage = computed(() => {
-  const raw = Array.isArray(route.query.page) ? route.query.page[0] : route.query.page;
-  const parsed = Number(raw);
-  return Number.isFinite(parsed) && parsed > 0 ? parsed : 1;
-});
-
-const loadRecommendations = async (targetPage = 1) => {
-  if (targetPage < 1) targetPage = 1;
-
+const loadData = async (targetPage = 1) => {
   try {
     await recommendStore.fetchArticles({
-      page: targetPage,
+      page: Math.max(1, targetPage),
       size: SIZE
     });
   } catch (err) {
@@ -73,34 +70,25 @@ const loadRecommendations = async (targetPage = 1) => {
   }
 };
 
-const refresh = () => loadRecommendations(currentPage.value);
-
-
-const nextPage = () => {
-  if (hasNextPage.value) {
-    router.push({
-      query: {...route.query, page: String(currentPage.value + 1)}
-    });
-  }
+const goToPage = (page) => {
+  router.push({
+    query: { ...route.query, page: Math.max(1, page) }
+  });
 };
 
-const prevPage = () => {
-  if (hasPreviousPage.value) {
-    router.push({
-      query: {...route.query, page: String(Math.max(1, currentPage.value - 1))}
-    });
-  }
-};
+const refresh = () => loadData(props.page);
+const nextPage = () => hasNextPage.value && goToPage(props.page + 1);
+const prevPage = () => hasPreviousPage.value && goToPage(props.page - 1);
 
-onMounted(() => {
-  if (sessionStorage.getItem('origin-list') != route.fullPath) {
-    loadRecommendations(currentPage.value);
-  }
-  sessionStorage.removeItem('origin-list')
+// 仅在 props.page 变化且是用户手动触发时监听
+watch(() => props.page, (newPage) => {
+  loadData(newPage);
 });
 
-watch(
-    () => currentPage.value,
-    (page) => loadRecommendations(page)
-);
+// 组件首次挂载时加载，被 keep-alive 缓存后再次后退回来不会重复触发 onMounted
+onMounted(() => {
+  if (items.value.length === 0) {
+    loadData(props.page);
+  }
+});
 </script>

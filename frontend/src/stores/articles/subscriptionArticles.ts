@@ -14,6 +14,8 @@ export const useSubscriptionArticlesStore = defineStore('subscriptionArticles', 
     const totalPages = ref<number | null>(null);
     const tagFilter = ref<string | null>(null);
     const categoryFilter = ref<string | null>(null);
+    const feedIdFilter = ref<string | null>(null);
+    let requestSequence = 0;
 
     // insights state
     const insightsLoading = ref(false);
@@ -43,6 +45,7 @@ export const useSubscriptionArticlesStore = defineStore('subscriptionArticles', 
         category?: string | null
         feedId?:string | null
     }) => {
+        const requestId = ++requestSequence;
         loading.value = true;
         error.value = null;
         const nextPage = override?.page ?? page.value;
@@ -51,6 +54,8 @@ export const useSubscriptionArticlesStore = defineStore('subscriptionArticles', 
         const nextTag = hasTagOverride ? override?.tags ?? null : tagFilter.value;
         const hasCategoryOverride = override !== undefined && Object.prototype.hasOwnProperty.call(override, 'category');
         const nextCategory = hasCategoryOverride ? override?.category ?? null : categoryFilter.value;
+        const hasFeedOverride = override !== undefined && Object.prototype.hasOwnProperty.call(override, 'feedId');
+        const nextFeedId = hasFeedOverride ? override?.feedId ?? null : feedIdFilter.value;
 
         try {
             const response = await request<PageResponse<ArticleDto>>(
@@ -62,10 +67,11 @@ export const useSubscriptionArticlesStore = defineStore('subscriptionArticles', 
                         sort: override?.sort ?? 'publishedAt,desc',
                         tags: nextTag ?? undefined,
                         category: nextCategory ?? undefined,
-                        feedId:override.feedId
+                        feedId: nextFeedId ?? undefined
                     }
                 }
             );
+            if (requestId !== requestSequence) return;
 
             const list = Array.isArray(response?.content) ? response.content : [];
             items.value = list.map(normalizeArticle);
@@ -75,12 +81,14 @@ export const useSubscriptionArticlesStore = defineStore('subscriptionArticles', 
             totalPages.value = response?.totalPages ?? (list.length ? 1 : 0);
             tagFilter.value = nextTag;
             categoryFilter.value = nextCategory;
+            feedIdFilter.value = nextFeedId;
         } catch (err) {
+            if (requestId !== requestSequence) return;
             const message = err instanceof Error ? err.message : '文章加载失败';
             error.value = message;
             throw err;
         } finally {
-            loading.value = false;
+            if (requestId === requestSequence) loading.value = false;
         }
     };
 
@@ -123,6 +131,7 @@ export const useSubscriptionArticlesStore = defineStore('subscriptionArticles', 
         fetchArticles,
         tag: tagFilter,
         category: categoryFilter,
+        feedId: feedIdFilter,
         insights,
         insightsLoading,
         insightsError,

@@ -331,7 +331,7 @@
 <script setup lang="ts">
 import {computed, nextTick, onBeforeUnmount, onMounted, ref, watch} from 'vue';
 import {storeToRefs} from 'pinia';
-import {useRouter} from 'vue-router';
+import {useRoute, useRouter} from 'vue-router';
 import {useArticlesStore} from '../stores/articles/articles';
 import {useCollectionsStore} from '../stores/collections';
 import {useRecommendArticlesStore} from '../stores/articles/recommendArticles'
@@ -340,12 +340,15 @@ import ArticleCardList from "../components/ArticleCardList.vue";
 import {useAuthStore} from "../stores/auth";
 import {md2html} from "../utils/markdown";
 
+defineOptions({name: 'ArticleDetailPage'});
+
 interface Props {
   id: string;
 }
 
 const props = defineProps<Props>();
 const router = useRouter();
+const route = useRoute();
 const articlesStore = useArticlesStore();
 const collectionsStore = useCollectionsStore();
 const authStore = useAuthStore();
@@ -358,7 +361,10 @@ const scrollTracked = ref(false);
 const articleContentRef = ref<HTMLElement | null>(null);
 const mindmapFrame = ref<HTMLIFrameElement | null>(null);
 const abortControllerRef = ref<AbortController | null>(null);
-const activeMainTab = ref<'content' | 'summary' | 'mindmap'>('content');
+type MainTab = 'content' | 'summary' | 'mindmap';
+const normalizeMainTab = (value: unknown): MainTab =>
+  value === 'summary' || value === 'mindmap' ? value : 'content';
+const activeMainTab = ref<MainTab>(normalizeMainTab(route.query.tab));
 const mindmapMarkdown = ref('');
 const isEnriching = ref(false);
 const linkCopied = ref(false);
@@ -458,6 +464,15 @@ const handleScroll = throttle(() => {
 
 const handleTabSwitch = async (tab: 'content' | 'summary' | 'mindmap') => {
   activeMainTab.value = tab;
+  const query = {...route.query};
+  if (tab === 'content') {
+    delete query.tab;
+  } else {
+    query.tab = tab;
+  }
+  if (route.query.tab !== query.tab) {
+    await router.push({query});
+  }
   if (tab === 'content') return;
   if (tab === 'summary' && article.value?.summary) return;
   if (tab === 'mindmap' && mindmapMarkdown.value) return;
@@ -489,7 +504,7 @@ const loadArticle = async (articleId: string) => {
   abortControllerRef.value = new AbortController();
   const currentController = abortControllerRef.value;
   errorMessage.value = '';
-  activeMainTab.value = 'content';
+  activeMainTab.value = normalizeMainTab(route.query.tab);
   mindmapMarkdown.value = '';
 
   try {
@@ -643,6 +658,10 @@ onBeforeUnmount(() => {
   }
 
   window.removeEventListener('scroll', handleScroll);
+});
+
+watch(() => route.query.tab, (tab) => {
+  activeMainTab.value = normalizeMainTab(tab);
 });
 
 watch(() => props.id, async (newId) => {

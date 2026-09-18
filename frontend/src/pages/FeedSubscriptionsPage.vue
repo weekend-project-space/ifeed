@@ -116,6 +116,8 @@ import {useSubscriptionArticlesStore} from '../stores/articles/subscriptionArtic
 import {useSubscriptionsStore} from "../stores/subscriptions";
 import {useReadFeedStore} from "../stores/readfeed";
 
+defineOptions({name: 'FeedSubscriptionsPage'});
+
 const router = useRouter();
 const route = useRoute();
 const subscriptionStore = useSubscriptionArticlesStore();
@@ -260,11 +262,8 @@ const readFeed = async () => {
 }
 
 onMounted(() => {
-  if (sessionStorage.getItem('origin-list') != route.fullPath) {
-    loadData();
-    subscriptionStore.fetchInsights();
-  }
-  sessionStorage.removeItem('origin-list')
+  loadData();
+  subscriptionStore.fetchInsights();
 });
 
 watch(

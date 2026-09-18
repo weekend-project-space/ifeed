@@ -25,6 +25,14 @@ import { trackPageView } from '@/utils/analytics'
 
 const router = createRouter({
     history: createWebHistory(),
+    scrollBehavior(to, from, savedPosition) {
+        // Browser back/forward should restore the exact list scroll position.
+        if (savedPosition) {
+            return savedPosition;
+        }
+        // New navigations start at the top of the target page.
+        return {top: 0, left: 0, behavior: 'auto'};
+    },
     routes: [
         {
             path: '/auth',
@@ -38,7 +46,10 @@ const router = createRouter({
                 {
                     path: '',
                     name: 'home',
-                    component: HomePage
+                    component: HomePage,
+                    props: route => ({
+                        page: Number(route.query.page) || 1
+                    })
                 },
                 {
                     path: 'search',
@@ -115,16 +126,12 @@ const router = createRouter({
 
 router.beforeEach(async (to: any, from: any) => {
     const auth = useAuthStore();
-    window.scrollTo({ top: 0, behavior: 'smooth' });
     if (!auth.initialized && auth.token) {
         try {
             await auth.fetchUser();
         } catch (err) {
             console.warn('用户信息初始化失败', err);
         }
-    }
-    if (to.name == 'article') {
-        sessionStorage.setItem('origin-list', from.fullPath)
     }
     // if (to.name !== 'auth' && !auth.isAuthenticated) {
     //     return {name: 'auth', query: {redirect: to.fullPath}};

@@ -13,6 +13,7 @@ export const useRecommendArticlesStore = defineStore('recommendArticles', () => 
     const size = ref(60);
     const total = ref<number | null>(null);
     const totalPages = ref<number | null>(null);
+    let requestSequence = 0;
 
     const hasNextPage = computed(() => {
         if (totalPages.value === null) {
@@ -27,6 +28,7 @@ export const useRecommendArticlesStore = defineStore('recommendArticles', () => 
         page?: number;
         size?: number;
     }) => {
+        const requestId = ++requestSequence;
         loading.value = true;
         error.value = null;
         const nextPage = override?.page ?? page.value;
@@ -42,6 +44,7 @@ export const useRecommendArticlesStore = defineStore('recommendArticles', () => 
                     }
                 }
             );
+            if (requestId !== requestSequence) return;
 
             const list = Array.isArray(response?.content) ? response.content : [];
             items.value = list.map(normalizeArticle);
@@ -50,11 +53,12 @@ export const useRecommendArticlesStore = defineStore('recommendArticles', () => 
             total.value = response?.totalElements ?? list.length;
             totalPages.value = response?.totalPages ?? (list.length ? 1 : 0);
         } catch (err) {
+            if (requestId !== requestSequence) return;
             const message = err instanceof Error ? err.message : '推荐文章加载失败';
             error.value = message;
             throw err;
         } finally {
-            loading.value = false;
+            if (requestId === requestSequence) loading.value = false;
         }
     };
 

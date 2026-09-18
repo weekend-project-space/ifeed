@@ -436,7 +436,11 @@
 
         <div :class="route.name === 'feedsSubscriptions' ? 'px-1 pt-5 sm:px-6 sm:pt-6' : ''">
           <global-audio-player>
-            <router-view />
+            <router-view v-slot="{ Component }">
+              <KeepAlive :include="['HomePage', 'FeedSubscriptionsPage', 'FeedDetailPage', 'SearchPage', 'ArticleDetailPage']">
+                <component :is="Component" />
+              </KeepAlive>
+            </router-view>
           </global-audio-player>
         </div>
       </main>

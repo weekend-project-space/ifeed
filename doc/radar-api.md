@@ -23,17 +23,17 @@
 #### Auth
 
 - 可匿名：返回全局主题（不个性化）
-- 已登录：主题排序可做个性化（收藏/赞踩/停留时长）
+- 已登录：暂与匿名相同；个性化排序（收藏/赞踩/停留时长）待实现
 
 #### Query Params
 
-- `windowHours` (optional, default `24`, range `6..72`): 滚动窗口
+- `windowHours` (optional, range `6..72`): 滚动窗口。不传时返回最新可用快照（不限窗口），全局生成配置默认为 72h
 - `snapshotId` (optional):
-  - 不传：返回“最新快照”的结果，并在 `meta.snapshotId` 返回该快照 ID
+  - 不传：返回"最新快照"的结果，并在 `meta.snapshotId` 返回该快照 ID
   - 传入：基于该快照分页（保证翻页一致）
 - `page` (optional, default `0`)
-- `size` (optional, default `6`, range `1..20`)
-- `sort` (optional): 例如 `score,desc`、`updatedAt,desc`（也可后端限制为枚举）
+- `size` (optional, default `20`)
+- `sort` (optional): 例如 `score,desc`、`updatedAt,desc`（通过 Spring Pageable 支持）
 > 注意：当前实现会以服务端“最新快照”为准返回 `meta.snapshotId`；如需翻页一致性，请携带该 `snapshotId` 继续翻页。
 
 #### Response 200
@@ -51,14 +51,14 @@
       "topKeywords": ["GPU", "NPU", "推理", "算力", "价格"]
     }
   ],
-  "totalPages": 3,
+  "totalPages": 1,
   "totalElements": 14,
-  "size": 6,
+  "size": 20,
   "page": 0,
   "meta": {
-    "snapshotId": "radar_20260213T190000Z_u123_w24h",
+    "snapshotId": "radar_20260213T190000Z_u123_w72h",
     "generatedAt": "2026-02-13T19:00:00Z",
-    "windowHours": 24
+    "windowHours": 72
   }
 }
 ```
@@ -66,15 +66,16 @@
 #### 翻页示例
 
 - 第一页（拿到 `meta.snapshotId`）
-  - `GET /api/user/radar/digest?windowHours=24&page=0&size=6`
+  - `GET /api/user/radar/digest?page=0&size=20`
+- 带窗口过滤
+  - `GET /api/user/radar/digest?windowHours=24&page=0&size=20`
 - 第二页（用同快照继续翻页）
-  - `GET /api/user/radar/digest?snapshotId=radar_20260213T190000Z_u123_w24h&page=1&size=6`
+  - `GET /api/user/radar/digest?snapshotId=radar_20260213T190000Z_u123_w72h&page=1&size=20`
 
 #### Status Codes
 
 - `200` OK
-- `400` 参数非法
-- `410` 快照过期/不存在（建议错误码：`SNAPSHOT_EXPIRED`）
+- `400` 参数非法（如 `windowHours` 不在 `6..72` 范围，错误码：`INVALID_WINDOW_HOURS`）
 - `500` 服务器错误
 
 ## 2) 主题详情（文章分页）
@@ -89,11 +90,13 @@
 
 #### Query Params
 
-- `snapshotId` (required, 推荐必填): 快照 ID
+- `snapshotId` (required): 快照 ID
 - `page` (optional, default `0`)
-- `size` (optional, default `20`, range `1..50`)
-- `sort` (optional): 例如 `score,desc` 或 `publishedAt,desc`
+- `size` (optional, default `20`)
+- `sort` (optional): 例如 `score,desc` 或 `publishedAt,desc`（通过 Spring Pageable 支持）
 - `includeContent` (optional, default `false`): 是否返回正文（默认只返回摘要字段）
+
+> 说明：响应使用 `@JsonInclude(NON_NULL)`，当 `includeContent=false` 时 `content` 字段不出现在 JSON 中；`enclosure` 为文章附件/媒体资源链接，无附件时同样不出现。
 
 #### Response 200
 
@@ -104,7 +107,9 @@
       "articleId": "7c3db9d8-10a0-4a69-9f3c-2f1b1d0b7d22",
       "title": "某厂新卡发布后，推理成本再降",
       "summary": "文章总结了新卡的定价、能效与推理场景的变化……",
+      "content": null,
       "thumbnail": "https://example.com/img.jpg",
+      "enclosure": "https://example.com/media.mp3",
       "feedTitle": "Tech Source",
       "publishedAt": "2026-02-13T16:12:00Z",
       "relativeTime": "3 hours ago",
@@ -117,7 +122,7 @@
   "size": 20,
   "page": 0,
   "meta": {
-    "snapshotId": "radar_20260213T190000Z_u123_w24h",
+    "snapshotId": "radar_20260213T190000Z_u123_w72h",
     "includeContent": false,
     "topic": {
       "topicId": "d9a8b6f0-7e3a-4b0d-9c2c-1b2b9e2e6b3a",
@@ -136,6 +141,4 @@
 
 - `200` OK
 - `400` 参数非法
-- `404` 主题不存在（在该 snapshot 下）
-- `410` 快照过期（建议错误码：`SNAPSHOT_EXPIRED`）
 - `500` 服务器错误
