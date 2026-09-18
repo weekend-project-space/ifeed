@@ -348,6 +348,7 @@ import {useAuthStore} from "../stores/auth";
 import {md2html} from "../utils/markdown";
 import {normalizeArticle, type ArticleDetail} from '../stores/articles/types';
 import {articleQueryKey, useArticleQuery, useArticleRecommendationsQuery} from '../queries/article';
+import {updateArticleCollectedCaches} from '../queries/articleCache';
 
 defineOptions({name: 'ArticleDetailPage'});
 
@@ -526,16 +527,15 @@ const collectionMutation = useMutation({
       collected: payload.collected,
     }),
   onSuccess: (_, payload) => {
+    const collected = !payload.collected;
     queryClient.setQueryData<ArticleDetail>(currentArticleQueryKey.value, (previous) => previous ? {
       ...previous,
-      collected: !payload.collected,
+      collected,
     } : previous);
+    updateArticleCollectedCaches(queryClient, userId.value, payload.id, collected);
     void Promise.all([
       queryClient.invalidateQueries({queryKey: ['collections']}),
-      queryClient.invalidateQueries({queryKey: ['recommendations']}),
       queryClient.invalidateQueries({queryKey: ['search']}),
-      queryClient.invalidateQueries({queryKey: ['feedArticles']}),
-      queryClient.invalidateQueries({queryKey: ['subscriptionArticles']}),
     ]);
   },
 });

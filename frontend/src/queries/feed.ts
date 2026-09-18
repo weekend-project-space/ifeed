@@ -1,5 +1,5 @@
 import { computed, type ComputedRef } from 'vue';
-import { keepPreviousData, useQuery } from '@tanstack/vue-query';
+import { useInfiniteQuery, useQuery } from '@tanstack/vue-query';
 import { useAuthStore } from '@/stores/auth';
 import { getFeed, listFeedArticles } from '@/api/feed';
 
@@ -19,27 +19,31 @@ export const useFeedQuery = (feedId: ComputedRef<string | null>) => {
   });
 };
 
-export const useFeedArticlesQuery = (
+export const useInfiniteFeedArticlesQuery = (
   feedId: ComputedRef<string | null>,
-  page: ComputedRef<number>,
   tag: ComputedRef<string | null>,
 ) => {
   const authStore = useAuthStore();
   const userId = computed(() => authStore.user?.userId ?? 'anonymous');
 
-  return useQuery({
+  return useInfiniteQuery({
     queryKey: computed(() => [
-      'feedArticles', userId.value, feedId.value, tag.value, page.value, FEED_ARTICLES_PAGE_SIZE, 'publishedAt,desc',
+      'feedArticles', userId.value, feedId.value, tag.value, FEED_ARTICLES_PAGE_SIZE, 'publishedAt,desc',
     ] as const),
-    queryFn: ({ signal }) => listFeedArticles(
+    initialPageParam: 0,
+    queryFn: ({ pageParam, signal }) => listFeedArticles(
       feedId.value!,
-      Math.max(0, page.value - 1),
+      pageParam,
       FEED_ARTICLES_PAGE_SIZE,
       tag.value,
       signal,
     ),
     enabled: computed(() => Boolean(feedId.value)),
-    placeholderData: keepPreviousData,
+    getNextPageParam: (lastPage) => {
+      const nextPage = lastPage.number + 1;
+      return nextPage < lastPage.totalPages ? nextPage : undefined;
+    },
+    maxPages: 10,
     staleTime: 5 * 60 * 1000,
     gcTime: 30 * 60 * 1000,
     refetchOnWindowFocus: false,

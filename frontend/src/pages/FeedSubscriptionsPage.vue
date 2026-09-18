@@ -94,34 +94,41 @@
         </template>
       </article-list>
 
-      <!-- 分页 -->
-      <pagination
-          v-if="items.length && !articlesLoading"
-          :current-page="currentPage"
-          :has-previous-page="hasPreviousPage"
-          :has-next-page="hasNextPage"
-          :disabled="articlesFetching"
-          @prev-page="prevPage"
-          @next-page="nextPage"
-      />
+      <div v-if="items.length" class="mt-6 flex flex-col items-center gap-3" aria-live="polite">
+        <div v-if="isFetchingNextPage" class="text-sm text-text-secondary">正在加载更多文章...</div>
+        <template v-else-if="nextPageError">
+          <p class="text-sm text-red-700">加载更多失败，请重试。</p>
+          <button
+              type="button"
+              class="px-4 py-2 text-sm font-medium rounded-md bg-red-600 text-white hover:bg-red-700 transition-colors"
+              @click="loadMore"
+          >
+            重试
+          </button>
+        </template>
+        <p v-else-if="!hasNextPage" class="text-sm text-text-muted">已加载全部文章</p>
+      </div>
+      <div ref="loadMoreSentinel" class="h-1" aria-hidden="true"></div>
     </main>
   </div>
 </template>
 
 <script setup lang="ts">
-import {computed, watch} from 'vue';
+import {computed, onActivated, onBeforeUnmount, onDeactivated, onMounted, ref, watch} from 'vue';
 import {useRouter} from 'vue-router';
 import {useMutation} from '@tanstack/vue-query';
 import {useSubscriptionsStore} from "../stores/subscriptions";
 import {useReadFeedStore} from "../stores/readfeed";
 import {normalizeArticle} from '../stores/articles/types';
-import {useSubscriptionArticlesQuery, useSubscriptionInsightsQuery} from '../queries/subscriptionArticles';
+import {
+  useInfiniteSubscriptionArticlesQuery,
+  useSubscriptionInsightsQuery,
+} from '../queries/subscriptionArticles';
 
 defineOptions({name: 'FeedSubscriptionsPage'});
 
 const router = useRouter();
 const props = defineProps<{
-  page: number;
   tags: string | null;
   category: string | null;
   feedId: string | null;
@@ -134,9 +141,6 @@ const readFeedMutation = useMutation({
 });
 const readFeedAttempted = new Set<string>();
 
-// 当前页码
-const currentPage = computed(() => props.page);
-
 // 当前标签
 const activeTag = computed(() => props.tags);
 
@@ -146,23 +150,27 @@ const currentCategory = computed(() => props.category);
 // 当前订阅源ID
 const currentFeedId = computed(() => props.feedId);
 
-const articlesQuery = useSubscriptionArticlesQuery(currentPage, activeTag, currentCategory, currentFeedId);
+const articlesQuery = useInfiniteSubscriptionArticlesQuery(activeTag, currentCategory, currentFeedId);
 const insightsQuery = useSubscriptionInsightsQuery();
-const items = computed(() => (
-  articlesQuery.data.value?.content ?? []
-).map(normalizeArticle));
+const items = computed(() => articlesQuery.data.value?.pages
+  .flatMap((page) => page.content)
+  .map(normalizeArticle) ?? []);
 const articlesLoading = computed(() => articlesQuery.isPending.value);
-const articlesFetching = computed(() => articlesQuery.isFetching.value);
-const articleError = computed(() => articlesQuery.error.value instanceof Error ? articlesQuery.error.value.message : null);
-const totalPages = computed(() => articlesQuery.data.value?.totalPages ?? 0);
-const hasNextPage = computed(() => currentPage.value < totalPages.value);
-const hasPreviousPage = computed(() => currentPage.value > 1);
+const isFetchingNextPage = computed(() => articlesQuery.isFetchingNextPage.value);
+const hasNextPage = computed(() => Boolean(articlesQuery.hasNextPage.value));
+const articleError = computed(() => {
+  const error = articlesQuery.error.value;
+  if (items.value.length > 0) return null;
+  return error instanceof Error ? error.message : error ? '订阅文章加载失败' : null;
+});
+const nextPageError = computed(() => articlesQuery.isFetchNextPageError.value);
 const insightsLoading = computed(() => insightsQuery.isPending.value);
 const topCategories = computed(() => insightsQuery.data.value?.categories ?? []);
+const loadMoreSentinel = ref<HTMLElement | null>(null);
+let observer: IntersectionObserver | null = null;
 
 // 构建查询参数
 const buildQuery = (overrides?: {
-  page?: number;
   tags?: string | null;
   category?: string | null;
   feedId?: string | null
@@ -178,42 +186,24 @@ const buildQuery = (overrides?: {
   const feedId = overrides?.hasOwnProperty('feedId') ? overrides.feedId : currentFeedId.value;
   if (feedId) query.feedId = feedId;
 
-  const page = overrides?.page ?? currentPage.value;
-  if (page > 1) query.page = String(page);
-
   return query;
 };
 
 const refresh = () => articlesQuery.refetch();
-
-// 页面跳转
-const navigateToPage = (target: number) => {
-  if (target < 1) return;
-  router.push({name: 'feedsSubscriptions', query: buildQuery({page: target})});
-};
-
-const nextPage = () => {
-  if (hasNextPage.value && !articlesFetching.value) navigateToPage(currentPage.value + 1);
-};
-
-const prevPage = () => {
-  if (hasPreviousPage.value && !articlesFetching.value) navigateToPage(Math.max(1, currentPage.value - 1));
-};
-
 
 // 标签筛选
 const handleSelectTag = (tag: string) => {
   if (!tag) return;
   router.push({
     name: 'feedsSubscriptions',
-    query: buildQuery({page: 1, tags: tag.toLowerCase()})
+    query: buildQuery({tags: tag.toLowerCase()})
   });
 };
 
 const clearTagFilter = () => {
   router.push({
     name: 'feedsSubscriptions',
-    query: buildQuery({tags: null, page: 1})
+    query: buildQuery({tags: null})
   });
 };
 
@@ -223,14 +213,14 @@ const handleSelectCategory = (category: string) => {
   if (!category) return;
   router.push({
     name: 'feedsSubscriptions',
-    query: buildQuery({page: 1, category: category.toLowerCase(), tags: null})
+    query: buildQuery({category: category.toLowerCase(), tags: null})
   });
 };
 
 const clearCategoryFilter = () => {
   router.push({
     name: 'feedsSubscriptions',
-    query: buildQuery({page: 1, category: null})
+    query: buildQuery({category: null})
   });
 };
 
@@ -250,4 +240,40 @@ const readFeed = async () => {
 watch([currentFeedId, () => subscriptionsStore.items], () => {
   void readFeed();
 }, {immediate: true});
+
+const loadMore = async () => {
+  if (!hasNextPage.value || isFetchingNextPage.value) return;
+  try {
+    await articlesQuery.fetchNextPage();
+  } catch {
+    // 错误状态由 Query 暴露，页面提供重试入口。
+  }
+};
+
+const observeSentinel = () => {
+  observer?.disconnect();
+  observer = null;
+  if (!loadMoreSentinel.value) return;
+  observer = new IntersectionObserver((entries) => {
+    if (entries[0]?.isIntersecting) {
+      void loadMore();
+    }
+  }, {rootMargin: '600px 0px'});
+  observer.observe(loadMoreSentinel.value);
+};
+
+const disconnectObserver = () => {
+  observer?.disconnect();
+  observer = null;
+};
+
+const activateObserver = () => {
+  if (!observer) observeSentinel();
+};
+
+watch(loadMoreSentinel, observeSentinel);
+onMounted(activateObserver);
+onActivated(activateObserver);
+onDeactivated(disconnectObserver);
+onBeforeUnmount(disconnectObserver);
 </script>

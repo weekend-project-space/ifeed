@@ -1,27 +1,31 @@
-import { computed, type ComputedRef } from 'vue';
-import { keepPreviousData, useQuery } from '@tanstack/vue-query';
-import { useAuthStore } from '@/stores/auth';
-import { listRecommendations } from '@/api/recommendations';
+import {computed} from 'vue';
+import {useInfiniteQuery} from '@tanstack/vue-query';
+import {useAuthStore} from '@/stores/auth';
+import {listRecommendations} from '@/api/recommendations';
 
-const RECOMMENDATION_PAGE_SIZE = 60;
+const RECOMMENDATION_PAGE_SIZE = 20;
 
-export const useRecommendationsQuery = (page: ComputedRef<number>) => {
+export const useInfiniteRecommendationsQuery = () => {
   const authStore = useAuthStore();
   const userId = computed(() => authStore.user?.userId ?? 'anonymous');
 
-  return useQuery({
+  return useInfiniteQuery({
     queryKey: computed(() => [
       'recommendations',
       userId.value,
-      page.value,
       RECOMMENDATION_PAGE_SIZE,
     ] as const),
-    queryFn: ({ signal }) => listRecommendations(
-      Math.max(0, page.value - 1),
+    initialPageParam: 0,
+    queryFn: ({ pageParam, signal }) => listRecommendations(
+      pageParam,
       RECOMMENDATION_PAGE_SIZE,
       signal,
     ),
-    placeholderData: keepPreviousData,
+    getNextPageParam: (lastPage) => {
+      const nextPage = lastPage.number + 1;
+      return nextPage < lastPage.totalPages ? nextPage : undefined;
+    },
+    maxPages: 10,
     staleTime: 5 * 60 * 1000,
     gcTime: 30 * 60 * 1000,
     refetchOnWindowFocus: false,

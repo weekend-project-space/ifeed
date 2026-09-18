@@ -154,26 +154,32 @@
       {{ articleError }}
     </p>
 
-    <!-- Pagination -->
-    <pagination
-        v-if="items.length && !articlesLoading"
-        :current-page="page"
-        :has-previous-page="hasPreviousPage"
-        :has-next-page="hasNextPage"
-        :disabled="articlesFetching"
-        @prev-page="prevPage"
-        @next-page="nextPage"
-    />
+    <div v-if="items.length" class="mt-6 flex flex-col items-center gap-3" aria-live="polite">
+      <div v-if="isFetchingNextPage" class="text-sm text-text-secondary">正在加载更多文章...</div>
+      <template v-else-if="nextPageError">
+        <p class="text-sm text-red-700">加载更多失败，请重试。</p>
+        <button
+            type="button"
+            class="px-4 py-2 text-sm font-medium rounded-md bg-red-600 text-white hover:bg-red-700 transition-colors"
+            @click="loadMore"
+        >
+          重试
+        </button>
+      </template>
+      <p v-else-if="!hasNextPage" class="text-sm text-text-muted">已加载全部文章</p>
+    </div>
+    <div ref="loadMoreSentinel" class="h-1" aria-hidden="true"></div>
   </div>
 </template>
 
 <script setup lang="ts">
-import {computed, watch} from 'vue';
+import {computed, onActivated, onBeforeUnmount, onDeactivated, onMounted, ref, watch} from 'vue';
 import {useRouter} from 'vue-router';
 import {storeToRefs} from 'pinia';
 import {useMutation, useQueryClient} from '@tanstack/vue-query';
 import {normalizeArticle} from '../stores/articles/types';
-import {useFeedQuery, useFeedArticlesQuery} from '../queries/feed';
+import {useFeedQuery, useInfiniteFeedArticlesQuery} from '../queries/feed';
+import {resetInfiniteArticleCaches} from '../queries/articleCache';
 import {useSubscriptionsStore} from '../stores/subscriptions';
 import {useReadFeedStore} from '../stores/readfeed'
 import {formatRelativeTime} from '../utils/datetime';
@@ -182,7 +188,6 @@ defineOptions({name: 'FeedDetailPage'});
 
 const props = defineProps<{
   feedId: string;
-  page: number;
   tags: string | null;
 }>();
 const router = useRouter();
@@ -193,7 +198,6 @@ const queryClient = useQueryClient();
 const {submitting: subscriptionSubmitting} = storeToRefs(subscriptionsStore);
 
 const currentFeedId = computed(() => props.feedId);
-const routePage = computed(() => props.page);
 const routeTag = computed(() => props.tags);
 
 const normalizedTag = computed(() => {
@@ -202,20 +206,24 @@ const normalizedTag = computed(() => {
 });
 
 const feedQuery = useFeedQuery(currentFeedId);
-const feedArticlesQuery = useFeedArticlesQuery(currentFeedId, routePage, normalizedTag);
+const feedArticlesQuery = useInfiniteFeedArticlesQuery(currentFeedId, normalizedTag);
 const detail = computed(() => feedQuery.data.value ?? null);
-const items = computed(() => (
-  feedArticlesQuery.data.value?.content ?? []
-).map(normalizeArticle));
+const items = computed(() => feedArticlesQuery.data.value?.pages
+  .flatMap((page) => page.content)
+  .map(normalizeArticle) ?? []);
 const feedLoading = computed(() => feedQuery.isPending.value);
 const feedError = computed(() => feedQuery.error.value instanceof Error ? feedQuery.error.value.message : null);
 const articlesLoading = computed(() => feedArticlesQuery.isPending.value);
-const articlesFetching = computed(() => feedArticlesQuery.isFetching.value);
-const articleError = computed(() => feedArticlesQuery.error.value instanceof Error ? feedArticlesQuery.error.value.message : null);
-const totalPages = computed(() => feedArticlesQuery.data.value?.totalPages ?? 0);
-const hasNextPage = computed(() => routePage.value < totalPages.value);
-const hasPreviousPage = computed(() => routePage.value > 1);
-const page = routePage;
+const isFetchingNextPage = computed(() => feedArticlesQuery.isFetchingNextPage.value);
+const hasNextPage = computed(() => Boolean(feedArticlesQuery.hasNextPage.value));
+const articleError = computed(() => {
+  const error = feedArticlesQuery.error.value;
+  if (items.value.length > 0) return null;
+  return error instanceof Error ? error.message : error ? '文章加载失败' : null;
+});
+const nextPageError = computed(() => feedArticlesQuery.isFetchNextPageError.value);
+const loadMoreSentinel = ref<HTMLElement | null>(null);
+let observer: IntersectionObserver | null = null;
 
 const selectedTagDisplay = computed(() => routeTag.value);
 
@@ -270,13 +278,11 @@ const fetchIssueLabel = computed(() => {
   return parts.join(' · ') || '抓取异常';
 });
 
-const buildQuery = (overrides?: { page?: number; tags?: string | null }) => {
+const buildQuery = (overrides?: { tags?: string | null }) => {
   const query: Record<string, string> = {};
   const hasTagOverride = overrides && Object.prototype.hasOwnProperty.call(overrides, 'tags');
   const tag = hasTagOverride ? overrides?.tags ?? null : routeTag.value;
   if (tag) query.tags = tag;
-  const nextPage = overrides?.page ?? routePage.value;
-  if (nextPage > 1) query.page = String(nextPage);
   return query;
 };
 
@@ -289,7 +295,7 @@ const handleSelectTag = (tag: string) => {
   router.push({
     name: 'feed',
     params: {feedId: currentFeedId.value},
-    query: buildQuery({page: 1, tags: tag.toLowerCase()})
+    query: buildQuery({tags: tag.toLowerCase()})
   });
 };
 
@@ -299,27 +305,7 @@ const clearTag = () => {
   router.push({
     name: 'feed',
     params: {feedId: currentFeedId.value},
-    query: buildQuery({page: 1, tags: null})
-  });
-};
-
-const nextPage = () => {
-  if (!hasNextPage.value || !currentFeedId.value || articlesFetching.value) return;
-
-  router.push({
-    name: 'feed',
-    params: {feedId: currentFeedId.value},
-    query: buildQuery({page: routePage.value + 1})
-  });
-};
-
-const prevPage = () => {
-  if (!hasPreviousPage.value || !currentFeedId.value || articlesFetching.value) return;
-
-  router.push({
-    name: 'feed',
-    params: {feedId: currentFeedId.value},
-    query: buildQuery({page: Math.max(1, routePage.value - 1)})
+    query: buildQuery({tags: null})
   });
 };
 
@@ -333,12 +319,11 @@ const subscriptionMutation = useMutation({
     }
   },
   onSuccess: async () => {
+    resetInfiniteArticleCaches(queryClient, ['subscriptionArticles']);
     await Promise.all([
-      queryClient.invalidateQueries({queryKey: ['feed']}),
-      queryClient.invalidateQueries({queryKey: ['feedArticles']}),
       queryClient.invalidateQueries({queryKey: ['subscriptionArticles']}),
+      feedQuery.refetch(),
     ]);
-    await feedQuery.refetch();
   },
 });
 const subscriptionSubmittingMutation = computed(() => subscriptionMutation.isPending.value);
@@ -368,4 +353,40 @@ const readFeed = async () => {
 watch([() => feedQuery.data.value, () => subscriptionsStore.items], () => {
   void readFeed();
 }, {immediate: true});
+
+const loadMore = async () => {
+  if (!hasNextPage.value || isFetchingNextPage.value) return;
+  try {
+    await feedArticlesQuery.fetchNextPage();
+  } catch {
+    // 错误状态由 Query 暴露，页面提供重试入口。
+  }
+};
+
+const observeSentinel = () => {
+  observer?.disconnect();
+  observer = null;
+  if (!loadMoreSentinel.value) return;
+  observer = new IntersectionObserver((entries) => {
+    if (entries[0]?.isIntersecting) {
+      void loadMore();
+    }
+  }, {rootMargin: '600px 0px'});
+  observer.observe(loadMoreSentinel.value);
+};
+
+const disconnectObserver = () => {
+  observer?.disconnect();
+  observer = null;
+};
+
+const activateObserver = () => {
+  if (!observer) observeSentinel();
+};
+
+watch(loadMoreSentinel, observeSentinel);
+onMounted(activateObserver);
+onActivated(activateObserver);
+onDeactivated(disconnectObserver);
+onBeforeUnmount(disconnectObserver);
 </script>

@@ -45,17 +45,6 @@
           </svg>
         </button>
         <button
-            @click="setView('card')"
-            :class="btnClass(view === 'card')"
-            title="卡片视图"
-            aria-label="卡片视图">
-          <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-               :stroke-width="view === 'card' ? 2.5 : 2">
-            <path stroke-linecap="round" stroke-linejoin="round"
-                  d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
-          </svg>
-        </button>
-        <button
             @click="setView('social')"
             :class="btnClass(view === 'social')"
             title="社交视图"
@@ -66,6 +55,18 @@
                   d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
           </svg>
         </button>
+        <button
+            @click="setView('card')"
+            :class="btnClass(view === 'card')"
+            title="卡片视图"
+            aria-label="卡片视图">
+          <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+               :stroke-width="view === 'card' ? 2.5 : 2">
+            <path stroke-linecap="round" stroke-linejoin="round"
+                  d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
+          </svg>
+        </button>
+
         <button
             @click="setView('only-title')"
             :class="btnClass(view === 'only-title')"
@@ -192,10 +193,10 @@
                     <img v-if="item.feedAvatar && !avatarErrorMap[item.id]"
                          :src="item.feedAvatar"
                          :alt="item.feedTitle"
-                         class="w-5 h-5 rounded-full object-cover flex-shrink-0"
+                         class="w-3 h-3 rounded-full object-cover flex-shrink-0"
                          @error="avatarErrorMap[item.id] = true"/>
                     <span v-else
-                          class="w-5 h-5 rounded-full bg-primary/10 text-primary flex items-center justify-center
+                          class="w-3 h-3 rounded-full bg-primary/10 text-primary flex items-center justify-center
                                  text-[10px] font-semibold flex-shrink-0">
                       {{ item.feedTitle?.charAt(0)?.toUpperCase() }}
                     </span>
@@ -209,7 +210,7 @@
                   v-if="item.summary"
                   :to="{ name: 'article', params: { id: item.id } }"
                   class="block rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
-                <p class="text-sm leading-relaxed text-gray-600 dark:text-gray-400 line-clamp-2 md:line-clamp-4">
+                <p class="text-sm leading-relaxed text-gray-600 dark:text-gray-400 line-clamp-2 ">
                   {{ item.summary }}
                 </p>
               </router-link>
@@ -237,7 +238,7 @@
                 v-if="item.thumbnail && !thumbErrorMap[item.id]"
                 :to="{ name: 'article', params: { id: item.id } }"
                 class="flex-shrink-0 order-2
-               w-20 h-20 md:w-48 md:h-32 lg:w-56 lg:h-36
+               w-20 h-20 md:w-48 md:h-32
                overflow-hidden rounded-lg md:rounded-xl
                bg-gray-100 dark:bg-gray-800
                focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
@@ -363,7 +364,7 @@
         </div>
 
         <!-- Title only view -->
-        <div v-else-if="view === 'only-title'" key="view-only-title" class="max-w-screen-lg mx-auto">
+        <div v-else-if="view === 'only-title'" key="view-only-title" class=" mx-auto">
           <article
               v-for="item in items"
               :key="item.id"
@@ -396,7 +397,7 @@
         </div>
 
         <!-- Social view (X / Reddit style) -->
-        <div v-else key="view-social" class="max-w-[640px] mx-auto">
+        <div v-else key="view-social" class="max-w-[600px] mx-auto">
           <article
               v-for="item in items"
               :key="item.id"

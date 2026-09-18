@@ -58,9 +58,6 @@ const router = createRouter({
                     path: '',
                     name: 'home',
                     component: HomePage,
-                    props: route => ({
-                        page: routePage(route.query.page)
-                    })
                 },
                 {
                     path: 'search',
@@ -104,7 +101,6 @@ const router = createRouter({
                     name: 'feedsSubscriptions',
                     component: FeedSubscriptionsPage,
                     props: route => ({
-                        page: routePage(route.query.page),
                         tags: routeText(route.query.tags) || null,
                         category: routeText(route.query.category).toLowerCase() || null,
                         feedId: routeText(route.query.feedId) || null,
@@ -121,7 +117,6 @@ const router = createRouter({
                     component: FeedDetailPage,
                     props: route => ({
                         feedId: routeText(route.params.feedId),
-                        page: routePage(route.query.page),
                         tags: routeText(route.query.tags) || null,
                     })
                 },

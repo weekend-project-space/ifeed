@@ -1,5 +1,5 @@
 import { computed, type ComputedRef } from 'vue';
-import { keepPreviousData, useQuery } from '@tanstack/vue-query';
+import { useInfiniteQuery, useQuery } from '@tanstack/vue-query';
 import { useAuthStore } from '@/stores/auth';
 import { listArticles, getSubscriptionInsights } from '@/api/articles';
 
@@ -7,8 +7,7 @@ export const SUBSCRIPTION_ARTICLES_PAGE_SIZE = 20;
 
 export type { SubscriptionInsights } from '@/api/articles';
 
-export const useSubscriptionArticlesQuery = (
-  page: ComputedRef<number>,
+export const useInfiniteSubscriptionArticlesQuery = (
   tag: ComputedRef<string | null>,
   category: ComputedRef<string | null>,
   feedId: ComputedRef<string | null>,
@@ -16,13 +15,14 @@ export const useSubscriptionArticlesQuery = (
   const authStore = useAuthStore();
   const userId = computed(() => authStore.user?.userId ?? 'anonymous');
 
-  return useQuery({
+  return useInfiniteQuery({
     queryKey: computed(() => [
       'subscriptionArticles', userId.value, tag.value, category.value, feedId.value,
-      page.value, SUBSCRIPTION_ARTICLES_PAGE_SIZE, 'publishedAt,desc',
+      SUBSCRIPTION_ARTICLES_PAGE_SIZE, 'publishedAt,desc',
     ] as const),
-    queryFn: ({ signal }) => listArticles({
-      page: Math.max(0, page.value - 1),
+    initialPageParam: 0,
+    queryFn: ({ pageParam, signal }) => listArticles({
+      page: pageParam,
       size: SUBSCRIPTION_ARTICLES_PAGE_SIZE,
       sort: 'publishedAt,desc',
       tags: tag.value,
@@ -30,7 +30,11 @@ export const useSubscriptionArticlesQuery = (
       feedId: feedId.value,
       signal,
     }),
-    placeholderData: keepPreviousData,
+    getNextPageParam: (lastPage) => {
+      const nextPage = lastPage.number + 1;
+      return nextPage < lastPage.totalPages ? nextPage : undefined;
+    },
+    maxPages: 10,
     staleTime: 5 * 60 * 1000,
     gcTime: 30 * 60 * 1000,
     refetchOnWindowFocus: false,
