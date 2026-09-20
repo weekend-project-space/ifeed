@@ -92,7 +92,7 @@
                     :class="detail?.subscribed
                   ? 'text-secondary bg-secondary/10 hover:bg-secondary/20'
                   : 'text-white bg-secondary hover:bg-secondary/90'"
-                    :disabled="subscriptionSubmitting || feedLoading || subscriptionSubmittingMutation"
+                    :disabled="subscriptionSubmitting || feedLoading"
                     @click="toggleSubscription">
                   {{ detail?.subscribed ? '已订阅' : '订阅' }}
                 </button>
@@ -131,6 +131,9 @@
 
               <p v-if="feedError" class="text-sm text-red-600 dark:text-red-400">
                 {{ feedError }}
+              </p>
+              <p v-if="subscriptionError" class="text-sm text-red-600 dark:text-red-400" role="alert">
+                {{ subscriptionError }}
               </p>
             </div>
           </div>
@@ -177,11 +180,10 @@
 <script setup lang="ts">
 import {computed, onActivated, onBeforeUnmount, onDeactivated, onMounted, ref, watch} from 'vue';
 import {useRouter} from 'vue-router';
-import {storeToRefs} from 'pinia';
-import {useMutation, useQueryClient} from '@tanstack/vue-query';
+import {useMutation} from '@tanstack/vue-query';
 import {normalizeArticle} from '../stores/articles/types';
 import {useFeedQuery, useInfiniteFeedArticlesQuery} from '../queries/feed';
-import {resetInfiniteArticleCaches} from '../queries/articleCache';
+import {useSubscriptionMutation} from '../queries/subscriptions';
 import {useDocumentTitle} from '../composables/documentTitle';
 import {useSubscriptionsStore} from '../stores/subscriptions';
 import {useReadFeedStore} from '../stores/readfeed'
@@ -196,9 +198,6 @@ const props = defineProps<{
 const router = useRouter();
 const subscriptionsStore = useSubscriptionsStore();
 const readFeedStore = useReadFeedStore();
-const queryClient = useQueryClient();
-
-const {submitting: subscriptionSubmitting} = storeToRefs(subscriptionsStore);
 
 const currentFeedId = computed(() => props.feedId);
 const routeTag = computed(() => props.tags);
@@ -317,27 +316,20 @@ const clearTag = () => {
   });
 };
 
-const subscriptionMutation = useMutation({
-  mutationFn: async () => {
-    if (!detail.value) return;
-    if (detail.value.subscribed) {
-      await subscriptionsStore.removeSubscription(detail.value.feedId);
-    } else {
-      await subscriptionsStore.addSubscription(detail.value.url, detail.value.feedId);
-    }
-  },
-  onSuccess: async () => {
-    resetInfiniteArticleCaches(queryClient, ['subscriptionArticles']);
-    await Promise.all([
-      queryClient.invalidateQueries({queryKey: ['subscriptionArticles']}),
-      feedQuery.refetch(),
-    ]);
-  },
-});
-const subscriptionSubmittingMutation = computed(() => subscriptionMutation.isPending.value);
-const toggleSubscription = () => {
-  if (!detail.value || !currentFeedId.value || subscriptionMutation.isPending.value) return;
-  subscriptionMutation.mutate();
+const subscriptionMutation = useSubscriptionMutation();
+const subscriptionSubmitting = subscriptionMutation.isPending;
+const subscriptionError = ref('');
+const toggleSubscription = async () => {
+  const feed = detail.value;
+  if (!feed || !currentFeedId.value || subscriptionSubmitting.value) return;
+  subscriptionError.value = '';
+  try {
+    await subscriptionMutation.mutateAsync({
+      feedId: feed.feedId, feedUrl: feed.url, subscribed: feed.subscribed,
+    });
+  } catch (error) {
+    subscriptionError.value = error instanceof Error ? error.message : '订阅操作失败，请重试';
+  }
 };
 
 const readFeedMutation = useMutation({
