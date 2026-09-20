@@ -77,7 +77,11 @@ const router = createRouter({
                 {
                     path: 'discover',
                     name: 'discover',
-                    component: SubscriptionDiscoveryPage
+                    component: SubscriptionDiscoveryPage,
+                    props: route => ({
+                        query: routeText(route.query.q),
+                        category: routeText(route.query.category) || 'all',
+                    })
                 },
                 {
                     path: 'subscriptions',

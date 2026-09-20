@@ -1,22 +1,16 @@
 import { ref } from 'vue';
 import { defineStore } from 'pinia';
+import { invalidateSubscriptionCaches } from '@/queries/subscriptionCache';
 import {
     addSubscription as addSubscriptionRequest,
-    confirmOpmlImport as confirmOpmlImportRequest,
     listSubscriptions,
-    previewOpmlImport as previewOpmlImportRequest,
     removeSubscription as removeSubscriptionRequest,
     searchSubscriptions as searchSubscriptionsRequest,
-    type SubscriptionBaseDto,
     type SubscriptionListItemDto,
     type SubscriptionSearchResultDto,
 } from '@/api/subscriptions';
 
 export type {
-    OpmlImportResultDto,
-    OpmlPreviewFeedDto,
-    OpmlPreviewResultDto,
-    SubscriptionBaseDto,
     SubscriptionListItemDto,
     SubscriptionSearchResultDto,
 } from '@/api/subscriptions';
@@ -63,6 +57,7 @@ export const useSubscriptionsStore = defineStore('subscriptions', () => {
         error.value = null;
         try {
             await addSubscriptionRequest(feedUrl, feedId);
+            void invalidateSubscriptionCaches();
             await fetchSubscriptions();
         } catch (err) {
             const message = err instanceof Error ? err.message : '添加订阅失败';
@@ -78,6 +73,7 @@ export const useSubscriptionsStore = defineStore('subscriptions', () => {
         error.value = null;
         try {
             await removeSubscriptionRequest(feedId);
+            void invalidateSubscriptionCaches();
             items.value = items.value.filter((item) => item.feedId !== feedId);
         } catch (err) {
             const message = err instanceof Error ? err.message : '取消订阅失败';
@@ -136,20 +132,6 @@ export const useSubscriptionsStore = defineStore('subscriptions', () => {
         activeSearchQuery.value = '';
     };
 
-    const previewOpmlImport = async (file: File) => {
-        return await previewOpmlImportRequest(file);
-    };
-
-    const confirmOpmlImport = async (feeds: {
-        feedUrl: string;
-        title: string;
-        siteUrl: string;
-        avatar?: string | null;
-        selected: boolean;
-    }[]) => {
-        return await confirmOpmlImportRequest(feeds);
-    };
-
     return {
         items,
         loading,
@@ -162,8 +144,6 @@ export const useSubscriptionsStore = defineStore('subscriptions', () => {
         addSubscription,
         removeSubscription,
         searchSubscriptions,
-        clearSearchResults,
-        previewOpmlImport,
-        confirmOpmlImport
+        clearSearchResults
     };
 });

@@ -24,31 +24,33 @@
         <button
             type="submit"
             class="absolute right-2 top-1.5 bottom-1.5 px-4 text-sm font-medium text-white bg-secondary dark:bg-secondary/10 rounded-full hover:bg-secondary/90 transition-colors disabled:opacity-50"
-            :disabled="subscriptionsStore.submitting">
-          {{ subscriptionsStore.submitting ? '添加中...' : '添加' }}
+            :disabled="isPending">
+          {{ isPending ? '添加中...' : '添加' }}
         </button>
       </form>
     </div>
-    <p v-if="subscriptionsStore.error" class="mt-3 px-4 py-2.5 text-sm text-red-700 dark:text-red-400 bg-red-50 dark:bg-red-900/20 rounded-lg">
-      {{ subscriptionsStore.error }}
+    <p v-if="error" class="mt-3 px-4 py-2.5 text-sm text-red-700 dark:text-red-400 bg-red-50 dark:bg-red-900/20 rounded-lg">
+      {{ error.message }}
     </p>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue';
-import { useSubscriptionsStore } from '../../stores/subscriptions';
+import { useSubscriptionMutation } from '@/queries/subscriptions';
 
-const subscriptionsStore = useSubscriptionsStore();
+const emit = defineEmits<{ success: [] }>();
+const { mutateAsync, isPending, error } = useSubscriptionMutation();
 const newFeedUrl = ref('');
 
 const handleAdd = async () => {
-  if (!newFeedUrl.value) return;
+  if (!newFeedUrl.value || isPending.value) return;
   try {
-    await subscriptionsStore.addSubscription(newFeedUrl.value);
+    await mutateAsync({ feedUrl: newFeedUrl.value, subscribed: false });
     newFeedUrl.value = '';
+    emit('success');
   } catch (err) {
-    // 错误信息由 store 维护
+    // Mutation exposes the error for the form.
   }
 };
 </script>

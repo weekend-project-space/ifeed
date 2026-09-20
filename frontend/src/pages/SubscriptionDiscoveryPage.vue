@@ -22,6 +22,7 @@
             </svg>
             <input
                 v-model="searchQuery"
+                @input="scheduleSearch"
                 type="text"
                 placeholder="搜索订阅源..."
                 class="w-full pl-12 pr-4 py-3 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-full border border-gray-200 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-secondary focus:border-transparent transition-shadow"
@@ -75,7 +76,7 @@
           <button
               v-for="category in categories"
               :key="category.id"
-              @click="selectedCategory = category.id"
+              @click="selectCategory(category.id)"
               :class="[
                 selectedCategory === category.id
                   ? 'bg-secondary text-white shadow-md border'
@@ -86,7 +87,6 @@
             <span class="flex items-center gap-2">
               <span>{{ category.icon }}</span>
               <span>{{ category.name }}</span>
-<!--              <span v-if="category.feedCount" class="text-xs opacity-75">({{ category.feedCount }})</span>-->
             </span>
           </button>
         </div>
@@ -94,6 +94,13 @@
 
       <!-- Feed Grid -->
       <div>
+        <div v-if="categoriesQuery.isError.value" class="mb-4 text-sm text-red-700" role="alert">
+          分类加载失败。<button type="button" class="underline" @click="categoriesQuery.refetch()">重试</button>
+        </div>
+        <div v-if="feedError" class="mb-4 text-sm text-red-700" role="alert">
+          订阅源加载失败。<button type="button" class="underline" @click="feedsQuery.refetch()">重试</button>
+        </div>
+        <p v-if="subscriptionError" class="mb-4 text-sm text-red-700" role="alert">{{ subscriptionError }}</p>
         <div class="flex items-center justify-between mb-6">
           <h2 class="text-lg font-semibold text-text">
             {{ selectedCategoryName }}
@@ -135,12 +142,12 @@
         <!-- Grid View -->
         <div v-else-if="viewMode === 'grid'" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <article
-              v-for="feed in filteredFeeds"
-              :key="feed.id"
+              v-for="feed in feeds"
+              :key="feed.feedId"
               class="flex items-center gap-3"
           >
               <!-- Feed 信息（点击跳转详情） -->
-              <router-link :to="'/feeds/' + feed.id" class="flex items-center gap-3 flex-1 min-w-0">
+              <router-link :to="'/feeds/' + feed.feedId" class="flex items-center gap-3 flex-1 min-w-0">
                 <img
                     :src="feed.favicon"
                     :alt="feed.name"
@@ -160,7 +167,7 @@
               <!-- 图标化微型按钮：仅 32x32px 圆形 -->
             <button
                 @click.stop.prevent="toggleSubscribe(feed)"
-                :disabled="subscribing === feed.id"
+                :disabled="subscribing.has(feed.feedId)"
                 :title="feed.subscribed ? '取消订阅' : '订阅'"
                 :class="[
       feed.subscribed
@@ -170,7 +177,7 @@
     ]"
             >
               <!-- 加载状态 -->
-              <svg v-if="subscribing === feed.id" class="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <svg v-if="subscribing.has(feed.feedId)" class="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                 <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
               </svg>
 
@@ -185,30 +192,6 @@
                 <line x1="5" y1="12" x2="19" y2="12"/>
               </svg>
             </button>
-<!--            &lt;!&ndash; Feed Description &ndash;&gt;-->
-<!--            <p class="text-sm text-gray-600 dark:text-gray-400 line-clamp-3 mb-4 ">-->
-<!--              {{ feed.description || '暂无描述' }}-->
-<!--            </p>-->
-
-            <!-- Feed Stats -->
-<!--            <div class="flex items-center gap-4 mb-4 text-sm text-gray-500 dark:text-gray-400">-->
-<!--    <span class="flex items-center gap-1">-->
-<!--      <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">-->
-<!--        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>-->
-<!--        <circle cx="9" cy="7" r="4"/>-->
-<!--        <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>-->
-<!--      </svg>-->
-<!--      {{ formatNumber(feed.subscribers) }}-->
-<!--    </span>-->
-<!--              <span class="flex items-center gap-1">-->
-<!--      <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">-->
-<!--        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>-->
-<!--        <polyline points="14 2 14 8 20 8"/>-->
-<!--      </svg>-->
-<!--      {{ feed.articleCount }} 篇-->
-<!--    </span>-->
-<!--            </div>-->
-
 
           </article>
         </div>
@@ -216,13 +199,13 @@
         <!-- List View -->
         <div v-else class="space-y-3">
           <article
-              v-for="feed in filteredFeeds"
-              :key="feed.id"
+              v-for="feed in feeds"
+              :key="feed.feedId"
               class="group py-3 sm:py-4 transition-colors hover:bg-gray-50/60 dark:hover:bg-gray-800/40"
           >
             <div class="flex items-center gap-3 sm:gap-4">
               <!-- 1. 头像 -->
-              <router-link :to="'/feeds/' + feed.id" class="flex-shrink-0">
+              <router-link :to="'/feeds/' + feed.feedId" class="flex-shrink-0">
                 <img
                     :src="feed.favicon"
                     :alt="feed.name"
@@ -232,7 +215,7 @@
               </router-link>
 
               <!-- 2. 标题与描述 -->
-              <router-link :to="'/feeds/' + feed.id" class="flex-1 min-w-0">
+              <router-link :to="'/feeds/' + feed.feedId" class="flex-1 min-w-0">
                 <h3 class="text-sm sm:text-base font-semibold text-gray-900 dark:text-gray-100 truncate group-hover:text-secondary transition-colors">
                   {{ feed.name }}
                 </h3>
@@ -244,7 +227,7 @@
               <!-- 3. 订阅按钮 -->
               <button
                   @click="toggleSubscribe(feed)"
-                  :disabled="subscribing === feed.id"
+                  :disabled="subscribing.has(feed.feedId)"
                   :class="[
         feed.subscribed
           ? 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
@@ -252,7 +235,7 @@
         'px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm rounded-full font-medium flex-shrink-0 transition-colors disabled:opacity-50'
       ]"
               >
-      <span v-if="subscribing === feed.id" class="flex items-center gap-1">
+      <span v-if="subscribing.has(feed.feedId)" class="flex items-center gap-1">
         <svg class="w-3.5 h-3.5 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
         </svg>
@@ -267,7 +250,7 @@
         </div>
 
         <!-- Empty State -->
-        <div v-if="!loading && filteredFeeds.length === 0" class="text-center py-16">
+        <div v-if="!loading && !feedError && feeds.length === 0" class="text-center py-16">
           <div
               class="w-20 h-20 mx-auto mb-4 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center">
             <svg class="w-10 h-10 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -280,17 +263,15 @@
         </div>
       </div>
 
-      <!-- Pagination -->
-      <div v-if="filteredFeeds.length > 0" class="mt-8">
-        <Pagination
-            :current-page="currentPage + 1"
-            :has-previous-page="hasPreviousPage"
-            :has-next-page="hasNextPage"
-            :disabled="loading"
-            @prev-page="prevPage"
-            @next-page="nextPage"
-        />
+      <div v-if="feeds.length" class="mt-8 flex flex-col items-center gap-3" aria-live="polite">
+        <p v-if="isFetchingNextPage" class="text-sm text-text-secondary">正在加载更多订阅源...</p>
+        <template v-else-if="nextPageError">
+          <p class="text-sm text-red-700">加载更多失败，请重试。</p>
+          <button type="button" class="px-4 py-2 text-sm rounded-md bg-red-600 text-white" @click="loadMore">重试</button>
+        </template>
+        <p v-else-if="!hasNextPage" class="text-sm text-text-muted">已加载全部订阅源</p>
       </div>
+      <div ref="loadMoreSentinel" class="h-1" aria-hidden="true"></div>
     </div>
 
     <!-- Manual Add Dialog -->
@@ -316,7 +297,7 @@
 
           <!-- Dialog Content -->
           <div class="p-6">
-            <SubscriptionsAddManual @success="handleManualAddSuccess"/>
+            <SubscriptionsAddManual @success="showManualAddDialog = false"/>
           </div>
         </div>
       </div>
@@ -345,7 +326,7 @@
 
           <!-- Dialog Content -->
           <div class="p-6">
-            <SubscriptionsAddOpml @success="handleOpmlSuccess"/>
+            <SubscriptionsAddOpml @success="showOpmlDialog = false"/>
           </div>
         </div>
       </div>
@@ -354,273 +335,132 @@
 </template>
 
 <script setup lang="ts">
-import {computed, onMounted, ref, watch} from 'vue';
+import {computed, nextTick, onActivated, onBeforeUnmount, onDeactivated, ref, watch} from 'vue';
 import {useRouter, useRoute} from 'vue-router';
-import {getDiscoveryCategories, listDiscoveryFeeds} from '../api/discovery';
-import type {Category, DiscoveryFeed} from '../api/discovery';
-import {useSubscriptionsStore} from '../stores/subscriptions';
+import {useDiscoveryCategoriesQuery, useInfiniteDiscoveryFeedsQuery} from '@/queries/discovery';
+import {useSubscriptionMutation} from '@/queries/subscriptions';
 import SubscriptionsAddManual from './components/SubscriptionsAddManual.vue';
 import SubscriptionsAddOpml from './components/SubscriptionsAddOpml.vue';
-import Pagination from '../components/Pagination.vue';
 
-// Types
-interface Feed {
-  id: string;
-  name: string;
-  url: string;
-  description: string;
-  favicon: string;
-  category: string;
-  subscribers: number;
-  articleCount: number;
-  updateFrequency: string;
-  subscribed: boolean;
-}
-
-// Router
+defineOptions({ name: 'SubscriptionDiscoveryPage' });
+const props = defineProps<{ query: string; category: string }>();
 const router = useRouter();
 const route = useRoute();
-
-// State
-const searchQuery = ref('');
-const selectedCategory = ref('all');
+const active = computed(() => route.name === 'discover');
+const searchQuery = ref(props.query);
+const selectedCategory = computed(() => props.category);
 const viewMode = ref<'grid' | 'list'>('grid');
-const loading = ref(false);
-const subscribing = ref<string | null>(null);
-
-// Dialog states
 const showManualAddDialog = ref(false);
 const showOpmlDialog = ref(false);
-
-// Stores
-const subscriptionsStore = useSubscriptionsStore();
-
-// Categories
-const categories = ref<Category[]>([]);
-
-// View modes
+const categoriesQuery = useDiscoveryCategoriesQuery();
+const feedsQuery = useInfiniteDiscoveryFeedsQuery(
+  computed(() => props.query), selectedCategory, active,
+);
+const categories = computed(() => categoriesQuery.data.value?.categories ?? []);
+const feeds = computed(() => {
+  const items = feedsQuery.data.value?.pages.flatMap(page => page.content) ?? [];
+  return [...new Map(items.map(feed => [feed.feedId, feed])).values()];
+});
+const loading = feedsQuery.isPending;
+const hasNextPage = feedsQuery.hasNextPage;
+const isFetchingNextPage = feedsQuery.isFetchingNextPage;
+const nextPageError = feedsQuery.isFetchNextPageError;
+const feedError = computed(() => feedsQuery.isError.value && !nextPageError.value);
+const selectedCategoryName = computed(() =>
+  categories.value.find(category => category.id === selectedCategory.value)?.name ?? '全部',
+);
 const viewModes = [
   {id: 'grid', name: '网格视图'},
   {id: 'list', name: '列表视图'},
 ];
 
-// Feeds data
-const feeds = ref<Feed[]>([]);
-const currentPage = ref(0);
-const totalPages = ref(0);
-
-// Computed
-const selectedCategoryName = computed(() => {
-  const category = categories.value.find(c => c.id === selectedCategory.value);
-  return category ? category.name : '全部';
-});
-
-const filteredFeeds = computed(() => {
-  return feeds.value;
-});
-
-const hasNextPage = computed(() => {
-  return currentPage.value < totalPages.value - 1;
-});
-
-const hasPreviousPage = computed(() => {
-  return currentPage.value > 0;
-});
-
-// Methods
-const formatNumber = (num: number): string => {
-  if (num >= 1000000) {
-    return (num / 1000000).toFixed(1) + 'M';
+const subscriptionMutation = useSubscriptionMutation();
+const subscribing = ref(new Set<string>());
+const subscriptionError = ref('');
+const toggleSubscribe = async (feed: typeof feeds.value[number]) => {
+  if (subscribing.value.has(feed.feedId)) return;
+  subscribing.value.add(feed.feedId);
+  subscriptionError.value = '';
+  try {
+    await subscriptionMutation.mutateAsync({
+      feedId: feed.feedId, feedUrl: feed.url, subscribed: feed.subscribed,
+    });
+  } catch (error) {
+    subscriptionError.value = error instanceof Error ? error.message : '订阅操作失败，请重试';
+  } finally {
+    subscribing.value.delete(feed.feedId);
   }
-  if (num >= 1000) {
-    return (num / 1000).toFixed(1) + 'K';
-  }
-  return num.toString();
 };
+
+let searchTimeout: ReturnType<typeof setTimeout> | undefined;
+const cancelSearch = () => {
+  clearTimeout(searchTimeout);
+  searchTimeout = undefined;
+};
+const navigateFilters = (query: string, category: string) => {
+  cancelSearch();
+  if (query === props.query && category === props.category) return;
+  void router.push({
+    name: 'discover',
+    query: { q: query || undefined, category: category === 'all' ? undefined : category },
+  });
+};
+const selectCategory = (category: string) => navigateFilters(searchQuery.value.trim(), category);
+const scheduleSearch = () => {
+  cancelSearch();
+  searchTimeout = setTimeout(() => {
+    if (active.value) navigateFilters(searchQuery.value.trim(), props.category);
+  }, 500);
+};
+watch(() => [props.query, props.category], () => {
+  cancelSearch();
+  searchQuery.value = props.query;
+});
+watch(active, (value) => {
+  if (!value) cancelSearch();
+}, { flush: 'sync' });
+
+const loadMoreSentinel = ref<HTMLElement | null>(null);
+let observer: IntersectionObserver | null = null;
+const disconnectObserver = () => {
+  observer?.disconnect();
+  observer = null;
+};
+const loadMore = async () => {
+  if (!active.value || !hasNextPage.value || feedsQuery.isFetching.value) return;
+  await feedsQuery.fetchNextPage();
+};
+const observeSentinel = () => {
+  disconnectObserver();
+  if (!active.value || !loadMoreSentinel.value || !hasNextPage.value
+      || feedsQuery.isFetching.value || feedsQuery.isError.value) return;
+  observer = new IntersectionObserver(entries => {
+    if (entries.some(entry => entry.isIntersecting)) void loadMore();
+  }, { rootMargin: '600px 0px' });
+  observer.observe(loadMoreSentinel.value);
+};
+watch([
+  loadMoreSentinel, active, feedsQuery.isFetching, hasNextPage, feedsQuery.isError, viewMode,
+], observeSentinel, { flush: 'post' });
+onActivated(async () => {
+  searchQuery.value = props.query;
+  await nextTick();
+  observeSentinel();
+});
+onDeactivated(() => {
+  cancelSearch();
+  disconnectObserver();
+});
+onBeforeUnmount(() => {
+  cancelSearch();
+  disconnectObserver();
+});
 
 const handleImageError = (event: Event) => {
   const img = event.target as HTMLImageElement;
-  img.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="%239CA3AF" stroke-width="2"%3E%3Ccircle cx="12" cy="12" r="3"/%3E%3Cpath d="M12 2v4m0 12v4M4.22 4.22l2.83 2.83m9.9 9.9 2.83 2.83M2 12h4m12 0h4M4.22 19.78l2.83-2.83m9.9-9.9 2.83-2.83"/%3E%3C/svg%3E';
+  img.onerror = null;
+  img.src = '/logo.svg';
 };
-
-const formatUpdateFrequency = (freq: string): string => {
-  const map: Record<string, string> = {
-    'REALTIME': '实时更新',
-    'HOURLY': '每小时更新',
-    'DAILY': '每日更新',
-    'WEEKLY': '每周更新',
-    'MONTHLY': '每月更新',
-    'UNKNOWN': '更新频率未知'
-  };
-  return map[freq] || freq;
-};
-
-const mapDiscoveryFeedToFeed = (discoveryFeed: DiscoveryFeed): Feed => {
-  return {
-    id: discoveryFeed.feedId,
-    name: discoveryFeed.name,
-    url: discoveryFeed.url,
-    description: discoveryFeed.description || '',
-    favicon: discoveryFeed.favicon,
-    category: discoveryFeed.category,
-    subscribers: discoveryFeed.subscriberCount,
-    articleCount: discoveryFeed.articleCount,
-    updateFrequency: formatUpdateFrequency(discoveryFeed.updateFrequency),
-    subscribed: discoveryFeed.subscribed,
-  };
-};
-
-const loadCategories = async () => {
-  try {
-    const response = await getDiscoveryCategories();
-    categories.value = response.categories;
-  } catch (error) {
-    console.error('Failed to load categories:', error);
-  }
-};
-
-const loadFeeds = async () => {
-  loading.value = true;
-  try {
-    const response = await listDiscoveryFeeds({
-      page: currentPage.value,
-      size: 30,
-      query: searchQuery.value,
-      category: selectedCategory.value !== 'all' ? selectedCategory.value : undefined,
-    });
-
-    feeds.value = response.content.map(mapDiscoveryFeedToFeed);
-    totalPages.value = response.totalPages;
-  } catch (error) {
-    console.error('Failed to load feeds:', error);
-    feeds.value = [];
-  } finally {
-    loading.value = false;
-  }
-};
-
-const toggleSubscribe = async (feed: Feed) => {
-  subscribing.value = feed.id;
-
-  try {
-    if (feed.subscribed) {
-      // Unsubscribe
-      await subscriptionsStore.removeSubscription(feed.id);
-      feed.subscribed = false;
-      feed.subscribers--;
-    } else {
-      // Subscribe
-      await subscriptionsStore.addSubscription(feed.url, feed.id);
-      feed.subscribed = true;
-      feed.subscribers++;
-    }
-  } catch (error) {
-    console.error('Failed to toggle subscription:', error);
-  } finally {
-    subscribing.value = null;
-  }
-};
-
-// Route synchronization
-const updateRoute = () => {
-  const query: Record<string, string | number> = {};
-
-  if (searchQuery.value) {
-    query.q = searchQuery.value;
-  }
-
-  if (selectedCategory.value !== 'all') {
-    query.category = selectedCategory.value;
-  }
-
-  if (currentPage.value > 0) {
-    query.page = currentPage.value + 1;
-  }
-
-  router.push({query});
-};
-
-const nextPage = () => {
-  if (hasNextPage.value && !loading.value) {
-    currentPage.value++;
-    updateRoute();
-    window.scrollTo({top: 0, behavior: 'smooth'});
-  }
-};
-
-const prevPage = () => {
-  if (hasPreviousPage.value && !loading.value) {
-    currentPage.value--;
-    updateRoute();
-    window.scrollTo({top: 0, behavior: 'smooth'});
-  }
-};
-
-// Success handlers for dialogs
-const handleManualAddSuccess = () => {
-  showManualAddDialog.value = false;
-  loadFeeds(); // Refresh feeds list
-};
-
-const handleOpmlSuccess = () => {
-  showOpmlDialog.value = false;
-  loadFeeds(); // Refresh feeds list
-};
-
-// Watchers
-// Update route when filters change
-watch(selectedCategory, () => {
-  currentPage.value = 0;
-  updateRoute();
-});
-
-// Debounce search update
-let searchTimeout: number | null = null;
-watch(searchQuery, (newVal, oldVal) => {
-  // Only update route if the value actually changed and it's not the initial sync
-  if (newVal !== oldVal) {
-    if (searchTimeout) clearTimeout(searchTimeout);
-    searchTimeout = window.setTimeout(() => {
-      currentPage.value = 0;
-      updateRoute();
-    }, 500);
-  }
-});
-
-// React to route changes
-watch(
-    () => route.query,
-    (newQuery) => {
-      // Sync state from route
-      const q = (newQuery.q as string) || '';
-      const category = (newQuery.category as string) || 'all';
-      const page = parseInt(newQuery.page as string) || 1;
-
-      // Only update if changed to avoid loops
-      if (searchQuery.value !== q) {
-        searchQuery.value = q;
-      }
-
-      if (selectedCategory.value !== category) {
-        selectedCategory.value = category;
-      }
-
-      // Internal page is 0-based
-      const targetPage = Math.max(0, page - 1);
-      if (currentPage.value !== targetPage) {
-        currentPage.value = targetPage;
-      }
-
-      loadFeeds();
-    },
-    {immediate: true}
-);
-
-// Lifecycle
-onMounted(async () => {
-  await loadCategories();
-  // loadFeeds is called by the immediate route watcher
-});
 </script>
 
 <style scoped>

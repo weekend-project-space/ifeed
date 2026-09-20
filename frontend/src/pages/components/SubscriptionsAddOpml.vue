@@ -189,12 +189,14 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
 import {
-  useSubscriptionsStore,
   type OpmlImportResultDto,
   type OpmlPreviewFeedDto
-} from '../../stores/subscriptions';
+} from '@/api/subscriptions';
+import { useOpmlImportMutation, useOpmlPreviewMutation } from '@/queries/subscriptions';
 
-const subscriptionsStore = useSubscriptionsStore();
+const emit = defineEmits<{ success: [] }>();
+const previewMutation = useOpmlPreviewMutation();
+const importMutation = useOpmlImportMutation();
 
 interface OpmlPreviewFeedView extends OpmlPreviewFeedDto {
   selected: boolean;
@@ -205,8 +207,8 @@ const opmlFileInput = ref<HTMLInputElement | null>(null);
 const opmlPreviewFeeds = ref<OpmlPreviewFeedView[]>([]);
 const opmlWarnings = ref<string[]>([]);
 const opmlError = ref<string | null>(null);
-const opmlPreviewLoading = ref(false);
-const opmlConfirmLoading = ref(false);
+const opmlPreviewLoading = previewMutation.isPending;
+const opmlConfirmLoading = importMutation.isPending;
 const opmlConfirmResult = ref<OpmlImportResultDto | null>(null);
 const showOpmlModal = ref(false);
 const remainingQuota = ref(0);
@@ -223,11 +225,10 @@ const handlePreviewOpml = async () => {
     opmlError.value = '请选择一个 OPML 文件';
     return;
   }
-  opmlPreviewLoading.value = true;
   opmlError.value = null;
   opmlConfirmResult.value = null;
   try {
-    const result = await subscriptionsStore.previewOpmlImport(opmlFile.value);
+    const result = await previewMutation.mutateAsync(opmlFile.value);
     opmlWarnings.value = result.warnings ?? [];
     remainingQuota.value = result.remainingQuota ?? 0;
     opmlPreviewFeeds.value = result.feeds.map((feed) => ({
@@ -240,8 +241,6 @@ const handlePreviewOpml = async () => {
     opmlError.value = message;
     opmlPreviewFeeds.value = [];
     opmlWarnings.value = [];
-  } finally {
-    opmlPreviewLoading.value = false;
   }
 };
 
@@ -276,6 +275,7 @@ const closeOpmlModal = () => {
 const handleSuccessClose = () => {
   closeOpmlModal();
   opmlConfirmResult.value = null;
+  emit('success');
 };
 
 const handleConfirmOpml = async () => {
@@ -287,7 +287,6 @@ const handleConfirmOpml = async () => {
     opmlError.value = '超过剩余额度，请取消部分订阅后再试';
     return;
   }
-  opmlConfirmLoading.value = true;
   opmlError.value = null;
   try {
     const payload = opmlPreviewFeeds.value.map((feed) => ({
@@ -297,17 +296,14 @@ const handleConfirmOpml = async () => {
       avatar: feed.avatar ?? undefined,
       selected: feed.selected
     }));
-    const result = await subscriptionsStore.confirmOpmlImport(payload);
+    const result = await importMutation.mutateAsync(payload);
     opmlConfirmResult.value = result;
-    await subscriptionsStore.fetchSubscriptions();
     opmlPreviewFeeds.value = [];
     opmlWarnings.value = [];
     resetOpmlInput();
   } catch (error) {
     const message = error instanceof Error ? error.message : '导入失败';
     opmlError.value = message;
-  } finally {
-    opmlConfirmLoading.value = false;
   }
 };
 

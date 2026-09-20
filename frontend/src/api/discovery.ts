@@ -30,8 +30,8 @@ export interface DiscoveryFeed {
   featured: boolean;
 }
 
-export const getDiscoveryCategories = () =>
-  get<CategoriesResponse>('/api/discovery/categories');
+export const getDiscoveryCategories = (signal?: AbortSignal) =>
+  get<CategoriesResponse>('/api/discovery/categories', { signal });
 
 export const listDiscoveryFeeds = (params: {
   page: number;
