@@ -218,7 +218,7 @@
           <!-- Article Body - Medium Typography -->
           <div class="prose-custom">
             <div v-if="article.content" ref="articleContentRef" class="article-content" v-html="article.content"></div>
-            <div v-else class="text-center py-20">
+            <div v-else-if="!article.enclosure" class="text-center py-20">
               <svg class="w-12 h-12 mx-auto text-gray-300 dark:text-gray-600 mb-3" fill="none" stroke="currentColor"
                    viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -737,7 +737,7 @@ watch(activeMainTab, async (newTab) => {
 
 .article-content {
   font-family: charter, Georgia, Cambria, "Times New Roman", Times, serif;
-  @apply text-lg leading-7 text-gray-900 dark:text-gray-100;
+  @apply text-lg leading-7 text-gray-900 dark:text-gray-100 break-words;
 }
 
 .article-content :deep(p) {
