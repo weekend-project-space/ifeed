@@ -585,7 +585,6 @@ const subscriptionMutation = useMutation({
     ]);
   },
 });
-const subscriptionSubmittingMutation = computed(() => subscriptionMutation.isPending.value);
 
 const toggleFeedSubscription = () => {
   if (!feedDetail.value || subscriptionMutation.isPending.value) return;
