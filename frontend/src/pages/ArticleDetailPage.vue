@@ -56,7 +56,8 @@
       <header class="pt-12 pb-8">
         <!-- Title -->
         <h1 class="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 dark:text-gray-50 leading-tight mb-6 font-serif break-words">
-          {{ article.title }}
+          <a :href="article.link" v-text="article.title" target="_blank">
+          </a>
         </h1>
 
         <!-- Author & Meta Info -->
@@ -81,29 +82,21 @@
             </div>
           </router-link>
 
-          <!-- Copy Link Button -->
           <button
-              @click="copyArticleLink"
-              class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors group relative"
-              :class="{ 'text-green-600 dark:text-green-400': linkCopied }"
-              title="复制链接"
-              aria-label="复制文章链接"
-          >
-            <svg v-if="!linkCopied"
-                 class="w-5 h-5 text-gray-600 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-gray-100"
-                 fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
-            </svg>
-            <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-            </svg>
-            <!-- Tooltip -->
-            <span v-if="linkCopied"
-                  class="absolute -bottom-10 sm:-bottom-8 left-1/2 transform -translate-x-1/2 px-2 py-1 text-xs bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 rounded whitespace-nowrap pointer-events-none z-10">
-              已复制
-            </span>
+              v-if="article.feedId && feedDetail"
+              type="button"
+              class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              :class="feedDetail.subscribed
+                ? 'text-secondary bg-secondary/10 hover:bg-secondary/20'
+                : 'text-white bg-secondary hover:bg-secondary/90'"
+              :disabled="subscriptionSubmitting || feedQuery.isPending.value || subscriptionMutation.isPending.value"
+              :title="feedDetail.subscribed ? '取消订阅' : '订阅该来源'"
+              :aria-label="feedDetail.subscribed ? '取消订阅' : '订阅该来源'"
+              :aria-pressed="feedDetail.subscribed"
+              @click="toggleFeedSubscription">
+            {{ feedDetail.subscribed ? '已订阅' : '订阅' }}
           </button>
+
         </div>
 
         <!-- Action Bar -->
@@ -122,6 +115,20 @@
           <!-- Collect Button -->
           <template v-if="headerActionExists && route.name === 'article'">
             <Teleport to="#header-action">
+              <button
+                      class="flex h-10 w-10 items-center justify-center rounded-full text-gray-900 dark:text-gray-100 hover:bg-gray-200 dark:hover:bg-gray-700 transition-all"
+                      :class="linkCopied ? 'text-green-600 dark:text-green-400' : ''"
+                      title="复制链接"
+                      aria-label="复制文章链接"
+                      @click="copyArticleLink">
+                <svg v-if="!linkCopied" class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                </svg>
+                <svg v-else class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                </svg>
+              </button>
               <button
                       class="flex h-10 w-10 items-center justify-center text-sm font-medium rounded-full transition-all text-gray-900 dark:text-gray-100 hover:bg-gray-200 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
                       :disabled="collectionSubmitting"
@@ -178,7 +185,7 @@
                 :aria-selected="activeMainTab === 'summary'"
                 :tabindex="activeMainTab === 'summary' ? 0 : -1"
             >
-              摘要
+              总结
               <div v-if="activeMainTab === 'summary'"
                    class="absolute bottom-0 left-0 right-0 h-0.5 bg-gray-900 dark:bg-gray-100"></div>
             </button>
@@ -337,18 +344,21 @@
 </template>
 
 <script setup lang="ts">
-import {computed, nextTick, onBeforeUnmount, onMounted, ref, watch} from 'vue';
+import {computed, nextTick, onBeforeUnmount, onDeactivated, onMounted, ref, watch} from 'vue';
 import {useMutation, useQueryClient} from '@tanstack/vue-query';
+import {storeToRefs} from 'pinia';
 import {useRoute, useRouter} from 'vue-router';
 import {useArticlesStore} from '../stores/articles/articles';
 import {useCollectionsStore} from '../stores/collections';
+import {useSubscriptionsStore} from '../stores/subscriptions';
 import MediaAttachment from "../components/MediaAttachment.vue";
 import ArticleCardList from "../components/ArticleCardList.vue";
 import {useAuthStore} from "../stores/auth";
 import {md2html} from "../utils/markdown";
 import {normalizeArticle, type ArticleDetail} from '../stores/articles/types';
 import {articleQueryKey, useArticleQuery, useArticleRecommendationsQuery} from '../queries/article';
-import {updateArticleCollectedCaches} from '../queries/articleCache';
+import {useFeedQuery} from '../queries/feed';
+import {resetInfiniteArticleCaches, updateArticleCollectedCaches} from '../queries/articleCache';
 import {useDocumentTitle} from '../composables/documentTitle';
 
 defineOptions({name: 'ArticleDetailPage'});
@@ -363,8 +373,10 @@ const router = useRouter();
 const route = useRoute();
 const articlesStore = useArticlesStore();
 const collectionsStore = useCollectionsStore();
+const subscriptionsStore = useSubscriptionsStore();
 const authStore = useAuthStore();
 const queryClient = useQueryClient();
+const {submitting: subscriptionSubmitting} = storeToRefs(subscriptionsStore);
 
 const scrollTracked = ref(false);
 const articleContentRef = ref<HTMLElement | null>(null);
@@ -385,6 +397,9 @@ const currentArticleQueryKey = computed(() => articleQueryKey(userId.value, arti
 const articleQuery = useArticleQuery(articleId);
 const recommendationsQuery = useArticleRecommendationsQuery(articleId);
 const article = computed(() => articleQuery.data.value ?? null);
+const articleFeedId = computed(() => article.value?.feedId ?? null);
+const feedQuery = useFeedQuery(articleFeedId);
+const feedDetail = computed(() => feedQuery.data.value ?? null);
 const articleLoading = computed(() => articleQuery.isPending.value);
 const articleError = computed(() => {
   const error = articleQuery.error.value;
@@ -552,6 +567,31 @@ const toggleCollection = () => {
   });
 };
 
+const subscriptionMutation = useMutation({
+  mutationFn: async () => {
+    const feed = feedDetail.value;
+    if (!feed) return;
+    if (feed.subscribed) {
+      await subscriptionsStore.removeSubscription(feed.feedId);
+    } else {
+      await subscriptionsStore.addSubscription(feed.url, feed.feedId);
+    }
+  },
+  onSuccess: async () => {
+    resetInfiniteArticleCaches(queryClient, ['subscriptionArticles']);
+    await Promise.all([
+      queryClient.invalidateQueries({queryKey: ['subscriptionArticles']}),
+      feedQuery.refetch(),
+    ]);
+  },
+});
+const subscriptionSubmittingMutation = computed(() => subscriptionMutation.isPending.value);
+
+const toggleFeedSubscription = () => {
+  if (!feedDetail.value || subscriptionMutation.isPending.value) return;
+  subscriptionMutation.mutate();
+};
+
 const handleTagClick = (tag: string) => {
   if (!tag) return;
   router.push({name: 'feedsSubscriptions', query: {tags: tag.toLowerCase()}});
@@ -654,7 +694,12 @@ onMounted(async () => {
   window.addEventListener('scroll', handleScroll, {passive: true});
 });
 
+onDeactivated(() => {
+  linkCopied.value = false;
+});
+
 onBeforeUnmount(() => {
+  linkCopied.value = false;
   // 清理 Intersection Observer
   if (lazyLoadObserver.value) {
     lazyLoadObserver.value.disconnect();
