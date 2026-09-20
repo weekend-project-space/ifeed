@@ -373,7 +373,7 @@
             <component
                 :is="item.feedId ? 'router-link' : 'span'"
                 :to="item.feedId ? { name: 'feed', params: { feedId: item.feedId } } : undefined"
-                class="flex-shrink-0 flex items-center gap-1.5 sm:w-32 md:w-36 sm:max-w-[30%]
+                class="flex-shrink-0 flex items-center gap-1.5  md:w-52 sm:max-w-[30%]
                text-xs text-gray-500 dark:text-gray-400 rounded group
                hover:text-primary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                 :aria-label="`来源：${item.feedTitle}`">
@@ -455,18 +455,21 @@
               <!-- 主体 -->
               <div class="flex-1 min-w-0 space-y-1.5">
                 <!-- 来源、标题和时间 -->
-                <div class="flex flex-wrap sm:flex-nowrap items-center gap-x-1.5 gap-y-0.5 text-sm leading-snug">
+                <div class="flex flex-wrap  items-center gap-x-1.5 gap-y-0.5 text-sm leading-snug">
                   <router-link v-if="item.feedId"
                                :to="{ name: 'feed', params: { feedId: item.feedId } }"
-                               class="text-gray-900 dark:text-gray-100 font-semibold truncate flex-shrink-0 max-w-[10rem] sm:max-w-[12rem]
+                               class="text-gray-900 dark:text-gray-100 font-semibold truncate flex-shrink-0 max-w-[15rem] sm:max-w-[16rem]
                                rounded hover:text-primary transition-colors
                                focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
                     {{ item.feedTitle }}
                   </router-link>
                   <span v-else
-                        class="text-gray-900 dark:text-gray-100 font-semibold truncate flex-shrink-0 max-w-[10rem] sm:max-w-[12rem]">
+                        class="text-gray-900 dark:text-gray-100 font-semibold truncate flex-shrink-0 max-w-[15rem] sm:max-w-[16rem]">
                     {{ item.feedTitle }}
                   </span>
+                  <small class="text-gray-400 dark:text-gray-500 flex-shrink-0 whitespace-nowrap">
+                      {{ item.timeAgo }}
+                    </small>
                   <svg
                       class="w-3 h-3 flex-shrink-0 text-gray-400 dark:text-gray-600"
                       viewBox="0 0 24 24"
@@ -479,17 +482,16 @@
                   >
                     <path d="m9 18 6-6-6-6"/>
                   </svg>
-                  <span class="basis-full sm:basis-auto min-w-0 flex items-center gap-1.5">
+                  <span class="basis-full sm:basis-auto min-w-0 flex items-start gap-1.5 ">
                     <router-link
                         :to="{ name: 'article', params: { id: item.id } }"
-                        class="text-gray-900 dark:text-gray-100 font-semibold truncate min-w-0 flex-1 rounded
+                        class="text-gray-900 dark:text-gray-100 font-semibold line-clamp-2 min-w-0 flex-1 rounded
                                focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
                       {{ item.title }}
                     </router-link>
-                    <span class="text-gray-400 dark:text-gray-500 flex-shrink-0 whitespace-nowrap">
-                      {{ item.timeAgo }}
-                    </span>
+
                   </span>
+
                 </div>
 
                 <!-- 摘要 -->
@@ -498,7 +500,7 @@
                     :to="{ name: 'article', params: { id: item.id } }"
                     class="block rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
                   <p class="text-sm leading-relaxed text-gray-600 dark:text-gray-400"
-                     :class="item.thumbnail && !thumbErrorMap[item.id] ? 'line-clamp-3' : 'line-clamp-6'">
+                     :class="item.thumbnail && !thumbErrorMap[item.id] ? 'line-clamp-3' : 'line-clamp-4'">
                     {{ item.summary }}
                   </p>
                 </router-link>
