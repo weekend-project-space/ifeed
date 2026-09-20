@@ -1,5 +1,5 @@
 <template>
-  <div class="max-w-screen-lg mx-auto px-4 sm:px-6 py-6 sm:py-8">
+  <div class="max-w-screen-lg mx-auto py-6 sm:py-8">
 
 
     <article-list
@@ -10,11 +10,12 @@
         @refresh="refreshArticles">
       <template #header>
         <!-- Channel Header -->
-        <section class="mb-8 space-y-4">
+        <section class="mb-8 px-4 sm:px-6  space-y-4">
           <!-- Channel Info -->
           <div class="flex items-start gap-4">
             <!-- Avatar -->
             <div class="flex-shrink-0">
+              <a :href="detail?.siteUrl" target="_blank">
               <img
                   v-if="detail?.avatar"
                   :src="detail.avatar"
@@ -25,13 +26,14 @@
                   class="flex h-16 w-16 items-center justify-center rounded-full bg-secondary/10 text-2xl font-semibold text-secondary">
                 {{ channelInitial }}
               </div>
+              </a>
             </div>
 
             <!-- Info & Actions -->
             <div class="flex-1 min-w-0 space-y-3">
               <div>
                 <h1 class="text-2xl sm:text-3xl font-bold text-text mb-1">
-                  {{ channelTitle }}
+                  <a :href="detail?.siteUrl" target="_blank" v-text="channelTitle"></a>
                 </h1>
                 <p class="text-sm text-text-secondary">
                   {{ detail?.description }} 最近更新 {{ latestUpdateText }} · 最近抓取 {{ lastFetchedText }}

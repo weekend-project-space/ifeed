@@ -152,22 +152,13 @@
           <article
               v-for="item in items"
               :key="item.id"
-              class="group flex flex-row items-start gap-3 md:gap-6
+              class="group flex flex-row items-end gap-3 md:gap-6
                      p-4 md:p-5 rounded-2xl transition-all duration-300
                      hover:bg-surface-container/60 cursor-pointer"
               @click="handleArticleContainerClick(item, $event)"
           >
             <!-- 文字内容 -->
             <div class="flex-1 min-w-0 order-1 space-y-2 md:space-y-3">
-              <!-- 标题 -->
-              <h3 class="text-base font-normal text-gray-900 dark:text-gray-100 line-clamp-1 md:line-clamp-2">
-                <router-link
-                    :to="{ name: 'article', params: { id: item.id } }"
-                    class="rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
-                  {{ item.title }}
-                </router-link>
-              </h3>
-
               <!-- 来源 · 时间 -->
               <div
                   class="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-500 whitespace-nowrap max-w-full">
@@ -204,6 +195,16 @@
                   </span>
                 <span class="flex-shrink-0">· {{ item.timeAgo }}</span>
               </div>
+              <!-- 标题 -->
+              <h3 class="text-base font-normal text-gray-900 dark:text-gray-100 line-clamp-2">
+                <router-link
+                    :to="{ name: 'article', params: { id: item.id } }"
+                    class="rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
+                  {{ item.title }}
+                </router-link>
+              </h3>
+
+
 
               <!-- 摘要 -->
               <router-link
