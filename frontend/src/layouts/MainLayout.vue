@@ -13,10 +13,23 @@
         <!-- Left: Logo (mobile) + Sidebar toggle (desktop) -->
         <div class="flex items-center gap-3">
           <!-- Mobile Logo -->
-          <RouterLink :to="{ name: 'home' }" class="flex items-center gap-2 lg:hidden">
+          <RouterLink :to="{ name: 'home' }" class="flex items-center gap-2 lg:hidden" v-if="route.name=='home'">
             <img class="h-8 w-8 rounded-2xl" src="/logo.svg" alt="iFeed" />
             <span class="text-lg font-semibold">IFeed</span>
           </RouterLink>
+
+          <!-- 非首页：返回按钮 -->
+          <button
+              v-else
+              type="button"
+              class="-ml-3 flex h-10 w-10 items-center justify-center rounded-full hover:bg-surface-container/60 transition lg:hidden"
+              @click="router.back()"
+              aria-label="Back"
+          >
+            <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
+            </svg>
+          </button>
 
           <!-- Desktop sidebar toggle -->
           <button type="button"
