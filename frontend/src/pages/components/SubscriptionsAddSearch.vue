@@ -29,6 +29,9 @@
       <p v-if="searchError" class="mt-2 text-sm text-red-600 dark:text-red-400">
         {{ searchError }}
       </p>
+      <p v-if="subscriptionError" class="mt-2 text-sm text-red-600 dark:text-red-400" role="alert">
+        {{ subscriptionError }}
+      </p>
     </div>
 
     <!-- Results List -->
@@ -91,7 +94,7 @@
                   v-else
                   type="button"
                   class="px-4 py-1.5 text-sm font-medium text-secondary bg-secondary/10 rounded-full hover:bg-secondary/20 transition-colors disabled:opacity-50"
-                  :disabled="subscriptionsStore.submitting"
+                  :disabled="subscriptionSubmitting"
                   @click="subscribeFromSearch(feed)">
                 订阅
               </button>
@@ -115,7 +118,6 @@
 
 <script setup lang="ts">
 import {computed, onUnmounted, ref, watch} from 'vue';
-import {useRouter} from 'vue-router';
 import {storeToRefs} from 'pinia';
 import {
   useSubscriptionsStore,
@@ -123,10 +125,13 @@ import {
   type SubscriptionSearchResultDto
 } from '../../stores/subscriptions';
 import {formatRelativeTime} from '../../utils/datetime';
+import {useSubscriptionMutation} from '../../queries/subscriptions';
 
 const subscriptionsStore = useSubscriptionsStore();
 const {items, searchResults, searchLoading, searchError} = storeToRefs(subscriptionsStore);
-const router = useRouter();
+const subscriptionMutation = useSubscriptionMutation();
+const subscriptionSubmitting = subscriptionMutation.isPending;
+const subscriptionError = ref('');
 
 const searchQuery = ref('');
 const hasSearched = ref(false);
@@ -167,18 +172,20 @@ const handleSearch = async () => {
   }
 };
 
-const viewArticles = (feedId: string) => {
-  router.push({name: 'feed', params: {feedId}});
-};
-
 const subscribeFromSearch = async (feed: SubscriptionSearchResultDto) => {
+  if (subscriptionSubmitting.value) return;
+  subscriptionError.value = '';
   try {
     if (isSubscribed(feed)) return;
-    await subscriptionsStore.addSubscription(feed.url, feed.feedId);
+    await subscriptionMutation.mutateAsync({
+      feedId: feed.feedId,
+      feedUrl: feed.url,
+      subscribed: false,
+    });
     feed.subscribed = true;
     feed.subscriberCount = (feed.subscriberCount ?? 0) + 1;
-  } catch (err) {
-    // 错误信息由 store 维护
+  } catch (error) {
+    subscriptionError.value = error instanceof Error ? error.message : '添加订阅失败，请重试';
   }
 };
 

@@ -90,6 +90,7 @@
           </span>
           <button
               @click="selectAll"
+              :disabled="isBatchProcessing"
               class="px-3 py-2 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
           >
             {{ selectedItems.size === filteredItems.length ? '取消全选' : '全选' }}
@@ -103,6 +104,7 @@
           </button>
           <button
               @click="exitBatchMode"
+              :disabled="isBatchProcessing"
               class="px-3 py-2 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
           >
             取消
@@ -110,6 +112,10 @@
         </div>
       </div>
     </div>
+
+    <p v-if="subscriptionError" class="mb-4 text-sm text-red-600 dark:text-red-400" role="alert">
+      {{ subscriptionError }}
+    </p>
 
     <!-- Loading State -->
     <div v-if="subscriptionsStore.loading && !items.length" class="space-y-3">
@@ -171,6 +177,7 @@
           <input
               type="checkbox"
               :checked="selectedItems.has(item.feedId)"
+              :disabled="isBatchProcessing"
               @change="toggleSelection(item.feedId)"
               class="w-5 h-5 text-secondary border-gray-300 dark:border-gray-600 rounded focus:ring-secondary cursor-pointer"
           />
@@ -217,7 +224,7 @@
                   </router-link>
                   <button
                       @click.stop="confirmRemove(item)"
-                      :disabled="subscriptionsStore.submitting"
+                      :disabled="subscriptionSubmitting"
                       class="w-full px-4 py-2 text-left text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 disabled:opacity-50"
                   >
                     取消订阅
@@ -268,20 +275,23 @@
     <div
         v-if="itemToRemove"
         class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40"
-        @click.self="itemToRemove = null"
+        @click.self="cancelRemove"
     >
       <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-sm w-full p-5">
         <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">确认取消订阅</h3>
         <p class="text-sm text-gray-600 dark:text-gray-400 mb-5">
           确定要取消订阅 <strong>{{ displayTitle(itemToRemove) }}</strong> 吗?
         </p>
+        <p v-if="subscriptionError" class="mb-4 text-sm text-red-600 dark:text-red-400" role="alert">
+          {{ subscriptionError }}
+        </p>
         <div class="flex gap-3 justify-end">
-          <button @click="itemToRemove = null" class="px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors">
+          <button @click="cancelRemove" :disabled="subscriptionSubmitting" class="px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors">
             取消
           </button>
           <button
               @click="remove(itemToRemove.feedId)"
-              :disabled="subscriptionsStore.submitting"
+              :disabled="subscriptionSubmitting"
               class="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg disabled:opacity-50 transition-colors"
           >
             确认取消订阅
@@ -308,6 +318,9 @@
             </li>
           </ul>
         </div>
+        <p v-if="subscriptionError" class="mb-4 text-sm text-red-600 dark:text-red-400" role="alert">
+          {{ subscriptionError }}
+        </p>
         <div class="flex gap-3 justify-end">
           <button 
               @click="cancelBatchRemove" 
@@ -334,9 +347,14 @@ import { computed, onMounted, ref } from 'vue';
 import { storeToRefs } from 'pinia';
 import { useSubscriptionsStore, type SubscriptionListItemDto } from '../../stores/subscriptions';
 import { formatRelativeTime } from '../../utils/datetime';
+import { useBatchRemoveSubscriptionsMutation, useSubscriptionMutation } from '../../queries/subscriptions';
 
 const subscriptionsStore = useSubscriptionsStore();
 const { items } = storeToRefs(subscriptionsStore);
+const subscriptionMutation = useSubscriptionMutation();
+const batchRemoveMutation = useBatchRemoveSubscriptionsMutation();
+const subscriptionSubmitting = subscriptionMutation.isPending;
+const subscriptionError = ref('');
 const activeDropdown = ref<string | null>(null);
 const sortBy = ref<'relevance' | 'lastUpdated' | 'subscribeTime'>('relevance');
 const isRefreshing = ref(false);
@@ -348,7 +366,7 @@ const searchQuery = ref('');
 // Batch operations
 const batchMode = ref(false);
 const selectedItems = ref<Set<string>>(new Set());
-const isBatchProcessing = ref(false);
+const isBatchProcessing = batchRemoveMutation.isPending;
 const batchItemsToRemove = ref<SubscriptionListItemDto[]>([]);
 
 const sortedItems = computed(() => {
@@ -410,15 +428,28 @@ const refresh = async () => {
 
 const confirmRemove = (item: SubscriptionListItemDto) => {
   activeDropdown.value = null;
+  subscriptionError.value = '';
   itemToRemove.value = item;
 };
 
+const cancelRemove = () => {
+  if (subscriptionSubmitting.value) return;
+  itemToRemove.value = null;
+};
+
 const remove = async (feedId: string) => {
+  const item = items.value.find((entry) => entry.feedId === feedId);
+  if (!item || subscriptionSubmitting.value) return;
+  subscriptionError.value = '';
   try {
-    await subscriptionsStore.removeSubscription(feedId);
+    await subscriptionMutation.mutateAsync({
+      feedId: item.feedId,
+      feedUrl: item.url,
+      subscribed: true,
+    });
     itemToRemove.value = null;
-  } catch (err) {
-    console.error('取消订阅失败:', err);
+  } catch (error) {
+    subscriptionError.value = error instanceof Error ? error.message : '取消订阅失败，请重试';
   }
 };
 
@@ -429,9 +460,9 @@ const enterBatchMode = () => {
 };
 
 const exitBatchMode = () => {
+  if (isBatchProcessing.value) return;
   batchMode.value = false;
   selectedItems.value.clear();
-  isBatchProcessing.value = false;
 };
 
 const toggleSelection = (feedId: string) => {
@@ -453,7 +484,8 @@ const selectAll = () => {
 };
 
 const confirmBatchRemove = () => {
-  if (selectedItems.value.size === 0) return;
+  if (selectedItems.value.size === 0 || isBatchProcessing.value) return;
+  subscriptionError.value = '';
   
   batchItemsToRemove.value = filteredItems.value.filter(item => 
     selectedItems.value.has(item.feedId)
@@ -461,24 +493,34 @@ const confirmBatchRemove = () => {
 };
 
 const cancelBatchRemove = () => {
+  if (isBatchProcessing.value) return;
   batchItemsToRemove.value = [];
 };
 
 const batchRemove = async () => {
-  if (batchItemsToRemove.value.length === 0 || isBatchProcessing.value) return;
+  if (
+    batchItemsToRemove.value.length === 0
+    || isBatchProcessing.value
+    || subscriptionSubmitting.value
+  ) return;
   
-  isBatchProcessing.value = true;
+  subscriptionError.value = '';
   try {
-    // Remove items one by one using existing API
-    for (const item of batchItemsToRemove.value) {
-      await subscriptionsStore.removeSubscription(item.feedId);
+    const result = await batchRemoveMutation.mutateAsync(
+      batchItemsToRemove.value.map((item) => item.feedId),
+    );
+    for (const feedId of result.removedFeedIds) {
+      selectedItems.value.delete(feedId);
     }
-    batchItemsToRemove.value = [];
-    exitBatchMode();
-  } catch (err) {
-    console.error('批量取消订阅失败:', err);
-  } finally {
-    isBatchProcessing.value = false;
+    const failedIds = new Set(result.failedFeedIds);
+    batchItemsToRemove.value = batchItemsToRemove.value.filter((item) => failedIds.has(item.feedId));
+    if (failedIds.size) {
+      subscriptionError.value = `${failedIds.size} 个订阅取消失败，请重试。`;
+    } else {
+      exitBatchMode();
+    }
+  } catch (error) {
+    subscriptionError.value = error instanceof Error ? error.message : '批量取消订阅失败，请重试';
   }
 };
 

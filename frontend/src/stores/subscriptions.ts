@@ -1,10 +1,7 @@
 import { ref } from 'vue';
 import { defineStore } from 'pinia';
-import { invalidateSubscriptionCaches } from '@/queries/subscriptionCache';
 import {
-    addSubscription as addSubscriptionRequest,
     listSubscriptions,
-    removeSubscription as removeSubscriptionRequest,
     searchSubscriptions as searchSubscriptionsRequest,
     type SubscriptionListItemDto,
     type SubscriptionSearchResultDto,
@@ -18,7 +15,6 @@ export type {
 export const useSubscriptionsStore = defineStore('subscriptions', () => {
     const items = ref<SubscriptionListItemDto[]>([]);
     const loading = ref(false);
-    const submitting = ref(false);
     const error = ref<string | null>(null);
     const searchResults = ref<SubscriptionSearchResultDto[]>([]);
     const searchLoading = ref(false);
@@ -45,42 +41,6 @@ export const useSubscriptionsStore = defineStore('subscriptions', () => {
             throw err;
         } finally {
             loading.value = false;
-        }
-    };
-
-    const addSubscription = async (feedUrl: string, feedId: string) => {
-        if (!feedUrl && !feedId) {
-            error.value = '请输入有效的订阅链接';
-            return;
-        }
-        submitting.value = true;
-        error.value = null;
-        try {
-            await addSubscriptionRequest(feedUrl, feedId);
-            void invalidateSubscriptionCaches();
-            await fetchSubscriptions();
-        } catch (err) {
-            const message = err instanceof Error ? err.message : '添加订阅失败';
-            error.value = message;
-            throw err;
-        } finally {
-            submitting.value = false;
-        }
-    };
-
-    const removeSubscription = async (feedId: string) => {
-        submitting.value = true;
-        error.value = null;
-        try {
-            await removeSubscriptionRequest(feedId);
-            void invalidateSubscriptionCaches();
-            items.value = items.value.filter((item) => item.feedId !== feedId);
-        } catch (err) {
-            const message = err instanceof Error ? err.message : '取消订阅失败';
-            error.value = message;
-            throw err;
-        } finally {
-            submitting.value = false;
         }
     };
 
@@ -135,14 +95,11 @@ export const useSubscriptionsStore = defineStore('subscriptions', () => {
     return {
         items,
         loading,
-        submitting,
         error,
         searchResults,
         searchLoading,
         searchError,
         fetchSubscriptions,
-        addSubscription,
-        removeSubscription,
         searchSubscriptions,
         clearSearchResults
     };

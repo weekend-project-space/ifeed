@@ -335,10 +335,11 @@
 </template>
 
 <script setup lang="ts">
-import {computed, nextTick, onActivated, onBeforeUnmount, onDeactivated, ref, watch} from 'vue';
+import {computed, onActivated, onBeforeUnmount, onDeactivated, ref, watch} from 'vue';
 import {useRouter, useRoute} from 'vue-router';
 import {useDiscoveryCategoriesQuery, useInfiniteDiscoveryFeedsQuery} from '@/queries/discovery';
 import {useSubscriptionMutation} from '@/queries/subscriptions';
+import {useInfiniteScroll} from '@/composables/infiniteScroll';
 import SubscriptionsAddManual from './components/SubscriptionsAddManual.vue';
 import SubscriptionsAddOpml from './components/SubscriptionsAddOpml.vue';
 
@@ -420,41 +421,18 @@ watch(active, (value) => {
   if (!value) cancelSearch();
 }, { flush: 'sync' });
 
-const loadMoreSentinel = ref<HTMLElement | null>(null);
-let observer: IntersectionObserver | null = null;
-const disconnectObserver = () => {
-  observer?.disconnect();
-  observer = null;
-};
-const loadMore = async () => {
-  if (!active.value || !hasNextPage.value || feedsQuery.isFetching.value) return;
-  await feedsQuery.fetchNextPage();
-};
-const observeSentinel = () => {
-  disconnectObserver();
-  if (!active.value || !loadMoreSentinel.value || !hasNextPage.value
-      || feedsQuery.isFetching.value || feedsQuery.isError.value) return;
-  observer = new IntersectionObserver(entries => {
-    if (entries.some(entry => entry.isIntersecting)) void loadMore();
-  }, { rootMargin: '600px 0px' });
-  observer.observe(loadMoreSentinel.value);
-};
-watch([
-  loadMoreSentinel, active, feedsQuery.isFetching, hasNextPage, feedsQuery.isError, viewMode,
-], observeSentinel, { flush: 'post' });
-onActivated(async () => {
+const {sentinel: loadMoreSentinel, loadMore} = useInfiniteScroll({
+  enabled: active,
+  hasNextPage,
+  isLoading: feedsQuery.isFetching,
+  hasError: feedsQuery.isError,
+  onLoadMore: () => feedsQuery.fetchNextPage(),
+});
+onActivated(() => {
   searchQuery.value = props.query;
-  await nextTick();
-  observeSentinel();
 });
-onDeactivated(() => {
-  cancelSearch();
-  disconnectObserver();
-});
-onBeforeUnmount(() => {
-  cancelSearch();
-  disconnectObserver();
-});
+onDeactivated(cancelSearch);
+onBeforeUnmount(cancelSearch);
 
 const handleImageError = (event: Event) => {
   const img = event.target as HTMLImageElement;

@@ -41,9 +41,10 @@
 </template>
 
 <script setup lang="ts">
-import {computed, onActivated, onBeforeUnmount, onDeactivated, onMounted, ref, watch} from 'vue';
+import {computed} from 'vue';
 import {normalizeArticle} from '../stores/articles/types';
 import {useInfiniteRecommendationsQuery} from '../queries/recommendations';
+import {useInfiniteScroll} from '../composables/infiniteScroll';
 
 defineOptions({ name: 'HomePage' });
 
@@ -60,44 +61,12 @@ const articleError = computed(() => {
   return error instanceof Error ? error.message : error ? '推荐文章加载失败' : null;
 });
 const nextPageError = computed(() => recommendationsQuery.isFetchNextPageError.value);
-const loadMoreSentinel = ref<HTMLElement | null>(null);
-let observer: IntersectionObserver | null = null;
-
-const loadMore = async () => {
-  if (!hasNextPage.value || isFetchingNextPage.value) return;
-  try {
-    await recommendationsQuery.fetchNextPage();
-  } catch {
-    // 错误状态由 Query 暴露，页面提供重试入口。
-  }
-};
+const {sentinel: loadMoreSentinel, loadMore} = useInfiniteScroll({
+  hasNextPage,
+  isLoading: recommendationsQuery.isFetching,
+  hasError: recommendationsQuery.isError,
+  onLoadMore: () => recommendationsQuery.fetchNextPage(),
+});
 
 const refresh = () => recommendationsQuery.refetch();
-
-const observeSentinel = () => {
-  observer?.disconnect();
-  observer = null;
-  if (!loadMoreSentinel.value) return;
-  observer = new IntersectionObserver((entries) => {
-    if (entries[0]?.isIntersecting) {
-      void loadMore();
-    }
-  }, {rootMargin: '600px 0px'});
-  observer.observe(loadMoreSentinel.value);
-};
-
-const disconnectObserver = () => {
-  observer?.disconnect();
-  observer = null;
-};
-
-const activateObserver = () => {
-  if (!observer) observeSentinel();
-};
-
-watch(loadMoreSentinel, observeSentinel);
-onMounted(activateObserver);
-onActivated(activateObserver);
-onDeactivated(disconnectObserver);
-onBeforeUnmount(disconnectObserver);
 </script>

@@ -89,7 +89,7 @@
               :class="feedDetail.subscribed
                 ? 'text-secondary bg-secondary/10 hover:bg-secondary/20'
                 : 'text-white bg-secondary hover:bg-secondary/90'"
-              :disabled="subscriptionSubmitting || feedQuery.isPending.value || subscriptionMutation.isPending.value"
+              :disabled="subscriptionSubmitting || feedQuery.isPending.value"
               :title="feedDetail.subscribed ? '取消订阅' : '订阅该来源'"
               :aria-label="feedDetail.subscribed ? '取消订阅' : '订阅该来源'"
               :aria-pressed="feedDetail.subscribed"
@@ -98,6 +98,9 @@
           </button>
 
         </div>
+        <p v-if="subscriptionError" class="mb-3 text-sm text-red-600 dark:text-red-400" role="alert">
+          {{ subscriptionError }}
+        </p>
 
         <!-- Action Bar -->
         <div class="flex items-center justify-between py-4 border-y  border-gray-100 dark:border-gray-800">
@@ -346,11 +349,9 @@
 <script setup lang="ts">
 import {computed, nextTick, onBeforeUnmount, onDeactivated, onMounted, ref, watch} from 'vue';
 import {useMutation, useQueryClient} from '@tanstack/vue-query';
-import {storeToRefs} from 'pinia';
 import {useRoute, useRouter} from 'vue-router';
 import {useArticlesStore} from '../stores/articles/articles';
 import {useCollectionsStore} from '../stores/collections';
-import {useSubscriptionsStore} from '../stores/subscriptions';
 import MediaAttachment from "../components/MediaAttachment.vue";
 import ArticleCardList from "../components/ArticleCardList.vue";
 import {useAuthStore} from "../stores/auth";
@@ -358,8 +359,9 @@ import {md2html} from "../utils/markdown";
 import {normalizeArticle, type ArticleDetail} from '../stores/articles/types';
 import {articleQueryKey, useArticleQuery, useArticleRecommendationsQuery} from '../queries/article';
 import {useFeedQuery} from '../queries/feed';
-import {resetInfiniteArticleCaches, updateArticleCollectedCaches} from '../queries/articleCache';
+import {updateArticleCollectedCaches} from '../queries/articleCache';
 import {useDocumentTitle} from '../composables/documentTitle';
+import {useSubscriptionMutation} from '../queries/subscriptions';
 
 defineOptions({name: 'ArticleDetailPage'});
 
@@ -373,10 +375,8 @@ const router = useRouter();
 const route = useRoute();
 const articlesStore = useArticlesStore();
 const collectionsStore = useCollectionsStore();
-const subscriptionsStore = useSubscriptionsStore();
 const authStore = useAuthStore();
 const queryClient = useQueryClient();
-const {submitting: subscriptionSubmitting} = storeToRefs(subscriptionsStore);
 
 const scrollTracked = ref(false);
 const articleContentRef = ref<HTMLElement | null>(null);
@@ -567,28 +567,20 @@ const toggleCollection = () => {
   });
 };
 
-const subscriptionMutation = useMutation({
-  mutationFn: async () => {
-    const feed = feedDetail.value;
-    if (!feed) return;
-    if (feed.subscribed) {
-      await subscriptionsStore.removeSubscription(feed.feedId);
-    } else {
-      await subscriptionsStore.addSubscription(feed.url, feed.feedId);
-    }
-  },
-  onSuccess: async () => {
-    resetInfiniteArticleCaches(queryClient, ['subscriptionArticles']);
-    await Promise.all([
-      queryClient.invalidateQueries({queryKey: ['subscriptionArticles']}),
-      feedQuery.refetch(),
-    ]);
-  },
-});
-
-const toggleFeedSubscription = () => {
-  if (!feedDetail.value || subscriptionMutation.isPending.value) return;
-  subscriptionMutation.mutate();
+const subscriptionMutation = useSubscriptionMutation();
+const subscriptionSubmitting = subscriptionMutation.isPending;
+const subscriptionError = ref('');
+const toggleFeedSubscription = async () => {
+  const feed = feedDetail.value;
+  if (!feed || subscriptionSubmitting.value) return;
+  subscriptionError.value = '';
+  try {
+    await subscriptionMutation.mutateAsync({
+      feedId: feed.feedId, feedUrl: feed.url, subscribed: feed.subscribed,
+    });
+  } catch (error) {
+    subscriptionError.value = error instanceof Error ? error.message : '订阅操作失败，请重试';
+  }
 };
 
 const handleTagClick = (tag: string) => {

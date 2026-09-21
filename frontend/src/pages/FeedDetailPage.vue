@@ -178,7 +178,7 @@
 </template>
 
 <script setup lang="ts">
-import {computed, onActivated, onBeforeUnmount, onDeactivated, onMounted, ref, watch} from 'vue';
+import {computed, ref, watch} from 'vue';
 import {useRouter} from 'vue-router';
 import {useMutation} from '@tanstack/vue-query';
 import {normalizeArticle} from '../stores/articles/types';
@@ -188,6 +188,7 @@ import {useDocumentTitle} from '../composables/documentTitle';
 import {useSubscriptionsStore} from '../stores/subscriptions';
 import {useReadFeedStore} from '../stores/readfeed'
 import {formatRelativeTime} from '../utils/datetime';
+import {useInfiniteScroll} from '../composables/infiniteScroll';
 
 defineOptions({name: 'FeedDetailPage'});
 
@@ -224,8 +225,6 @@ const articleError = computed(() => {
   return error instanceof Error ? error.message : error ? '文章加载失败' : null;
 });
 const nextPageError = computed(() => feedArticlesQuery.isFetchNextPageError.value);
-const loadMoreSentinel = ref<HTMLElement | null>(null);
-let observer: IntersectionObserver | null = null;
 useDocumentTitle(() => (
   detail.value?.title?.trim()
   || detail.value?.siteUrl?.trim()
@@ -354,39 +353,10 @@ watch([() => feedQuery.data.value, () => subscriptionsStore.items], () => {
   void readFeed();
 }, {immediate: true});
 
-const loadMore = async () => {
-  if (!hasNextPage.value || isFetchingNextPage.value) return;
-  try {
-    await feedArticlesQuery.fetchNextPage();
-  } catch {
-    // 错误状态由 Query 暴露，页面提供重试入口。
-  }
-};
-
-const observeSentinel = () => {
-  observer?.disconnect();
-  observer = null;
-  if (!loadMoreSentinel.value) return;
-  observer = new IntersectionObserver((entries) => {
-    if (entries[0]?.isIntersecting) {
-      void loadMore();
-    }
-  }, {rootMargin: '600px 0px'});
-  observer.observe(loadMoreSentinel.value);
-};
-
-const disconnectObserver = () => {
-  observer?.disconnect();
-  observer = null;
-};
-
-const activateObserver = () => {
-  if (!observer) observeSentinel();
-};
-
-watch(loadMoreSentinel, observeSentinel);
-onMounted(activateObserver);
-onActivated(activateObserver);
-onDeactivated(disconnectObserver);
-onBeforeUnmount(disconnectObserver);
+const {sentinel: loadMoreSentinel, loadMore} = useInfiniteScroll({
+  hasNextPage,
+  isLoading: feedArticlesQuery.isFetching,
+  hasError: feedArticlesQuery.isError,
+  onLoadMore: () => feedArticlesQuery.fetchNextPage(),
+});
 </script>
