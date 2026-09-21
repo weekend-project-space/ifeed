@@ -145,7 +145,7 @@ public class ArticleController {
 //        内容只要有增强默认所有人都可以看
 //        ArticleEnrichment enrichment = Objects.isNull(principal) || User.Plan.FREE.equals(principal.getCurrentPlan()) ? null : articleEnrichmentService.getEnrichment(article.getId());
         ArticleEnrichment enrichment = articleEnrichmentService.getEnrichment(article.getId());
-        var collected = Objects.nonNull(principal) && userCollectionService.isCollected(principal.getId(), article.getUid());
+        var collected = Objects.nonNull(principal) && userCollectionService.isCollected(principal.getId(), article.getId());
         Feed feed = article.getFeed();
         var response = new ArticleDetailResponse(
                 article.getUid().toString(),

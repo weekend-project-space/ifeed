@@ -5,15 +5,16 @@ import org.bitmagic.ifeed.api.request.ReadHistoryRequest;
 import org.bitmagic.ifeed.api.response.MessageResponse;
 import org.bitmagic.ifeed.api.response.ReadHistoryItemResponse;
 import org.bitmagic.ifeed.api.util.IdentifierUtils;
+import org.bitmagic.ifeed.api.util.BehaviorPageables;
 import org.bitmagic.ifeed.config.security.UserPrincipal;
 import org.bitmagic.ifeed.domain.service.UserHistoryService;
 import org.bitmagic.ifeed.exception.ApiException;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.util.MultiValueMap;
 
 @RestController
 @RequestMapping("/api/user/history")
@@ -42,8 +43,8 @@ public class UserHistoryController {
 
     @GetMapping
     public ResponseEntity<Page<ReadHistoryItemResponse>> listHistory(@AuthenticationPrincipal UserPrincipal principal,
-                                                                     Pageable pageable) {
-        var history = userHistoryService.listHistory(principal.getId(), pageable);
+                                                                     @RequestParam MultiValueMap<String, String> parameters) {
+        var history = userHistoryService.listHistory(principal.getId(), BehaviorPageables.parse(parameters, "readAt"));
         return ResponseEntity.ok(history);
     }
 

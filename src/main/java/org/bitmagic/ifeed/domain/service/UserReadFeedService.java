@@ -24,8 +24,11 @@ public class UserReadFeedService {
     // Record that user read a feed at current time. Upsert latest timestamp per feed.
     @Transactional
     public void recordFeedRead(Integer userId, UUID feedUid) {
+        recordFeedRead(userId, feedUid, Instant.now());
+    }
 
-
+    @Transactional
+    public void recordFeedRead(Integer userId, UUID feedUid, Instant readAt) {
         var document = userBehaviorRepository.findById(userId.toString())
                 .orElseGet(() -> UserBehaviorDocument.builder()
                         .id(userId.toString())
@@ -36,7 +39,6 @@ public class UserReadFeedService {
         }
 
         var feedIdValue = feedUid.toString();
-        var now = Instant.now();
 
         var existing = document.getReadFeedHistory().stream()
                 .filter(ref -> feedIdValue.equals(ref.getFeedId()))
@@ -44,11 +46,13 @@ public class UserReadFeedService {
                 .orElse(null);
 
         if (existing != null) {
-            existing.setTimestamp(now);
+            if (existing.getTimestamp() == null || existing.getTimestamp().isBefore(readAt)) {
+                existing.setTimestamp(readAt);
+            }
         } else {
             document.getReadFeedHistory().add(UserBehaviorDocument.FeedRef.builder()
                     .feedId(feedIdValue)
-                    .timestamp(now)
+                    .timestamp(readAt)
                     .build());
         }
 

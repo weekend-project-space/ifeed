@@ -1,159 +1,64 @@
 package org.bitmagic.ifeed.domain.service;
 
 import lombok.RequiredArgsConstructor;
-import org.bitmagic.ifeed.api.response.CollectionItemResponse;
 import org.bitmagic.ifeed.api.response.ReadHistoryItemResponse;
-import org.bitmagic.ifeed.domain.document.UserBehaviorDocument;
-import org.bitmagic.ifeed.domain.model.Article;
-import org.bitmagic.ifeed.domain.model.User;
-import org.bitmagic.ifeed.domain.record.ArticleSummary;
-import org.bitmagic.ifeed.domain.record.ArticleSummaryView;
 import org.bitmagic.ifeed.domain.repository.ArticleRepository;
-import org.bitmagic.ifeed.domain.repository.UserBehaviorRepository;
+import org.bitmagic.ifeed.domain.repository.UserReadHistoryRepository;
 import org.bitmagic.ifeed.exception.ApiException;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
 import java.util.UUID;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class UserHistoryService {
 
-    private final UserBehaviorRepository userBehaviorRepository;
+    private final UserReadHistoryRepository historyRepository;
     private final ArticleRepository articleRepository;
+    private final UserReadFeedService userReadFeedService;
 
     @Transactional
     public void recordHistory(Integer userId, UUID articleId, Instant readAt) {
-        var article = articleRepository.findOne((root, query, cb) -> cb.equal(root.get("uid"), articleId))
+        var article = articleRepository.findOne((root, query, builder) -> builder.equal(root.get("uid"), articleId))
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Article not found"));
-
-        var document = getOrCreateDocument(userId);
-        ensureReadHistoryInitialized(document);
-
-        var articleIdValue = article.getUid().toString();
         var timestamp = readAt != null ? readAt : Instant.now();
-//      添加文章阅读记录
-        var existing = document.getReadHistory().stream()
-                .filter(item -> articleIdValue.equals(item.getArticleId()))
-                .findFirst()
-                .orElse(null);
-
-        if (existing != null) {
-            existing.setTimestamp(timestamp);
-        } else {
-            document.getReadHistory().add(UserBehaviorDocument.ArticleRef.builder()
-                    .articleId(articleIdValue)
-                    .timestamp(timestamp)
-                    .build());
-        }
-
-        //      添加feed阅读记录
-        var feedIdValue = article.getFeed().getUid().toString();
-        var feedExisting = document.getReadFeedHistory().stream()
-                .filter(item -> feedIdValue.equals(item.getFeedId()))
-                .findFirst()
-                .orElse(null);
-
-        if (feedExisting != null) {
-            feedExisting.setTimestamp(timestamp);
-        } else {
-            document.getReadFeedHistory().add(UserBehaviorDocument.FeedRef.builder()
-                    .feedId(feedIdValue)
-                    .timestamp(timestamp)
-                    .build());
-        }
-
-        userBehaviorRepository.save(document);
+        historyRepository.upsert(userId.longValue(), article.getId(), timestamp);
+        userReadFeedService.recordFeedRead(userId, article.getFeed().getUid(), timestamp);
     }
 
     @Transactional(readOnly = true)
     public Page<ReadHistoryItemResponse> listHistory(Integer userId, Pageable pageable) {
-        var document = userBehaviorRepository.findById(userId.toString()).orElse(null);
-        if (document == null) {
-            return Page.empty(pageable);
+        if (pageable.isUnpaged() || pageable.getPageSize() > 100) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "History page size must be between 1 and 100");
         }
-        ensureReadHistoryInitialized(document);
-        if (document.getReadHistory().isEmpty()) {
-            return Page.empty(pageable);
+        for (Sort.Order order : pageable.getSort()) {
+            if (!order.getProperty().equals("readAt") && !order.getProperty().equals("timestamp")) {
+                throw new ApiException(HttpStatus.BAD_REQUEST, "Unsupported history sort field");
+            }
         }
-
-        var sorted = sortHistory(document, pageable);
-        var total = sorted.size();
-        var fromIndex = Math.min((int) pageable.getOffset(), total);
-        var toIndex = Math.min(fromIndex + pageable.getPageSize(), total);
-        var pageRefs = sorted.subList(fromIndex, toIndex);
-
-        var articleIds = pageRefs.stream()
-                .map(UserBehaviorDocument.ArticleRef::getArticleId)
-                .map(UUID::fromString)
-                .toList();
-
-        Map<UUID, ArticleSummary> articles = articleRepository.listArticleSummaries(articleIds).stream()
-                .collect(Collectors.toMap(ArticleSummary::id, Function.identity()));
-
-        var content = pageRefs.stream()
-                .map(item -> {
-                    var id = UUID.fromString(item.getArticleId());
-                    var article = articles.get(id);
-                    var title = article != null ? article.title() : null;
-                    return new ReadHistoryItemResponse(item.getArticleId(), title, article.feedTitle(), article.thumbnail(), article.summary(), item.getTimestamp());
-                })
-                .toList();
-
-        return new PageImpl<>(content, pageable, total);
-    }
-
-    @Transactional
-    public void removeFromHistory(Integer userId, UUID articleId) {
-        var document = userBehaviorRepository.findById(userId.toString())
-                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Article not read"));
-
-        ensureReadHistoryInitialized(document);
-
-        var removed = document.getReadHistory().removeIf(item -> articleId.toString().equals(item.getArticleId()));
-        if (!removed) {
-            throw new ApiException(HttpStatus.NOT_FOUND, "Article not read");
-        }
-
-        userBehaviorRepository.save(document);
-    }
-
-    private List<UserBehaviorDocument.ArticleRef> sortHistory(UserBehaviorDocument document, Pageable pageable) {
-        var comparator = Comparator.comparing(UserBehaviorDocument.ArticleRef::getTimestamp);
         var order = pageable.getSort().getOrderFor("readAt");
         if (order == null) {
             order = pageable.getSort().getOrderFor("timestamp");
         }
-        if (order == null || order.isDescending()) {
-            comparator = comparator.reversed();
-        }
-        return new ArrayList<>(document.getReadHistory()).stream()
-                .sorted(comparator)
-                .toList();
+        var direction = order != null ? order.getDirection() : Sort.Direction.DESC;
+        var normalized = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(),
+                Sort.by(direction, "readAt"));
+        return historyRepository.findByUserId(userId.longValue(), normalized);
     }
 
-    private UserBehaviorDocument getOrCreateDocument(Integer userId) {
-        return userBehaviorRepository.findById(userId.toString())
-                .orElseGet(() -> UserBehaviorDocument.builder()
-                        .id(userId.toString())
-                        .build());
-    }
-
-    private void ensureReadHistoryInitialized(UserBehaviorDocument document) {
-        if (document.getReadHistory() == null) {
-            document.setReadHistory(new ArrayList<>());
+    @Transactional
+    public void removeFromHistory(Integer userId, UUID articleId) {
+        var article = articleRepository.findOne((root, query, builder) -> builder.equal(root.get("uid"), articleId))
+                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Article not read"));
+        if (historyRepository.delete(userId.longValue(), article.getId()) == 0) {
+            throw new ApiException(HttpStatus.NOT_FOUND, "Article not read");
         }
     }
 }
