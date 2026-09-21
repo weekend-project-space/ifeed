@@ -17,6 +17,8 @@ export interface ArticleDto {
   publishedAt?: string;
   tags?: string[];
   collected?: boolean;
+  liked?: boolean;
+  folderId?: string | null;
 }
 
 export interface ArticleEnrichmentResult {

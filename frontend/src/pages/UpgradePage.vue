@@ -62,6 +62,10 @@
         </router-link>
 
         <!-- Collections Section -->
+        <router-link to="/likes" class="flex items-center px-4 py-3.5 hover:bg-surface-container transition-colors">
+          <svg class="w-6 h-6 text-text mr-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8Z" /></svg>
+          <span class="flex-1 text-left text-sm text-text">我的喜欢</span>
+        </router-link>
         <router-link to="/collections" class="flex items-center px-4 py-3.5 hover:bg-surface-container transition-colors">
           <svg class="w-6 h-6 text-text mr-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/>

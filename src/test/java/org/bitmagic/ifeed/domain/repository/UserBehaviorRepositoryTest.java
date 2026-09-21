@@ -138,6 +138,8 @@ class UserBehaviorRepositoryTest {
         assertEquals(first.collectedAt(), moved.collectedAt());
         assertEquals(folder.folderId(), unchanged.folderId());
         assertEquals(first.collectedAt(), unchanged.collectedAt());
+        assertEquals(unchanged, collections.findState(7L, 3_000_000_001L).orElseThrow());
+        assertTrue(collections.findState(8L, 3_000_000_001L).isEmpty());
         var query = BehaviorPageQuery.of(PageRequest.of(0, 20), "collectedAt", Map.of("collectedAt", "collected_at"));
         assertEquals(1, collections.list(7L, folderId, true, query).getTotalElements());
         assertTrue(collections.list(7L, null, true, query).isEmpty());
@@ -160,6 +162,7 @@ class UserBehaviorRepositoryTest {
         var query = BehaviorPageQuery.of(PageRequest.of(0, 20), "collectedAt", Map.of("collectedAt", "collected_at"));
         var remaining = collections.list(7L, null, true, query).getContent().getFirst();
         assertNull(remaining.folderId());
+        assertNull(collections.findState(7L, 3_000_000_001L).orElseThrow().folderId());
         assertEquals(collected.collectedAt(), remaining.collectedAt());
     }
 
@@ -204,6 +207,8 @@ class UserBehaviorRepositoryTest {
         var collections = new UserCollectionRepository(jdbcTemplate);
         collections.save(7L, 3_000_000_001L, null, false);
         var first = likes.save(7L, 3_000_000_001L);
+        assertTrue(likes.exists(7L, 3_000_000_001L));
+        assertFalse(likes.exists(8L, 3_000_000_001L));
         assertEquals(first, likes.save(7L, 3_000_000_001L));
         var query = BehaviorPageQuery.of(PageRequest.of(0, 20), "likedAt", Map.of("likedAt", "liked_at"));
         assertEquals(1, likes.list(7L, query).getTotalElements());
@@ -211,6 +216,7 @@ class UserBehaviorRepositoryTest {
         assertTrue(likes.list(8L, query).isEmpty());
 
         likes.delete(7L, 3_000_000_001L);
+        assertFalse(likes.exists(7L, 3_000_000_001L));
         likes.delete(7L, 3_000_000_001L);
 
         assertTrue(likes.list(7L, query).isEmpty());

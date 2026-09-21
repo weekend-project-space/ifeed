@@ -71,15 +71,7 @@ public class UserCollectionRepository {
                 ON CONFLICT (user_id, article_id) DO UPDATE
                 SET folder_id = CASE WHEN ? THEN EXCLUDED.folder_id ELSE user_collections.folder_id END
                 """, userId, articleId, folderId, folderSpecified);
-        return jdbcTemplate.queryForObject("""
-                SELECT article.uid AS article_uid, folder.uid AS folder_uid, collection.collected_at
-                FROM user_collections collection
-                JOIN articles article ON article.id = collection.article_id
-                LEFT JOIN user_collection_folders folder ON folder.id = collection.folder_id
-                WHERE collection.user_id = ? AND collection.article_id = ?
-                """, (resultSet, rowNumber) -> new CollectionStateResponse(
-                resultSet.getObject("article_uid", UUID.class), resultSet.getObject("folder_uid", UUID.class),
-                resultSet.getTimestamp("collected_at").toInstant()), userId, articleId);
+        return findState(userId, articleId).orElseThrow();
     }
 
     public void importAll(Long userId, Map<Long, Instant> collections) {
@@ -111,6 +103,18 @@ public class UserCollectionRepository {
                 SELECT article_id FROM user_collections
                 WHERE user_id = :userId AND article_id IN (:articleIds)
                 """, Map.of("userId", userId, "articleIds", articleIds), Long.class));
+    }
+
+    public Optional<CollectionStateResponse> findState(Long userId, Long articleId) {
+        return jdbcTemplate.query("""
+                SELECT article.uid AS article_uid, folder.uid AS folder_uid, collection.collected_at
+                FROM user_collections collection
+                JOIN articles article ON article.id = collection.article_id
+                LEFT JOIN user_collection_folders folder ON folder.id = collection.folder_id
+                WHERE collection.user_id = ? AND collection.article_id = ?
+                """, (resultSet, rowNumber) -> new CollectionStateResponse(
+                resultSet.getObject("article_uid", UUID.class), resultSet.getObject("folder_uid", UUID.class),
+                resultSet.getTimestamp("collected_at").toInstant()), userId, articleId).stream().findFirst();
     }
 
     public Page<CollectionItemResponse> list(Long userId, Long folderId, boolean filterFolder, BehaviorPageQuery query) {

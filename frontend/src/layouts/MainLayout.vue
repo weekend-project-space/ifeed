@@ -446,7 +446,7 @@
         <div :class="route.name === 'feedsSubscriptions' ? 'px-1 pt-5 sm:px-6 sm:pt-6' : ''">
           <global-audio-player>
             <router-view v-slot="{ Component }">
-              <KeepAlive :include="['HomePage', 'FeedSubscriptionsPage', 'FeedDetailPage', 'SearchPage', 'ArticleDetailPage', 'SubscriptionDiscoveryPage']">
+              <KeepAlive :include="['HomePage', 'FeedSubscriptionsPage', 'FeedDetailPage', 'SearchPage', 'ArticleDetailPage', 'SubscriptionDiscoveryPage', 'CollectionsPage', 'LikesPage', 'HistoryPage']">
                 <component :is="Component" />
               </KeepAlive>
             </router-view>
@@ -763,6 +763,17 @@ const navSections = computed<NavSection[]>(() => {
           const tab = current.query.tab as string | undefined;
           return current.name === 'collections' && !tab;
         }
+      },
+      {
+        id: 'likes',
+        label: '喜欢',
+        to: { name: 'likes' as const },
+        icon: {
+          stroke: true,
+          paths: ['M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8Z'],
+          viewBox: '0 0 24 24'
+        },
+        activeMatch: (current) => current.name === 'likes'
       }
     ]
   }];

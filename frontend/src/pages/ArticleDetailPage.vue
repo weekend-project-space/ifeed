@@ -132,37 +132,16 @@
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                 </svg>
               </button>
-              <button
-                      class="flex h-10 w-10 items-center justify-center text-sm font-medium rounded-full transition-all text-gray-900 dark:text-gray-100 hover:bg-gray-200 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                      :disabled="collectionSubmitting"
-                      :title="article.collected ? '取消收藏' : '收藏'"
-                      :aria-label="article.collected ? '取消收藏' : '收藏'"
-                      :aria-pressed="article.collected"
-                      @click="toggleCollection">
-                <svg class="w-5 h-5" :class="article.collected ? 'fill-current' : 'fill-none'" stroke="currentColor"
-                     stroke-width="2" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round"
-                        d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/>
-                </svg>
-              </button>
+              <ArticleActions :article-id="article.id" :collected="article.collected ?? false" :liked="article.liked" :folder-id="article.folderId" />
             </Teleport>
           </template>
-          <button v-if="!headerActionExists"
-                  class="p-2 text-sm font-medium rounded-full transition-all inline-flex items-center gap-2 text-gray-900 dark:text-gray-100 hover:bg-gray-200 dark:hover:bg-gray-700"
-                  :disabled="collectionSubmitting"
-                  :title="article.collected ? '取消收藏' : '收藏'"
-                  :aria-label="article.collected ? '取消收藏' : '收藏'"
-                  :aria-pressed="article.collected"
-                  @click="toggleCollection"
-          >
-            <svg class="w-4 h-4" :class="article.collected ? 'fill-current' : 'fill-none'" stroke="currentColor"
-                 stroke-width="2" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round"
-                    d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/>
-            </svg>
-          </button>
+          <ArticleActions v-if="!headerActionExists" :article-id="article.id" :collected="article.collected ?? false" :liked="article.liked" :folder-id="article.folderId" />
         </div>
       </header>
+
+      <p v-if="historyMutation.isError.value" role="alert" class="mx-auto max-w-screen-lg px-4 py-2 text-sm text-red-600">
+        阅读记录保存失败 <button class="underline" :disabled="historyMutation.isPending.value" @click="historyMutation.mutate(articleId)">重试</button>
+      </p>
 
       <!-- Tabs Navigation - Clean Style -->
       <div v-if="article.summary||article.mindMap||article.requiresUpgrade"
@@ -347,11 +326,12 @@
 </template>
 
 <script setup lang="ts">
-import {computed, nextTick, onBeforeUnmount, onDeactivated, onMounted, ref, watch} from 'vue';
+import {computed, nextTick, onActivated, onBeforeUnmount, onDeactivated, onMounted, ref, watch} from 'vue';
 import {useMutation, useQueryClient} from '@tanstack/vue-query';
 import {useRoute, useRouter} from 'vue-router';
 import {useArticlesStore} from '../stores/articles/articles';
-import {useCollectionsStore} from '../stores/collections';
+import ArticleActions from '../components/ArticleActions.vue';
+import {useHistoryMutation} from '../queries/articleActions';
 import MediaAttachment from "../components/MediaAttachment.vue";
 import ArticleCardList from "../components/ArticleCardList.vue";
 import {useAuthStore} from "../stores/auth";
@@ -359,7 +339,6 @@ import {md2html} from "../utils/markdown";
 import {normalizeArticle, type ArticleDetail} from '../stores/articles/types';
 import {articleQueryKey, useArticleQuery, useArticleRecommendationsQuery} from '../queries/article';
 import {useFeedQuery} from '../queries/feed';
-import {updateArticleCollectedCaches} from '../queries/articleCache';
 import {useDocumentTitle} from '../composables/documentTitle';
 import {useSubscriptionMutation} from '../queries/subscriptions';
 
@@ -374,11 +353,10 @@ const props = defineProps<Props>();
 const router = useRouter();
 const route = useRoute();
 const articlesStore = useArticlesStore();
-const collectionsStore = useCollectionsStore();
 const authStore = useAuthStore();
 const queryClient = useQueryClient();
 
-const scrollTracked = ref(false);
+const pageActive = ref(false);
 const articleContentRef = ref<HTMLElement | null>(null);
 const mindmapFrame = ref<HTMLIFrameElement | null>(null);
 type MainTab = 'content' | 'summary' | 'mindmap';
@@ -388,7 +366,6 @@ const linkCopied = ref(false);
 const lazyLoadObserver = ref<IntersectionObserver | null>(null);
 const headerActionExists = ref(false);
 
-const SCROLL_PROGRESS_THRESHOLD = 0.3;
 const AVERAGE_WORDS_PER_MINUTE = 200;
 
 const articleId = computed(() => props.id ?? '');
@@ -409,8 +386,12 @@ const detailsItems = computed(() => (recommendationsQuery.data.value ?? []).map(
 const detailsLoading = computed(() => recommendationsQuery.isPending.value);
 useDocumentTitle(() => article.value?.title);
 
-const historyMutation = useMutation({
-  mutationFn: (id: string) => articlesStore.recordHistory(id),
+const historyMutation = useHistoryMutation('record');
+const readingKey = computed(() => pageActive.value && authStore.isAuthenticated && article.value?.id === articleId.value
+  ? `${userId.value}:${articleId.value}` : '');
+watch(readingKey, (key) => {
+  historyMutation.reset();
+  if (key) historyMutation.mutate(articleId.value);
 });
 
 // 计算思维导图高度
@@ -442,10 +423,6 @@ const readingTime = computed(() => {
   return Math.max(1, minutes); // 至少显示 1 分钟
 });
 
-const getScrollTop = (): number => {
-  return window.scrollY ?? document.documentElement.scrollTop ?? document.body.scrollTop ?? 0;
-};
-
 const sendMindmapData = () => {
   if (!mindmapFrame.value || !mindmapMarkdown.value) return;
 
@@ -462,42 +439,6 @@ const sendMindmapData = () => {
     console.error('Failed to send mindmap data:', error);
   }
 };
-
-// 节流函数
-const throttle = <T extends (...args: any[]) => void>(fn: T, delay: number): T => {
-  let lastCall = 0;
-  return ((...args: any[]) => {
-    const now = Date.now();
-    if (now - lastCall >= delay) {
-      lastCall = now;
-      fn(...args);
-    }
-  }) as T;
-};
-
-const handleScroll = throttle(() => {
-  // 记录阅读历史
-  if (scrollTracked.value || !article.value) return;
-
-  const windowHeight = window.innerHeight;
-  const documentHeight = document.documentElement.scrollHeight;
-  const scrollTop = getScrollTop();
-  const maxScroll = documentHeight - windowHeight;
-  if (authStore.isAuthenticated) {
-    if (maxScroll <= 0) {
-      scrollTracked.value = true;
-      historyMutation.mutate(articleId.value);
-      return;
-    }
-
-    const progress = scrollTop / maxScroll;
-    if (progress > SCROLL_PROGRESS_THRESHOLD) {
-      scrollTracked.value = true;
-      historyMutation.mutate(articleId.value);
-    }
-  }
-
-}, 100);
 
 const handleTabSwitch = async (tab: MainTab) => {
   const query = {...route.query};
@@ -538,34 +479,6 @@ const enrichMutation = useMutation({
   },
 });
 const isEnriching = computed(() => enrichMutation.isPending.value);
-
-const collectionMutation = useMutation({
-  mutationFn: (payload: { id: string; collected: boolean }) =>
-    collectionsStore.toggleCollection(payload.id, {
-      collected: payload.collected,
-    }),
-  onSuccess: (_, payload) => {
-    const collected = !payload.collected;
-    queryClient.setQueryData<ArticleDetail>(currentArticleQueryKey.value, (previous) => previous ? {
-      ...previous,
-      collected,
-    } : previous);
-    updateArticleCollectedCaches(queryClient, userId.value, payload.id, collected);
-    void Promise.all([
-      queryClient.invalidateQueries({queryKey: ['collections']}),
-      queryClient.invalidateQueries({queryKey: ['search']}),
-    ]);
-  },
-});
-const collectionSubmitting = computed(() => collectionMutation.isPending.value);
-
-const toggleCollection = () => {
-  if (!article.value || collectionMutation.isPending.value) return;
-  collectionMutation.mutate({
-    id: articleId.value,
-    collected: article.value.collected ?? false,
-  });
-};
 
 const subscriptionMutation = useSubscriptionMutation();
 const subscriptionSubmitting = subscriptionMutation.isPending;
@@ -682,10 +595,13 @@ const setupLazyLoading = () => {
 onMounted(async () => {
   // 检查 Teleport 目标是否存在
   headerActionExists.value = !!document.querySelector('#header-action');
-  window.addEventListener('scroll', handleScroll, {passive: true});
+  pageActive.value = true;
 });
 
+onActivated(() => { pageActive.value = true; });
+
 onDeactivated(() => {
+  pageActive.value = false;
   linkCopied.value = false;
 });
 
@@ -697,18 +613,14 @@ onBeforeUnmount(() => {
     lazyLoadObserver.value = null;
   }
 
-  window.removeEventListener('scroll', handleScroll);
+  pageActive.value = false;
 });
 
-watch(() => article.value, async (newArticle) => {
-  if (!newArticle) return;
-  scrollTracked.value = false;
-  mindmapMarkdown.value = newArticle.mindMap ?? '';
-  window.scrollTo({top: 0, behavior: 'auto'});
+watch([() => article.value?.id, () => article.value?.content, () => article.value?.mindMap], async ([id], previous) => {
+  if (!article.value) return;
+  mindmapMarkdown.value = article.value.mindMap ?? '';
+  if (id !== previous?.[0]) window.scrollTo({top: 0, behavior: 'auto'});
   await nextTick();
-  if (authStore.isAuthenticated) {
-    historyMutation.mutate(articleId.value);
-  }
   setupLazyLoading();
 }, {immediate: true});
 

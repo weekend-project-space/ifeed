@@ -23,6 +23,7 @@ import org.bitmagic.ifeed.domain.service.ArticleEnrichmentService;
 import org.bitmagic.ifeed.domain.service.ArticleService;
 import org.bitmagic.ifeed.domain.service.MixFeedService;
 import org.bitmagic.ifeed.domain.service.UserCollectionService;
+import org.bitmagic.ifeed.domain.service.UserLikeService;
 import org.bitmagic.ifeed.exception.ApiException;
 import org.bitmagic.ifeed.infrastructure.util.DateUtils;
 import org.bitmagic.ifeed.infrastructure.util.FaviconResolver;
@@ -55,6 +56,7 @@ public class ArticleController {
     private final ArticleEnrichmentService articleEnrichmentService;
     private final ArticleEnhancedService articleEnhancedService;
     private final UserCollectionService userCollectionService;
+    private final UserLikeService userLikeService;
     private final RecommendationService recommendationService;
 
     // Add repositories for auto-detection
@@ -145,7 +147,9 @@ public class ArticleController {
 //        内容只要有增强默认所有人都可以看
 //        ArticleEnrichment enrichment = Objects.isNull(principal) || User.Plan.FREE.equals(principal.getCurrentPlan()) ? null : articleEnrichmentService.getEnrichment(article.getId());
         ArticleEnrichment enrichment = articleEnrichmentService.getEnrichment(article.getId());
-        var collected = Objects.nonNull(principal) && userCollectionService.isCollected(principal.getId(), article.getId());
+        var collection = principal == null ? null
+                : userCollectionService.findState(principal.getId(), article.getId()).orElse(null);
+        var liked = principal != null && userLikeService.isLiked(principal.getId(), article.getId());
         Feed feed = article.getFeed();
         var response = new ArticleDetailResponse(
                 article.getUid().toString(),
@@ -163,7 +167,9 @@ public class ArticleController {
                 FaviconResolver.resolve(feed.getSiteUrl(), feed.getUrl()),
                 formatTimestamp(article.getPublishedAt()),
                 tags,
-                collected);
+                collection != null,
+                liked,
+                collection == null ? null : collection.folderId());
         return ResponseEntity.ok(response);
     }
 

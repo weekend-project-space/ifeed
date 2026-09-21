@@ -145,6 +145,8 @@ CREATE INDEX idx_user_likes_article
 
 ## 7. 与 Interaction 的关系
 
+文章详情 `GET /api/articles/{articleId}` 同时返回当前用户的 `liked`、`collected` 和 `folderId`，用于页面初始化按钮状态。未登录时两个状态为 `false`，`folderId` 为 `null`。此为已有文章详情接口的响应扩展，喜欢仍只有新增、删除、分页列表三个接口。
+
 现有系统没有独立的喜欢状态数据，本次仅创建空的 `user_likes` 表，不从旧收藏或 Interaction 推断用户是否喜欢。原 MongoDB 数据不删除。
 
 喜欢状态以 PostgreSQL 的 `user_likes` 为准。现有 `Interaction` 表达行为历史，后续需要为推荐记录喜欢、取消喜欢事件时，可在状态变更成功后接入，并处理事件投递的一致性。重复喜欢或重复取消没有产生实际状态变化时，不应重复产生行为事件。当前这版接口和表结构可以独立使用，无需依赖事件写入。

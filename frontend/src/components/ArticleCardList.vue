@@ -125,6 +125,8 @@ interface ArticleItem {
   summary?: string;
   feedTitle?: string;
   collectedAt?: string;
+  likedAt?: string;
+  folderId?: string | null;
   readAt?: string;
   timeAgo?: string;
   relativeTime?: string;
@@ -137,7 +139,7 @@ interface Props {
   loading: boolean;
   showAction?: boolean;
   actionLabel?: string;
-  metaField?: 'collectedAt' | 'readAt' | 'timeAgo' | 'relativeTime' | 'custom';
+  metaField?: 'collectedAt' | 'likedAt' | 'readAt' | 'timeAgo' | 'relativeTime' | 'custom';
   metaPrefix?: string;
   keyField?: keyof ArticleItem;
   compact?: boolean;
@@ -172,7 +174,7 @@ const getMetaText = (item: ArticleItem): string => {
   if (props.metaField === 'custom') return '';
   if (props.metaField === 'relativeTime') return item.relativeTime || '';
   if (props.metaField === 'timeAgo') return item.timeAgo || '';
-  const timestamp = item[props.metaField as 'collectedAt' | 'readAt'];
+  const timestamp = item[props.metaField as 'collectedAt' | 'likedAt' | 'readAt'];
   if (!timestamp) return '';
   const timeText = formatRelativeTime(timestamp);
   return props.metaPrefix ? `${props.metaPrefix}${timeText}` : timeText;

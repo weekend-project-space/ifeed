@@ -35,6 +35,12 @@ public class UserLikeRepository {
         jdbcTemplate.update("DELETE FROM user_likes WHERE user_id = ? AND article_id = ?", userId, articleId);
     }
 
+    public boolean exists(Long userId, Long articleId) {
+        return Boolean.TRUE.equals(jdbcTemplate.queryForObject(
+                "SELECT EXISTS (SELECT 1 FROM user_likes WHERE user_id = ? AND article_id = ?)",
+                Boolean.class, userId, articleId));
+    }
+
     public Set<Long> findArticleIds(Long userId, List<Long> articleIds) {
         if (articleIds.isEmpty()) {
             return Set.of();

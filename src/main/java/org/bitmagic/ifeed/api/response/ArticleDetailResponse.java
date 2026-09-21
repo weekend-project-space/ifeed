@@ -3,6 +3,7 @@ package org.bitmagic.ifeed.api.response;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.List;
+import java.util.UUID;
 
 public record ArticleDetailResponse(
         String id,
@@ -20,5 +21,7 @@ public record ArticleDetailResponse(
         String feedAvatar,
         @JsonProperty("publishedAt") String publishedAt,
         List<String> tags,
-        boolean collected) {
+        boolean collected,
+        boolean liked,
+        UUID folderId) {
 }

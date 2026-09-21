@@ -9,6 +9,7 @@ import SubscriptionsAddPage from '../pages/SubscriptionsAddPage.vue';
 import SubscriptionDiscoveryPage from '../pages/SubscriptionDiscoveryPage.vue';
 import CollectionsPage from '../pages/CollectionsPage.vue';
 import HistoryPage from '../pages/HistoryPage.vue';
+import LikesPage from '../pages/LikesPage.vue';
 import ArticleDetailPage from '../pages/ArticleDetailPage.vue';
 import FeedDetailPage from '../pages/FeedDetailPage.vue';
 import HomePage from '../pages/HomePage.vue';
@@ -92,13 +93,17 @@ const router = createRouter({
                     path: 'collections',
                     name: 'collections',
                     component: CollectionsPage,
-                    props: route => ({ page: routePage(route.query.page) })
+                    props: route => ({ folderId: routeText(route.query.folderId) || undefined })
+                },
+                {
+                    path: 'likes',
+                    name: 'likes',
+                    component: LikesPage,
                 },
                 {
                     path: 'history',
                     name: 'history',
                     component: HistoryPage,
-                    props: route => ({ page: routePage(route.query.page) })
                 },
                 {
                     path: 'feeds/subscriptions',
@@ -161,6 +166,11 @@ const router = createRouter({
 });
 
 router.beforeEach(async (to: any, from: any) => {
+    if (['collections', 'likes', 'history'].includes(to.name) && 'page' in to.query) {
+        const query = { ...to.query };
+        delete query.page;
+        return { path: to.path, query, hash: to.hash, replace: true };
+    }
     const auth = useAuthStore();
     if (!auth.initialized && auth.token) {
         try {

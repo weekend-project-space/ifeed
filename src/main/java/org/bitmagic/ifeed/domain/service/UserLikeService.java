@@ -37,6 +37,11 @@ public class UserLikeService {
     }
 
     @Transactional(readOnly = true)
+    public boolean isLiked(Integer userId, Long articleId) {
+        return likeRepository.exists(userId.longValue(), articleId);
+    }
+
+    @Transactional(readOnly = true)
     public Page<LikeItemResponse> list(Integer userId, Pageable pageable) {
         var query = BehaviorPageQuery.of(pageable, "likedAt", Map.of("likedAt", "liked_at"));
         return likeRepository.list(userId.longValue(), query);

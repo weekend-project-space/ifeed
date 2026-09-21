@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -45,6 +46,11 @@ public class UserCollectionService {
     @Transactional(readOnly = true)
     public boolean isCollected(Integer userId, Long articleId) {
         return collectionRepository.exists(userId.longValue(), articleId);
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<CollectionStateResponse> findState(Integer userId, Long articleId) {
+        return collectionRepository.findState(userId.longValue(), articleId);
     }
 
     @Transactional(readOnly = true)

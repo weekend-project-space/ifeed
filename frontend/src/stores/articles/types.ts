@@ -22,6 +22,8 @@ export interface ArticleListItem {
 
 
 export interface ArticleDetail extends ArticleListItem {
+    liked: boolean;
+    folderId: string | null;
     content: string;
     feedId?: string;
     feedAvatar?: string;
@@ -74,5 +76,7 @@ export const normalizeArticleDetail = (article: ArticleDto): ArticleDetail => {
         timeAgo: formatRelativeTime(publishedAt ?? Date.now()),
         tags: Array.from(new Set(tags)).slice(0, 6),
         collected: article.collected ?? false,
+        liked: article.liked ?? false,
+        folderId: article.folderId ?? null,
     };
 };
