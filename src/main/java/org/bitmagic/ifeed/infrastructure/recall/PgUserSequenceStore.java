@@ -2,6 +2,8 @@ package org.bitmagic.ifeed.infrastructure.recall;
 
 import lombok.RequiredArgsConstructor;
 import org.bitmagic.ifeed.application.recommendation.recall.spi.SequenceStore;
+import org.bitmagic.ifeed.domain.repository.UserCollectionRepository;
+import org.bitmagic.ifeed.domain.repository.UserLikeRepository;
 import org.bitmagic.ifeed.domain.repository.UserReadHistoryRepository;
 import org.bitmagic.ifeed.infrastructure.recall.data.UserBehaviorDataAccessor;
 import org.springframework.beans.factory.annotation.Value;
@@ -19,6 +21,8 @@ public class PgUserSequenceStore implements SequenceStore {
 
     private final UserReadHistoryRepository historyRepository;
     private final UserBehaviorDataAccessor dataAccessor;
+    private final UserCollectionRepository collectionRepository;
+    private final UserLikeRepository likeRepository;
 
     @Value("${recall.sequence.window-days:30}")
     private int windowDays;
@@ -38,6 +42,12 @@ public class PgUserSequenceStore implements SequenceStore {
     @Value("${recall.sequence.interaction-weight-base:0.1}")
     private double interactionWeightBase;
 
+    @Value("${recall.sequence.collection-bonus:2.0}")
+    private double collectionBonus;
+
+    @Value("${recall.sequence.like-bonus:2.0}")
+    private double likeBonus;
+
     @Value("${recall.sequence.estimated-interaction-duration:30.0}")
     private double estimatedInteractionDuration;
 
@@ -52,10 +62,14 @@ public class PgUserSequenceStore implements SequenceStore {
 
         int fetchLimit = (int) Math.min(Math.max((long) limit * fetchMultiplier, lookback), maxFetchLimit);
         Instant cutoff = windowDays > 0 ? Instant.now().minus(Duration.ofDays(windowDays)) : null;
-        var history = historyRepository.findRecent(userId.longValue(), cutoff, fetchLimit);
+        var history = historyRepository.findRecent(userId.longValue(), cutoff, fetchLimit).stream()
+                .limit(limit).toList();
         if (history.isEmpty()) {
             return List.of();
         }
+        var articleIds = history.stream().map(entry -> entry.article().articleId()).toList();
+        var collectedIds = collectionRepository.findArticleIds(userId.longValue(), articleIds);
+        var likedIds = likeRepository.findArticleIds(userId.longValue(), articleIds);
         Map<String, Long> interactionCounts = dataAccessor.getUserBehavior(userId)
                 .map(dataAccessor::buildInteractionCountMap)
                 .orElseGet(Map::of);
@@ -67,12 +81,11 @@ public class PgUserSequenceStore implements SequenceStore {
                     ? Math.log1p(interactionCount) * interactionWeightBase
                     : interactionCount * interactionWeightBase;
             double recencyWeight = Math.exp(-results.size() / (recencyDecayFactor * limit));
+            double preferenceWeight = (collectedIds.contains(article.articleId()) ? collectionBonus : 0.0)
+                    + (likedIds.contains(article.articleId()) ? likeBonus : 0.0);
             results.add(new UserInteraction(article.articleId(), article.title(),
                     interactionCount * estimatedInteractionDuration,
-                    recencyWeight * (1.0 + interactionWeight), entry.readAt()));
-            if (results.size() >= limit) {
-                break;
-            }
+                    recencyWeight * (1.0 + interactionWeight + preferenceWeight), entry.readAt()));
         }
         return results;
     }

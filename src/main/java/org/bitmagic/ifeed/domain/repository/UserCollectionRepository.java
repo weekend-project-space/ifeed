@@ -9,6 +9,7 @@ import org.bitmagic.ifeed.domain.record.CollectionFolder;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
 
 import java.sql.ResultSet;
@@ -19,6 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 @Repository
@@ -99,6 +101,16 @@ public class UserCollectionRepository {
         return Boolean.TRUE.equals(jdbcTemplate.queryForObject(
                 "SELECT EXISTS (SELECT 1 FROM user_collections WHERE user_id = ? AND article_id = ?)",
                 Boolean.class, userId, articleId));
+    }
+
+    public Set<Long> findArticleIds(Long userId, List<Long> articleIds) {
+        if (articleIds.isEmpty()) {
+            return Set.of();
+        }
+        return Set.copyOf(new NamedParameterJdbcTemplate(jdbcTemplate).queryForList("""
+                SELECT article_id FROM user_collections
+                WHERE user_id = :userId AND article_id IN (:articleIds)
+                """, Map.of("userId", userId, "articleIds", articleIds), Long.class));
     }
 
     public Page<CollectionItemResponse> list(Long userId, Long folderId, boolean filterFolder, BehaviorPageQuery query) {

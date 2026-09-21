@@ -14,8 +14,11 @@ import org.springframework.jdbc.datasource.init.ScriptUtils;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.Timestamp;
 import java.time.Instant;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -212,5 +215,63 @@ class UserBehaviorRepositoryTest {
 
         assertTrue(likes.list(7L, query).isEmpty());
         assertTrue(collections.exists(7L, 3_000_000_001L));
+    }
+
+    @Test
+    void batchPreferenceLookupsAreScopedToUserAndRequestedNumericArticleIds() {
+        var likes = new UserLikeRepository(jdbcTemplate);
+        var collections = new UserCollectionRepository(jdbcTemplate);
+        likes.save(7L, 3_000_000_001L);
+        likes.save(8L, 3_000_000_002L);
+        collections.save(7L, 3_000_000_002L, null, false);
+        collections.save(8L, 3_000_000_001L, null, false);
+        var ids = List.of(3_000_000_001L, 3_000_000_002L, 9_000_000_000L);
+
+        assertEquals(Set.of(3_000_000_001L), likes.findArticleIds(7L, ids));
+        assertEquals(Set.of(3_000_000_002L), collections.findArticleIds(7L, ids));
+        assertTrue(likes.findArticleIds(7L, List.of(3_000_000_002L)).isEmpty());
+        assertTrue(collections.findArticleIds(7L, List.of(3_000_000_001L)).isEmpty());
+        assertTrue(likes.findArticleIds(7L, List.of()).isEmpty());
+        assertTrue(collections.findArticleIds(7L, List.of()).isEmpty());
+        assertEquals(Set.of(3_000_000_001L), likes.findArticleIds(7L, List.of(3_000_000_001L, 3_000_000_001L)));
+
+        likes.delete(7L, 3_000_000_001L);
+        collections.delete(7L, 3_000_000_002L);
+        assertTrue(likes.findArticleIds(7L, ids).isEmpty());
+        assertTrue(collections.findArticleIds(7L, ids).isEmpty());
+        assertEquals(Set.of(3_000_000_002L), likes.findArticleIds(8L, ids));
+        assertEquals(Set.of(3_000_000_001L), collections.findArticleIds(8L, ids));
+    }
+
+    @Test
+    void recentLikesRespectWindowLimitStableOrderingAndUserIsolation() {
+        var likes = new UserLikeRepository(jdbcTemplate);
+        likes.save(7L, 3_000_000_002L);
+        likes.save(7L, 3_000_000_001L);
+        likes.save(8L, 3_000_000_001L);
+        jdbcTemplate.update("UPDATE user_likes SET liked_at = ? WHERE user_id = 7", Timestamp.from(readAt));
+        jdbcTemplate.update("UPDATE articles SET tags = '[\"database\"]', category = 'Technology' WHERE id = ?", 3_000_000_001L);
+
+        var tied = likes.findRecent(7L, null, 10);
+        assertEquals(List.of(3_000_000_002L, 3_000_000_001L), tied.stream().map(article -> article.articleId()).toList());
+        assertEquals(1, likes.findRecent(8L, null, 10).size());
+        assertEquals(1, likes.findRecent(7L, null, 1).size());
+        assertEquals(2, likes.findRecent(7L, readAt, 10).size());
+        assertTrue(likes.findRecent(7L, readAt.plusSeconds(1), 10).isEmpty());
+        assertTrue(likes.findRecent(7L, null, 0).isEmpty());
+        assertTrue(likes.findRecent(7L, null, -1).isEmpty());
+
+        jdbcTemplate.update("UPDATE user_likes SET liked_at = ? WHERE user_id = 7 AND article_id = ?",
+                Timestamp.from(readAt.plusSeconds(60)), 3_000_000_001L);
+        var latest = likes.findRecent(7L, readAt.plusSeconds(1), 1).getFirst();
+        assertEquals(articleUid, latest.id());
+        assertEquals(3_000_000_001L, latest.articleId());
+        assertEquals("Feed", latest.feedTitle());
+        assertEquals("[\"database\"]", latest.tags());
+        assertEquals("Technology", latest.category());
+        assertNull(latest.summary());
+
+        likes.delete(7L, 3_000_000_001L);
+        assertTrue(likes.findRecent(7L, readAt.plusSeconds(1), 1).isEmpty());
     }
 }

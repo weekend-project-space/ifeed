@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.bitmagic.ifeed.application.recommendation.recall.spi.UserPreferenceService;
 import org.bitmagic.ifeed.domain.record.ArticleSummary;
 import org.bitmagic.ifeed.domain.repository.UserCollectionRepository;
+import org.bitmagic.ifeed.domain.repository.UserLikeRepository;
 import org.bitmagic.ifeed.domain.repository.UserReadHistoryRepository;
 import org.bitmagic.ifeed.domain.record.ReadHistoryArticle;
 import org.bitmagic.ifeed.infrastructure.util.JSON;
@@ -19,7 +20,7 @@ import java.util.stream.Collectors;
 
 /**
  * 用户兴趣画像服务
- * 基于阅读历史和收藏行为，提取用户对 feedTitle、tag、category、keyword、entity 的偏好权重
+ * 基于阅读历史、收藏和喜欢行为，提取用户对 feedTitle、tag、category、keyword、entity 的偏好权重
  */
 @Slf4j
 @Component
@@ -29,6 +30,7 @@ public class UserInterestProfileService implements UserPreferenceService {
     private final UserCollectionRepository collectionRepository;
     private final UserReadHistoryRepository historyRepository;
     private final KeywordExtractor keywordExtractor;
+    private final UserLikeRepository likeRepository;
 
     private static final TypeReference<List<String>> TAGS_TYPE = new TypeReference<>() {
     };
@@ -39,11 +41,17 @@ public class UserInterestProfileService implements UserPreferenceService {
     @Value("${recall.preference.collection-window-days:90}")
     private int collectionWindowDays;
 
+    @Value("${recall.preference.like-window-days:90}")
+    private int likeWindowDays;
+
     @Value("${recall.preference.lookback:200}")
     private int lookback;
 
     @Value("${recall.preference.collection-bonus:2.0}")
     private double collectionBonus;
+
+    @Value("${recall.preference.like-bonus:2.0}")
+    private double likeBonus;
 
     @Value("${recall.preference.min-total-score:0.1}")
     private double minTotalScore;
@@ -69,39 +77,43 @@ public class UserInterestProfileService implements UserPreferenceService {
                 ? Instant.now().minus(Duration.ofDays(collectionWindowDays)) : null;
         var collectedArticles = historyLimit < 10 ? List.<ArticleSummary>of()
                 : collectionRepository.findRecent(userId.longValue(), collectionCutoff, historyLimit);
-        return computeTopPreferences(readHistory, collectedArticles, limit);
+        Instant likeCutoff = likeWindowDays > 0
+                ? Instant.now().minus(Duration.ofDays(likeWindowDays)) : null;
+        var likedArticles = likeRepository.findRecent(userId.longValue(), likeCutoff, historyLimit);
+        return computeTopPreferences(readHistory, collectedArticles, likedArticles, limit);
     }
 
     private List<AttributePreference> computeTopPreferences(
-            List<ArticleSummary> readHistory, List<ArticleSummary> collections, int limit) {
+            List<ArticleSummary> readHistory, List<ArticleSummary> collections, List<ArticleSummary> likes, int limit) {
         Set<Long> collectedIds = collections.stream()
                 .map(ArticleSummary::articleId)
                 .collect(Collectors.toSet());
+        Set<Long> likedIds = likes.stream()
+                .map(ArticleSummary::articleId)
+                .collect(Collectors.toSet());
+        Set<Long> readIds = readHistory.stream()
+                .map(ArticleSummary::articleId)
+                .collect(Collectors.toSet());
+        Map<Long, ArticleSummary> articles = new LinkedHashMap<>();
+        for (var source : List.of(readHistory, collections, likes)) {
+            source.forEach(article -> articles.putIfAbsent(article.articleId(), article));
+        }
         Map<String, Double> feedScores = new HashMap<>();
         Map<String, Double> tagScores = new HashMap<>();
         Map<String, Double> categoryScores = new HashMap<>();
         Map<String, Double> keywordScores = new HashMap<>();
         Map<String, Double> entityScores = new HashMap<>();
-        Set<Long> processedIds = new HashSet<>();
 
-        for (ArticleSummary article : readHistory) {
-            double score = collectedIds.contains(article.articleId()) ? 1.0 + collectionBonus : 1.0;
+        for (ArticleSummary article : articles.values()) {
+            double score = 1.0 + (collectedIds.contains(article.articleId()) ? collectionBonus : 0.0)
+                    + (likedIds.contains(article.articleId()) ? likeBonus : 0.0);
             accumulateFeedScore(feedScores, article, score);
             accumulateTagScores(tagScores, article, score);
             accumulateCategoryScore(categoryScores, article, score);
-            accumulateKeywordScores(keywordScores, article, score);
-            accumulateEntityScores(entityScores, article, score);
-            processedIds.add(article.articleId());
-        }
-
-        for (ArticleSummary article : collections) {
-            if (processedIds.contains(article.articleId())) {
-                continue;
+            if (readIds.contains(article.articleId()) || likedIds.contains(article.articleId())) {
+                accumulateKeywordScores(keywordScores, article, score);
+                accumulateEntityScores(entityScores, article, score);
             }
-            double score = 1.0 + collectionBonus;
-            accumulateFeedScore(feedScores, article, score);
-            accumulateTagScores(tagScores, article, score);
-            accumulateCategoryScore(categoryScores, article, score);
         }
 
         List<AttributePreference> result = new ArrayList<>();
