@@ -373,7 +373,7 @@
             <component
                 :is="item.feedId ? 'router-link' : 'span'"
                 :to="item.feedId ? { name: 'feed', params: { feedId: item.feedId } } : undefined"
-                class="flex-shrink-0 flex items-center gap-1.5  md:w-52 sm:max-w-[30%]
+                class="flex-shrink-0 flex items-center gap-1.5  md:w-32 sm:max-w-[30%]
                text-xs text-gray-500 dark:text-gray-400 rounded group
                hover:text-primary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                 :aria-label="`来源：${item.feedTitle}`">
