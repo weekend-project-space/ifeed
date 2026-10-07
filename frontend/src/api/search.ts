@@ -22,9 +22,10 @@ export const searchArticles = (
   source: Source | undefined,
   page: number,
   size: number,
+  filters?: { feedId?: string | null; tags?: string | null; category?: string | null },
   signal?: AbortSignal,
 ) =>
   get<PageResponse<SearchResultDto>>('/api/search', {
     signal,
-    query: { query, source, type, page, size },
+    query: { query, source, type, page, size, ...filters },
   });

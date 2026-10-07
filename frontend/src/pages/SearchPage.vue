@@ -9,7 +9,7 @@
         </h1>
         <p v-if="hasQuery" class="text-xs sm:text-sm text-text-secondary">
           关键词: "{{ searchQuery }}"
-          <!--          <span v-if="total !== null" class="ml-2">· {{ total }} 条结果</span>-->
+          <span v-if="totalElements !== null" class="ml-2">· {{ totalElements }} 条结果</span>
         </p>
       </div>
 
@@ -56,16 +56,27 @@
         <p class="text-xs sm:text-sm text-text-secondary px-4">输入关键词查找你感兴趣的文章</p>
       </div>
 
+      <!-- Error State -->
+      <div v-else-if="searchError" role="alert" class="rounded-lg border border-red-200 bg-red-50 p-3 text-xs text-red-800 sm:p-4 sm:text-sm">
+        <div class="flex items-center justify-between gap-3">
+          <span>{{ searchError }}</span>
+          <button type="button" class="shrink-0 underline" :disabled="searchFetching" @click="searchQueryResult.refetch()">重试</button>
+        </div>
+      </div>
+
       <!-- Loading or Results List -->
       <div v-else-if="searchLoading || searchArticleItems.length > 0">
-        <article-card-list :loading="searchLoading" :items="searchArticleItems" meta-field="timeAgo" key-field="id"
-          action-label="文章选项菜单" @action="handleMenuClick">
+        <article-card-list :loading="searchLoading" :items="searchArticleItems" meta-field="timeAgo"
+          show-action action-label="文章选项菜单">
           <template #empty-thumbnail>
             <svg class="w-8 h-8 sm:w-10 sm:h-10 text-text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor"
               stroke-width="1.5">
               <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
               <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
             </svg>
+          </template>
+          <template #action-dropdown="{ item, close }">
+            <router-link :to="`/articles/${item.articleId}`" target="_blank" class="menu-action" @click="close">在新标签页打开</router-link>
           </template>
         </article-card-list>
 
@@ -77,19 +88,6 @@
 
       <!-- Error or Empty State -->
       <div v-else>
-        <!-- Error State -->
-        <div v-if="searchError" class="mb-4 p-3 sm:p-4 bg-red-50 border border-red-200 rounded-lg">
-          <div class="flex items-center gap-2 text-xs sm:text-sm text-red-800">
-            <svg class="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-              stroke-width="2">
-              <circle cx="12" cy="12" r="10" />
-              <line x1="12" y1="8" x2="12" y2="12" />
-              <line x1="12" y1="16" x2="12.01" y2="16" />
-            </svg>
-            <span>{{ searchError }}</span>
-          </div>
-        </div>
-
         <!-- Empty Results -->
         <div class="flex flex-col items-center justify-center py-16 sm:py-20 text-center">
           <div
@@ -130,10 +128,15 @@ const searchQuery = computed(() => props.query);
 const searchType = computed(() => props.type);
 const source = computed(() => props.source);
 const routePage = computed(() => props.page);
+const filters = {
+  feedId: computed(() => props.feedId),
+  tags: computed(() => props.tags),
+  category: computed(() => props.category),
+};
 
 const hasQuery = computed(() => Boolean(searchQuery.value));
 
-const searchQueryResult = useSearchQuery(searchQuery, searchType, source, routePage);
+const searchQueryResult = useSearchQuery(searchQuery, searchType, source, routePage, filters);
 const searchLoading = computed(() => searchQueryResult.isPending.value);
 const searchFetching = computed(() => searchQueryResult.isFetching.value);
 const searchError = computed(() => {
@@ -142,12 +145,13 @@ const searchError = computed(() => {
 });
 const results = computed(() => searchQueryResult.data.value?.content ?? []);
 const totalPages = computed(() => searchQueryResult.data.value?.totalPages ?? 0);
+const totalElements = computed(() => searchQueryResult.data.value?.totalElements ?? null);
 const hasNextPage = computed(() => routePage.value < totalPages.value);
 const hasPreviousPage = computed(() => routePage.value > 1);
 
 const searchArticleItems = computed(() =>
   results.value.map((item) => ({
-    id: item.id,
+    articleId: item.id,
     feedId: item.feedId,
     title: item.title ?? '未命名文章',
     summary: item.summary ?? '暂无摘要',
@@ -228,8 +232,8 @@ const goBackToHome = () => {
   router.push({ name: 'home', query });
 };
 
-const handleMenuClick = (item: any) => {
-  console.log('菜单点击:', item);
-};
-
 </script>
+
+<style scoped>
+.menu-action { @apply block w-full px-4 py-2 text-left text-sm hover:bg-surface-container; }
+</style>

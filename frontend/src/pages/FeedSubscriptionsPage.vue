@@ -72,7 +72,7 @@
         <template #action>
           <router-link
               class="p-2 text-sm text-primary font-medium rounded-lg transition-colors  hover:bg-surface-container"
-              to="/feeds/channels">所有订阅
+              to="/feed/channels">所有订阅
           </router-link>
         </template>
         <template #empty>

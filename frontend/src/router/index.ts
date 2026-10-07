@@ -5,7 +5,6 @@ import AuthPage from '../pages/AuthPage.vue';
 // import HomePage from '../pages/HomePage.vue';
 import SearchPage from '../pages/SearchPage.vue';
 import MainLayout from '../layouts/MainLayout.vue';
-import SubscriptionsAddPage from '../pages/SubscriptionsAddPage.vue';
 import SubscriptionDiscoveryPage from '../pages/SubscriptionDiscoveryPage.vue';
 import CollectionsPage from '../pages/CollectionsPage.vue';
 import HistoryPage from '../pages/HistoryPage.vue';
@@ -43,7 +42,7 @@ const router = createRouter({
             return savedPosition;
         }
         // New navigations start at the top of the target page.
-        return {top: 0, left: 0, behavior: 'auto'};
+        return { top: 0, left: 0, behavior: 'auto' };
     },
     routes: [
         {
@@ -84,11 +83,11 @@ const router = createRouter({
                         category: routeText(route.query.category) || 'all',
                     })
                 },
-                {
-                    path: 'subscriptions',
-                    name: 'subscriptions',
-                    component: SubscriptionsAddPage
-                },
+                // {
+                //     path: 'subscriptions',
+                //     name: 'subscriptions',
+                //     component: SubscriptionsAddPage
+                // },
                 {
                     path: 'collections',
                     name: 'collections',
@@ -106,7 +105,7 @@ const router = createRouter({
                     component: HistoryPage,
                 },
                 {
-                    path: 'feeds/subscriptions',
+                    path: 'feed/subscriptions',
                     name: 'feedsSubscriptions',
                     component: FeedSubscriptionsPage,
                     props: route => ({
@@ -116,12 +115,12 @@ const router = createRouter({
                     })
                 },
                 {
-                    path: 'feeds/channels',
+                    path: 'feed/channels',
                     name: 'feedChannels',
                     component: FeedChannelsPage,
                 },
                 {
-                    path: 'feeds/:feedId',
+                    path: 'feed/:feedId',
                     name: 'feed',
                     component: FeedDetailPage,
                     props: route => ({
@@ -140,7 +139,7 @@ const router = createRouter({
                     })
                 },
                 {
-                    path: 'upgrade',
+                    path: 'feed/you',
                     name: 'upgrade',
                     component: UpgradePage,
                 },

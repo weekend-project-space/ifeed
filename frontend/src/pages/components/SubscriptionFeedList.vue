@@ -5,23 +5,16 @@
       <!-- Search Bar -->
       <div class="relative">
         <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none"
-             viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="11" cy="11" r="8"/>
-          <path d="m21 21-4.35-4.35"/>
+          viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8" />
+          <path d="m21 21-4.35-4.35" />
         </svg>
-        <input
-            v-model="searchQuery"
-            type="text"
-            placeholder="搜索订阅源..."
-            class="w-full pl-10 pr-4 py-2 bg-white dark:bg-gray-800 text-sm text-gray-900 dark:text-gray-100 rounded-lg border border-gray-300 dark:border-gray-600 focus:outline-none focus:border-secondary focus:ring-2 focus:ring-secondary/20"
-        />
-        <button
-            v-if="searchQuery"
-            @click="searchQuery = ''"
-            class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-        >
+        <input v-model="searchQuery" type="text" placeholder="搜索订阅源..."
+          class="w-full pl-10 pr-4 py-2 bg-white dark:bg-gray-800 text-sm text-gray-900 dark:text-gray-100 rounded-lg border border-gray-300 dark:border-gray-600 focus:outline-none focus:border-secondary focus:ring-2 focus:ring-secondary/20" />
+        <button v-if="searchQuery" @click="searchQuery = ''"
+          class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
           <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M18 6L6 18M6 6l12 12"/>
+            <path d="M18 6L6 18M6 6l12 12" />
           </svg>
         </button>
       </div>
@@ -31,53 +24,37 @@
         <!-- Left: Sort & Batch Mode -->
         <div class="flex items-center gap-2">
           <div class="relative flex-shrink-0">
-            <select
-                v-model="sortBy"
-                class="appearance-none bg-white dark:bg-gray-800 text-sm text-gray-900 dark:text-gray-100 pl-3 pr-10 py-2 rounded-lg border border-gray-300 dark:border-gray-600 focus:outline-none focus:border-secondary focus:ring-2 focus:ring-secondary/20 cursor-pointer">
+            <select v-model="sortBy"
+              class="appearance-none bg-white dark:bg-gray-800 text-sm text-gray-900 dark:text-gray-100 pl-3 pr-10 py-2 rounded-lg border border-gray-300 dark:border-gray-600 focus:outline-none focus:border-secondary focus:ring-2 focus:ring-secondary/20 cursor-pointer">
               <option value="relevance">相关度(从高到低)</option>
               <option value="lastUpdated">最近更新</option>
-              <option value="subscribeTime">订阅时间</option>
             </select>
             <svg class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none"
-                 viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="m6 9 6 6 6-6"/>
+              viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="m6 9 6 6 6-6" />
             </svg>
           </div>
-          
-          <button
-              v-if="!batchMode && filteredItems.length > 0"
-              @click="enterBatchMode"
-              class="px-3 py-2 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
-          >
+
+          <button v-if="!batchMode && filteredItems.length > 0" @click="enterBatchMode"
+            class="px-3 py-2 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors">
             批量操作
           </button>
         </div>
 
         <!-- Right: Action Buttons -->
         <div v-if="!batchMode" class="flex items-center gap-2">
-          <button
-              @click="refresh"
-              :disabled="subscriptionsStore.loading || isRefreshing"
-              class="flex-1 sm:flex-none p-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors disabled:opacity-50"
-              aria-label="刷新"
-          >
-            <svg
-                class="w-5 h-5 mx-auto"
-                :class="{ 'animate-spin': subscriptionsStore.loading || isRefreshing }"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-            >
-              <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
+          <button @click="refresh" :disabled="subscriptionsStore.loading || isRefreshing"
+            class="flex-1 sm:flex-none p-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors disabled:opacity-50"
+            aria-label="刷新">
+            <svg class="w-5 h-5 mx-auto" :class="{ 'animate-spin': subscriptionsStore.loading || isRefreshing }"
+              viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2" />
             </svg>
           </button>
-          <router-link
-              to="/discover"
-              class="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-white bg-secondary hover:bg-secondary/90 rounded-full transition-colors"
-          >
+          <router-link to="/discover"
+            class="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-white bg-secondary hover:bg-secondary/90 rounded-full transition-colors">
             <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M12 5v14M5 12h14"/>
+              <path d="M12 5v14M5 12h14" />
             </svg>
             <span>添加订阅</span>
           </router-link>
@@ -88,34 +65,36 @@
           <span class="text-sm text-gray-600 dark:text-gray-400">
             已选择 {{ selectedItems.size }} 项
           </span>
-          <button
-              @click="selectAll"
-              :disabled="isBatchProcessing"
-              class="px-3 py-2 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
-          >
+          <button @click="selectAll" :disabled="isBatchProcessing"
+            class="px-3 py-2 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors">
             {{ selectedItems.size === filteredItems.length ? '取消全选' : '全选' }}
           </button>
-          <button
-              @click="confirmBatchRemove"
-              :disabled="selectedItems.size === 0 || isBatchProcessing"
-              class="px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors disabled:opacity-50"
-          >
+          <button @click="confirmBatchRemove" :disabled="selectedItems.size === 0 || isBatchProcessing"
+            class="px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors disabled:opacity-50">
             批量取消订阅
           </button>
-          <button
-              @click="exitBatchMode"
-              :disabled="isBatchProcessing"
-              class="px-3 py-2 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
-          >
+          <button @click="exitBatchMode" :disabled="isBatchProcessing"
+            class="px-3 py-2 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors">
             取消
           </button>
         </div>
       </div>
     </div>
 
-    <p v-if="subscriptionError" class="mb-4 text-sm text-red-600 dark:text-red-400" role="alert">
+    <p v-if="subscriptionError"
+      class="mb-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2.5 text-sm text-red-700 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-300"
+      role="alert">
       {{ subscriptionError }}
     </p>
+
+    <div v-if="subscriptionsStore.error && !subscriptionsStore.loading"
+      class="mb-6 rounded-xl border border-red-200 bg-red-50 p-5 dark:border-red-900/60 dark:bg-red-950/30">
+      <p class="text-sm font-medium text-red-800 dark:text-red-200">订阅列表加载失败</p>
+      <p class="mt-1 text-sm text-red-700/80 dark:text-red-300/80">{{ subscriptionsStore.error }}</p>
+      <button type="button"
+        class="mt-3 text-sm font-medium text-red-700 underline underline-offset-2 hover:text-red-900 dark:text-red-300 dark:hover:text-red-100"
+        @click="refresh">重试</button>
+    </div>
 
     <!-- Loading State -->
     <div v-if="subscriptionsStore.loading && !items.length" class="space-y-3">
@@ -130,18 +109,18 @@
     </div>
 
     <!-- Empty State -->
-    <div v-else-if="!items.length" class="text-center py-16">
+    <div v-else-if="!feedItems.length"
+      class="rounded-xl border border-dashed border-gray-300 bg-white/70 py-16 text-center dark:border-gray-700 dark:bg-gray-900/40">
       <div class="w-16 h-16 mx-auto mb-4 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center">
         <svg class="w-8 h-8 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-          <path d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+          <path
+            d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
         </svg>
       </div>
       <h2 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">还没有订阅</h2>
       <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">添加你感兴趣的订阅源开始使用</p>
-      <router-link
-          to="/discover"
-          class="inline-flex items-center gap-2 px-5 py-2 text-sm font-medium text-white bg-secondary hover:bg-secondary/90 rounded-full transition-colors"
-      >
+      <router-link to="/discover"
+        class="inline-flex items-center gap-2 px-5 py-2 text-sm font-medium text-white bg-secondary hover:bg-secondary/90 rounded-full transition-colors">
         添加订阅
       </router-link>
     </div>
@@ -150,133 +129,116 @@
     <div v-else-if="searchQuery && filteredItems.length === 0" class="text-center py-16">
       <div class="w-16 h-16 mx-auto mb-4 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center">
         <svg class="w-8 h-8 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="11" cy="11" r="8"/>
-          <path d="m21 21-4.35-4.35"/>
+          <circle cx="11" cy="11" r="8" />
+          <path d="m21 21-4.35-4.35" />
         </svg>
       </div>
       <h2 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">未找到匹配的订阅源</h2>
       <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">尝试使用其他关键词搜索</p>
-      <button
-          @click="searchQuery = ''"
-          class="inline-flex items-center gap-2 px-5 py-2 text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
-      >
+      <button @click="searchQuery = ''"
+        class="inline-flex items-center gap-2 px-5 py-2 text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors">
         清除搜索
       </button>
     </div>
 
     <!-- Subscription List -->
-    <div v-else class="space-y-0">
-      <article
-          v-for="item in filteredItems"
-          :key="item.feedId"
-          class="group flex items-start gap-4 px-4 py-4 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
-          :class="{ 'bg-secondary/5': batchMode && selectedItems.has(item.feedId) }"
-      >
+    <div v-else
+      class="divide-y divide-gray-200 overflow-hidden rounded-xl border border-gray-200 bg-white dark:divide-gray-800 dark:border-gray-800 dark:bg-gray-900/60">
+      <article v-for="item in filteredItems" :key="item.feedId"
+        class="group flex items-start gap-3 px-3 py-4 transition-colors hover:bg-gray-50 sm:gap-4 sm:px-5 dark:hover:bg-gray-800/50"
+        :class="{ 'bg-secondary/5': batchMode && selectedItems.has(item.feedId) }">
         <!-- Checkbox (Batch Mode) -->
         <div v-if="batchMode" class="flex-shrink-0 pt-2">
-          <input
-              type="checkbox"
-              :checked="selectedItems.has(item.feedId)"
-              :disabled="isBatchProcessing"
-              @change="toggleSelection(item.feedId)"
-              class="w-5 h-5 text-secondary border-gray-300 dark:border-gray-600 rounded focus:ring-secondary cursor-pointer"
-          />
+          <input type="checkbox" :checked="selectedItems.has(item.feedId)" :disabled="isBatchProcessing"
+            @change="toggleSelection(item.feedId)"
+            class="w-5 h-5 text-secondary border-gray-300 dark:border-gray-600 rounded focus:ring-secondary cursor-pointer" />
         </div>
 
         <!-- Avatar -->
-        <router-link :to="`/feeds/${item.feedId}`" class="flex-shrink-0" :class="{ 'pointer-events-none': batchMode }">
-          <img
-              :src="getFaviconUrl(item)"
-              :alt="displayTitle(item)"
-              class="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-800 object-cover"
-              @error="handleImageError"
-          />
+        <router-link :to="`/feed/${item.feedId}`" class="flex-shrink-0" :class="{ 'pointer-events-none': batchMode }">
+          <img :src="getFaviconUrl(item)" :alt="displayTitle(item)"
+            class="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-800 object-cover" @error="handleImageError" />
         </router-link>
 
         <!-- Content -->
         <div class="flex-1 min-w-0">
           <div class="flex items-start justify-between gap-3 mb-1.5">
-            <router-link :to="`/feeds/${item.feedId}`" class="flex-1 min-w-0" :class="{ 'pointer-events-none': batchMode }">
-              <h3 class="text-base font-medium text-gray-900 dark:text-gray-100 line-clamp-1 group-hover:text-secondary transition-colors">
+            <router-link :to="`/feed/${item.feedId}`" class="flex-1 min-w-0"
+              :class="{ 'pointer-events-none': batchMode }">
+              <h3
+                class="text-base font-medium text-gray-900 dark:text-gray-100 line-clamp-1 group-hover:text-secondary transition-colors">
                 {{ displayTitle(item) }}
               </h3>
             </router-link>
 
             <!-- Action Buttons -->
-            <div v-if="!batchMode" class="flex items-center gap-1.5 flex-shrink-0">
-              <button
-                  class="relative p-1"
-                  @click.stop="toggleDropdown(item.feedId)"
-                  :aria-expanded="activeDropdown === item.feedId"
-              >
-                <svg class="w-5 h-5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <circle cx="12" cy="12" r="1" fill="currentColor"/>
-                  <circle cx="12" cy="5" r="1" fill="currentColor"/>
-                  <circle cx="12" cy="19" r="1" fill="currentColor"/>
+            <div v-if="!batchMode" class="relative flex flex-shrink-0 items-center gap-1.5">
+              <button type="button" class="relative p-1" @click.stop="toggleDropdown(item.feedId)"
+                :aria-expanded="activeDropdown === item.feedId" aria-label="更多操作">
+                <svg class="w-5 h-5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" viewBox="0 0 24 24"
+                  fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="1" fill="currentColor" />
+                  <circle cx="12" cy="5" r="1" fill="currentColor" />
+                  <circle cx="12" cy="19" r="1" fill="currentColor" />
                 </svg>
-                <!-- Dropdown Menu -->
-                <div
-                    v-if="activeDropdown === item.feedId"
-                    class="absolute right-0 top-full mt-1 w-36 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-1 z-10"
-                >
-                  <router-link :to="`/feeds/${item.feedId}`" class="sm:hidden block w-full px-4 py-2 text-left text-sm text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700" @click="activeDropdown = null">
-                    查看详情
-                  </router-link>
-                  <button
-                      @click.stop="confirmRemove(item)"
-                      :disabled="subscriptionSubmitting"
-                      class="w-full px-4 py-2 text-left text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 disabled:opacity-50"
-                  >
-                    取消订阅
-                  </button>
-                </div>
               </button>
+              <div v-if="activeDropdown === item.feedId"
+                class="absolute right-0 top-full z-20 mt-1 w-36 rounded-lg border border-gray-200 bg-white py-1 shadow-lg dark:border-gray-700 dark:bg-gray-800">
+                <router-link :to="`/feed/${item.feedId}`"
+                  class="block w-full px-4 py-2 text-left text-sm text-gray-900 hover:bg-gray-100 dark:text-gray-100 dark:hover:bg-gray-700"
+                  @click="activeDropdown = null">
+                  查看详情
+                </router-link>
+                <button @click.stop="confirmRemove(item)" :disabled="subscriptionSubmitting"
+                  class="w-full px-4 py-2 text-left text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 disabled:opacity-50">
+                  取消订阅
+                </button>
+              </div>
             </div>
           </div>
 
-          <router-link :to="`/feeds/${item.feedId}`" class="block" :class="{ 'pointer-events-none': batchMode }">
+          <router-link :to="`/feed/${item.feedId}`" class="block" :class="{ 'pointer-events-none': batchMode }">
+
+
+            <p class="text-sm text-gray-600 dark:text-gray-400 line-clamp-1 mb-2">
+              {{ getDescription(item) }}
+            </p>
             <div class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 mb-1.5">
               <span class="truncate max-w-[200px]">@{{ getUsername(item) }}</span>
               <span>•</span>
               <span class="truncate">{{ getSubscriberCount(item) }}</span>
             </div>
-
-            <p class="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 mb-2">
-              {{ getDescription(item) }}
-            </p>
-
             <!-- Status -->
-            <div v-if="hasIssue(item)" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-red-50 dark:bg-red-900/20 text-xs text-red-700 dark:text-red-400">
+            <div v-if="hasIssue(item)"
+              class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-red-50 dark:bg-red-900/20 text-xs text-red-700 dark:text-red-400">
               <svg class="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor">
-                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z"/>
+                <path fill-rule="evenodd"
+                  d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z" />
               </svg>
               <span>抓取异常</span>
             </div>
-<!--            <span v-else class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-green-50 dark:bg-green-900/20 text-xs text-green-700 dark:text-green-400">-->
-<!--              <svg class="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor">-->
-<!--                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z"/>-->
-<!--              </svg>-->
-<!--              <span>已订阅</span>-->
-<!--            </span>-->
+            <!--            <span v-else class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-green-50 dark:bg-green-900/20 text-xs text-green-700 dark:text-green-400">-->
+            <!--              <svg class="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor">-->
+            <!--                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z"/>-->
+            <!--              </svg>-->
+            <!--              <span>已订阅</span>-->
+            <!--            </span>-->
           </router-link>
         </div>
       </article>
     </div>
 
     <!-- Footer -->
-    <div v-if="items.length" class="mt-6 text-center text-sm text-gray-600 dark:text-gray-400">
-      共 {{ items.length }} 个订阅源
+    <div v-if="feedItems.length" class="mt-5 text-center text-xs text-gray-500 dark:text-gray-500">
+      显示 {{ filteredItems.length }} / {{ feedItems.length }} 个订阅源
     </div>
 
     <!-- Click outside to close dropdown -->
     <div v-if="activeDropdown" @click="activeDropdown = null" class="fixed inset-0 z-0"></div>
 
     <!-- Single Item Confirmation Dialog -->
-    <div
-        v-if="itemToRemove"
-        class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40"
-        @click.self="cancelRemove"
-    >
+    <div v-if="itemToRemove" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40"
+      @click.self="cancelRemove">
       <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-sm w-full p-5">
         <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">确认取消订阅</h3>
         <p class="text-sm text-gray-600 dark:text-gray-400 mb-5">
@@ -286,14 +248,12 @@
           {{ subscriptionError }}
         </p>
         <div class="flex gap-3 justify-end">
-          <button @click="cancelRemove" :disabled="subscriptionSubmitting" class="px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors">
+          <button @click="cancelRemove" :disabled="subscriptionSubmitting"
+            class="px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors">
             取消
           </button>
-          <button
-              @click="remove(itemToRemove.feedId)"
-              :disabled="subscriptionSubmitting"
-              class="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg disabled:opacity-50 transition-colors"
-          >
+          <button @click="remove(itemToRemove.feedId)" :disabled="subscriptionSubmitting"
+            class="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg disabled:opacity-50 transition-colors">
             确认取消订阅
           </button>
         </div>
@@ -301,11 +261,8 @@
     </div>
 
     <!-- Batch Removal Confirmation Dialog -->
-    <div
-        v-if="batchItemsToRemove.length > 0"
-        class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40"
-        @click.self="cancelBatchRemove"
-    >
+    <div v-if="batchItemsToRemove.length > 0"
+      class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40" @click.self="cancelBatchRemove">
       <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full p-5">
         <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">确认批量取消订阅</h3>
         <p class="text-sm text-gray-600 dark:text-gray-400 mb-3">
@@ -322,18 +279,12 @@
           {{ subscriptionError }}
         </p>
         <div class="flex gap-3 justify-end">
-          <button 
-              @click="cancelBatchRemove" 
-              :disabled="isBatchProcessing"
-              class="px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors disabled:opacity-50"
-          >
+          <button @click="cancelBatchRemove" :disabled="isBatchProcessing"
+            class="px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors disabled:opacity-50">
             取消
           </button>
-          <button
-              @click="batchRemove"
-              :disabled="isBatchProcessing"
-              class="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg disabled:opacity-50 transition-colors"
-          >
+          <button @click="batchRemove" :disabled="isBatchProcessing"
+            class="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg disabled:opacity-50 transition-colors">
             {{ isBatchProcessing ? '处理中...' : '确认取消订阅' }}
           </button>
         </div>
@@ -356,7 +307,7 @@ const batchRemoveMutation = useBatchRemoveSubscriptionsMutation();
 const subscriptionSubmitting = subscriptionMutation.isPending;
 const subscriptionError = ref('');
 const activeDropdown = ref<string | null>(null);
-const sortBy = ref<'relevance' | 'lastUpdated' | 'subscribeTime'>('relevance');
+const sortBy = ref<'relevance' | 'lastUpdated'>('relevance');
 const isRefreshing = ref(false);
 const itemToRemove = ref<SubscriptionListItemDto | null>(null);
 
@@ -368,9 +319,10 @@ const batchMode = ref(false);
 const selectedItems = ref<Set<string>>(new Set());
 const isBatchProcessing = batchRemoveMutation.isPending;
 const batchItemsToRemove = ref<SubscriptionListItemDto[]>([]);
+const feedItems = computed(() => items.value.filter((item) => !item.type || item.type === 'FEED'));
 
 const sortedItems = computed(() => {
-  const list = [...items.value];
+  const list = [...feedItems.value];
 
   switch (sortBy.value) {
     case 'relevance':
@@ -378,12 +330,10 @@ const sortedItems = computed(() => {
         const aHasIssue = hasIssue(a);
         const bHasIssue = hasIssue(b);
         if (aHasIssue !== bHasIssue) return aHasIssue ? 1 : -1;
-        return getTime(b.subscribedAt) - getTime(a.subscribedAt);
+        return getTime(b.lastUpdated || b.lastFetched) - getTime(a.lastUpdated || a.lastFetched);
       });
     case 'lastUpdated':
       return list.sort((a, b) => getTime(b.lastUpdated || b.lastFetched) - getTime(a.lastUpdated || a.lastFetched));
-    case 'subscribeTime':
-      return list.sort((a, b) => getTime(b.subscribedAt) - getTime(a.subscribedAt));
     default:
       return list;
   }
@@ -401,11 +351,11 @@ const filteredItems = computed(() => {
     const url = (item.url || '').toLowerCase();
     const siteUrl = (item.siteUrl || '').toLowerCase();
     const description = getDescription(item).toLowerCase();
-    
-    return title.includes(query) || 
-           url.includes(query) || 
-           siteUrl.includes(query) ||
-           description.includes(query);
+
+    return title.includes(query) ||
+      url.includes(query) ||
+      siteUrl.includes(query) ||
+      description.includes(query);
   });
 });
 
@@ -421,6 +371,8 @@ const refresh = async () => {
   isRefreshing.value = true;
   try {
     await subscriptionsStore.fetchSubscriptions();
+  } catch (error) {
+    subscriptionError.value = error instanceof Error ? error.message : '订阅列表加载失败，请重试';
   } finally {
     setTimeout(() => isRefreshing.value = false, 500);
   }
@@ -444,7 +396,7 @@ const remove = async (feedId: string) => {
   try {
     await subscriptionMutation.mutateAsync({
       feedId: item.feedId,
-      feedUrl: item.url,
+      feedUrl: item.url ?? '',
       subscribed: true,
     });
     itemToRemove.value = null;
@@ -486,8 +438,8 @@ const selectAll = () => {
 const confirmBatchRemove = () => {
   if (selectedItems.value.size === 0 || isBatchProcessing.value) return;
   subscriptionError.value = '';
-  
-  batchItemsToRemove.value = filteredItems.value.filter(item => 
+
+  batchItemsToRemove.value = filteredItems.value.filter(item =>
     selectedItems.value.has(item.feedId)
   );
 };
@@ -503,7 +455,7 @@ const batchRemove = async () => {
     || isBatchProcessing.value
     || subscriptionSubmitting.value
   ) return;
-  
+
   subscriptionError.value = '';
   try {
     const result = await batchRemoveMutation.mutateAsync(
@@ -543,13 +495,14 @@ const getSubscriberCount = (item: SubscriptionListItemDto) => {
 };
 
 const getDescription = (item: SubscriptionListItemDto) => {
-  const parts: string[] = [];
-  if (item.lastFetched) parts.push(`上次抓取 ${formatRelativeTime(item.lastFetched)}`);
+  // const parts: string[] = [];
+  // if (item.lastFetched) parts.push(`上次抓取 ${formatRelativeTime(item.lastFetched)}`);
 
-  const url = item.siteUrl && item.siteUrl !== item.url ? item.siteUrl : item.url;
-  if (url) parts.push(url.length > 50 ? url.substring(0, 50) + '...' : url);
+  // const url = item.siteUrl && item.siteUrl !== item.url ? item.siteUrl : item.url;
+  // if (url) parts.push(url.length > 50 ? url.substring(0, 50) + '...' : url);
 
-  return parts.length > 0 ? parts.join(' · ') : '暂无描述';
+  // return parts.length > 0 ? parts.join(' · ') : '暂无描述';
+  return item.description
 };
 
 const getFaviconUrl = (item: SubscriptionListItemDto) => {
@@ -574,6 +527,6 @@ const handleImageError = (event: Event) => {
 };
 
 onMounted(() => {
-  if (!items.value.length) refresh();
+  if (!items.value.length) void refresh();
 });
 </script>

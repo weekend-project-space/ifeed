@@ -4,9 +4,11 @@ export interface SubscriptionBaseDto {
   feedId: string;
   title?: string;
   description?: string;
-  url: string;
-  siteUrl?: string;
+  url?: string | null;
+  siteUrl?: string | null;
   avatar?: string;
+  icon?: string | null;
+  type?: 'FEED' | 'MIX_FEED';
   lastFetched?: string;
   lastUpdated?: string;
   failureCount?: number;

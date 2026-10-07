@@ -30,6 +30,12 @@
       </button>
     </div>
 
+    <div v-if="loadError" class="mb-6 rounded-xl border border-red-200 bg-red-50 p-5 dark:border-red-900/60 dark:bg-red-950/30" role="alert">
+      <p class="text-sm font-medium text-red-800 dark:text-red-200">订阅聚合加载失败</p>
+      <p class="mt-1 text-sm text-red-700/80 dark:text-red-300/80">{{ loadError }}</p>
+      <button type="button" class="mt-3 text-sm font-medium text-red-700 underline underline-offset-2 hover:text-red-900 dark:text-red-300 dark:hover:text-red-100" @click="refresh">重试</button>
+    </div>
+
     <!-- Loading State -->
     <div v-if="mixFeedsStore.loading && !mixFeedsStore.myMixFeeds.length" class="space-y-3">
       <div v-for="i in 3" :key="i" class="flex items-start gap-4 p-4 rounded-lg animate-pulse">
@@ -42,7 +48,7 @@
     </div>
 
     <!-- Empty State -->
-    <div v-else-if="!mixFeedsStore.myMixFeeds.length" class="text-center py-16">
+    <div v-else-if="!mixFeedsStore.myMixFeeds.length" class="rounded-xl border border-dashed border-gray-300 bg-white/70 py-16 text-center dark:border-gray-700 dark:bg-gray-900/40">
       <div class="w-16 h-16 mx-auto mb-4 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center">
         <svg class="w-8 h-8 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
           <path d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
@@ -59,11 +65,11 @@
     </div>
 
     <!-- List -->
-    <div v-else class="space-y-0">
+    <div v-else class="divide-y divide-gray-200 overflow-hidden rounded-xl border border-gray-200 bg-white dark:divide-gray-800 dark:border-gray-800 dark:bg-gray-900/60">
       <div
           v-for="feed in mixFeedsStore.myMixFeeds"
           :key="feed.id"
-          class="group flex items-start gap-4 px-4 py-4 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
+          class="group flex items-start gap-3 px-3 py-4 transition-colors hover:bg-gray-50 sm:gap-4 sm:px-5 dark:hover:bg-gray-800/50"
       >
         <!-- Icon/Avatar Placeholder -->
         <div class="flex-shrink-0 w-10 h-10 rounded-full bg-secondary/10 dark:bg-secondary/20 flex items-center justify-center text-secondary">
@@ -74,28 +80,30 @@
 
         <div class="flex-1 min-w-0">
           <div class="flex items-start justify-between gap-3 mb-1.5">
-            <router-link :to="`/feeds/${feed.id}`" class="flex-1 min-w-0">
+            <router-link :to="`/feed/${feed.id}`" class="flex-1 min-w-0">
               <h3 class="text-base font-medium text-gray-900 dark:text-gray-100 line-clamp-1 group-hover:text-secondary transition-colors">
                 {{ feed.name }}
               </h3>
             </router-link>
 
             <!-- Action Buttons -->
-            <div class="flex items-center gap-1.5 flex-shrink-0">
+            <div class="relative flex flex-shrink-0 items-center gap-1.5">
               <button
+                  type="button"
                   class="relative p-1"
                   @click.stop="toggleDropdown(feed.id)"
                   :aria-expanded="activeDropdown === feed.id"
+                  aria-label="更多操作"
               >
                 <svg class="w-5 h-5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <circle cx="12" cy="12" r="1" fill="currentColor"/>
                   <circle cx="12" cy="5" r="1" fill="currentColor"/>
                   <circle cx="12" cy="19" r="1" fill="currentColor"/>
                 </svg>
-                <!-- Dropdown Menu -->
-                <div
+              </button>
+              <div
                     v-if="activeDropdown === feed.id"
-                    class="absolute right-0 top-full mt-1 w-36 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-1 z-10"
+                    class="absolute right-0 top-full z-20 mt-1 w-36 rounded-lg border border-gray-200 bg-white py-1 shadow-lg dark:border-gray-700 dark:bg-gray-800"
                 >
                   <button
                       @click.stop="openEditModal(feed)"
@@ -110,11 +118,10 @@
                     删除
                   </button>
                 </div>
-              </button>
             </div>
           </div>
 
-          <router-link :to="`/feeds/${feed.id}`" class="block">
+          <router-link :to="`/feed/${feed.id}`" class="block">
             <p class="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 mb-2">
               {{ feed.description || '暂无描述' }}
             </p>
@@ -324,6 +331,7 @@ const editingId = ref<string | null>(null);
 const feedToDelete = ref<MixFeedListResponse | null>(null);
 const activeDropdown = ref<string | null>(null);
 const isRefreshing = ref(false);
+const loadError = ref<string | null>(null);
 const items = computed(()=>subscriptionsStore.items.filter(item=>item.type=='FEED'))
 
 const form = ref<MixFeedRequest>({
@@ -385,7 +393,10 @@ const refresh = async () => {
   if (isRefreshing.value || mixFeedsStore.loading) return;
   isRefreshing.value = true;
   try {
+    loadError.value = null;
     await mixFeedsStore.fetchMyMixFeeds();
+  } catch (error) {
+    loadError.value = error instanceof Error ? error.message : '订阅聚合加载失败，请重试';
   } finally {
     setTimeout(() => isRefreshing.value = false, 500);
   }
@@ -463,10 +474,10 @@ const handleDelete = async () => {
 
 onMounted(() => {
   if (!mixFeedsStore.myMixFeeds.length) {
-    mixFeedsStore.fetchMyMixFeeds();
+    void refresh();
   }
   if (!subscriptionsStore.items.length) {
-    subscriptionsStore.fetchSubscriptions();
+    void subscriptionsStore.fetchSubscriptions();
   }
 });
 </script>
