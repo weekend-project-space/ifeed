@@ -62,7 +62,7 @@
 
         <!-- Author & Meta Info -->
         <div class="flex items-center justify-between gap-4 mb-8">
-          <router-link v-if="article.feedId" :to="'/feeds/' + article.feedId" class="flex items-center gap-3 group">
+          <router-link v-if="article.feedId" :to="'/feed/' + article.feedId" class="flex items-center gap-3 group">
             <img v-if="article.feedAvatar" :src="article.feedAvatar" :alt="article.feedTitle"
                  class="w-12 h-12 rounded-full object-cover"
                  @error="(e) => (e.target as HTMLImageElement).style.display = 'none'"/>
