@@ -8,6 +8,7 @@ import java.time.Instant;
 public record SubscriptionResponse(
                 String feedId,
                 String title,
+                String description,
                 String url,
                 String siteUrl,
                 String avatar,

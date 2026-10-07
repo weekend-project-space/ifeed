@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.bitmagic.ifeed.api.response.SearchResultResponse;
 import org.bitmagic.ifeed.exception.ApiException;
 import org.bitmagic.ifeed.config.security.UserPrincipal;
+import org.bitmagic.ifeed.api.util.IdentifierUtils;
 import org.bitmagic.ifeed.domain.service.ArticleService;
 import org.bitmagic.ifeed.application.search.SearchRetrievalService;
 import org.springframework.data.domain.Page;
@@ -21,6 +22,11 @@ import org.springframework.web.bind.annotation.RestController;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Locale;
+import java.util.Set;
+import java.util.Arrays;
+import java.util.TreeSet;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/search")
@@ -39,8 +45,11 @@ public class SearchController {
     public ResponseEntity<Page<SearchResultResponse>> search(@AuthenticationPrincipal UserPrincipal principal,
                                                              @RequestParam String query,
                                                              @RequestParam(required = false, defaultValue = TYPE_SEMANTIC) String type,
-
-                                                             @RequestParam(required = false, defaultValue = SOURCE_OWNER) String source,@PageableDefault(sort = "id", direction = Sort.Direction.DESC) Pageable pageable) {
+                                                             @RequestParam(required = false, defaultValue = SOURCE_OWNER) String source,
+                                                             @RequestParam(required = false) String feedId,
+                                                             @RequestParam(required = false) String tags,
+                                                             @RequestParam(required = false) String category,
+                                                             @PageableDefault(sort = "id", direction = Sort.Direction.DESC) Pageable pageable) {
         ensureAuthenticated(principal);
         if (query == null || query.isBlank()) {
             throw new ApiException(HttpStatus.BAD_REQUEST, "Query must not be blank");
@@ -57,9 +66,12 @@ public class SearchController {
         var pageNumber = pageable.getPageNumber();
         var pageSize = pageable.getPageSize();
         var includeGlobal = SOURCE_GLOBAL.equals(normalizedSource);
+        UUID feedUid = feedId == null || feedId.isBlank() ? null : IdentifierUtils.parseUuid(feedId, "feed id");
+        Set<String> tagSet = parseTags(tags);
 
         if (TYPE_SEMANTIC.equals(normalizedType)) {
-            return ResponseEntity.ok(searchRetrievalService.hybridSearch(principal.getId(), query, includeGlobal, pageNumber, pageSize).map(article -> new SearchResultResponse(
+            return ResponseEntity.ok(searchRetrievalService.hybridSearch(principal.getId(), query, includeGlobal,
+                    feedUid, tagSet, category, pageNumber, pageSize).map(article -> new SearchResultResponse(
                     article.id().toString(),
                     article.title(),
                     article.summary(),
@@ -71,7 +83,7 @@ public class SearchController {
             )));
         }
 
-        var articlePage = articleService.searchArticles(principal.getId(), query, includeGlobal, pageable)
+        var articlePage = articleService.searchArticles(principal.getId(), query, includeGlobal, feedUid, tagSet, category, pageable)
                 .map(article -> new SearchResultResponse(
                         article.id().toString(),
                         article.title(),
@@ -82,6 +94,14 @@ public class SearchController {
                         null,
                         article.feedId() != null ? article.feedId().toString() : null));
         return ResponseEntity.ok(articlePage);
+    }
+
+    private Set<String> parseTags(String tags) {
+        if (tags == null || tags.isBlank()) return Set.of();
+        return Arrays.stream(tags.split(","))
+                .map(String::trim).filter(value -> !value.isBlank())
+                .map(value -> value.toLowerCase(Locale.ROOT))
+                .collect(Collectors.toCollection(TreeSet::new));
     }
 
     private void ensureAuthenticated(UserPrincipal principal) {

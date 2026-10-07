@@ -107,6 +107,30 @@ public class ArticleService {
         return new PageImpl<>(ordered, PageRequest.of(safePage, safeSize), artIds.size());
     }
 
+    public Page<ArticleSummaryView> findSearchCandidates(List<Long> articleIds,
+                                                         Integer ownerId,
+                                                         UUID feedUid,
+                                                         Set<String> tags,
+                                                         String category,
+                                                         int page,
+                                                         int size) {
+        int safePage = Math.max(page, 0);
+        int safeSize = size <= 0 ? 10 : size;
+        if (articleIds.isEmpty()) {
+            return Page.empty(PageRequest.of(safePage, safeSize));
+        }
+        var tagPattern = buildTagPattern(tags);
+        var normalizedCategory = category == null || category.isBlank() ? null : category.trim().toLowerCase(Locale.ROOT);
+        Map<Long, ArticleSummaryView> matches = articleRepository.findSearchCandidates(
+                        articleIds, ownerId, feedUid, tagPattern, normalizedCategory).stream()
+                .collect(Collectors.toMap(ArticleSummaryView::articleId, Function.identity()));
+        List<ArticleSummaryView> ordered = articleIds.stream().distinct()
+                .map(matches::get).filter(Objects::nonNull).toList();
+        int fromIndex = Math.min(safePage * safeSize, ordered.size());
+        int toIndex = Math.min(fromIndex + safeSize, ordered.size());
+        return new PageImpl<>(ordered.subList(fromIndex, toIndex), PageRequest.of(safePage, safeSize), ordered.size());
+    }
+
     public Article getArticle(UUID articleUid) {
         return articleRepository.findOne((root, query, cb) -> cb.equal(root.get("uid"), articleUid))
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Article not found"));
@@ -115,6 +139,9 @@ public class ArticleService {
     public Page<ArticleSummaryView> searchArticles(Integer ownerId,
                                                    String query,
                                                    boolean includeGlobal,
+                                                   UUID feedUid,
+                                                   Set<String> tags,
+                                                   String category,
                                                    Pageable pageable) {
         if (query == null || query.isBlank()) {
             throw new ApiException(HttpStatus.BAD_REQUEST, "Query must not be blank");
@@ -122,7 +149,9 @@ public class ArticleService {
 
         var term = "%" + query.trim().toLowerCase() + "%";
         var scopeOwnerId = includeGlobal ? null : ownerId;
-        return articleRepository.searchArticleSummaries(term, scopeOwnerId, pageable);
+        var tagPattern = buildTagPattern(tags);
+        return articleRepository.searchArticleSummaries(term, scopeOwnerId, feedUid, tagPattern,
+                category == null || category.isBlank() ? null : category.trim().toLowerCase(), pageable);
     }
 
 

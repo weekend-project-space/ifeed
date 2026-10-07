@@ -33,6 +33,7 @@ public class SubscriptionViewConverter {
         return new SubscriptionResponse(
                 feed.getUid().toString(),
                 info.title(),
+                feed.getDescription(),
                 feed.getUrl(),
                 info.siteUrl(),
                 info.faviconUrl(),
@@ -56,6 +57,7 @@ public class SubscriptionViewConverter {
         return new SubscriptionResponse(
                 mixFeed.getUid().toString(),
                 mixFeed.getName(),
+                mixFeed.getDescription(),
                 null, // URL is not applicable for MixFeed in the same way
                 null, // Site URL
                 mixFeed.getIcon(), // Avatar/Icon

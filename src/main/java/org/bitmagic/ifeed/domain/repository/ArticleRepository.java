@@ -94,6 +94,9 @@ public interface ArticleRepository extends JpaRepository<Article, Long>, JpaSpec
             where (lower(a.title) like :term
                or lower(a.author) like :term
                or lower(a.tags) like :term)
+              and (:feedUid is null or f.uid = :feedUid)
+              and (:tagPattern is null or lower(coalesce(a.tags, '')) like :tagPattern)
+              and (:category is null or lower(coalesce(a.category, '')) = :category)
               and (:ownerId is null or exists (
                     select 1
                     from UserSubscription us
@@ -108,6 +111,9 @@ public interface ArticleRepository extends JpaRepository<Article, Long>, JpaSpec
             where (lower(a.title) like :term
                or lower(a.author) like :term
                or lower(a.tags) like :term)
+              and (:feedUid is null or a.feed.uid = :feedUid)
+              and (:tagPattern is null or lower(coalesce(a.tags, '')) like :tagPattern)
+              and (:category is null or lower(coalesce(a.category, '')) = :category)
               and (:ownerId is null or exists (
                     select 1
                     from UserSubscription us
@@ -119,6 +125,9 @@ public interface ArticleRepository extends JpaRepository<Article, Long>, JpaSpec
             """)
     Page<ArticleSummaryView> searchArticleSummaries(@Param("term") String term,
                                                     @Param("ownerId") Integer ownerId,
+                                                    @Param("feedUid") UUID feedUid,
+                                                    @Param("tagPattern") String tagPattern,
+                                                    @Param("category") String category,
                                                     Pageable pageable);
 
     @Query(value = """
@@ -221,6 +230,27 @@ public interface ArticleRepository extends JpaRepository<Article, Long>, JpaSpec
             where a.id in (:ids)
             """)
     List<ArticleSummaryView> findArticleSummariesByIds(@Param("ids") Collection<Long> ids);
+
+    @Query("""
+            select new org.bitmagic.ifeed.domain.record.ArticleSummaryView(
+                a.uid, a.id, a.title, a.link, a.summary, f.title, f.icon, a.publishedAt,
+                a.tags, a.thumbnail, a.enclosure, f.uid)
+            from Article a
+            left join a.feed f
+            where a.id in :ids
+              and (:feedUid is null or f.uid = :feedUid)
+              and (:tagPattern is null or lower(coalesce(a.tags, '')) like :tagPattern)
+              and (:category is null or lower(coalesce(a.category, '')) = :category)
+              and (:ownerId is null or exists (
+                    select 1 from UserSubscription us
+                    where us.sourceType = 'FEED' and us.sourceId = f.id
+                      and us.user.id = :ownerId and us.active = true))
+            """)
+    List<ArticleSummaryView> findSearchCandidates(@Param("ids") Collection<Long> ids,
+                                                   @Param("ownerId") Integer ownerId,
+                                                   @Param("feedUid") UUID feedUid,
+                                                   @Param("tagPattern") String tagPattern,
+                                                   @Param("category") String category);
 
     @Query(value = """
             select new org.bitmagic.ifeed.domain.record.ArticleContent(

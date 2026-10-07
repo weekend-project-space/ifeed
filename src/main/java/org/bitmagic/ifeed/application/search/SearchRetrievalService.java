@@ -21,6 +21,8 @@ import org.springframework.util.StringUtils;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
+import java.util.UUID;
 
 /**
  * 混合检索服务：结合 BM25 与向量召回，完成打分融合与分页返回。
@@ -44,6 +46,9 @@ public class SearchRetrievalService {
     public Page<ArticleSummaryView> hybridSearch(Integer userId,
                                                  String query,
                                                  boolean includeGlobal,
+                                                 UUID feedUid,
+                                                 Set<String> tags,
+                                                 String category,
                                                  int page,
                                                  int size) {
 
@@ -51,7 +56,9 @@ public class SearchRetrievalService {
             return Page.empty(PageRequest.of(Math.max(page, 0), Math.max(size, 1)));
         }
         List<DocScore> artIds = hybridSearch(userId, null, query, includeGlobal, properties.getFusionTopK());
-        Page<ArticleSummaryView> data = articleService.findIds2Article(artIds.stream().map(DocScore::docId).toList(), page, size);
+        Page<ArticleSummaryView> data = articleService.findSearchCandidates(
+                artIds.stream().map(DocScore::docId).toList(), includeGlobal ? null : userId,
+                feedUid, tags, category, page, size);
         log.debug("Hybrid search complete: user={}, query='{}', totalCandidates={}, pageIsLast={}",
                 userId, query, artIds.size(), data.isLast());
         return data;
