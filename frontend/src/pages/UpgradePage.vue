@@ -1,6 +1,6 @@
 <template>
   <div class="mx-auto px-4 py-6 pb-24 text-text sm:px-6 lg:px-8">
-    <section class="border-b border-outline/10 pb-6">
+    <section v-if="authStore.isAuthenticated" class="border-b border-outline/10 pb-6">
       <div class="flex items-start gap-4 sm:gap-6">
         <img v-if="userInfo?.avatarUrl" :src="userInfo.avatarUrl" alt="头像"
           class="h-20 w-20 shrink-0 rounded-full border border-outline/10 object-cover sm:h-24 sm:w-24" />
@@ -40,7 +40,20 @@
       </div>
     </section>
 
-    <nav class="-mb-px flex gap-1 overflow-x-auto border-b border-outline/10 pt-3 scrollbar-none" aria-label="个人中心">
+    <section v-else class="border-b border-outline/10 pb-6">
+      <div class="max-w-2xl">
+        <p class="text-xs font-bold uppercase tracking-wider text-primary">iFeed 会员</p>
+        <h1 class="mt-2 text-2xl font-bold leading-tight sm:text-3xl">升级你的阅读体验</h1>
+        <p class="mt-3 text-sm leading-6 text-text-secondary sm:text-base">
+          解锁更多订阅、AI 摘要、思维导图和智能推荐。登录后即可选择套餐并完成支付。
+        </p>
+        <router-link :to="loginLink" class="mt-5 inline-flex items-center rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90">
+          登录后购买
+        </router-link>
+      </div>
+    </section>
+
+    <nav class="-mb-px flex gap-1 overflow-x-auto border-b border-outline/10 pt-3 scrollbar-none" aria-label="账户与会员">
       <button v-for="tab in tabs" :key="tab.id" type="button" class="profile-tab"
         :class="activeTab === tab.id ? 'profile-tab-active' : ''" :aria-selected="activeTab === tab.id"
         @click="activeTab = tab.id">{{ tab.label }}</button>
@@ -136,8 +149,10 @@
 
       <template v-else>
         <SectionHeader title="会员方案" />
-        <div class="mb-6 rounded-xl border border-primary/20 bg-primary/5 p-4 text-sm text-text-secondary">当前套餐：<strong
-            class="text-text">{{ userInfo?.currentPlan || 'Free' }}</strong></div>
+        <div class="mb-6 rounded-xl border border-primary/20 bg-primary/5 p-4 text-sm text-text-secondary">
+          当前套餐：<strong class="text-text">{{ authStore.isAuthenticated ? (userInfo?.currentPlan || 'Free') : '登录后查看' }}</strong>
+          <span v-if="!authStore.isAuthenticated" class="ml-2">登录后可以购买并管理会员套餐。</span>
+        </div>
         <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
           <PlanCard name="Free" description="体验基础功能" price="免费" :features="freeFeatures"
             :current="currentPlan === 'free'" />
@@ -199,9 +214,9 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, h, defineComponent } from 'vue';
+import { computed, ref, h, defineComponent, watch } from 'vue';
 import { storeToRefs } from 'pinia';
-import { useRouter } from 'vue-router';
+import { useRouter, useRoute } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 import { usePWAStore } from '@/stores/pwa';
 import { useHistoryQuery } from '@/queries/history';
@@ -215,14 +230,41 @@ import type { CollectionFolderDto } from '@/api/collectionFolders';
 
 defineOptions({ name: 'UpgradePage' });
 const router = useRouter();
+const route = useRoute();
 const authStore = useAuthStore();
 const pwaStore = usePWAStore();
 const { user: userInfo } = storeToRefs(authStore);
 const { canInstall } = storeToRefs(pwaStore);
-const activeTab = ref<'overview' | 'likes' | 'collections' | 'history' | 'plans'>('overview');
+const tabDefinitions = [
+  { id: 'overview', label: '总览' },
+  { id: 'likes', label: '喜欢' },
+  { id: 'collections', label: '收藏' },
+  { id: 'history', label: '历史' },
+  { id: 'plans', label: '会员' },
+] as const;
+type TabId = typeof tabDefinitions[number]['id'];
+const tabs = computed(() => authStore.isAuthenticated
+  ? tabDefinitions
+  : tabDefinitions.filter(tab => tab.id === 'plans'));
+const requestedTab = computed<TabId | null>(() => {
+  const tab = route.query.tab;
+  if (typeof tab !== 'string') return null;
+  return tabDefinitions.some(item => item.id === tab) ? tab as TabId : null;
+});
+const activeTab = ref<TabId>(authStore.isAuthenticated ? (requestedTab.value || 'overview') : 'plans');
 const selectedPlan = ref<string | null>(null);
 const showPaymentModal = ref(false);
-const tabs = [{ id: 'overview', label: '总览' }, { id: 'likes', label: '喜欢' }, { id: 'collections', label: '收藏' }, { id: 'history', label: '历史' }, { id: 'plans', label: '会员' }] as const;
+
+const requestedPlan = computed<'standard' | 'pro' | null>(() => {
+  const plan = route.query.plan;
+  return plan === 'standard' || plan === 'pro' ? plan : null;
+});
+const loginLink = computed(() => ({
+  name: 'auth',
+  query: {
+    redirect: router.resolve({ name: 'upgrade', query: { tab: 'plans' } }).fullPath,
+  },
+}));
 
 const historyQuery = useHistoryQuery();
 const likesQuery = useLikesQuery();
@@ -231,18 +273,25 @@ const historyItems = computed(() => historyQuery.items.value as HistoryEntryDto[
 const likesItems = computed(() => likesQuery.items.value as LikeDto[]);
 const recentHistory = computed(() => historyItems.value.slice(0, 10));
 const recentLikes = computed(() => likesItems.value.slice(0, 10));
-const folders = computed<CollectionFolderDto[]>(() => [
-  { folderId: 'default', name: '默认收藏', createdAt: '', updatedAt: '' },
-  ...(foldersQuery.data.value?.pages.flatMap(page => page.content) ?? []),
-]);
-const folderCount = computed(() => foldersQuery.data.value?.pages[0]?.totalElements
-  ? foldersQuery.data.value.pages[0].totalElements + 1 : 1);
+const folders = computed<CollectionFolderDto[]>(() => {
+  if (!authStore.isAuthenticated) return [];
+  return [
+    { folderId: 'default', name: '默认收藏', createdAt: '', updatedAt: '' },
+    ...(foldersQuery.data.value?.pages.flatMap(page => page.content) ?? []),
+  ];
+});
+const folderCount = computed(() => {
+  if (!authStore.isAuthenticated) return 0;
+  return (foldersQuery.data.value?.pages[0]?.totalElements ?? 0) + 1;
+});
 const historyPending = computed(() => historyQuery.isPending.value);
 const likesPending = computed(() => likesQuery.isPending.value);
 const foldersPending = computed(() => foldersQuery.isPending.value);
 const historyError = computed(() => historyQuery.errorMessage.value);
 const likesError = computed(() => likesQuery.errorMessage.value);
-const currentPlan = computed(() => (userInfo.value?.currentPlan || 'Free').toLowerCase());
+const currentPlan = computed(() => authStore.isAuthenticated
+  ? (userInfo.value?.currentPlan || 'Free').toLowerCase()
+  : '');
 const freeFeatures = ['订阅 60 个 RSS 源', '每天 AI 处理 3 篇文章', '基础摘要功能', '内容分类和标签', '关键词搜索'];
 const standardFeatures = ['订阅 300 个 RSS 源', '每天 AI 处理 30 篇文章', '创建 2 个订阅源', '智能摘要和关键信息提取', '内容分类和标签管理', '文章思维导图', '语义搜索'];
 const proFeatures = ['订阅 2000 个 RSS 源', '每天 AI 处理 100 篇文章', '创建 6 个订阅源', '智能推荐（多路召回+重排）', '文章思维导图', '语义搜索', '优先客户支持'];
@@ -251,11 +300,46 @@ const comparisonData = [
 ];
 const selectedPlanName = computed(() => selectedPlan.value === 'standard' ? 'Standard 套餐' : 'Pro 套餐');
 const selectedPlanPrice = computed(() => selectedPlan.value === 'standard' ? '¥36/年' : '¥68/年');
-const selectPlan = (plan: string) => { selectedPlan.value = plan; showPaymentModal.value = true; };
+const selectPlan = async (plan: 'standard' | 'pro') => {
+  if (!authStore.isAuthenticated) {
+    const redirect = router.resolve({ name: 'upgrade', query: { tab: 'plans', plan } }).fullPath;
+    await router.push({ name: 'auth', query: { redirect } });
+    return;
+  }
+  if (!userInfo.value) return;
+  selectedPlan.value = plan;
+  showPaymentModal.value = true;
+};
 const closePaymentModal = () => { showPaymentModal.value = false; };
 const handleImageError = () => console.warn('Failed to load QR code image');
 const handleLogout = async () => { await authStore.logout(); await router.replace({ name: 'auth' }); };
 const handleInstallPWA = async () => { await pwaStore.installPWA(); };
+
+watch(() => authStore.isAuthenticated, (isAuthenticated) => {
+  if (!isAuthenticated) {
+    activeTab.value = 'plans';
+    selectedPlan.value = null;
+    showPaymentModal.value = false;
+  } else if (requestedTab.value) {
+    activeTab.value = requestedTab.value;
+  } else if (activeTab.value === 'plans' && !requestedPlan.value) {
+    activeTab.value = 'overview';
+  }
+});
+
+watch(requestedTab, (tab) => {
+  if (authStore.isAuthenticated && tab) activeTab.value = tab;
+});
+
+watch([() => authStore.isAuthenticated, () => userInfo.value, requestedPlan],
+  ([isAuthenticated, user, plan]) => {
+    if (isAuthenticated && user && plan) {
+      activeTab.value = 'plans';
+      selectedPlan.value = plan;
+      showPaymentModal.value = true;
+    }
+  },
+  { immediate: true });
 </script>
 
 <script lang="ts">
@@ -323,12 +407,18 @@ const Shelf = defineComponent({
           h(RouterLink, { to: props.to, class: 'text-xs font-semibold text-text-secondary hover:text-primary' }, () => '查看全部'),
           h('button', {
             type: 'button', title: '向左滚动', 'aria-label': '向左滚动', disabled: !canScrollLeft.value,
-            class: 'shelf-arrow', onClick: () => scrollShelf(-1),
-          }, '‹'),
+            class: 'flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-outline/20 transition-colors hover:bg-surface-container disabled:cursor-not-allowed disabled:opacity-30',
+            onClick: () => scrollShelf(-1),
+          }, [h('svg', { class: 'h-4 w-4 text-text', fill: 'none', stroke: 'currentColor', viewBox: '0 0 24 24' }, [
+            h('path', { 'stroke-linecap': 'round', 'stroke-linejoin': 'round', 'stroke-width': '2', d: 'M15 19l-7-7 7-7' }),
+          ])]),
           h('button', {
             type: 'button', title: '向右滚动', 'aria-label': '向右滚动', disabled: !canScrollRight.value,
-            class: 'shelf-arrow', onClick: () => scrollShelf(1),
-          }, '›'),
+            class: 'flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-outline/20 transition-colors hover:bg-surface-container disabled:cursor-not-allowed disabled:opacity-30',
+            onClick: () => scrollShelf(1),
+          }, [h('svg', { class: 'h-4 w-4 text-text', fill: 'none', stroke: 'currentColor', viewBox: '0 0 24 24' }, [
+            h('path', { 'stroke-linecap': 'round', 'stroke-linejoin': 'round', 'stroke-width': '2', d: 'M9 5l7 7-7 7' }),
+          ])]),
         ]),
       ]),
       props.loading
@@ -385,10 +475,6 @@ export default defineComponent({
 
 .folder-card {
   @apply flex min-w-0 items-center gap-3 rounded-xl border border-outline/10 bg-surface p-3 transition hover:border-primary/40 hover:bg-surface-container/40;
-}
-
-.shelf-arrow {
-  @apply flex h-8 w-8 items-center justify-center rounded-full border border-outline/20 text-xl leading-none text-text transition hover:bg-surface-container disabled:cursor-not-allowed disabled:opacity-30;
 }
 
 :global(.scrollbar-none::-webkit-scrollbar) {
