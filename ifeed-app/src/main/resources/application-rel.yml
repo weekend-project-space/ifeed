@@ -1,0 +1,50 @@
+spring:
+  application:
+    name: IFeed
+    version: 0.1.1
+  datasource:
+    url: jdbc:postgresql://${PG:192.168.8.233}:${PG_PORT:5432}/${PG_DATABASE:i_feed2025}
+    username: ${PG_USERNAME:postgres}
+    password: ${PG_PASSWORD:postgres@123456}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 30
+      connection-timeout: 30000
+  jpa:
+    hibernate:
+      ddl-auto: validate
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    baseline-version: 1
+
+  threads:
+    virtual:
+      enabled: true
+app:
+  proxy:
+    url: https://www.ifeed.cc/proxy
+  ai:
+    provider:
+      enabled: true
+#      base-url: 'https://oneapi.jisuai.cn/'
+#      api-key: 'sk-HGq0GZEFP3xI5lGksbthh71U3p2VE04YcxUmTMbTgkpAl9zp'
+#      model: 'gpt-oss-120b'
+      base-url: 'http://192.168.8.58:8080/'
+      api-key: 'sk-HGq0GZEFP3xI5lGksbthh71U3p2VE04YcxUmTMbTgkpAl9zp'
+      model: 'gemma-4-E2B-it-qat-UD-Q4_K_XL.gguf'
+      embedding:
+        #        base-url: 'http://192.168.8.232:8081'
+        #        model: 'bge-m3-Q4_K_M.gguf'
+        base-url: 'http://192.168.8.58:8081'
+        model: 'bge-m3-Q4_K_S.gguf'
+      reranker:
+        #        base-url: 'http://192.168.8.232:8082'
+        #        model: 'bge-reranker-v2-m3-Q4_K_M.gguf'
+        base-url: 'http://192.168.8.58:8082'
+        model: 'bge-reranker-v2-m3-Q4_K_M.gguf'
+  oauth:
+    linux-do:
+      client-id: ${OAUTH_LINUX_DO_CLIENT_ID:PeXlJCOmunsYupcKmvTx86Bcxg00y5oe}
+      client-secret: ${OAUTH_LINUX_DO_CLIENT_SECRET:w8x4nqkPJZvfVg228rdU1VRW5pwKkRKh}
+      redirect-uri: ${OAUTH_LINUX_DO_REDIRECT_URI:https://www.ifeed.cc/auth}

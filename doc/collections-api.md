@@ -366,11 +366,8 @@ CREATE INDEX idx_user_collections_article
 
 现有项目中 `Article.id` 已为 Java `Long`，`User.id` 仍为 Java `Integer`。新表主键和关联字段统一为 `BIGINT`／`Long`；PostgreSQL 支持新表的 `BIGINT user_id` 外键引用现有 `INTEGER users.id`，服务入口将用户 ID 转为 `Long`。若后续将用户主键也统一为 `Long`，需同步迁移 `users.id`、相关引用列、实体及仓储等，本次不改动现有用户主键。
 
-## 12. 旧收藏迁移
+## 12. 历史数据迁移
 
-- 来源为 MongoDB `user_behavior.collections`，数组项使用当前 Java 映射的 `articleId`（文章 UUID）和 `timestamp`。
-- 通过现有用户数字 ID、文章 UUID 查到内部主键，旧收藏统一放入默认收藏夹，即 `folder_id = NULL`，不创建额外文件夹。
-- 同一用户、同一文章的旧重复数据取最早收藏时间。PG 已有记录时不覆盖收藏时间或所属文件夹；重复运行不会重复插入。
-- 无效用户 ID、缺失用户、无效文章 UUID、缺失时间或已删除文章跳过并记录统计；数据库异常终止迁移，不伪装成缺失数据。
-- 推荐画像中的收藏读取已切换为 PG。MongoDB 原收藏数组保留作备份，不再用于正常收藏状态或列表查询。
-- 使用与阅读历史共用的独立迁移命令，维护窗口内依次回填两类数据。命令、备份及回退注意事项见[阅读历史迁移步骤](history-api.md#7-旧数据迁移方案)。恢复正常写入和删除后，不要重新全量回填旧快照。
+- 历史收藏已经回填到 PostgreSQL `user_collections`，无法映射的用户、文章或时间会被记录并跳过。
+- 旧收藏统一放入默认文件夹，即 `folder_id = NULL`，不创建额外文件夹。
+- 推荐画像中的收藏读取 PostgreSQL。一次性迁移命令已经移除，当前服务不再执行重复回填。

@@ -1,6 +1,6 @@
-# 阅读历史接口与 PostgreSQL 迁移
+# 阅读历史接口与 PostgreSQL 存储
 
-本文整理文章阅读历史的接口、表结构和从 MongoDB 迁移到 PostgreSQL 的方案。保留现有三个接口路径和响应格式，内部关联统一使用数字 ID。
+本文整理文章阅读历史的接口和 PostgreSQL 表结构。保留现有三个接口路径和响应格式，内部关联统一使用数字 ID。
 
 ## 1. 接口概览
 
@@ -28,7 +28,7 @@
 - 同一用户、同一文章只保留一条记录，表示最近一次阅读，不逐次记录阅读事件。
 - 重复阅读更新 `read_at`，取已存时间与本次时间的较大值，防止延迟请求或迁移回填覆盖更新的阅读时间。
 - 文章不存在返回 `404`。
-- 保留现有的 Feed 已读时间更新行为；Feed 已读记录仍存于 MongoDB，其时间同样不应被较早请求覆盖。
+- 保留现有的 Feed 已读时间更新行为；Feed 已读记录存于 PostgreSQL，其时间同样不应被较早请求覆盖。
 
 响应：`200 OK`。
 
@@ -124,49 +124,21 @@ CREATE INDEX idx_user_read_history_article
 
 现有 `User.id` 仍为 `Integer`，在应用入口转为 `Long`。PostgreSQL 支持 `BIGINT user_id` 外键关联已有 `INTEGER users.id`，此次无需全局迁移用户主键。
 
-## 6. 迁移范围
+## 6. 数据访问范围
 
-- 阅读历史接口改为读写 PostgreSQL。
-- 推荐的最近阅读序列、用户兴趣画像改为读取 PostgreSQL 阅读历史，避免迁移后推荐继续使用旧数据。
-- 收藏同期迁移至 PostgreSQL；MongoDB 的 `Interaction` 和 Feed 已读记录继续使用现有存储。文章阅读时保留 Feed 已读时间更新；PostgreSQL 与 MongoDB 之间不具备单一数据库事务的原子性。
-- 原 MongoDB `readHistory` 数组作为迁移源保留，切换后不再写入或用于正常阅读历史查询。
+- 阅读历史接口读写 PostgreSQL `user_read_history`。
+- 推荐的最近阅读序列、用户兴趣画像读取 PostgreSQL 阅读历史、收藏和喜欢数据。
+- Feed 已读状态读写 PostgreSQL `user_read_feeds`，文章阅读和 Feed 已读更新在同一数据库内完成。
 
-## 7. 旧数据迁移方案
+## 7. 历史数据迁移记录
 
-源为 MongoDB `user_behavior` 集合。以当前 Java 映射为准：用户 ID 在 `_id`，阅读数组为 `readHistory`，数组元素包含 `articleId`（文章 UUID 字符串）和 `timestamp`。
+历史阅读、收藏、喜欢和 Feed 已读数据已经统一到 PostgreSQL。迁移入口和一次性迁移工具已从应用代码中移除，当前部署只需执行 Flyway 脚本：
 
-1. 在维护窗口暂停阅读历史及收藏的写入和删除，停止旧版本实例接收相关请求，避免迁移时遗漏新增记录或复活已删除记录。
-2. 通过数据库版本迁移创建 `user_read_history`，再运行显式启用的旧数据迁移工具。
-3. 使用游标分批读取旧文档，将用户 ID 转成数字，通过文章 UUID 批量查出文章内部 ID。
-4. 对同一用户、同一文章的重复记录取最新时间，使用 PostgreSQL UPSERT 回填；已有记录也保留较新的时间。
-5. 用户不存在、文章不存在、ID 格式错误、时间缺失的记录跳过并统计，不能用当前时间伪造历史时间。数据库读取或写入异常应使迁移失败，不能当作缺失记录静默跳过。
-6. 核对有效去重后的记录数、跳过数量，并抽查不同用户的文章标识、时间、分页和推荐读取结果。
-7. 关闭迁移开关，部署使用 PostgreSQL 的版本并恢复请求。保留旧 MongoDB 数据供核验，不自动清空。
+- `V3__migrate_read_history_to_postgres.sql` 创建文章阅读历史表。
+- `V4__add_collections_and_likes.sql` 创建收藏夹、收藏和喜欢表。
+- `V5__add_read_feed_state.sql` 创建 Feed 已读状态表。
 
-迁移中断后可在保持维护状态时重新执行，重复写入不会生成重复记录或使时间倒退。恢复正常写入、删除后不要再次全量回填旧快照，否则可能恢复用户已经删除的历史。上线后若需要回退，应先处理 PostgreSQL 中的新增、更新与删除，不能直接切回旧 MongoDB 快照。
-
-### 执行命令
-
-使用 Java 21。先清理旧编译产物并构建应用：
-
-```bash
-mvn -DskipTests clean package
-```
-
-确认目标数据库配置、备份和维护窗口后运行独立迁移命令：
-
-```bash
-java -Dloader.main=org.bitmagic.migration.UserBehaviorMigrationCommand \
-  -cp target/ifeed-0.0.1-SNAPSHOT.jar \
-  org.springframework.boot.loader.launch.PropertiesLauncher \
-  --spring.profiles.active=rel
-```
-
-该命令仅启动迁移所需的数据访问组件，不启动 HTTP 服务、Feed 抓取任务或推荐定时任务；Flyway 先执行未应用的数据库版本脚本，然后依次回填阅读历史、收藏，完成后退出。执行前应审核全部待执行的 Flyway 脚本，包括此次新增的 `V3__migrate_read_history_to_postgres.sql` 和 `V4__add_collections_and_likes.sql`。如果数据库表结构已由运维单独迁移，可显式传入 `--spring.flyway.enabled=false`，但必须先确认这两个脚本中的表、约束和索引都已存在。
-
-迁移日志分别输出已处理用户数、有效去重后尝试写入的记录数、无效用户、缺失用户、无效记录、缺失文章和重复记录数量。`upsertedRecords` 包含已有记录的幂等更新，不等于新增行数。数据库连接、查询、写入失败时命令失败退出，不清理 MongoDB 原数据。
-
-普通应用启动默认不回填旧数据。不要在正常部署中长期设置 `ifeed.migration.user-behavior.enabled=true`。喜欢表仅新建，不从收藏、阅读历史或 Interaction 推断喜欢状态。
+这些脚本属于数据库版本历史，必须保留并按 Flyway 顺序执行；应用运行时不再依赖其他数据存储。
 
 ## 8. 错误响应
 

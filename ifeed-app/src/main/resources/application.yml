@@ -1,0 +1,138 @@
+spring:
+  application:
+    name: IFeed
+    version: 0.1.1
+  datasource:
+    url: jdbc:postgresql://${PG:127.0.0.1}:${PG_PORT:5432}/${PG_DATABASE:i_feed}
+    username: ${PG_USERNAME:i_feed}
+    password: ${PG_PASSWORD:0123.}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 30
+      connection-timeout: 30000
+  threads:
+    virtual:
+      enabled: true
+  ai:
+    openai:
+      api-key: ${app.ai.provider.api-key}
+      base-url: ${app.ai.provider.base-url}
+      chat:
+        options:
+          model: ${app.ai.provider.model}
+          temperature: 0.5
+      embedding:
+        options:
+          dimensions: ${app.ai.provider.embedding.options.dimensions}
+          model: ${app.ai.provider.embedding.model}
+          encoding-format: 'float'
+        base-url: ${app.ai.provider.embedding.base-url}
+        api-key: ${app.ai.provider.embedding.api-key}
+    vectorstore:
+      pgvector:
+        initialize-schema: false
+        table-name: vector_store
+        index-type: ${VECTOR_INDEX_TYPE:HNSW}
+        distance-type: ${VECTOR_DISTANCE_TYPE:COSINE_DISTANCE}
+        dimensions: ${app.ai.provider.embedding.options.dimensions}
+        id-type: serial
+  mvc:
+    pathmatch:
+      matching-strategy: ant_path_matcher
+  profiles:
+    active: rel
+app:
+  # 定时任务
+  rss:
+    fetcher:
+      fixed-delay: PT100M
+      initial-delay: PT1M
+      thread-pool-size: 10
+      connect-timeout: 30s
+      read-timeout: 30s
+      max-items: 500
+      max-retries: 1
+      rsshub-list:
+        - https://rsshub.rssforever.com
+        - https://hub.slarker.me
+        - https://rss.owo.nz
+        - https://rsshub.umzzz.com
+        - https://rss.wudifeixue.com
+        - https://rsshub.isrss.com
+      cache:
+        expire-after-write: 30m
+        maximum-size: 1000
+  embedding:
+    document:
+      fixed-delay: PT10M
+      initial-delay: PT1M
+    user:
+      fixed-delay: PT12H
+      initial-delay: PT30s
+      options:
+        recent-behavior-limit: 200
+  # ai 集成
+  ai:
+    provider:
+      enabled: true
+      base-url: ''
+      api-key: ''
+      model: 'gpt-4o-mini'
+      embedding:
+        base-url: '${app.ai.provider.endpoint}'
+        api-key: '${app.ai.provider.api-key}'
+        model: 'Qwen/Qwen3-Embedding-4B'
+        options:
+          dimensions: 1024
+      reranker:
+        base-url: '${app.ai.provider.endpoint}'
+        api-key: '${app.ai.provider.api-key}'
+        model: 'bge-reranker-v2-m3'
+  # 检索
+  search:
+    retrieval:
+      bm25-top-k: 50
+      vector-top-k: 120
+      fusion-top-k: 50
+      bm25-weight: 0.6
+      vector-weight: 0.4
+      freshness-time-weight: 0.3
+      freshness-lambda: 0.5
+      similarity-threshold: 0.3
+
+  radar:
+    fixed-delay: PT12H
+    initial-delay: PT10m
+    window-hours: 72
+    similarity-threshold: 0.7
+    neighbors: 10
+    min-cluster-size: 5
+    max-topics: 12
+    snapshot-ttl: PT2H
+    include-global: true
+  # 召回
+  recall:
+    preference:
+      read-window-days: 30
+      collection-window-days: 90
+      lookback: 200
+      collection-bonus: 2.0
+      min-total-score: 0.1
+      extract-keywords: true
+      extract-entities: true
+  # OAuth 集成
+  oauth:
+    linux-do:
+      client-id: ${OAUTH_LINUX_DO_CLIENT_ID:xxx}
+      client-secret: ${OAUTH_LINUX_DO_CLIENT_SECRET:xxx}
+      redirect-uri: ${OAUTH_LINUX_DO_REDIRECT_URI:https://www.ifeed.cc/auth}
+#management:
+#  endpoints:
+#    web:
+#      exposure:
+#        include: health,info,metrics,threaddump
+logging:
+  level:
+    org.bitmagic.ifeed:
+      application:
+        feed: debug
