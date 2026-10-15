@@ -94,7 +94,7 @@ public class ArticleEnrichmentService {
 
         ArticleEnrichment.Rating rating = ArticleEnrichment.Rating.valueOf(finalGrade);
         enrichment.setRating(rating);
-        if (genAllTop ? !ArticleEnrichment.Rating.D.equals(rating) : ArticleEnrichment.Rating.A.equals(rating) || ArticleEnrichment.Rating.B.equals(rating)) {
+        if (genAllTop ? !ArticleEnrichment.Rating.D.equals(rating) : ArticleEnrichment.Rating.A.equals(rating)) {
             // 4. 生成AI增强内容
             log.debug("开始生成AI增强内容: articleId={}", article.getId());
             if (Strings.isBlank(enrichment.getAiSummary())) {
