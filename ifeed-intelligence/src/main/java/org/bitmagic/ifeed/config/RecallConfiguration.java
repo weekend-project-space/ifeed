@@ -3,6 +3,7 @@ package org.bitmagic.ifeed.config;
 import org.bitmagic.ifeed.application.recommendation.recall.core.*;
 import org.bitmagic.ifeed.application.recommendation.recall.spi.ItemFreshnessProvider;
 import org.bitmagic.ifeed.application.recommendation.recall.spi.SequenceStore;
+import org.bitmagic.ifeed.domain.repository.ArticleRepository;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -35,7 +36,7 @@ public class RecallConfiguration {
                                      @Value("${recall.fusion.freshness-weight:0.23}") double freshnessWeight,
                                      @Value("${recall.fusion.freshness-half-life-hours:168}") long halfLifeHours) {
         Duration halfLife = Duration.ofHours(Math.max(1L, halfLifeHours));
-        return new DefaultRecallFusion(freshnessProvider, freshnessWeight,  halfLife);
+        return new DefaultRecallFusion(freshnessProvider, freshnessWeight, halfLife);
     }
 
     @Bean
@@ -60,8 +61,9 @@ public class RecallConfiguration {
                                      RecallPlanner planner,
                                      RecallFusion fusion,
                                      UserContextFactory contextFactory,
+                                     ArticleRepository articleRepository,
                                      @Qualifier("recallExecutor") Executor executor) {
         // 构建多路召回引擎，对外提供统一服务
-        return new RecallEngine(registry, planner, fusion, contextFactory, executor);
+        return new RecallEngine(registry, planner, fusion, contextFactory, executor, articleRepository);
     }
 }

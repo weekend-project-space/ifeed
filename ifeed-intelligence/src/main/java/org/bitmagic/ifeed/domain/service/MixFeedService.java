@@ -37,7 +37,6 @@ public class MixFeedService {
     private final ArticleRepository articleRepository;
     private final UserSubscriptionRepository userSubscriptionRepository;
     private final ObjectMapper objectMapper;
-    private final static int MAX_USER_MIX_FEEDS = 3;
 
     @Transactional
     public MixFeed create(User user, String name, String description, String icon, boolean isPublic,

@@ -36,7 +36,7 @@ export interface RadarDigestParams {
 }
 
 export const getRadarDigest = (params: RadarDigestParams) =>
-  get<PageResponseWithMeta<RadarTopicDto>>('/api/user/radar/digest', {
+  get<PageResponseWithMeta<RadarTopicDto>>('/api/radar/digest', {
     query: {
       ...params,
       snapshotId: params.snapshotId ?? undefined,
@@ -51,7 +51,7 @@ export const getRadarTopicDetail = (args: {
   size: number;
 }) =>
   get<PageResponseWithMeta<RadarItemDto>>(
-    `/api/user/radar/topics/${encodeURIComponent(args.topicId)}`,
+    `/api/radar/topics/${encodeURIComponent(args.topicId)}`,
     {
       query: {
         snapshotId: args.snapshotId,

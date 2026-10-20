@@ -3,6 +3,8 @@ package org.bitmagic.ifeed.application.recommendation.recall.core;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.bitmagic.ifeed.application.recommendation.recall.model.*;
+import org.bitmagic.ifeed.domain.record.ArticleSummaryView;
+import org.bitmagic.ifeed.domain.repository.ArticleRepository;
 
 import java.time.Duration;
 import java.util.EnumMap;
@@ -10,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
+import java.util.stream.Collectors;
 
 /**
  * 多路召回调度引擎，负责并发执行各策略并完成结果融合。
@@ -23,7 +26,7 @@ public class RecallEngine {
     private final RecallFusion fusion;
     private final UserContextFactory contextFactory;
     private final Executor executor;
-//    private final ArticleRepository articleRepository;
+    private final ArticleRepository articleRepository;
 //    private final AdaptiveScoreMapper adaptiveScoreMapper = new AdaptiveScoreMapper();
 
     public RecallResponse recall(RecallRequest request) {
@@ -60,7 +63,7 @@ public class RecallEngine {
 //                    log.debug("recall {}-{} title: {} score:{}=>{}", strategyId, item.itemId(), id2title.get(item.itemId()), item.score(), adaptiveScoreMapper.map(item.score()));
 //                });
 //            }
-//            return list.stream().map(i -> i.withScore(adaptiveScoreMapper.map(i.score()))).collect(Collectors.toList());
+//            return list;//stream().map(i -> i.withScore(adaptiveScoreMapper.map(i.score()))).collect(Collectors.toList());
 //        });
         // 将各通道结果交给融合层进行重排、多样化
         List<ItemCandidate> fused = fusion.fuse(channelResults, new FusionContext(request, plan.fusionConfig()));

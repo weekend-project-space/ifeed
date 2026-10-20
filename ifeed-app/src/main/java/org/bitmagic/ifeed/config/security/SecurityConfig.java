@@ -44,9 +44,13 @@ public class SecurityConfig {
                                 "/api/auth/**",
                                 "/actuator/**",
                                 "/api/feeds/**",
+                                "/api/radar/**",
                                 "/api/articles/**",
                                 "/api/discovery/**"
                         ).permitAll()
+                        .requestMatchers("/api/topic-tracks/suggestions", "/api/topic-tracks/following").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/topic-tracks", "/api/topic-tracks/summaries",
+                                "/api/topic-tracks/limits", "/api/topic-tracks/*", "/api/topic-tracks/summaries/*/articles").permitAll()
                         .requestMatchers("/api/**").authenticated()
                         .anyRequest().denyAll()
                 )

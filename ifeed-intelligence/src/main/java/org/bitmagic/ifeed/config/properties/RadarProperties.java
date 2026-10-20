@@ -21,9 +21,6 @@ public class RadarProperties {
     /** Minimum similarity to connect two docs into the same topic cluster. */
     private double similarityThreshold = 0.82;
 
-    /** Per-document nearest neighbors considered when building similarity graph. */
-    private int neighbors = 10;
-
     /** Ignore clusters smaller than this size. */
     private int minClusterSize = 5;
 
@@ -33,4 +30,3 @@ public class RadarProperties {
     /** Snapshot TTL. */
     private Duration snapshotTtl = Duration.ofHours(24);
 }
-

@@ -5,7 +5,7 @@
       <!-- Header -->
       <div class="flex items-start justify-between mb-6 sm:mb-8">
         <div>
-          <h1 class="text-2xl sm:text-3xl font-bold text-text">热点雷达</h1>
+          <h1 class="text-2xl sm:text-3xl font-bold text-text">今日热榜</h1>
           <p class="text-sm text-text-secondary mt-3">
             过去 {{ windowHoursText }}h
             <span v-if="generatedAtText" class="before:content-['·'] before:mx-1.5">{{ generatedAtText }}</span>

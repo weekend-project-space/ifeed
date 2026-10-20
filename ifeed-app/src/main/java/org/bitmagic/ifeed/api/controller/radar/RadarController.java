@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/user/radar")
+@RequestMapping("/api/radar")
 @RequiredArgsConstructor
 public class RadarController {
 

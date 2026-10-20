@@ -1,5 +1,5 @@
 <template>
-  <div class="mx-auto px-4 py-6 pb-24 text-text sm:px-6 lg:px-8">
+  <div class="mx-auto max-w-screen-2xl px-4 py-6 pb-24 text-text sm:px-6 lg:px-8">
     <section v-if="authStore.isAuthenticated" class="border-b border-outline/10 pb-6">
       <div class="flex items-start gap-4 sm:gap-6">
         <img v-if="userInfo?.avatarUrl" :src="userInfo.avatarUrl" alt="头像"
@@ -152,7 +152,7 @@
         <SectionHeader title="会员方案" />
         <div class="mb-6 rounded-xl border border-primary/20 bg-primary/5 p-4 text-sm text-text-secondary">
           当前套餐：<strong class="text-text">{{ authStore.isAuthenticated ? (userInfo?.currentPlan || 'Free') : '登录后查看'
-          }}</strong>
+            }}</strong>
           <span v-if="!authStore.isAuthenticated" class="ml-2">登录后可以购买并管理会员套餐。</span>
         </div>
         <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
@@ -295,10 +295,10 @@ const currentPlan = computed(() => authStore.isAuthenticated
   ? (userInfo.value?.currentPlan || 'Free').toLowerCase()
   : '');
 const freeFeatures = ['订阅 60 个 RSS 源', '每天 AI 处理 3 篇文章', '基础摘要功能', '内容分类和标签', '关键词搜索'];
-const standardFeatures = ['订阅 300 个 RSS 源', '每天 AI 处理 15 篇文章', '创建 2 个订阅源', '智能摘要和关键信息提取', '内容分类和标签管理', '文章思维导图', '语义搜索'];
-const proFeatures = ['订阅 1200 个 RSS 源', '每天 AI 处理 60 篇文章', '创建 8 个订阅源', '智能推荐（多路召回+重排）', '文章思维导图', '语义搜索', '优先客户支持'];
+const standardFeatures = ['订阅 300 个 RSS 源', '每天 AI 处理 15 篇文章', '创建 2 个追踪', '智能摘要和关键信息提取', '内容分类和标签管理', '文章思维导图', '语义搜索'];
+const proFeatures = ['订阅 1200 个 RSS 源', '每天 AI 处理 60 篇文章', '创建 8 个追踪', '智能推荐（多路召回+重排）', '文章思维导图', '语义搜索', '优先客户支持'];
 const comparisonData = [
-  { feature: 'RSS 订阅源数量', free: '60 个', standard: '5x', pro: '20x' }, { feature: 'AI 处理文章数/天', free: '3 篇', standard: '5x', pro: '20x' }, { feature: '创建订阅源', free: '—', standard: '2 个', pro: '8 个' }, { feature: '智能摘要', free: '基础', standard: '✓', pro: '✓' }, { feature: '内容分类和标签', free: '✓', standard: '✓', pro: '✓' }, { feature: '文章思维导图', free: '—', standard: '✓', pro: '✓' }, { feature: '搜索', free: '关键词', standard: '关键词 + 语义', pro: '关键词 + 语义' }, { feature: '智能推荐', free: '基础', standard: '基础+自定义查询词', pro: '基础+自定义查询词+超级过滤' },
+  { feature: 'RSS 订阅源数量', free: '60 个', standard: '5x', pro: '20x' }, { feature: 'AI 处理文章数/天', free: '3 篇', standard: '5x', pro: '20x' }, { feature: '创建追踪', free: '—', standard: '2 个', pro: '8 个' }, { feature: '智能摘要', free: '基础', standard: '✓', pro: '✓' }, { feature: '内容分类和标签', free: '✓', standard: '✓', pro: '✓' }, { feature: '文章思维导图', free: '—', standard: '✓', pro: '✓' }, { feature: '搜索', free: '关键词', standard: '关键词 + 语义', pro: '关键词 + 语义' }, { feature: '智能推荐', free: '基础', standard: '基础+自定义查询词', pro: '基础+自定义查询词+超级过滤' },
 ];
 const selectedPlanName = computed(() => selectedPlan.value === 'standard' ? 'Standard 套餐' : 'Pro 套餐');
 const selectedPlanPrice = computed(() => selectedPlan.value === 'standard' ? '¥36/年' : '¥68/年');

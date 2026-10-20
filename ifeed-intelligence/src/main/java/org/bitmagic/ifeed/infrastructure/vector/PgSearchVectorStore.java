@@ -31,7 +31,7 @@ public class PgSearchVectorStore implements VectorStore {
     @Override
     public List<Document> similaritySearch(SearchRequest request) {
         String topQuery = request.getQuery();//chatClient.prompt("'%s\n提取出用户关键查询词 ，简扼要，不要啰嗦，只给出关键词即可".formatted(request.getQuery())).call().content();
-        List<DocScore> docScores = retrievalPipeline.execute(RetrievalContext.builder().query(topQuery).includeGlobal(false).userId(2).topK(request.getTopK()).build());
+        List<DocScore> docScores = retrievalPipeline.execute(RetrievalContext.builder().query(topQuery).includeGlobal(false).topK(request.getTopK()).build());
         return docScores.stream().map(d -> {
             if (d.meta() instanceof Document) {
                 return (Document) d.meta();

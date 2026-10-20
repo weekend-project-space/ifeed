@@ -14,9 +14,9 @@ import org.bitmagic.ifeed.domain.repository.ArticleEmbeddingRepository;
 import org.bitmagic.ifeed.domain.repository.ArticleRepository;
 import org.bitmagic.ifeed.domain.service.radar.RadarTopicNamingService;
 import org.bitmagic.ifeed.infrastructure.ai.NSFWService;
-import org.bitmagic.ifeed.infrastructure.ai.rerank.RerankerModel;
 import org.bitmagic.ifeed.infrastructure.util.JSON;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
@@ -44,32 +44,36 @@ public class RadarSnapshotBuildService {
         // 1) 拉取候选文章（embedding 已生成）
         int windowHours = properties.getWindowHours();
         Instant from = now.minus(Duration.ofHours(windowHours));
-        List<Article> recent = articleRepository.findAll(
-                (root, query, cb) -> cb.and(
-                        cb.greaterThan(root.get("publishedAt"), from),
-                        cb.isTrue(root.get("embeddingGenerated"))
-                ),
-                PageRequest.of(0, 10000)
-        ).getContent();
+        List<Article> recent = loadCandidates(from, now);
 
         if (recent.isEmpty()) {
             log.info("Radar snapshot build skipped: no recent embedded articles");
             return;
         }
 
+        Set<String> seenTitles = new HashSet<>();
+        recent = recent.stream()
+                .sorted(Comparator.comparing(Article::getPublishedAt,
+                                Comparator.nullsLast(Comparator.naturalOrder()))
+                        .thenComparing(Article::getId, Comparator.nullsLast(Comparator.naturalOrder())))
+                .filter(article -> StringUtils.isBlank(article.getTitle()) || seenTitles.add(article.getTitle()))
+                .toList();
+
         // 2) 批量加载 embedding
-        Map<Long, ArticleEmbeddingRecord> embeddingById = articleEmbeddingRepository.findAllByIds(
-                        recent.stream().map(Article::getId).filter(Objects::nonNull).toList())
-                .stream()
-                .collect(Collectors.toMap(ArticleEmbeddingRecord::id, r -> r));
+        Map<Long, ArticleEmbeddingRecord> embeddingById = new HashMap<>();
+        List<Long> articleIds = recent.stream().map(Article::getId).toList();
+        for (int start = 0; start < articleIds.size(); start += 1000) {
+            articleEmbeddingRepository.findAllByIds(articleIds.subList(start, Math.min(start + 1000, articleIds.size())))
+                    .forEach(embedding -> embeddingById.put(embedding.id(), embedding));
+        }
 
         Map<Long, Article> byId = recent.stream().collect(Collectors.toMap(Article::getId, a -> a));
 
         // 3) 构建近邻表（内存余弦相似度计算，替代 N 次向量检索）
-        Map<Long, Set<Long>> neighborMap = buildNeighborMap(embeddingById, byId);
+        NeighborGraph neighborGraph = buildNeighborMap(embeddingById, byId);
 
         // 4) DBSCAN 聚类
-        List<List<Long>> clusterList = runDbscan(neighborMap, byId);
+        List<List<Long>> clusterList = runDbscan(neighborGraph);
 
         if (clusterList.isEmpty()) {
             log.info("Radar snapshot build produced no clusters meeting minClusterSize={}", properties.getMinClusterSize());
@@ -85,23 +89,43 @@ public class RadarSnapshotBuildService {
         snapshot.setSnapshotId(snapshotId);
         snapshot.setGeneratedAt(now);
         snapshot.setWindowHours(windowHours);
-        snapshot.setExpiresAt(now.plus(properties.getSnapshotTtl()));
 
         List<RadarTopic> topics = new ArrayList<>();
         List<RadarTopicArticle> articles = new ArrayList<>();
         assembleTopics(clusterList, byId, snapshotId, now, topics, articles);
 
+        Duration ttl = properties.getSnapshotTtl().compareTo(properties.getFixedDelay()) > 0
+                ? properties.getSnapshotTtl() : properties.getFixedDelay().multipliedBy(2);
+        snapshot.setExpiresAt(Instant.now().plus(ttl));
         saveService.save(snapshot, topics, articles);
 
         log.info("Radar snapshot built: snapshotId={}, topics={}, articles={}, windowHours={}",
                 snapshotId, topics.size(), articles.size(), windowHours);
     }
 
+    private List<Article> loadCandidates(Instant from, Instant until) {
+        List<Article> candidates = new ArrayList<>();
+        long lastId = 0;
+        while (true) {
+            long afterId = lastId;
+            List<Article> batch = articleRepository.findAll(
+                    (root, query, builder) -> builder.and(
+                            builder.greaterThan(root.get("id"), afterId),
+                            builder.greaterThan(root.get("publishedAt"), from),
+                            builder.lessThanOrEqualTo(root.get("publishedAt"), until),
+                            builder.isTrue(root.get("embeddingGenerated"))),
+                    PageRequest.of(0, 1000, Sort.by("id"))).getContent();
+            candidates.addAll(batch);
+            if (batch.size() < 1000) return candidates;
+            lastId = batch.getLast().getId();
+        }
+    }
+
     /**
      * 用内存中已加载的 embedding 两两计算余弦相似度，构建邻居表。
      * 替代原来的 N 次向量数据库检索，消除所有网络往返开销。
      */
-    private Map<Long, Set<Long>> buildNeighborMap(
+    private NeighborGraph buildNeighborMap(
             Map<Long, ArticleEmbeddingRecord> embeddingById,
             Map<Long, Article> byId) {
 
@@ -111,86 +135,75 @@ public class RadarSnapshotBuildService {
                     float[] vec = embeddingById.get(id).embedding();
                     return vec != null && vec.length > 0;
                 })
+                .sorted()
                 .toList();
 
         double threshold = properties.getSimilarityThreshold();
-        int topK = properties.getNeighbors();
-
-        Map<Long, Set<Long>> neighborMap = new HashMap<>();
-
-        for (int i = 0; i < candidateIds.size(); i++) {
-            Long idA = candidateIds.get(i);
-            float[] vecA = embeddingById.get(idA).embedding();
-
-            List<Map.Entry<Long, Double>> hits = new ArrayList<>();
-            for (int j = 0; j < candidateIds.size(); j++) {
-                if (i == j) continue;
-                Long idB = candidateIds.get(j);
-                double sim = cosineSimilarity(vecA, embeddingById.get(idB).embedding());
-                if (sim >= threshold) {
-                    hits.add(Map.entry(idB, sim));
+        List<BitSet> neighbors = new ArrayList<>();
+        for (int index = 0; index < candidateIds.size(); index++) {
+            neighbors.add(new BitSet());
+        }
+        for (int left = 0; left < candidateIds.size(); left++) {
+            float[] leftVector = embeddingById.get(candidateIds.get(left)).embedding();
+            for (int right = left + 1; right < candidateIds.size(); right++) {
+                double similarity = cosineSimilarity(leftVector, embeddingById.get(candidateIds.get(right)).embedding());
+                if (similarity >= threshold) {
+                    neighbors.get(left).set(right);
+                    neighbors.get(right).set(left);
                 }
             }
-
-            if (hits.isEmpty()) continue;
-
-            Set<Long> neighbors = hits.stream()
-                    .sorted(Map.Entry.<Long, Double>comparingByValue().reversed())
-                    .limit(topK)
-                    .map(Map.Entry::getKey)
-                    .collect(Collectors.toCollection(LinkedHashSet::new));
-            neighborMap.put(idA, neighbors);
         }
 
-        log.info("Neighbor map built: candidates={}, with-neighbors={}", candidateIds.size(), neighborMap.size());
-        return neighborMap;
+        log.info("Neighbor map built: candidates={}, with-neighbors={}", candidateIds.size(),
+                neighbors.stream().filter(adjacent -> !adjacent.isEmpty()).count());
+        return new NeighborGraph(candidateIds, neighbors);
     }
+
+    private record NeighborGraph(List<Long> articleIds, List<BitSet> neighbors) {}
 
     /**
      * DBSCAN 聚类。核心点扩展簇，边缘点加入不扩展，噪声点丢弃。
      */
-    private List<List<Long>> runDbscan(Map<Long, Set<Long>> neighborMap, Map<Long, Article> byId) {
+    private List<List<Long>> runDbscan(NeighborGraph graph) {
         int minPts = properties.getMinClusterSize();
 
-        Set<Long> corePoints = neighborMap.entrySet().stream()
-                .filter(e -> e.getValue().size() >= minPts)
-                .map(Map.Entry::getKey)
-                .collect(Collectors.toSet());
+        BitSet corePoints = new BitSet();
+        for (int index = 0; index < graph.articleIds().size(); index++) {
+            if (graph.neighbors().get(index).cardinality() + 1 >= minPts) corePoints.set(index);
+        }
+        BitSet assigned = new BitSet();
+        List<List<Long>> clusters = new ArrayList<>();
 
-        Map<Long, Integer> clusterLabel = new HashMap<>();
-        int nextClusterId = 0;
-
-        for (Long seed : corePoints) {
-            if (clusterLabel.containsKey(seed)) continue;
-            int cid = ++nextClusterId;
-            Deque<Long> queue = new ArrayDeque<>();
+        for (int seed = corePoints.nextSetBit(0); seed >= 0; seed = corePoints.nextSetBit(seed + 1)) {
+            if (assigned.get(seed)) continue;
+            List<Long> cluster = new ArrayList<>();
+            Deque<Integer> queue = new ArrayDeque<>();
             queue.push(seed);
-            clusterLabel.put(seed, cid);
+            assigned.set(seed);
+            cluster.add(graph.articleIds().get(seed));
 
             while (!queue.isEmpty()) {
-                Long cur = queue.pop();
-                for (Long nbr : neighborMap.getOrDefault(cur, Set.of())) {
-                    if (clusterLabel.containsKey(nbr)) continue;
-                    clusterLabel.put(nbr, cid);
-                    if (corePoints.contains(nbr)) {
-                        queue.push(nbr);
+                BitSet adjacent = graph.neighbors().get(queue.pop());
+                for (int neighbor = adjacent.nextSetBit(0); neighbor >= 0; neighbor = adjacent.nextSetBit(neighbor + 1)) {
+                    if (assigned.get(neighbor)) continue;
+                    assigned.set(neighbor);
+                    cluster.add(graph.articleIds().get(neighbor));
+                    if (corePoints.get(neighbor)) {
+                        queue.push(neighbor);
                     }
                 }
             }
+            clusters.add(cluster);
         }
 
-        Map<Integer, List<Long>> grouped = new HashMap<>();
-        clusterLabel.forEach((aid, cid) ->
-                grouped.computeIfAbsent(cid, k -> new ArrayList<>()).add(aid));
-
-        List<List<Long>> clusterList = grouped.values().stream()
+        List<List<Long>> clusterList = clusters.stream()
                 .filter(list -> list.size() >= minPts)
                 .sorted((x, y) -> Integer.compare(y.size(), x.size()))
                 .limit(properties.getMaxTopics())
                 .toList();
 
         log.info("DBSCAN result: candidates={}, corePoints={}, clusters={}, noise={}",
-                byId.size(), corePoints.size(), clusterList.size(), byId.size() - clusterLabel.size());
+                graph.articleIds().size(), corePoints.cardinality(), clusterList.size(), graph.articleIds().size() - assigned.cardinality());
         return clusterList;
     }
 
@@ -218,12 +231,16 @@ public class RadarSnapshotBuildService {
                     .filter(Objects::nonNull)
                     .map(Article::getLink)
                     .collect(Collectors.toSet());
-            var named = topicNamingService.nameTopic(titles);
-
-            if (nsfwService.isNSFW(urls) || nsfwService.isNSFW(Strings.join(titles, ','))) {
-                log.info("titles: {} is NSFW, but not NSFW", titles);
+            try {
+                if (nsfwService.isNSFW(urls) || nsfwService.isNSFW(Strings.join(titles, ','))) {
+                    log.info("Radar topic skipped: NSFW content, articles={}", cluster.size());
+                    continue;
+                }
+            } catch (RuntimeException exception) {
+                log.warn("Radar topic skipped: content check failed, articleIds={}", cluster, exception);
                 continue;
             }
+            var named = topicNamingService.nameTopic(titles);
             RadarTopic topic = new RadarTopic();
             topic.setTopicId(topicId);
             topic.setSnapshotId(snapshotId);

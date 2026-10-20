@@ -35,7 +35,7 @@ public interface FeedRepository extends JpaRepository<Feed, Integer>, JpaSpecifi
 
     @Query("""
             select f from Feed f
-            where  f.failureCount < 99 and f.category = :category
+            where f.failureCount < 99 and lower(trim(f.category)) = :category
               and (lower(f.url) like lower(concat('%', :query, '%'))
                or lower(f.siteUrl) like lower(concat('%', :query, '%'))
                or lower(f.title) like lower(concat('%', :query, '%')))

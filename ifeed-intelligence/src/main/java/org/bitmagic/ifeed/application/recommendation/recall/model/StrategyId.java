@@ -13,7 +13,7 @@ public enum StrategyId {
     /**
      * User to Action to Item: 用户强行为信号
      */
-    U2A2I(1.2, "用户行为推荐"),
+    U2A2I(0.9, "用户行为推荐"),
 
     /**
      * User to Item: 用户兴趣建模
@@ -40,7 +40,7 @@ public enum StrategyId {
     /**
      * Random Item to Item: 探索 / 冷启动
      */
-    RANDOM_I2I(0.3, "随机物品关联"),
+    RANDOM_I2I(0.8, "随机物品关联"),
 
     // ==================== 内容策略 ====================
 
@@ -52,7 +52,7 @@ public enum StrategyId {
     /**
      * Hot: 热度兜底
      */
-    HOT(0.25, "热门内容"),
+    HOT(0.8, "热门内容"),
 
     // ==================== 混合策略 ====================
 

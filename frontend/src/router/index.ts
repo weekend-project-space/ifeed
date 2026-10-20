@@ -18,6 +18,7 @@ import AdminPage from "../pages/AdminPage.vue";
 import UpgradePage from "../pages/UpgradePage.vue";
 import RadarPage from '../pages/RadarPage.vue';
 import RadarTopicPage from '../pages/RadarTopicPage.vue';
+import TopicTrackingPage from '../pages/TopicTrackingPage.vue';
 import { useAuthStore } from '../stores/auth';
 // router/index.ts
 
@@ -158,6 +159,11 @@ const router = createRouter({
                     name: 'radarTopic',
                     component: RadarTopicPage,
                     props: true
+                },
+                {
+                    path: 'topic-tracking',
+                    name: 'topicTracking',
+                    component: TopicTrackingPage,
                 }
             ]
         }

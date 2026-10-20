@@ -1,24 +1,25 @@
 package org.bitmagic.ifeed.infrastructure.ai;
 
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.bitmagic.ifeed.infrastructure.ai.rerank.RerankerModel;
+import org.bitmagic.ifeed.infrastructure.ai.systemone.SystemOneModel;
+import org.bitmagic.ifeed.infrastructure.ai.systemone.SystemOneQuestion;
+import org.bitmagic.ifeed.infrastructure.ai.systemone.SystemOneRequest;
 import org.springframework.stereotype.Component;
 
 import java.net.URI;
-import java.util.Collection;
-import java.util.Locale;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author yangrd
  * @date 2026/2/28
  **/
-@Slf4j
 @Component
 @RequiredArgsConstructor
 public class NSFWService {
+
+    private static final String NSFW_QUESTION = "nsfw";
+    private static final double NSFW_THRESHOLD = 0.5;
 
     private static final Set<String> NSFW_URL_PREFIXES = Set.of(
             "javdb.com",
@@ -36,20 +37,15 @@ public class NSFWService {
             "rsshub.rssforever.com/javdb"
     );
 
-    private final RerankerModel rerankerModel;
-
-//    private final ChatClient chatClient;
-
+    private final SystemOneModel systemOneModel;
 
     public boolean isNSFW(String text) {
-//        -3 是分水岭
-        double score = rerankerModel.documentScore("这些内容是NSFW吗？只输出0或1即可", StringUtils.truncate(text, 500), null);
-//        String content = chatClient.prompt(text + "/n/n 这些内容是NSFW吗？ 只输出0或1即可").call().content();
-//        log.info("score: {}, text: {}", , text);
-//        log.info("c:{} score: {}, text: {}", content, score, text);
-//        return score > -2.5;
-//        return content.contains("1") || score < -9.7;
-        return score < -8;
+        if (StringUtils.isBlank(text)) return false;
+        var request = new SystemOneRequest(StringUtils.truncate(text.trim(), 500), Map.of(
+                NSFW_QUESTION, SystemOneQuestion.noul(
+                        "内容是否包含色情、露骨性描写或成人性服务推广，属于不适合工作场合展示的 NSFW 内容？"
+                                + "正常的医学、健康、教育或新闻讨论不算。")));
+        return systemOneModel.call(request).noul(NSFW_QUESTION).noul() >= NSFW_THRESHOLD;
     }
 
     public boolean isNSFW(Collection<String> urls) {

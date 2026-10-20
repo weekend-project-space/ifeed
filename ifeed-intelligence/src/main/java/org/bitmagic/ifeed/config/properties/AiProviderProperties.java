@@ -1,8 +1,12 @@
 package org.bitmagic.ifeed.config.properties;
 
+import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 
+import java.util.Map;
+
+@Data
 @Configuration
 @ConfigurationProperties(prefix = "app.ai.provider")
 public class AiProviderProperties {
@@ -26,35 +30,18 @@ public class AiProviderProperties {
      */
     private String model = "gpt-4o-mini";
 
-    public boolean isEnabled() {
-        return enabled;
-    }
+    private ModelInfo embedding;
 
-    public void setEnabled(boolean enabled) {
-        this.enabled = enabled;
-    }
+    private ModelInfo embeddingMini;
 
-    public String getBaseUrl() {
-        return baseUrl;
-    }
+    private ModelInfo reranker;
 
-    public void setBaseUrl(String baseUrl) {
-        this.baseUrl = baseUrl;
-    }
 
-    public String getApiKey() {
-        return apiKey;
-    }
-
-    public void setApiKey(String apiKey) {
-        this.apiKey = apiKey;
-    }
-
-    public String getModel() {
-        return model;
-    }
-
-    public void setModel(String model) {
-        this.model = model;
+    @Data
+    public static class ModelInfo{
+        private String baseUrl;
+        private String apiKey;
+        private String model;
+        private Map<String,Object> options;
     }
 }

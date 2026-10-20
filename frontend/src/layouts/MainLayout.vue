@@ -321,11 +321,21 @@
             <RouterLink :to="{ name: 'radar' }"
               class="flex flex-col items-center justify-center w-14 py-2.5 rounded-xl transition text-xs"
               :class="isActiveRoute('radar') ? 'bg-primary/10 dark:bg-primary/20 font-semibold' : 'text-gray-600 dark:text-gray-400 hover:bg-surface-container/60'"
-              title="热点雷达">
+              title="今日">
               <svg class="h-6 w-6 mb-1" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" :d="icons.radar" />
               </svg>
-              <span class="text-[10px] scale-90">雷达</span>
+              <span class="text-[10px] scale-90">今日</span>
+            </RouterLink>
+
+            <RouterLink :to="{ name: 'topicTracking' }"
+              class="flex flex-col items-center justify-center w-14 py-2.5 rounded-xl transition text-xs"
+              :class="isActiveRoute('topicTracking') ? 'bg-primary/10 dark:bg-primary/20 font-semibold' : 'text-gray-600 dark:text-gray-400 hover:bg-surface-container/60'"
+              title="追踪">
+              <svg class="h-6 w-6 mb-1" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" :d="icons.topic" />
+              </svg>
+              <span class="text-[10px] scale-90">追踪</span>
             </RouterLink>
 
             <!-- 订阅 -->
@@ -517,13 +527,21 @@
           <span class="text-[10px] font-medium">首页</span>
         </RouterLink>
         <!-- Collections Tab -->
-        <RouterLink :to="{ name: 'radar' }"
+<!--        <RouterLink :to="{ name: 'radar' }"-->
+<!--          class="flex flex-col items-center justify-center flex-1 gap-1 py-2 transition-colors"-->
+<!--          :class="isTabActive('radar') ? 'text-primary' : 'text-gray-600 dark:text-gray-400'">-->
+<!--          <svg class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">-->
+<!--            <path stroke-linecap="round" stroke-linejoin="round" :d="icons.radar" />-->
+<!--          </svg>-->
+<!--          <span class="text-[10px] font-medium">雷达</span>-->
+<!--        </RouterLink>-->
+        <RouterLink :to="{ name: 'topicTracking' }"
           class="flex flex-col items-center justify-center flex-1 gap-1 py-2 transition-colors"
-          :class="isTabActive('radar') ? 'text-primary' : 'text-gray-600 dark:text-gray-400'">
-          <svg class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" :d="icons.radar" />
+          :class="isTabActive('topicTracking') ? 'text-primary' : 'text-gray-600 dark:text-gray-400'">
+          <svg class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" :d="icons.topic" />
           </svg>
-          <span class="text-[10px] font-medium">雷达</span>
+          <span class="text-[10px] font-medium">追踪</span>
         </RouterLink>
 
 
@@ -584,7 +602,11 @@ const icons = {
   inbox: 'M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10',
   clock: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z',
   bookmark: 'M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z',
-  radar: 'M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0 M12 12m-6 0a6 6 0 1 0 12 0a6 6 0 1 0 -12 0 M12 12m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0 M12 12l7-2 M19 10a1 1 0 1 1-2 0a1 1 0 0 1 2 0',
+  topic: 'M9 3 6 21M18 3l-3 18M3 9h18M2 15h18',
+  // radar: 'M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6h-6z',
+  // radar: 'M18 2H6v2H2v6a4 4 0 0 0 4 4h1a6.012 6.012 0 0 0 5 5.917V21H8v2h8v-2h-4v-1.083A6.012 6.012 0 0 0 17 16h1a4 4 0 0 0 4-4V4h-4V2zM6 10V6h4v4H6zm12 2h-1a4.004 4.004 0 0 1-3.692 2.454C14.47 13.568 15 12.83 15 12V6h3v6z',
+  radar: 'M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.5 4 6.5 2 2 3 4 3 6.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a6.953 6.953 0 0 0 1.5 1z',
+  // radar: 'M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0 M12 12m-6 0a6 6 0 1 0 12 0a6 6 0 1 0 -12 0 M12 12m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0 M12 12l7-2 M19 10a1 1 0 1 1-2 0a1 1 0 0 1 2 0',
   adjustments: 'M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4',
   chevronUp: 'M5 15l7-7 7 7',
   chevronDown: 'M19 9l-7 7-7-7',
@@ -667,7 +689,7 @@ const baseNavSections: NavSection[] = [
       },
       {
         id: 'radar',
-        label: '热点雷达',
+        label: '今日',
         to: { name: 'radar' as const },
         icon: {
           stroke: true,
@@ -675,6 +697,13 @@ const baseNavSections: NavSection[] = [
           viewBox: '0 0 24 24'
         },
         activeMatch: (current) => current.name === 'radar' || current.name === 'radarTopic'
+      },
+      {
+        id: 'topic-tracking',
+        label: '追踪',
+        to: { name: 'topicTracking' as const },
+        icon: { stroke: true, paths: [icons.topic], viewBox: '0 0 24 24' },
+        activeMatch: (current) => current.name === 'topicTracking'
       },
       //
       // {
@@ -730,7 +759,7 @@ const subscriptionNavSection = computed<NavSection>(() => {
     return a.danger ? 1 : -1;
   });
 
-  const visibleEntries = showAllSubscriptions.value ? entries : entries.slice(0, 9);
+  const visibleEntries = showAllSubscriptions.value ? entries : entries.slice(0, 7);
 
   const items: NavItem[] = visibleEntries.map((meta, idx) => {
     const s = meta.subscription;
@@ -754,7 +783,7 @@ const subscriptionNavSection = computed<NavSection>(() => {
     };
   });
 
-  if (entries.length > 9) {
+  if (entries.length > 7) {
     items.push({
       id: 'toggle-subscriptions',
       label: showAllSubscriptions.value ? '折叠' : `展开（${entries.length}）`,

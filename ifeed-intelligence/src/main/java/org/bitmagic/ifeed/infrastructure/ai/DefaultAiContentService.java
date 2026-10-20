@@ -42,7 +42,6 @@ public class DefaultAiContentService implements AiContentService {
     // ==================== 停用词表 ====================
     private static final Set<String> STOP_WORDS = StopWorldHolder.STOP_WORDS;
 
-    private final AiProviderProperties properties;
 
     private final ChatClient chatClient;
 
