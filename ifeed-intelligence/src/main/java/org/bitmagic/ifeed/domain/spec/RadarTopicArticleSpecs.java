@@ -18,4 +18,10 @@ public interface RadarTopicArticleSpecs {
                 .eq("topicId", topicId)
                 .build();
     }
+
+    static Specification<RadarTopicArticle> byTopicId(String snapshotId) {
+        return Spec.<RadarTopicArticle>on()
+                .eq("snapshotId", snapshotId)
+                .build();
+    }
 }
