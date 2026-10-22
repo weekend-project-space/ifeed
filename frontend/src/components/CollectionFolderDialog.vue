@@ -1,44 +1,61 @@
 <template>
   <AppDialog :title="title ?? (includeAll ? '收藏文件夹' : '移动到文件夹')" :busy="busy" @close="$emit('close')">
-    <p v-if="error || mutationError" role="alert" class="mb-3 text-sm text-red-600">{{ error || mutationError }}</p>
+    <p v-if="error || mutationError" role="alert" class="mb-3 text-xs text-red-600 dark:text-red-400">{{ error || mutationError }}</p>
+
+    <!-- 删除确认态 -->
     <div v-if="deleting" class="space-y-4">
-      <p class="text-sm">删除“{{ deleting.name }}”？其中的收藏会移回默认收藏夹，收藏时间保持不变。</p>
-      <div class="flex justify-end gap-3">
-        <button :disabled="busy" class="px-3 py-2" @click="deleting = null">取消</button>
-        <button :disabled="busy" class="rounded-lg bg-red-600 px-3 py-2 text-white disabled:opacity-50" @click="removeFolder">{{ busy ? '删除中…' : '确认删除' }}</button>
+      <p class="text-xs leading-relaxed text-text-secondary sm:text-sm">
+        删除“<strong class="font-semibold text-text">{{ deleting.name }}</strong>”？其中的收藏会移回默认收藏夹，收藏时间保持不变。
+      </p>
+      <div class="flex justify-end gap-2.5 pt-2">
+        <button :disabled="busy" class="inline-flex h-9 items-center justify-center rounded-full px-4 text-xs font-semibold text-text-secondary hover:bg-surface-container transition" @click="deleting = null">取消</button>
+        <button :disabled="busy" class="inline-flex h-9 items-center justify-center rounded-full bg-red-600 px-4 text-xs font-semibold text-white shadow-xs hover:bg-red-700 transition disabled:opacity-40" @click="removeFolder">{{ busy ? '删除中…' : '确认删除' }}</button>
       </div>
     </div>
+
+    <!-- 正常编辑/列表态 -->
     <template v-else>
-      <form class="mb-4 flex flex-wrap gap-2" @submit.prevent="saveFolder">
+      <!-- MD3 输入行 -->
+      <form class="mb-4 flex flex-nowrap items-center gap-2" @submit.prevent="saveFolder">
         <label for="folder-name" class="sr-only">{{ editing ? '文件夹新名称' : '新文件夹名称' }}</label>
         <input id="folder-name" v-model="name" maxlength="50" required :disabled="busy" :placeholder="editing ? '文件夹新名称' : '新文件夹名称'"
-          class="min-w-0 flex-1 rounded-lg border border-gray-300 bg-transparent px-3 py-2 text-sm dark:border-gray-700" />
-        <button :disabled="busy || !name.trim()" class="rounded-lg bg-secondary px-3 py-2 text-sm text-white disabled:opacity-50">{{ editing ? '保存' : '创建' }}</button>
-        <button v-if="editing" type="button" :disabled="busy" class="px-2 text-sm" @click="resetEditor">取消编辑</button>
+               class="min-w-0 flex-1 rounded-full border border-outline/20 bg-surface-container/40 px-4 py-2 text-xs text-text outline-none transition placeholder:text-text-secondary/60 focus:border-primary focus:bg-surface sm:text-sm" />
+        <button :disabled="busy || !name.trim()" class="inline-flex h-9 shrink-0 items-center justify-center rounded-full bg-primary px-4 text-xs font-semibold text-white shadow-xs transition hover:brightness-105 disabled:opacity-40">
+          {{ editing ? '保存' : '创建' }}
+        </button>
+        <button v-if="editing" type="button" :disabled="busy" class="px-2 text-xs text-text-secondary hover:text-text" @click="resetEditor">取消编辑</button>
       </form>
-      <div class="max-h-[50vh] space-y-1 overflow-y-auto">
+
+      <!-- 选项列表 -->
+      <div class="max-h-[50vh] space-y-1.5 overflow-y-auto pr-1">
         <button v-if="includeAll" :disabled="busy" :aria-pressed="selected === 'all'" class="folder-option" @click="select('all', '全部收藏')">
-          全部收藏 <span v-if="selected === 'all'">✓</span>
+          <span>全部收藏</span>
+          <span v-if="selected === 'all'" class="text-primary font-bold">✓</span>
         </button>
         <button :disabled="busy" :aria-pressed="selected === 'default'" class="folder-option" @click="select('default', '默认收藏夹')">
-          默认收藏夹 <span v-if="selected === 'default'">✓</span>
+          <span>默认收藏夹</span>
+          <span v-if="selected === 'default'" class="text-primary font-bold">✓</span>
         </button>
-        <div v-for="folder in folders" :key="folder.folderId" class="flex items-center gap-1 rounded-lg hover:bg-surface-container">
+
+        <div v-for="folder in folders" :key="folder.folderId" class="flex items-center gap-1 rounded-2xl hover:bg-surface-container/60 transition">
           <button :disabled="busy" :aria-pressed="selected === folder.folderId" class="folder-option min-w-0 flex-1" @click="select(folder.folderId, folder.name)">
-            <span class="truncate">{{ folder.name }}</span><span v-if="selected === folder.folderId">✓</span>
+            <span class="truncate">{{ folder.name }}</span>
+            <span v-if="selected === folder.folderId" class="text-primary font-bold">✓</span>
           </button>
-          <button :disabled="busy" :aria-label="`重命名${folder.name}`" class="p-2 text-xs text-text-secondary" @click="editFolder(folder)">编辑</button>
-          <button :disabled="busy" :aria-label="`删除${folder.name}`" class="p-2 text-xs text-red-600" @click="deleting = folder; mutation.reset()">删除</button>
+          <button :disabled="busy" :aria-label="`重命名${folder.name}`" class="p-2 text-xs font-medium text-text-secondary hover:text-text" @click="editFolder(folder)">编辑</button>
+          <button :disabled="busy" :aria-label="`删除${folder.name}`" class="p-2 text-xs font-medium text-red-600 hover:text-red-700 dark:text-red-400" @click="deleting = folder; mutation.reset()">删除</button>
         </div>
-        <p v-if="foldersQuery.isPending.value" role="status" class="p-3 text-sm text-text-secondary">正在加载文件夹…</p>
-        <p v-else-if="!folders.length && !foldersQuery.isError.value" class="p-3 text-sm text-text-secondary">还没有自定义文件夹</p>
-        <div v-if="foldersQuery.isError.value" role="alert" class="p-3 text-sm text-red-600">
-          文件夹加载失败 <button class="underline" @click="foldersQuery.refetch()">重试</button>
+
+        <p v-if="foldersQuery.isPending.value" role="status" class="p-4 text-center text-xs text-text-secondary">正在加载文件夹…</p>
+        <p v-else-if="!folders.length && !foldersQuery.isError.value" class="p-4 text-center text-xs text-text-secondary">还没有自定义文件夹</p>
+        <div v-if="foldersQuery.isError.value" role="alert" class="p-3 text-center text-xs text-red-600">
+          文件夹加载失败 <button class="underline ml-1 font-semibold" @click="foldersQuery.refetch()">重试</button>
         </div>
-        <button v-if="foldersQuery.hasNextPage.value" ref="sentinel" :disabled="foldersQuery.isFetching.value || busy" class="w-full p-3 text-sm text-text-secondary" @click="loadMore">
+        <button v-if="foldersQuery.hasNextPage.value" ref="sentinel" :disabled="foldersQuery.isFetching.value || busy" class="w-full p-2.5 text-center text-xs text-text-secondary hover:text-text" @click="loadMore">
           {{ foldersQuery.isFetchingNextPage.value ? '加载中…' : '加载更多文件夹' }}
         </button>
       </div>
+
       <slot name="footer" :busy="busy" />
     </template>
   </AppDialog>
@@ -73,8 +90,8 @@ const saveFolder = async () => {
   if (busy.value || !name.value.trim()) return;
   try {
     const result = await mutation.mutateAsync(editing.value
-      ? { action: 'rename', folderId: editing.value.folderId, name: name.value.trim() }
-      : { action: 'create', name: name.value.trim() });
+        ? { action: 'rename', folderId: editing.value.folderId, name: name.value.trim() }
+        : { action: 'create', name: name.value.trim() });
     if (editing.value && result) emit('renamed', result);
     resetEditor();
   } catch { return; }
@@ -92,10 +109,12 @@ const removeFolder = async () => {
 </script>
 
 <style scoped>
+@reference "../styles/tailwind.css";
+
 .folder-option {
-  @apply flex w-full items-center justify-between gap-2 rounded-lg px-3 py-3 text-left text-sm hover:bg-surface-container disabled:opacity-50;
+  @apply flex min-h-11 w-full items-center justify-between gap-2 rounded-2xl px-4 text-left text-xs sm:text-sm font-medium transition hover:bg-surface-container/70 disabled:opacity-50;
 }
 .folder-option[aria-pressed="true"] {
-  @apply bg-surface-container font-semibold;
+  @apply bg-primary/10 text-primary font-semibold;
 }
 </style>

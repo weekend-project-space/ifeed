@@ -1,107 +1,104 @@
-<!--search.vue-->
 <template>
-  <div class="">
-    <div class="max-w-screen-lg mx-auto px-4 sm:px-6 py-4 sm:py-6">
-      <!-- Page Header -->
+  <div class="text-text">
+    <div class="mx-auto max-w-screen-lg px-4 py-4 sm:px-6 sm:py-6">
+      <!-- 搜索头部 -->
       <div class="mb-6 sm:mb-8">
-        <h1 class="text-2xl sm:text-3xl font-bold text-text mb-2">
+        <h1 class="text-2xl font-bold tracking-tight text-text sm:text-3xl">
           {{ hasQuery ? '搜索结果' : '搜索' }}
         </h1>
-        <p v-if="hasQuery" class="text-xs sm:text-sm text-text-secondary">
+        <p v-if="hasQuery" class="mt-1 text-xs text-text-secondary sm:text-sm">
           关键词: "{{ searchQuery }}"
           <span v-if="totalElements !== null" class="ml-2">· {{ totalElements }} 条结果</span>
         </p>
       </div>
 
-      <!-- Controls Bar -->
-      <div class="flex items-center justify-between gap-4 mb-4 sm:mb-6 pb-4 border-b border-outline/20 flex-wrap">
-        <!-- Search Type Toggle -->
-        <div class="flex items-center gap-1 bg-surface-container rounded-full p-1">
+      <!-- 控制栏：MD3 Filter Chips 与返回胶囊 -->
+      <div class="mb-6 flex flex-wrap items-center justify-between gap-3 border-b border-outline/10 pb-4">
+        <!-- 搜索类型切换：MD3 Filter Chips 规范 -->
+        <div class="flex items-center gap-1.5 rounded-full bg-surface-container/50 p-1">
           <button type="button"
-            class="px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-medium transition-colors"
-            :class="searchType === 'semantic' ? 'bg-secondary text-secondary-foreground' : 'text-text'"
-            @click="setSearchType('semantic')">
+                  class="rounded-full px-4 py-1.5 text-xs font-medium transition select-none sm:text-xs"
+                  :class="searchType === 'semantic'
+                    ? 'bg-primary/15 font-semibold text-primary shadow-xs'
+                    : 'text-text-secondary hover:bg-surface-container hover:text-text'"
+                  @click="setSearchType('semantic')">
             语义匹配
           </button>
           <button type="button"
-            class="px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-medium transition-colors"
-            :class="searchType === 'keyword' ? 'bg-secondary text-secondary-foreground' : 'text-text'"
-            @click="setSearchType('keyword')">
+                  class="rounded-full px-4 py-1.5 text-xs font-medium transition select-none sm:text-xs"
+                  :class="searchType === 'keyword'
+                    ? 'bg-primary/15 font-semibold text-primary shadow-xs'
+                    : 'text-text-secondary hover:bg-surface-container hover:text-text'"
+                  @click="setSearchType('keyword')">
             关键词匹配
           </button>
         </div>
 
-        <!-- Back Button -->
+        <!-- 返回主页按钮：MD3 Tonal 药丸 -->
         <button
-          class="flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 hover:bg-surface-container rounded-lg transition-colors text-xs sm:text-sm font-medium text-text"
-          @click="goBackToHome">
-          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M19 12H5M12 19l-7-7 7-7" />
+            class="inline-flex h-8 items-center gap-1.5 rounded-full bg-surface-container/60 px-4 text-xs font-medium text-text transition hover:bg-surface-container active:scale-[0.98]"
+            @click="goBackToHome">
+          <svg class="h-3.5 w-3.5 text-text-secondary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M19 12H5M12 19l-7-7 7-7" />
           </svg>
           <span>返回推荐</span>
         </button>
       </div>
 
-      <!-- Empty State (No Query) -->
-      <div v-if="!hasQuery" class="flex flex-col items-center justify-center py-16 sm:py-20 text-center">
-        <div
-          class="w-20 h-20 sm:w-24 sm:h-24 mb-4 sm:mb-6 flex items-center justify-center rounded-full bg-surface-container">
-          <svg class="w-10 h-10 sm:w-12 sm:h-12 text-text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-            stroke-width="1.5">
+      <!-- 空白引导态 -->
+      <div v-if="!hasQuery" class="flex flex-col items-center justify-center py-20 text-center">
+        <div class="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-surface-container/60">
+          <svg class="h-8 w-8 text-text-secondary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
             <circle cx="11" cy="11" r="8" />
-            <path d="m21 21-4.35-4.35" />
+            <path stroke-linecap="round" d="m21 21-4.35-4.35" />
           </svg>
         </div>
-        <h2 class="text-lg sm:text-xl font-semibold text-text mb-2">开始搜索</h2>
-        <p class="text-xs sm:text-sm text-text-secondary px-4">输入关键词查找你感兴趣的文章</p>
+        <h2 class="text-base font-bold text-text">开始搜索</h2>
+        <p class="mt-1 text-xs text-text-secondary">输入关键词查找你感兴趣的文章与资讯</p>
       </div>
 
-      <!-- Error State -->
-      <div v-else-if="searchError" role="alert" class="rounded-lg border border-red-200 bg-red-50 p-3 text-xs text-red-800 sm:p-4 sm:text-sm">
+      <!-- 错误横幅 -->
+      <div v-else-if="searchError" role="alert" class="rounded-2xl bg-red-500/10 p-4 text-xs text-red-600 dark:text-red-400">
         <div class="flex items-center justify-between gap-3">
           <span>{{ searchError }}</span>
-          <button type="button" class="shrink-0 underline" :disabled="searchFetching" @click="searchQueryResult.refetch()">重试</button>
+          <button type="button" class="shrink-0 font-semibold underline" :disabled="searchFetching" @click="searchQueryResult.refetch()">重试</button>
         </div>
       </div>
 
-      <!-- Loading or Results List -->
+      <!-- 搜索结果列表 -->
       <div v-else-if="searchLoading || searchArticleItems.length > 0">
         <article-card-list :loading="searchLoading" :items="searchArticleItems" meta-field="timeAgo"
-          show-action action-label="文章选项菜单">
+                           show-action action-label="文章选项菜单">
           <template #empty-thumbnail>
-            <svg class="w-8 h-8 sm:w-10 sm:h-10 text-text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-              stroke-width="1.5">
-              <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
-              <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
+            <svg class="h-8 w-8 text-text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
+              <path stroke-linecap="round" stroke-linejoin="round" d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
             </svg>
           </template>
           <template #action-dropdown="{ item, close }">
-            <router-link :to="`/articles/${item.articleId}`" target="_blank" class="menu-action" @click="close">在新标签页打开</router-link>
+            <router-link :to="`/articles/${item.articleId}`" target="_blank"
+                         class="block w-full px-4 py-2 text-left text-xs font-medium text-text transition hover:bg-surface-container"
+                         @click="close">在新标签页打开</router-link>
           </template>
         </article-card-list>
 
-        <!-- Pagination -->
+        <!-- 分页 -->
         <pagination v-if="searchArticleItems.length > 0 && !searchLoading" :current-page="routePage"
-          :has-previous-page="hasPreviousPage" :has-next-page="hasNextPage" :disabled="searchFetching"
-          @prev-page="prevPage" @next-page="nextPage" />
+                    :has-previous-page="hasPreviousPage" :has-next-page="hasNextPage" :disabled="searchFetching"
+                    @prev-page="prevPage" @next-page="nextPage" />
       </div>
 
-      <!-- Error or Empty State -->
-      <div v-else>
-        <!-- Empty Results -->
-        <div class="flex flex-col items-center justify-center py-16 sm:py-20 text-center">
-          <div
-            class="w-20 h-20 sm:w-24 sm:h-24 mb-4 sm:mb-6 flex items-center justify-center rounded-full bg-surface-container">
-            <svg class="w-10 h-10 sm:w-12 sm:h-12 text-text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-              stroke-width="1.5">
-              <circle cx="12" cy="12" r="10" />
-              <line x1="12" y1="8" x2="12" y2="12" />
-              <line x1="12" y1="16" x2="12.01" y2="16" />
-            </svg>
-          </div>
-          <h2 class="text-lg sm:text-xl font-semibold text-text mb-2">未找到相关结果</h2>
-          <p class="text-xs sm:text-sm text-text-secondary px-4">换个关键词试试</p>
+      <!-- 搜索无结果 -->
+      <div v-else class="flex flex-col items-center justify-center py-20 text-center">
+        <div class="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-surface-container/60">
+          <svg class="h-8 w-8 text-text-secondary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <circle cx="12" cy="12" r="10" />
+            <line x1="12" y1="8" x2="12" y2="12" />
+            <line x1="12" y1="16" x2="12.01" y2="16" />
+          </svg>
         </div>
+        <h2 class="text-base font-bold text-text">未找到相关结果</h2>
+        <p class="mt-1 text-xs text-text-secondary">换个关键词或缩短词汇再试</p>
       </div>
     </div>
   </div>
@@ -112,7 +109,7 @@ import { computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { useSearchQuery, type SearchType, type Source } from '../queries/search';
 
-defineOptions({name: 'SearchPage'});
+defineOptions({ name: 'SearchPage' });
 
 const props = defineProps<{
   query: string;
@@ -123,6 +120,7 @@ const props = defineProps<{
   tags: string | null;
   category: string | null;
 }>();
+
 const router = useRouter();
 const searchQuery = computed(() => props.query);
 const searchType = computed(() => props.type);
@@ -150,49 +148,30 @@ const hasNextPage = computed(() => routePage.value < totalPages.value);
 const hasPreviousPage = computed(() => routePage.value > 1);
 
 const searchArticleItems = computed(() =>
-  results.value.map((item) => ({
-    articleId: item.id,
-    feedId: item.feedId,
-    title: item.title ?? '未命名文章',
-    summary: item.summary ?? '暂无摘要',
-    thumbnail: item.thumbnail,
-    feedTitle: item.feedTitle,
-    feedAvatar: item.feedAvatar,
-    timeAgo: item.timeAgo,
-  }))
+    results.value.map((item) => ({
+      articleId: item.id,
+      feedId: item.feedId,
+      title: item.title ?? '未命名文章',
+      summary: item.summary ?? '暂无摘要',
+      thumbnail: item.thumbnail,
+      feedTitle: item.feedTitle,
+      feedAvatar: item.feedAvatar,
+      timeAgo: item.timeAgo,
+    }))
 );
 
 const buildSearchQuery = (overrides?: { page?: number; type?: SearchType }) => {
   const query: Record<string, string> = {};
-
-  if (searchQuery.value) {
-    query.q = searchQuery.value;
-  }
-
+  if (searchQuery.value) query.q = searchQuery.value;
   const nextType = overrides?.type ?? searchType.value;
-  if (nextType !== 'semantic') {
-    query.type = nextType;
-  }
-
+  if (nextType !== 'semantic') query.type = nextType;
   const sourceValue = source.value;
-  if (sourceValue && sourceValue !== 'owner') {
-    query.source = sourceValue;
-  }
-
+  if (sourceValue && sourceValue !== 'owner') query.source = sourceValue;
   const nextPage = overrides?.page ?? routePage.value;
-  if (nextPage > 1) {
-    query.page = String(nextPage);
-  }
-
-  const feedId = props.feedId;
-  if (feedId) query.feedId = feedId;
-
-  const tag = props.tags;
-  if (tag) query.tags = tag;
-
-  const category = props.category;
-  if (category) query.category = category;
-
+  if (nextPage > 1) query.page = String(nextPage);
+  if (props.feedId) query.feedId = props.feedId;
+  if (props.tags) query.tags = props.tags;
+  if (props.category) query.category = props.category;
   return query;
 };
 
@@ -219,21 +198,9 @@ const setSearchType = (type: SearchType) => {
 
 const goBackToHome = () => {
   const query: Record<string, string> = {};
-
-  const feedId = props.feedId;
-  if (feedId) query.feedId = feedId;
-
-  const tag = props.tags;
-  if (tag) query.tags = tag;
-
-  const category = props.category;
-  if (category) query.category = category;
-
+  if (props.feedId) query.feedId = props.feedId;
+  if (props.tags) query.tags = props.tags;
+  if (props.category) query.category = props.category;
   router.push({ name: 'home', query });
 };
-
 </script>
-
-<style scoped>
-.menu-action { @apply block w-full px-4 py-2 text-left text-sm hover:bg-surface-container; }
-</style>

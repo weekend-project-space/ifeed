@@ -1,24 +1,25 @@
 <template>
-  <div class="space-y-3">
+  <div class="space-y-3.5 text-text">
     <slot name="header"></slot>
-    <!-- Header -->
-    <header class="max-w-screen-lg mx-auto flex flex-wrap items-center justify-between gap-4 px-4">
+
+    <!-- Header：M3 视图控制栏与标题 -->
+    <header class="mx-auto flex max-w-screen-lg flex-wrap items-center justify-between gap-4 px-4">
       <div class="flex items-center gap-3">
         <template v-if="title">
-          <h1 class="text-xl font-normal text-gray-900 dark:text-gray-100">
+          <h1 class="text-xl font-bold tracking-tight text-text sm:text-2xl">
             {{ title }}
-            <small v-text="subtitle"> </small>
+            <small v-if="subtitle" class="ml-2 text-xs font-normal text-text-secondary">{{ subtitle }}</small>
           </h1>
           <button
               type="button"
-              class="p-2 hover:bg-surface-container rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              class="flex h-8 w-8 items-center justify-center rounded-full text-text-secondary transition hover:bg-surface-container hover:text-text disabled:cursor-not-allowed disabled:opacity-40"
               @click="emit('refresh')"
               :disabled="loading"
               aria-label="刷新列表"
               title="刷新">
             <svg
                 xmlns="http://www.w3.org/2000/svg"
-                class="w-5 h-5 text-text-secondary transition-transform"
+                class="h-4 w-4 transition-transform"
                 :class="{ 'animate-spin': loading }"
                 viewBox="0 0 24 24"
                 fill="none"
@@ -30,18 +31,20 @@
           </button>
         </template>
       </div>
-      <div class="flex items-center gap-2">
+
+      <!-- 分段视图切换按钮群 -->
+      <div class="flex items-center gap-1 rounded-full bg-surface-container/50 p-1">
         <slot name="action"></slot>
         <button
             @click="setView('magazine')"
             :class="btnClass(view === 'magazine')"
             title="杂志视图"
             aria-label="杂志视图">
-          <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+          <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"
                :stroke-width="view === 'magazine' ? 2.5 : 2">
             <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h8m-8 4h5m-5 5h8m-8 4h5"/>
-            <rect x="15" y="4" width="5" height="5" rx="1"/>
-            <rect x="15" y="14" width="5" height="5" rx="1"/>
+            <rect x="15" y="4" width="5" height="5" rx="1.5"/>
+            <rect x="15" y="14" width="5" height="5" rx="1.5"/>
           </svg>
         </button>
         <button
@@ -49,7 +52,7 @@
             :class="btnClass(view === 'social')"
             title="社交视图"
             aria-label="社交视图">
-          <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+          <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"
                :stroke-width="view === 'social' ? 2.5 : 2">
             <path stroke-linecap="round" stroke-linejoin="round"
                   d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
@@ -60,216 +63,185 @@
             :class="btnClass(view === 'card')"
             title="卡片视图"
             aria-label="卡片视图">
-          <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+          <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"
                :stroke-width="view === 'card' ? 2.5 : 2">
             <path stroke-linecap="round" stroke-linejoin="round"
                   d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
           </svg>
         </button>
-
         <button
             @click="setView('only-title')"
             :class="btnClass(view === 'only-title')"
             title="仅标题视图"
             aria-label="仅标题视图">
-          <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+          <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"
                :stroke-width="view === 'only-title' ? 2.5 : 2">
             <path stroke-linecap="round" stroke-linejoin="round" d="M4 8h16M4 16h16"/>
           </svg>
         </button>
-
       </div>
     </header>
 
-    <!-- Loading skeleton -->
+    <!-- 骨架屏 -->
     <section v-if="loading" class="space-y-4">
-      <div v-if="view === 'card'" class="grid gap-0 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-        <div v-for="i in 12" :key="`card-skel-${i}`" class="animate-pulse space-y-4 p-4">
-          <div class="aspect-video w-full bg-surface-container rounded-lg"></div>
-          <div class="space-y-2">
-            <div class="h-4 w-3/4 bg-surface-container rounded"></div>
-            <div class="h-3 w-1/4 bg-surface-container rounded"></div>
-            <div class="h-4 w-full bg-surface-container rounded"></div>
-            <div class="h-4 w-3/4 bg-surface-container rounded"></div>
+      <div v-if="view === 'card'"
+           class="grid gap-2 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 px-2 sm:px-4">
+        <div v-for="i in 8" :key="`card-skel-${i}`"
+             class="animate-pulse space-y-3 rounded-xl bg-surface-container/30 p-3">
+          <div class="aspect-video w-full rounded-xl bg-surface-container/60"></div>
+          <div class="flex items-start gap-2">
+            <div class="h-7 w-7 rounded-full bg-surface-container shrink-0 mt-0.5"></div>
+            <div class="flex-1 space-y-2">
+              <div class="h-4 w-3/4 rounded bg-surface-container"></div>
+              <div class="h-3 w-1/3 rounded bg-surface-container/60"></div>
+            </div>
           </div>
         </div>
       </div>
 
-      <div v-else-if="view === 'magazine'" class="max-w-screen-lg mx-auto space-y-3">
-        <div v-for="i in 10" :key="`mag-skel-${i}`" class="flex items-start gap-3 md:gap-6 animate-pulse p-4">
-          <div class="flex-1 space-y-2">
-            <div class="h-5 w-2/3 bg-surface-container rounded"></div>
-            <div class="h-3 w-1/3 bg-surface-container rounded"></div>
-            <div class="hidden md:block h-4 w-full bg-surface-container rounded"></div>
-            <div class="hidden md:block h-4 w-3/4 bg-surface-container rounded"></div>
+      <div v-else-if="view === 'magazine'" class="mx-auto max-w-screen-lg space-y-3">
+        <div v-for="i in 8" :key="`mag-skel-${i}`"
+             class="flex items-start gap-4 rounded-2xl bg-surface-container/25 p-4 animate-pulse md:gap-6">
+          <div class="flex-1 space-y-2.5">
+            <div class="h-4 w-2/3 rounded bg-surface-container"></div>
+            <div class="h-3 w-1/3 rounded bg-surface-container/60"></div>
+            <div class="hidden h-3 w-full rounded bg-surface-container/40 md:block"></div>
           </div>
-          <div
-              class="w-20 h-20 md:w-48 md:h-32 lg:w-56 lg:h-36 bg-surface-container rounded-lg md:rounded-xl flex-shrink-0"></div>
+          <div class="h-20 w-20 shrink-0 rounded-2xl bg-surface-container/60 md:h-28 md:w-44"></div>
         </div>
       </div>
 
-      <div v-else-if="view === 'only-title'" class="max-w-screen-lg mx-auto">
-        <div v-for="i in 15" :key="`title-skel-${i}`" class="flex items-center gap-3 px-4 py-2.5 animate-pulse">
-          <div class="h-3 w-20 md:w-24 bg-surface-container rounded flex-shrink-0"></div>
-          <div class="h-4 flex-1 bg-surface-container rounded"></div>
-          <div class="h-3 w-12 bg-surface-container rounded flex-shrink-0"></div>
+      <div v-else-if="view === 'only-title'" class="mx-auto max-w-screen-lg space-y-1">
+        <div v-for="i in 12" :key="`title-skel-${i}`"
+             class="flex items-center gap-3 rounded-xl px-4 py-2.5 animate-pulse">
+          <div class="h-3 w-20 shrink-0 rounded bg-surface-container md:w-24"></div>
+          <div class="h-3.5 flex-1 rounded bg-surface-container/80"></div>
+          <div class="h-3 w-12 shrink-0 rounded bg-surface-container/40"></div>
         </div>
       </div>
 
-      <div v-else-if="view === 'social'" class="max-w-[640px] mx-auto">
-        <div v-for="i in 8" :key="`tl-skel-${i}`" class="animate-pulse px-4 py-5 space-y-3">
+      <div v-else-if="view === 'social'" class="mx-auto max-w-[600px] space-y-3">
+        <div v-for="i in 6" :key="`tl-skel-${i}`"
+             class="animate-pulse rounded-2xl bg-surface-container/25 p-4 space-y-3">
           <div class="flex items-center gap-3">
-            <div class="w-8 h-8 rounded-full bg-surface-container flex-shrink-0"></div>
-            <div class="h-3 w-24 bg-surface-container rounded"></div>
-            <div class="h-3 w-12 bg-surface-container rounded"></div>
+            <div class="h-8 w-8 shrink-0 rounded-full bg-surface-container"></div>
+            <div class="h-3.5 w-28 rounded bg-surface-container"></div>
           </div>
           <div class="space-y-2 pl-11">
-            <div class="h-4 w-4/5 bg-surface-container rounded"></div>
-            <div class="h-3 w-full bg-surface-container rounded"></div>
-            <div class="h-3 w-2/3 bg-surface-container rounded"></div>
-            <div v-if="i % 2 === 0" class="h-48 w-full bg-surface-container rounded-xl mt-2"></div>
+            <div class="h-4 w-4/5 rounded bg-surface-container"></div>
+            <div class="h-3 w-full rounded bg-surface-container/60"></div>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- Content -->
+    <!-- 内容展示区 -->
     <section v-else>
-      <!-- Empty state -->
-      <div v-if="!items.length" class="flex flex-col items-center justify-center gap-3 py-16 text-center">
+      <!-- 空状态 -->
+      <div v-if="!items.length" class="flex flex-col items-center justify-center gap-3 py-20 text-center">
         <slot name="empty">
-          <svg class="h-12 w-12 text-gray-400 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-          </svg>
-          <span class="text-sm text-gray-600 dark:text-gray-400 max-w-xs">{{ emptyMessage }}</span>
+          <div class="flex h-16 w-16 items-center justify-center rounded-full bg-surface-container/60">
+            <svg class="h-7 w-7 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"
+                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+            </svg>
+          </div>
+          <span class="max-w-xs text-xs text-text-secondary">{{ emptyMessage }}</span>
         </slot>
       </div>
 
       <transition name="fade" mode="out-in">
-        <!-- Magazine view -->
-        <div v-if="view === 'magazine'" key="view-magazine" class="max-w-screen-lg mx-auto space-y-4">
+        <!-- 1. 杂志视图 (Magazine View) -->
+        <div v-if="view === 'magazine'" key="view-magazine" class="mx-auto max-w-screen-lg space-y-3">
           <article
               v-for="item in items"
               :key="item.id"
-              class="group flex flex-row items-end gap-3 md:gap-6
-                     p-4 md:p-5 rounded-2xl transition-all duration-300
-                     hover:bg-surface-container/60 cursor-pointer"
+              class="group flex cursor-pointer flex-row items-start gap-4 rounded-3xl p-4 transition duration-200 hover:bg-surface-container/50 md:gap-6 md:p-5"
               @click="handleArticleContainerClick(item, $event)"
           >
-            <!-- 文字内容 -->
-            <div class="flex-1 min-w-0 order-1 space-y-2 md:space-y-3">
-              <!-- 来源 · 时间 -->
-              <div
-                  class="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-500 whitespace-nowrap max-w-full">
+            <div class="order-1 flex-1 min-w-0 space-y-2">
+              <div class="flex items-center gap-2 text-xs text-text-secondary">
                 <router-link
                     v-if="item.feedId"
                     :to="{ name: 'feed', params: { feedId: item.feedId } }"
-                    class="flex min-w-0 items-center gap-1.5 truncate rounded hover:text-primary transition-colors
-                             focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                    class="flex min-w-0 items-center gap-1.5 truncate font-medium hover:text-primary transition-colors focus-visible:outline-none"
                     :title="item.feedTitle">
                   <img v-if="item.feedAvatar && !avatarErrorMap[item.id]"
                        :src="item.feedAvatar"
                        :alt="item.feedTitle"
-                       class="w-5 h-5 rounded-full object-cover flex-shrink-0"
+                       class="h-4 w-4 shrink-0 rounded-full object-cover shadow-2xs"
                        @error="avatarErrorMap[item.id] = true"/>
                   <span v-else
-                        class="w-5 h-5 rounded-full bg-primary/10 text-primary flex items-center justify-center
-                                 text-[10px] font-semibold flex-shrink-0">
-                      {{ item.feedTitle?.charAt(0)?.toUpperCase() }}
-                    </span>
+                        class="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[9px] font-bold text-primary">
+                    {{ item.feedTitle?.charAt(0)?.toUpperCase() }}
+                  </span>
                   <span class="truncate">{{ item.feedTitle }}</span>
                 </router-link>
-                <span v-else class="flex min-w-0 items-center gap-1.5 truncate" :title="item.feedTitle">
-                    <img v-if="item.feedAvatar && !avatarErrorMap[item.id]"
-                         :src="item.feedAvatar"
-                         :alt="item.feedTitle"
-                         class="w-3 h-3 rounded-full object-cover flex-shrink-0"
-                         @error="avatarErrorMap[item.id] = true"/>
-                    <span v-else
-                          class="w-3 h-3 rounded-full bg-primary/10 text-primary flex items-center justify-center
-                                 text-[10px] font-semibold flex-shrink-0">
-                      {{ item.feedTitle?.charAt(0)?.toUpperCase() }}
-                    </span>
-                    <span class="truncate">{{ item.feedTitle }}</span>
-                  </span>
-                <span class="flex-shrink-0">· {{ item.timeAgo }}</span>
+                <span v-else class="flex min-w-0 items-center gap-1.5 truncate">
+                  <span class="truncate">{{ item.feedTitle }}</span>
+                </span>
+                <span>·</span>
+                <span class="shrink-0 text-[11px]">{{ item.timeAgo }}</span>
               </div>
-              <!-- 标题 -->
-              <h3 class="text-base font-normal text-gray-900 dark:text-gray-100 line-clamp-2">
-                <router-link
-                    :to="{ name: 'article', params: { id: item.id } }"
-                    class="rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
+
+              <h3 class="text-base font-semibold leading-snug tracking-tight text-text line-clamp-2 group-hover:text-primary transition-colors">
+                <router-link :to="{ name: 'article', params: { id: item.id } }">
                   {{ item.title }}
                 </router-link>
               </h3>
 
+              <p v-if="item.summary" class="text-xs leading-relaxed text-text-secondary line-clamp-2">
+                {{ item.summary }}
+              </p>
 
-              <!-- 摘要 -->
-              <router-link
-                  v-if="item.summary"
-                  :to="{ name: 'article', params: { id: item.id } }"
-                  class="block rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
-                <p class="text-sm leading-relaxed text-gray-600 dark:text-gray-400 line-clamp-2 ">
-                  {{ item.summary }}
-                </p>
-              </router-link>
-
-              <!-- 标签 -->
-              <div v-if="item.tags?.length" class="flex flex-wrap gap-2 text-xs text-gray-500 dark:text-gray-500">
+              <div v-if="item.tags?.length" class="flex flex-wrap gap-1.5 pt-0.5">
                 <button
                     v-for="tag in item.tags"
                     :key="tag"
                     type="button"
-                    @click="emit('select-tag', tag)"
-                    class="hover:text-primary transition-colors"
+                    @click.stop="emit('select-tag', tag)"
+                    class="rounded-md bg-surface-container/60 px-2 py-0.5 text-[11px] font-medium text-text-secondary transition hover:bg-surface-container hover:text-text"
                 >
                   #{{ tag }}
                 </button>
               </div>
             </div>
 
-            <!-- 缩略图 -->
             <router-link
                 v-if="item.thumbnail && !thumbErrorMap[item.id]"
                 :to="{ name: 'article', params: { id: item.id } }"
-                class="flex-shrink-0 order-2
-               w-20 h-20 md:w-48 md:h-32
-               overflow-hidden rounded-lg md:rounded-xl
-               bg-gray-100 dark:bg-gray-800
-               focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                class="order-2 h-20 w-24 shrink-0 overflow-hidden rounded-2xl bg-surface-container/60 shadow-2xs transition sm:h-28 sm:w-40 md:h-32 md:w-48"
             >
               <img
                   :src="item.thumbnail"
                   :alt="item.title"
                   loading="lazy"
                   decoding="async"
-                  class="w-full h-full object-cover transition-transform duration-500
-                 md:group-hover:scale-105"
+                  class="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
                   @error="thumbErrorMap[item.id] = true"
               />
             </router-link>
-
           </article>
         </div>
 
-
-        <!-- Card view - 恢复原始紧凑样式 -->
+        <!-- 2. 卡片视图 (Card View) - 严格复原移动端完整适配布局 -->
         <div
             v-else-if="view === 'card'"
             key="view-card"
-            class="grid gap-0 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
+            class="grid grid-cols-1 gap-2 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 px-2 sm:px-4">
           <article
               v-for="item in items"
               :key="item.id"
-              class="group relative flex h-full flex-col overflow-hidden rounded-xl p-3
-                     bg-white dark:bg-surface-container/60 hover:bg-surface-container/60
+              class="group relative flex h-full w-full flex-col overflow-hidden rounded-xl p-3
+                     bg-surface dark:bg-surface-container/60 hover:bg-surface-container/60
                      transition-colors duration-200 cursor-pointer"
               @click="handleArticleContainerClick(item, $event)">
+
+            <!-- 封面图：固定纵横比，移动端 100% 满宽 -->
             <router-link
                 :to="{ name: 'article', params: { id: item.id } }"
-                class="relative block aspect-video w-full overflow-hidden bg-gray-100 dark:bg-gray-800 rounded-xl
-                         focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
+                class="relative block aspect-video w-full overflow-hidden bg-surface-container rounded-xl
+                       focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
               <img
                   v-if="item.thumbnail && !thumbErrorMap[item.id]"
                   :src="item.thumbnail"
@@ -280,23 +252,24 @@
                   @error="thumbErrorMap[item.id] = true"/>
               <div
                   v-else
-                  class="flex h-full w-full flex-col items-center justify-center text-gray-400 dark:text-gray-600 gap-2">
-                <svg class="w-8 h-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
+                  class="flex h-full w-full flex-col items-center justify-center text-text-muted gap-2">
+                <svg class="w-8 h-8 opacity-40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
                      stroke-linecap="round" stroke-linejoin="round">
                   <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
                   <circle cx="8.5" cy="8.5" r="1.5"/>
                   <polyline points="21 15 16 10 5 21"/>
                 </svg>
-                <!--                  <span class="text-xs">无图</span>-->
               </div>
             </router-link>
 
+            <!-- 卡片主体：头像 + 标题 + 来源 + 标签 -->
             <div class="relative flex flex-1 flex-col gap-2 py-3">
-              <header class="flex items-start gap-2">
+              <header class="flex items-start gap-2.5">
+                <!-- 头像 -->
                 <router-link
                     v-if="item.feedId"
                     :to="{ name: 'feed', params: { feedId: item.feedId } }"
-                    class="flex-shrink-0 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                    class="shrink-0 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                     :aria-label="`查看 ${item.feedTitle}`">
                   <img v-if="item.feedAvatar && !avatarErrorMap[item.id]"
                        :src="item.feedAvatar"
@@ -306,236 +279,157 @@
                   <span v-else
                         class="w-7 h-7 rounded-full bg-primary/10 text-primary flex items-center justify-center
                                text-[10px] font-semibold mt-0.5">
-                      {{ item.feedTitle?.charAt(0)?.toUpperCase() }}
-                    </span>
-                </router-link>
-                <span v-else class="flex-shrink-0">
-                    <img v-if="item.feedAvatar && !avatarErrorMap[item.id]"
-                         :src="item.feedAvatar"
-                         :alt="item.feedTitle"
-                         class="w-7 h-7 rounded-full object-cover mt-0.5"
-                         @error="avatarErrorMap[item.id] = true"/>
-                    <span v-else
-                          class="w-7 h-7 rounded-full bg-primary/10 text-primary flex items-center justify-center
-                                 text-[10px] font-semibold mt-0.5">
-                      {{ item.feedTitle?.charAt(0)?.toUpperCase() }}
-                    </span>
+                    {{ item.feedTitle?.charAt(0)?.toUpperCase() }}
                   </span>
-                <div class="min-w-0 flex-1 space-y-1.5">
-                  <h3 class="text-base font-medium leading-tight text-gray-900 dark:text-gray-100 line-clamp-2">
+                </router-link>
+                <span v-else class="shrink-0">
+                  <img v-if="item.feedAvatar && !avatarErrorMap[item.id]"
+                       :src="item.feedAvatar"
+                       :alt="item.feedTitle"
+                       class="w-7 h-7 rounded-full object-cover mt-0.5"
+                       @error="avatarErrorMap[item.id] = true"/>
+                  <span v-else
+                        class="w-7 h-7 rounded-full bg-primary/10 text-primary flex items-center justify-center
+                               text-[10px] font-semibold mt-0.5">
+                    {{ item.feedTitle?.charAt(0)?.toUpperCase() }}
+                  </span>
+                </span>
+
+                <!-- 标题与来源 -->
+                <div class="min-w-0 flex-1 space-y-1">
+                  <h3 class="text-sm font-semibold leading-snug text-text line-clamp-2">
                     <router-link
                         :to="{ name: 'article', params: { id: item.id } }"
-                        class="rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
+                        class="rounded hover:text-primary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
                       {{ item.title }}
                     </router-link>
                   </h3>
-                  <p class="text-xs text-gray-500 dark:text-gray-500">
+                  <p class="text-xs text-text-secondary flex items-center gap-1">
                     <router-link v-if="item.feedId"
                                  :to="{ name: 'feed', params: { feedId: item.feedId } }"
-                                 class="rounded hover:text-primary transition-colors
-                                   focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
+                                 class="truncate hover:text-primary transition-colors focus-visible:outline-none">
                       {{ item.feedTitle }}
                     </router-link>
-                    <span v-else>{{ item.feedTitle }}</span>
-                    ·
-                    <span>
-                        {{ item.timeAgo }}
-                      </span>
+                    <span v-else class="truncate">{{ item.feedTitle }}</span>
+                    <span>·</span>
+                    <span class="shrink-0">{{ item.timeAgo }}</span>
                   </p>
 
                   <div v-if="item.tags?.length"
-                          class="flex  flex-wrap gap-3 mt-auto text-xs text-gray-500 dark:text-gray-500">
+                       class="flex flex-wrap gap-2 mt-2 pt-0.5 text-xs text-text-secondary">
                     <button
                         v-for="tag in item.tags"
                         :key="tag"
                         type="button"
                         class="hover:text-primary transition-colors"
-                        @click="emit('select-tag', tag)">
+                        @click.stop="emit('select-tag', tag)">
                       #{{ tag }}
                     </button>
                   </div>
                 </div>
               </header>
-
             </div>
           </article>
         </div>
 
-        <!-- Title only view -->
-        <div v-else-if="view === 'only-title'" key="view-only-title" class=" mx-auto">
+        <!-- 3. 仅标题视图 (Title Only View) -->
+        <!-- Title only view：融合 MD3 语义色 + 原版移动端隐藏来源文字的宽视野 -->
+        <div v-else-if="view === 'only-title'" key="view-only-title" class="mx-auto max-w-screen-lg space-y-1">
           <article
               v-for="item in items"
               :key="item.id"
-              class="flex items-start gap-3 px-4 py-2.5
-                     transition-colors hover:bg-surface-container/60 rounded-xl cursor-pointer"
+              class="flex cursor-pointer items-start gap-2.5 sm:gap-3 rounded-2xl px-3.5 py-2.5 transition hover:bg-surface-container/60"
               @click="handleArticleContainerClick(item, $event)">
-            <!-- 来源区域：大屏限制宽度，小屏仅按头像收缩 -->
+
+            <!-- 来源：小屏仅头像，大屏展示完整名称 -->
             <component
                 :is="item.feedId ? 'router-link' : 'span'"
                 :to="item.feedId ? { name: 'feed', params: { feedId: item.feedId } } : undefined"
-                class="flex-shrink-0 flex items-center gap-1.5  md:w-32 sm:max-w-[30%]
-               text-xs text-gray-500 dark:text-gray-400 rounded group
-               hover:text-primary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-                :aria-label="`来源：${item.feedTitle}`">
-
-              <!-- 1. 头像：移动端和小屏始终展示 -->
+                class="shrink-0 flex items-center gap-1.5 text-xs text-text-secondary sm:w-32 md:w-36 group"
+                :title="item.feedTitle"
+                @click.stop>
               <img
                   v-if="item.feedAvatar && !avatarErrorMap[item.id]"
                   :src="item.feedAvatar"
                   :alt="item.feedTitle"
-                  class="w-4 h-4 rounded-full object-cover flex-shrink-0"
+                  class="h-4 w-4 shrink-0 rounded-full object-cover mt-0.5"
                   @error="avatarErrorMap[item.id] = true"/>
               <span
                   v-else
-                  class="w-4 h-4 rounded-full bg-primary/10 text-primary flex items-center justify-center
-                 text-[9px] font-semibold flex-shrink-0">
-                {{ item.feedTitle?.charAt(0)?.toUpperCase() }}
-              </span>
-
-              <!-- 2. 文字标题：小屏 hidden，sm(>=640px) 时展示并省略截断 -->
-              <span class="hidden sm:inline truncate group-hover:text-primary">
-                {{ item.feedTitle }}
-              </span>
+                  class="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-surface-container-high text-[9px] font-bold text-text-secondary mt-0.5">
+        {{ item.feedTitle?.charAt(0)?.toUpperCase() }}
+      </span>
+              <!-- 小屏隐藏文本，大屏显示截断，防止抢占标题空间 -->
+              <span class="hidden sm:inline truncate group-hover:text-primary transition-colors">
+        {{ item.feedTitle }}
+      </span>
             </component>
-            <!-- 标题  -->
+
+            <!-- 标题：占据全部剩余宽度 -->
             <router-link
                 :to="{ name: 'article', params: { id: item.id } }"
-                class="flex-1 min-w-0 text-sm truncate rounded
-                       focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
-              <span class="text-gray-900 dark:text-gray-100 font-medium">{{ item.title }}</span>
+                class="min-w-0 flex-1 truncate text-xs font-semibold text-text transition hover:text-primary sm:text-sm">
+              {{ item.title }}
             </router-link>
+
             <!-- 时间 -->
-            <span class="flex-shrink-0 text-xs text-gray-400 dark:text-gray-500 pt-0.5">
-              {{ item.timeAgo }}
-            </span>
+            <span class="shrink-0 text-[11px] text-text-secondary/70 pt-0.5">
+      {{ item.timeAgo }}
+    </span>
           </article>
         </div>
 
-        <!-- Social view (X / Reddit style) -->
-        <div v-else key="view-social" class="max-w-[600px] mx-auto">
+        <!-- 4. 社交流视图 (Social View) -->
+        <div v-else key="view-social" class="mx-auto max-w-[600px] space-y-2.5">
           <article
               v-for="item in items"
               :key="item.id"
-              class="social-divider relative block px-4 py-5 rounded-xl
-                     last:after:hidden cursor-pointer"
+              class="cursor-pointer rounded-3xl bg-surface-container/25 p-4.5 transition hover:bg-surface-container/50 sm:p-5"
               @click="handleArticleContainerClick(item, $event)"
           >
-            <div class="flex gap-3">
-              <!-- 头像 -->
+            <div class="flex gap-3.5">
               <router-link
                   v-if="item.feedId"
                   :to="{ name: 'feed', params: { feedId: item.feedId } }"
-                  class="flex-shrink-0 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-                  :aria-label="`查看 ${item.feedTitle}`">
+                  class="shrink-0">
                 <img v-if="item.feedAvatar && !avatarErrorMap[item.id]"
                      :src="item.feedAvatar"
                      :alt="item.feedTitle"
-                     class="flex-shrink-0 w-8 h-8 rounded-full object-cover mt-0.5"
+                     class="h-9 w-9 rounded-full object-cover shadow-2xs"
                      @error="avatarErrorMap[item.id] = true"
                 />
                 <span v-else
-                      class="flex-shrink-0 w-8 h-8 rounded-full bg-primary/10 text-primary
-                          flex items-center justify-center text-xs font-bold select-none mt-0.5">
+                      class="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">
                   {{ item.feedTitle?.charAt(0)?.toUpperCase() }}
                 </span>
               </router-link>
-              <span v-else class="flex-shrink-0">
-                <img v-if="item.feedAvatar && !avatarErrorMap[item.id]"
-                     :src="item.feedAvatar"
-                     :alt="item.feedTitle"
-                     class="w-8 h-8 rounded-full object-cover mt-0.5"
-                     @error="avatarErrorMap[item.id] = true"/>
-                <span v-else
-                      class="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center
-                             text-xs font-bold select-none mt-0.5">
-                  {{ item.feedTitle?.charAt(0)?.toUpperCase() }}
-                </span>
-              </span>
 
-              <!-- 主体 -->
-              <div class="flex-1 min-w-0 space-y-1.5">
-                <!-- 来源、标题和时间 -->
-                <div class="flex flex-wrap  items-center gap-x-1.5 gap-y-0.5 text-sm leading-snug">
-                  <router-link v-if="item.feedId"
-                               :to="{ name: 'feed', params: { feedId: item.feedId } }"
-                               class="text-gray-900 dark:text-gray-100 font-semibold truncate flex-shrink-0 max-w-[15rem] sm:max-w-[16rem]
-                               rounded hover:text-primary transition-colors
-                               focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
-                    {{ item.feedTitle }}
-                  </router-link>
-                  <span v-else
-                        class="text-gray-900 dark:text-gray-100 font-semibold truncate flex-shrink-0 max-w-[15rem] sm:max-w-[16rem]">
-                    {{ item.feedTitle }}
-                  </span>
-                  <small class="text-gray-400 dark:text-gray-500 flex-shrink-0 whitespace-nowrap">
-                      {{ item.timeAgo }}
-                    </small>
-                  <svg
-                      class="w-3 h-3 flex-shrink-0 text-gray-400 dark:text-gray-600"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="2"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      aria-hidden="true"
-                  >
-                    <path d="m9 18 6-6-6-6"/>
-                  </svg>
-                  <span class="basis-full sm:basis-auto min-w-0 flex items-start gap-1.5 ">
-                    <router-link
-                        :to="{ name: 'article', params: { id: item.id } }"
-                        class="text-gray-900 dark:text-gray-100 font-semibold line-clamp-2 min-w-0 flex-1 rounded
-                               focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
-                      {{ item.title }}
-                    </router-link>
-
-                  </span>
-
+              <div class="min-w-0 flex-1 space-y-2">
+                <div class="flex flex-wrap items-baseline gap-1.5 text-xs text-text-secondary">
+                  <span class="font-bold text-text">{{ item.feedTitle }}</span>
+                  <span>·</span>
+                  <span class="text-[11px]">{{ item.timeAgo }}</span>
                 </div>
 
-                <!-- 摘要 -->
-                <router-link
-                    v-if="item.summary"
-                    :to="{ name: 'article', params: { id: item.id } }"
-                    class="block rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
-                  <p class="text-sm leading-relaxed text-gray-600 dark:text-gray-400"
-                     :class="item.thumbnail && !thumbErrorMap[item.id] ? 'line-clamp-3' : 'line-clamp-4'">
-                    {{ item.summary }}
-                  </p>
-                </router-link>
+                <h3 class="text-sm font-semibold leading-snug text-text transition group-hover:text-primary">
+                  {{ item.title }}
+                </h3>
 
-                <!-- 图片 -->
+                <p v-if="item.summary" class="text-xs leading-relaxed text-text-secondary line-clamp-3">
+                  {{ item.summary }}
+                </p>
 
                 <figure v-if="item.thumbnail && !thumbErrorMap[item.id]"
-                        class="mt-2 aspect-video overflow-hidden rounded-xl border border-gray-200 dark:border-gray-700/50
-                           bg-gray-100 dark:bg-gray-800
-                           ">
-                  <router-link
-                      :to="{ name: 'article', params: { id: item.id } }"
-                      class="block h-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
-                    <img
-                        :src="item.thumbnail"
-                        :alt="item.title"
-                        loading="lazy"
-                        decoding="async"
-                        class="w-full h-full object-cover"
-                        @error="thumbErrorMap[item.id] = true"
-                    />
-                  </router-link>
+                        class="mt-2.5 aspect-video overflow-hidden rounded-2xl bg-surface-container/60 shadow-2xs">
+                  <img
+                      :src="item.thumbnail"
+                      :alt="item.title"
+                      loading="lazy"
+                      decoding="async"
+                      class="h-full w-full object-cover transition-transform duration-300 hover:scale-[1.02]"
+                      @error="thumbErrorMap[item.id] = true"
+                  />
                 </figure>
-
-                <!-- 标签 -->
-                <div v-if="item.tags?.length" class="flex flex-wrap gap-x-3 gap-y-1 pt-1">
-                  <button
-                      v-for="tag in item.tags"
-                      :key="tag"
-                      type="button"
-                      @click="emit('select-tag', tag)"
-                      class="text-xs text-gray-500 dark:text-gray-400  hover:underline transition-colors">
-                    #{{ tag }}
-                  </button>
-                </div>
               </div>
             </div>
           </article>
@@ -553,7 +447,6 @@ const router = useRouter()
 
 function handleArticleContainerClick(item: ArticleListItemProps, event: MouseEvent) {
   const target = event.target as HTMLElement | null
-  // Preserve native router-link and tag button behavior; only blank areas use the fallback.
   if (target?.closest('a, button')) return
   if (item.id) {
     router.push({name: 'article', params: {id: item.id}})
@@ -573,12 +466,13 @@ export interface ArticleListItemProps {
 }
 
 const props = withDefaults(defineProps<{
-  title: string
+  title?: string
   subtitle?: string
   items: ArticleListItemProps[]
   loading?: boolean
   emptyMessage?: string
 }>(), {
+  title: '',
   subtitle: '',
   loading: false,
   emptyMessage: '暂无文章，添加订阅后即可看到推荐内容。'
@@ -604,10 +498,10 @@ function setView(v: ViewMode) {
 
 function btnClass(active: boolean) {
   return [
-    'p-2 rounded-full transition-all',
+    'flex h-7 w-7 items-center justify-center rounded-full transition duration-200 select-none',
     active
-        ? 'bg-primary/10 text-primary shadow-sm'
-        : 'text-gray-500 hover:bg-surface-container'
+        ? 'bg-primary/15 font-semibold text-primary shadow-2xs'
+        : 'text-text-secondary hover:bg-surface-container hover:text-text'
   ].join(' ')
 }
 
@@ -628,26 +522,11 @@ watch(() => props.items, (newItems) => {
 <style scoped>
 .fade-enter-active,
 .fade-leave-active {
-  transition: opacity 0.15s ease
+  transition: opacity 0.15s ease;
 }
 
 .fade-enter-from,
 .fade-leave-to {
-  opacity: 0
-}
-
-.social-divider::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 1rem;
-  right: 1rem;
-  height: 1px;
-  background: rgb(229 231 235 / 0.6);
-}
-
-:root.dark .social-divider::after,
-.dark .social-divider::after {
-  background: rgb(31 41 55 / 0.6);
+  opacity: 0;
 }
 </style>

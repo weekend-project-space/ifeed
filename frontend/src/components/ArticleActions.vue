@@ -74,6 +74,8 @@ onDeactivated(reset);
 </script>
 
 <style scoped>
+@reference "../styles/tailwind.css";
+
 .action-button {
   @apply flex h-10 w-10 items-center justify-center rounded-full hover:bg-surface-container disabled:cursor-not-allowed disabled:opacity-50;
 }

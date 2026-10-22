@@ -1,28 +1,28 @@
 <template>
-    <div v-if="visible && title" class="fixed inset-0 z-50 flex items-center justify-center p-4"
-      @click.self="handleBackdrop">
-      <div class="absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
-      <div class="relative bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-sm w-full p-6 space-y-4">
-        <h3 class="text-lg font-semibold text-text">{{ title }}</h3>
+  <div v-if="visible && title" class="fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-sm"
+       @click.self="handleBackdrop">
+    <div class="absolute inset-0 bg-black/45"></div>
+    <div class="relative w-full max-w-sm rounded-[28px] bg-surface p-6 shadow-2xl space-y-4">
+      <h3 class="text-base font-bold text-text">{{ title }}</h3>
 
-        <div class="text-sm text-text-secondary">
-          <slot>
-            <p v-if="description">{{ description }}</p>
-          </slot>
-        </div>
+      <div class="text-xs text-text-secondary leading-relaxed sm:text-sm">
+        <slot>
+          <p v-if="description">{{ description }}</p>
+        </slot>
+      </div>
 
-        <div class="flex gap-3 justify-end">
-          <button @click="handleCancel"
-            class="px-4 py-2 text-sm font-medium text-text-secondary hover:bg-surface-container rounded-lg transition-colors">
-            {{ cancelText }}
-          </button>
-          <button @click="handleConfirm" :disabled="confirmDisabled || confirmLoading"
-            class="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors disabled:opacity-50">
-            {{ confirmLoading ? (confirmLoadingText || confirmText) : confirmText }}
-          </button>
-        </div>
+      <div class="flex gap-2.5 justify-end pt-2">
+        <button @click="handleCancel"
+                class="inline-flex h-9 items-center justify-center rounded-full px-4 text-xs font-semibold text-text-secondary hover:bg-surface-container transition active:scale-95">
+          {{ cancelText }}
+        </button>
+        <button @click="handleConfirm" :disabled="confirmDisabled || confirmLoading"
+                class="inline-flex h-9 items-center justify-center rounded-full bg-red-600 px-4 text-xs font-semibold text-white shadow-xs transition hover:bg-red-700 disabled:opacity-40 active:scale-95">
+          {{ confirmLoading ? (confirmLoadingText || confirmText) : confirmText }}
+        </button>
       </div>
     </div>
+  </div>
 </template>
 
 <script setup lang="ts">

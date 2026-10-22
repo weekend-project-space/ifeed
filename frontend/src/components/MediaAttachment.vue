@@ -1,212 +1,164 @@
-<!-- components/MediaAttachment.vue -->
 <template>
-  <section v-if="url">
+  <section v-if="url" class="text-text">
     <!-- 支持的媒体类型 -->
-    <div v-if="isSupported" class="rounded-lg bg-secondary/5 hover:bg-secondary/10 dark:bg-secondary/10 dark:hover:bg-secondary/20 overflow-hidden transition-colors duration-200">
+    <div v-if="isSupported" class="overflow-hidden rounded-2xl bg-surface-container/40 transition duration-200 hover:bg-surface-container/70 shadow-2xs">
 
-      <!-- 视频播放器 -->
+      <!-- 1. 视频播放器 -->
       <template v-if="isVideo">
         <div class="aspect-video bg-black">
           <video
               :src="url"
               controls
               controlsList="nodownload"
-              class="w-full h-full"
+              class="h-full w-full"
               @error="onVideoError"
           ></video>
         </div>
-        <div class="px-4 py-3 border-t border-gray-100 dark:border-gray-700">
+        <div class="border-t border-outline/10 px-4 py-3">
           <div class="flex items-center gap-2.5">
-            <div class="w-8 h-8 rounded-full bg-primary/10 dark:bg-primary/20 flex items-center justify-center flex-shrink-0">
-              <svg class="w-4 h-4 text-primary" fill="currentColor" viewBox="0 0 20 20">
-                <path
-                    d="M2 6a2 2 0 012-2h6a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6zm12.553 1.106A1 1 0 0014 8v4a1 1 0 00.553.894l2 1A1 1 0 0018 13V7a1 1 0 00-1.447-.894l-2 1z"/>
+            <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+              <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M2 6a2 2 0 012-2h6a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6zm12.553 1.106A1 1 0 0014 8v4a1 1 0 00.553.894l2 1A1 1 0 0018 13V7a1 1 0 00-1.447-.894l-2 1z"/>
               </svg>
             </div>
-            <div class="flex-1 min-w-0">
-              <p class="text-sm text-gray-700 dark:text-gray-300 truncate">{{ displayFileName }}</p>
+            <div class="min-w-0 flex-1">
+              <p class="truncate text-xs font-medium text-text">{{ displayFileName }}</p>
             </div>
           </div>
         </div>
       </template>
 
-      <!-- 音频播放器 -->
+      <!-- 2. 音频播放器 -->
       <template v-else-if="isAudio">
         <!-- 内联模式 -->
-        <div v-if="mode === 'inline'" class="p-4">
+        <div v-if="mode === 'inline'" class="p-4 sm:p-5">
           <div class="flex items-start gap-4">
             <!-- 封面图 + 播放按钮 -->
-            <div class="flex-shrink-0 relative group">
-              <div
-                  v-if="coverImage"
-                  class="w-24 h-24 rounded-lg overflow-hidden"
-              >
+            <div class="group relative shrink-0">
+              <div v-if="coverImage" class="h-20 w-20 overflow-hidden rounded-2xl shadow-xs sm:h-24 sm:w-24">
                 <img
                     :src="coverImage"
                     :alt="title || '封面'"
-                    class="w-full h-full object-cover"
+                    class="h-full w-full object-cover"
                     @error="handleImageError"
                 />
               </div>
-              <div
-                  v-else
-                  class="w-24 h-24 rounded-lg bg-primary/10 dark:bg-primary/20 flex items-center justify-center"
-              >
-                <svg class="w-10 h-10 text-primary" fill="currentColor" viewBox="0 0 20 20">
-                  <path
-                      d="M18 3a1 1 0 00-1.196-.98l-10 2A1 1 0 006 5v9.114A4.369 4.369 0 005 14c-1.657 0-3 .895-3 2s1.343 2 3 2 3-.895 3-2V7.82l8-1.6v5.894A4.37 4.37 0 0015 12c-1.657 0-3 .895-3 2s1.343 2 3 2 3-.895 3-2V3z"/>
+              <div v-else class="flex h-20 w-20 items-center justify-center rounded-2xl bg-surface-container-high text-primary sm:h-24 sm:w-24">
+                <svg class="h-8 w-8" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M18 3a1 1 0 00-1.196-.98l-10 2A1 1 0 006 5v9.114A4.369 4.369 0 005 14c-1.657 0-3 .895-3 2s1.343 2 3 2 3-.895 3-2V7.82l8-1.6v5.894A4.37 4.37 0 0015 12c-1.657 0-3 .895-3 2s1.343 2 3 2 3-.895 3-2V3z"/>
                 </svg>
               </div>
 
-              <!-- 播放/暂停按钮 - 覆盖在封面上 -->
+              <!-- 覆盖按钮 -->
               <button
                   @click="toggleAudio"
-                  class="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity duration-200 rounded-lg focus:outline-none focus:opacity-100"
+                  class="absolute inset-0 flex items-center justify-center rounded-2xl bg-black/35 opacity-0 transition duration-200 group-hover:opacity-100 focus:opacity-100"
                   :class="{ 'opacity-100': isPlaying }"
                   aria-label="播放/暂停"
               >
-                <div v-if="!isPlaying"
-                     class="w-12 h-12 rounded-full bg-white/60 hover:bg-white/80 flex items-center justify-center transition-colors">
-                  <svg class="w-5 h-5 text-gray-900 ml-0.5" fill="currentColor" viewBox="0 0 20 20">
-                    <path
-                        d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"/>
+                <div class="flex h-11 w-11 items-center justify-center rounded-full bg-surface text-text shadow-xs transition hover:scale-105 active:scale-95">
+                  <svg v-if="!isPlaying" class="ml-0.5 h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"/>
                   </svg>
-                </div>
-                <div v-else
-                     class="w-12 h-12 rounded-full bg-white/60 hover:bg-white/80 flex items-center justify-center transition-colors">
-                  <svg class="w-5 h-5 text-gray-900" fill="currentColor" viewBox="0 0 20 20">
-                    <path
-                        d="M5 4a2 2 0 012-2h1a2 2 0 012 2v12a2 2 0 01-2 2H7a2 2 0 01-2-2V4zm8 0a2 2 0 012-2h1a2 2 0 012 2v12a2 2 0 01-2 2h-1a2 2 0 01-2-2V4z"/>
+                  <svg v-else class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M5 4a2 2 0 012-2h1a2 2 0 012 2v12a2 2 0 01-2 2H7a2 2 0 01-2-2V4zm8 0a2 2 0 012-2h1a2 2 0 012 2v12a2 2 0 01-2 2h-1a2 2 0 01-2-2V4z"/>
                   </svg>
                 </div>
               </button>
             </div>
 
-            <!-- 音频信息和控制 -->
-            <div class="flex-1 min-w-0">
-              <div class="mb-2">
-                <h3 v-if="title" class="text-base font-medium text-gray-900 dark:text-gray-100 truncate mb-0.5">
+            <!-- 控制与进度 -->
+            <div class="min-w-0 flex-1">
+              <div class="mb-1.5">
+                <h3 v-if="title" class="truncate text-sm font-semibold text-text">
                   {{ title }}
                 </h3>
-                <p v-if="artist" class="text-sm text-gray-600 dark:text-gray-400 truncate">
+                <p v-if="artist" class="truncate text-xs text-text-secondary">
                   {{ artist }}
                 </p>
-                <p v-else class="text-sm text-gray-600 dark:text-gray-400 truncate">
+                <p v-else class="truncate text-xs text-text-secondary">
                   {{ displayFileName }}
                 </p>
               </div>
 
-              <div class="mb-2">
-                <div v-if="duration > 0" class="text-xs text-gray-500 dark:text-gray-400 tabular-nums">
-                  {{ formatTime(currentTime) }} / {{ formatTime(duration) }}
+              <div class="mb-1 text-[11px] text-text-secondary tabular-nums" v-if="duration > 0">
+                {{ formatTime(currentTime) }} / {{ formatTime(duration) }}
+              </div>
+
+              <!-- 进度条 -->
+              <div v-if="duration > 0" class="group relative cursor-pointer py-2" @click="seekAudio">
+                <div class="relative h-1.5 w-full rounded-full bg-surface-container-high overflow-hidden">
+                  <div class="h-full bg-primary rounded-full transition-all duration-100" :style="{ width: progressPercent + '%' }"></div>
                 </div>
               </div>
 
-              <div v-if="duration > 0" class="relative py-2 cursor-pointer group" @click="seekAudio">
-                <div class="relative w-full h-1 bg-gray-300 dark:bg-gray-600 rounded-full">
-                  <div
-                      class="absolute inset-y-0 left-0 bg-primary dark:bg-primary rounded-full transition-all duration-100"
-                      :style="{ width: progressPercent + '%' }"
-                  ></div>
-                </div>
-                <div
-                    class="absolute top-1/2 -translate-y-1/2 w-4 h-4 bg-white dark:bg-gray-200 border-2 border-primary dark:border-primary rounded-full shadow-md transition-opacity pointer-events-none"
-                    :class="isPlaying ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'"
-                    :style="{ left: `calc(${progressPercent}% - 8px)` }"
-                ></div>
-              </div>
-
-              <div v-if="audioError" class="text-xs text-red-600 dark:text-red-400 mt-1">
+              <div v-if="audioError" class="mt-1 text-xs text-red-600 dark:text-red-400">
                 音频加载失败
               </div>
             </div>
           </div>
         </div>
 
-        <!-- 全局播放器模式 - 简洁卡片 + 添加到播放列表 -->
+        <!-- 全局播放器触发卡片模式 -->
         <div v-else class="p-4">
-          <div class="flex items-center gap-4">
-            <!-- 封面缩略图 -->
-            <div class="flex-shrink-0">
-              <div
-                  v-if="coverImage"
-                  class="w-16 h-16 rounded-lg overflow-hidden"
-              >
-                <img
-                    :src="coverImage"
-                    :alt="title || '封面'"
-                    class="w-full h-full object-cover"
-                    @error="handleImageError"
-                />
+          <div class="flex items-center gap-3.5">
+            <!-- 缩略图 -->
+            <div class="shrink-0">
+              <div v-if="coverImage" class="h-14 w-14 overflow-hidden rounded-xl shadow-2xs">
+                <img :src="coverImage" :alt="title || '封面'" class="h-full w-full object-cover" @error="handleImageError" />
               </div>
-              <div
-                  v-else
-                  class="w-16 h-16 rounded-lg bg-primary/10 dark:bg-primary/20 flex items-center justify-center"
-              >
-                <svg class="w-8 h-8 text-primary" fill="currentColor" viewBox="0 0 20 20">
-                  <path
-                      d="M18 3a1 1 0 00-1.196-.98l-10 2A1 1 0 006 5v9.114A4.369 4.369 0 005 14c-1.657 0-3 .895-3 2s1.343 2 3 2 3-.895 3-2V7.82l8-1.6v5.894A4.37 4.37 0 0015 12c-1.657 0-3 .895-3 2s1.343 2 3 2 3-.895 3-2V3z"/>
+              <div v-else class="flex h-14 w-14 items-center justify-center rounded-xl bg-surface-container text-primary">
+                <svg class="h-6 w-6" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M18 3a1 1 0 00-1.196-.98l-10 2A1 1 0 006 5v9.114A4.369 4.369 0 005 14c-1.657 0-3 .895-3 2s1.343 2 3 2 3-.895 3-2V7.82l8-1.6v5.894A4.37 4.37 0 0015 12c-1.657 0-3 .895-3 2s1.343 2 3 2 3-.895 3-2V3z"/>
                 </svg>
               </div>
             </div>
 
-            <!-- 音频信息 -->
-            <div class="flex-1 min-w-0">
-              <h3 v-if="title" class="text-sm font-medium text-gray-900 dark:text-gray-100 truncate mb-0.5">
+            <!-- 信息 -->
+            <div class="min-w-0 flex-1">
+              <h3 v-if="title" class="truncate text-xs font-semibold text-text sm:text-sm">
                 {{ title }}
               </h3>
-              <p v-if="artist" class="text-xs text-gray-600 dark:text-gray-400 truncate">
-                {{ artist }}
+              <p class="truncate text-[11px] text-text-secondary">
+                {{ artist || displayFileName }}
               </p>
-              <p v-else class="text-xs text-gray-600 dark:text-gray-400 truncate">
-                {{ displayFileName }}
-              </p>
-              <p v-if="duration > 0" class="text-xs text-gray-500 dark:text-gray-500 mt-1 tabular-nums">
+              <p v-if="duration > 0" class="mt-0.5 text-[10px] text-text-secondary/70 tabular-nums">
                 {{ formatTime(duration) }}
               </p>
             </div>
 
             <!-- 操作按钮 -->
             <div class="flex items-center gap-2">
-              <!-- 播放按钮 -->
               <button
                   @click="playInGlobalPlayer"
-                  class="w-10 h-10 rounded-full bg-primary hover:bg-primary/90 active:bg-primary/80 flex items-center justify-center transition-colors focus:outline-none focus:ring-2 focus:ring-primary/50"
-                  :class="{ 'bg-primary/80': isCurrentTrack }"
+                  class="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-white shadow-xs transition hover:brightness-105 active:scale-95"
                   aria-label="播放"
               >
-                <svg v-if="!isCurrentTrack || !isPlaying" class="w-5 h-5 text-white ml-0.5" fill="currentColor" viewBox="0 0 20 20">
-                  <path
-                      d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"/>
+                <svg v-if="!isCurrentTrack || !isPlaying" class="ml-0.5 h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"/>
                 </svg>
-                <svg v-else class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                <svg v-else class="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
                   <path d="M6 4h2.5v12H6V4zm5.5 0H14v12h-2.5V4z"/>
                 </svg>
               </button>
 
-              <!-- 添加到播放列表按钮 -->
               <button
                   @click="addToPlaylist"
-                  class="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 flex items-center justify-center transition-colors focus:outline-none focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-600"
-                  :class="{ 'bg-primary/10 dark:bg-primary/20': isInPlaylist }"
+                  class="flex h-9 w-9 items-center justify-center rounded-full bg-surface text-text-secondary shadow-2xs transition hover:bg-surface-container active:scale-95"
+                  :class="{ 'text-primary font-bold': isInPlaylist }"
                   aria-label="添加到播放列表"
               >
-                <svg v-if="!isInPlaylist" class="w-5 h-5 text-gray-700 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg v-if="!isInPlaylist" class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                 </svg>
-                <svg v-else class="w-5 h-5 text-primary" fill="currentColor" viewBox="0 0 20 20">
+                <svg v-else class="h-4 w-4 text-primary" fill="currentColor" viewBox="0 0 20 20">
                   <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
                 </svg>
               </button>
             </div>
           </div>
-
-          <div v-if="audioError" class="text-xs text-red-600 dark:text-red-400 mt-2">
-            音频加载失败
-          </div>
         </div>
 
-        <!-- 隐藏的音频元素 (仅内联模式使用) -->
         <audio
             v-if="mode === 'inline'"
             ref="audioRef"
@@ -221,42 +173,31 @@
         ></audio>
       </template>
 
-      <!-- 图片展示 -->
+      <!-- 3. 图片展示 -->
       <template v-else-if="isImage">
-        <div class="bg-gray-50 dark:bg-gray-800">
+        <div class="bg-surface-container/20">
           <img
               :src="url"
               :alt="displayFileName"
-              class="w-full max-h-[500px] object-contain"
+              class="max-h-[500px] w-full object-contain"
               loading="lazy"
           />
         </div>
-        <div class="px-4 py-3 border-t border-gray-100 dark:border-gray-700">
-          <div class="flex items-center gap-2.5">
-            <div class="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center flex-shrink-0">
-              <svg class="w-4 h-4 text-gray-600 dark:text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-                <path fill-rule="evenodd"
-                      d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z"
-                      clip-rule="evenodd"/>
-              </svg>
-            </div>
-            <div class="flex-1 min-w-0">
-              <p class="text-sm text-gray-700 dark:text-gray-300 truncate">{{ displayFileName }}</p>
-            </div>
-          </div>
+        <div class="border-t border-outline/10 px-4 py-3">
+          <p class="truncate text-xs font-medium text-text-secondary">{{ displayFileName }}</p>
         </div>
       </template>
     </div>
 
-    <!-- 不支持的文件类型 -->
+    <!-- 不支持的附件类型 -->
     <a
         v-else
         :href="url"
         target="_blank"
         rel="noopener noreferrer"
-        class="inline-flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-medium text-primary hover:bg-primary/5 dark:hover:bg-primary/10 active:bg-primary/10 dark:active:bg-primary/20 transition-colors duration-150"
+        class="inline-flex items-center gap-2 rounded-full bg-surface-container/60 px-4 py-2 text-xs font-medium text-text transition hover:bg-surface-container active:scale-95"
     >
-      <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+      <svg class="h-4 w-4 text-text-secondary" fill="currentColor" viewBox="0 0 20 20">
         <path fill-rule="evenodd"
               d="M8 4a3 3 0 00-3 3v4a5 5 0 0010 0V7a1 1 0 112 0v4a7 7 0 11-14 0V7a5 5 0 0110 0v4a3 3 0 11-6 0V7a1 1 0 012 0v4a1 1 0 102 0V7a3 3 0 00-3-3z"
               clip-rule="evenodd"/>
@@ -267,7 +208,7 @@
 </template>
 
 <script setup lang="ts">
-import {computed, ref, watch, onBeforeUnmount, inject} from 'vue';
+import { computed, ref, watch, onBeforeUnmount, inject } from 'vue';
 
 interface Props {
   url: string | null;
@@ -275,8 +216,8 @@ interface Props {
   title?: string | null;
   artist?: string | null;
   coverImage?: string | null;
-  mode?: 'inline' | 'global'; // 新增：模式选择
-  trackId?: string | null; // 新增：用于全局播放器追踪
+  mode?: 'inline' | 'global';
+  trackId?: string | null;
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -288,10 +229,8 @@ const props = withDefaults(defineProps<Props>(), {
   trackId: null
 });
 
-// 注入全局播放器（如果存在）
 const globalPlayer = inject<any>('globalAudioPlayer', null);
 
-// 内联模式状态
 const audioRef = ref<HTMLAudioElement | null>(null);
 const playing = ref(false);
 const currentTime = ref(0);
@@ -299,16 +238,13 @@ const duration = ref(0);
 const imageError = ref(false);
 const audioError = ref(false);
 
-// 全局播放器状态
 const isCurrentTrack = computed(() => {
   if (!globalPlayer || !props.trackId) return false;
   return globalPlayer.currentTrackId.value === props.trackId;
 });
 
 const isPlaying = computed(() => {
-  if (props.mode === 'inline') {
-    return playing.value;
-  }
+  if (props.mode === 'inline') return playing.value;
   return isCurrentTrack.value && globalPlayer?.isPlaying.value;
 });
 
@@ -317,7 +253,6 @@ const isInPlaylist = computed(() => {
   return globalPlayer.playlist.value.some((track: any) => track.id === props.trackId);
 });
 
-// 媒体类型判断
 const mimeType = computed(() => props.type || '');
 const urlLower = computed(() => props.url?.toLowerCase() || '');
 
@@ -352,7 +287,6 @@ const coverImage = computed(() =>
     imageError.value ? null : props.coverImage
 );
 
-// 内联模式控制
 const toggleAudio = () => {
   if (!audioRef.value) return;
   if (playing.value) {
@@ -371,10 +305,8 @@ const seekAudio = (event: MouseEvent) => {
   audioRef.value.currentTime = percent * duration.value;
 };
 
-// 全局播放器控制
 const playInGlobalPlayer = () => {
   if (!globalPlayer) return;
-
   const track = {
     id: props.trackId || `track-${Date.now()}`,
     url: props.url,
@@ -382,7 +314,6 @@ const playInGlobalPlayer = () => {
     artist: props.artist || '未知艺术家',
     coverImage: props.coverImage
   };
-
   if (isCurrentTrack.value) {
     globalPlayer.togglePlay();
   } else {
@@ -392,7 +323,6 @@ const playInGlobalPlayer = () => {
 
 const addToPlaylist = () => {
   if (!globalPlayer) return;
-
   const track = {
     id: props.trackId || `track-${Date.now()}`,
     url: props.url,
@@ -400,7 +330,6 @@ const addToPlaylist = () => {
     artist: props.artist || '未知艺术家',
     coverImage: props.coverImage
   };
-
   if (isInPlaylist.value) {
     globalPlayer.removeFromPlaylist(track.id);
   } else {
@@ -408,11 +337,8 @@ const addToPlaylist = () => {
   }
 };
 
-// 音频事件处理
 const onTimeUpdate = () => {
-  if (audioRef.value) {
-    currentTime.value = audioRef.value.currentTime;
-  }
+  if (audioRef.value) currentTime.value = audioRef.value.currentTime;
 };
 
 const onLoadedMetadata = () => {
@@ -428,13 +354,8 @@ const onEnded = () => {
   currentTime.value = 0;
 };
 
-const onPlay = () => {
-  playing.value = true;
-};
-
-const onPause = () => {
-  playing.value = false;
-};
+const onPlay = () => { playing.value = true; };
+const onPause = () => { playing.value = false; };
 
 const onAudioError = () => {
   console.error('音频加载失败:', props.url);
@@ -444,13 +365,8 @@ const onAudioError = () => {
   currentTime.value = 0;
 };
 
-const onVideoError = () => {
-  console.error('视频加载失败:', props.url);
-};
-
-const handleImageError = () => {
-  imageError.value = true;
-};
+const onVideoError = () => { console.error('视频加载失败:', props.url); };
+const handleImageError = () => { imageError.value = true; };
 
 const formatTime = (seconds: number): string => {
   if (!isFinite(seconds) || seconds < 0) return '0:00';
@@ -461,53 +377,34 @@ const formatTime = (seconds: number): string => {
 
 const updateMediaSession = () => {
   if (!('mediaSession' in navigator) || !isAudio.value || props.mode !== 'inline') return;
-
   try {
     navigator.mediaSession.metadata = new MediaMetadata({
       title: props.title || displayFileName.value,
       artist: props.artist || '未知艺术家',
       album: '',
       artwork: props.coverImage ? [
-        {src: props.coverImage, sizes: '96x96', type: 'image/jpeg'},
-        {src: props.coverImage, sizes: '128x128', type: 'image/jpeg'},
-        {src: props.coverImage, sizes: '192x192', type: 'image/jpeg'},
-        {src: props.coverImage, sizes: '256x256', type: 'image/jpeg'},
-        {src: props.coverImage, sizes: '384x384', type: 'image/jpeg'},
-        {src: props.coverImage, sizes: '512x512', type: 'image/jpeg'},
+        { src: props.coverImage, sizes: '96x96', type: 'image/jpeg' },
+        { src: props.coverImage, sizes: '128x128', type: 'image/jpeg' },
+        { src: props.coverImage, sizes: '256x256', type: 'image/jpeg' },
       ] : []
     });
 
-    navigator.mediaSession.setActionHandler('play', () => {
-      audioRef.value?.play();
-    });
-
-    navigator.mediaSession.setActionHandler('pause', () => {
-      audioRef.value?.pause();
-    });
-
+    navigator.mediaSession.setActionHandler('play', () => { audioRef.value?.play(); });
+    navigator.mediaSession.setActionHandler('pause', () => { audioRef.value?.pause(); });
     navigator.mediaSession.setActionHandler('seekbackward', () => {
-      if (audioRef.value) {
-        audioRef.value.currentTime = Math.max(0, audioRef.value.currentTime - 10);
-      }
+      if (audioRef.value) audioRef.value.currentTime = Math.max(0, audioRef.value.currentTime - 10);
     });
-
     navigator.mediaSession.setActionHandler('seekforward', () => {
-      if (audioRef.value && duration.value > 0) {
-        audioRef.value.currentTime = Math.min(duration.value, audioRef.value.currentTime + 10);
-      }
+      if (audioRef.value && duration.value > 0) audioRef.value.currentTime = Math.min(duration.value, audioRef.value.currentTime + 10);
     });
-
     navigator.mediaSession.setActionHandler('seekto', (details) => {
-      if (audioRef.value && details.seekTime != null) {
-        audioRef.value.currentTime = details.seekTime;
-      }
+      if (audioRef.value && details.seekTime != null) audioRef.value.currentTime = details.seekTime;
     });
   } catch (err) {
     console.warn('Media Session API not fully supported', err);
   }
 };
 
-// 仅在内联模式下监听 Media Session
 watch(
     () => ({
       title: props.title,
@@ -522,7 +419,6 @@ watch(
     }
 );
 
-// 从全局播放器同步时长（global 模式）
 watch(
     () => globalPlayer?.currentTrack.value,
     (track) => {

@@ -1,7 +1,5 @@
 <template>
-  <div class="max-w-screen-lg mx-auto py-6 sm:py-8">
-
-
+  <div class="mx-auto max-w-screen-lg py-6 sm:py-8 text-text">
     <article-list
         :items="items"
         :loading="articlesLoading"
@@ -9,92 +7,123 @@
         @select-tag="handleSelectTag"
         @refresh="refreshArticles">
       <template #header>
-        <!-- Channel Header -->
-        <section class="mb-8 px-4 sm:px-6  space-y-4">
-          <!-- Channel Info -->
-          <div class="flex items-start gap-4">
-            <!-- Avatar -->
-            <div class="flex-shrink-0">
-              <a :href="detail?.siteUrl" target="_blank">
-              <img
-                  v-if="detail?.avatar"
-                  :src="detail.avatar"
-                  class="h-16 w-16 rounded-full bg-gray-100 dark:bg-gray-800 object-cover"
-                  alt="频道头像"/>
-              <div
-                  v-else
-                  class="flex h-16 w-16 items-center justify-center rounded-full bg-secondary/10 text-2xl font-semibold text-secondary">
-                {{ channelInitial }}
-              </div>
+        <!-- 频道头部：MD3 动态表面包裹卡片 -->
+        <section class="mb-8 rounded-[28px] bg-surface-container/40 p-5 sm:p-7">
+          <div class="flex flex-col gap-5 sm:flex-row sm:items-start sm:gap-6">
+            <!-- 频道头像 -->
+            <div class="shrink-0">
+              <a :href="detail?.siteUrl" target="_blank" rel="noopener noreferrer">
+                <img
+                    v-if="detail?.avatar"
+                    :src="detail.avatar"
+                    class="h-16 w-16 rounded-full bg-surface object-cover shadow-xs p-0.5 sm:h-20 sm:w-20"
+                    alt="频道头像"/>
+                <div
+                    v-else
+                    class="flex h-16 w-16 items-center justify-center rounded-full bg-surface-container-high text-xl font-bold text-text sm:h-20 sm:w-20 shadow-xs">
+                  {{ channelInitial }}
+                </div>
               </a>
             </div>
 
-            <!-- Info & Actions -->
-            <div class="flex-1 min-w-0 space-y-3">
+            <!-- 信息主体与操作 -->
+            <div class="min-w-0 flex-1 space-y-3.5">
               <div>
-                <h1 class="text-2xl sm:text-3xl font-bold text-text mb-1">
-                  <a :href="detail?.siteUrl" target="_blank" v-text="channelTitle"></a>
+                <h1 class="text-2xl font-bold tracking-tight text-text sm:text-3xl">
+                  <a :href="detail?.siteUrl" target="_blank" rel="noopener noreferrer" class="hover:text-primary transition-colors">
+                    {{ channelTitle }}
+                  </a>
                 </h1>
-                <p class="text-sm text-text-secondary">
-                  {{ detail?.description }} 最近更新 {{ latestUpdateText }} · 最近抓取 {{ lastFetchedText }}
+                <p class="mt-1 text-xs text-text-secondary leading-relaxed sm:text-sm">
+                  {{ detail?.description || '暂无频道描述' }} · 最近更新 {{ latestUpdateText }} · 最近抓取 {{ lastFetchedText }}
                 </p>
               </div>
 
-              <!-- Stats -->
-              <div class="flex flex-wrap gap-4 text-sm text-text-secondary">
-              <span class="flex items-center gap-1.5" v-if="detail?.sources?.length ?? 0 ">
-               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
-                </svg>
-                {{ detail?.sources.length ?? 0 }} 个来源
-              </span>
-                <span class="flex items-center gap-1.5" v-else>
-                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                </svg>
-                {{ detail?.articleCount ?? 0 }} 篇文章
-              </span>
+              <!-- 统计数据 -->
+              <div class="flex flex-wrap gap-4 text-xs text-text-secondary">
+                <span v-if="detail?.sources?.length" class="flex items-center gap-1.5 font-medium">
+                  <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+                  </svg>
+                  {{ detail.sources.length }} 个来源
+                </span>
+                <span v-else class="flex items-center gap-1.5 font-medium">
+                  <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                  </svg>
+                  {{ detail?.articleCount ?? 0 }} 篇文章
+                </span>
 
-                <span class="flex items-center gap-1.5">
-                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
-                </svg>
-                {{ detail?.subscriberCount ?? 0 }} 订阅者
-              </span>
+                <span class="flex items-center gap-1.5 font-medium">
+                  <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
+                  </svg>
+                  {{ detail?.subscriberCount ?? 0 }} 订阅者
+                </span>
               </div>
 
-              <!-- Sources (for MixFeed) -->
-              <div v-if="detail?.sources && detail.sources.length > 0" class="space-y-2">
-                <!--            <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300">来源订阅 ({{ detail.sources.length }})</h3>-->
-                <div class="flex flex-wrap gap-2">
-              <span
-                  v-for="sourceId in detail.sources"
-                  :key="sourceId"
-                  class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-text-secondary bg-surface-container rounded-full"
-              >
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/>
-                </svg>
-                {{ sourceId }}
-              </span>
-                </div>
+              <!-- 混合源包含的子源 -->
+              <div v-if="detail?.sources && detail.sources.length > 0" class="flex flex-wrap gap-1.5 pt-1">
+                <span
+                    v-for="sourceId in detail.sources"
+                    :key="sourceId"
+                    class="inline-flex items-center gap-1 rounded-full bg-surface px-3 py-1 text-[11px] font-medium text-text-secondary shadow-2xs"
+                >
+                  <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/>
+                  </svg>
+                  {{ sourceId }}
+                </span>
               </div>
 
-              <!-- Actions -->
-              <div class="flex flex-wrap gap-2">
+              <!-- 操作按钮：锁定宽度 w-20 (80px)，精简文案 -->
+              <div class="flex flex-wrap items-center gap-2.5 pt-2">
                 <button
                     type="button"
-                    class="px-4 py-2 text-sm font-medium rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                    :class="detail?.subscribed
-                  ? 'text-secondary bg-secondary/10 hover:bg-secondary/20'
-                  : 'text-white bg-secondary hover:bg-secondary/90'"
+                    class="group relative inline-flex h-9.5 w-20 shrink-0 items-center justify-center gap-1.5 rounded-full text-xs font-semibold shadow-xs transition-all duration-200 select-none active:scale-95 disabled:cursor-not-allowed disabled:opacity-40"
+                    :class="[
+                      detail?.subscribed
+                        ? 'border border-outline/30 bg-surface text-text hover:border-red-500/40 hover:bg-red-500/10 hover:text-red-600 dark:hover:text-red-400'
+                        : 'bg-primary text-white hover:brightness-105 hover:shadow-sm'
+                    ]"
                     :disabled="subscriptionSubmitting || feedLoading"
                     @click="toggleSubscription">
-                  {{ detail?.subscribed ? '已订阅' : '订阅' }}
+                  <!-- 正在处理态 -->
+                  <template v-if="subscriptionSubmitting">
+                    <svg class="h-3.5 w-3.5 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                      <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+                    </svg>
+                  </template>
+
+                  <!-- 已订阅态：默认对勾，Hover时变叉 -->
+                  <template v-else-if="detail?.subscribed">
+                    <span class="inline-flex items-center gap-1 group-hover:hidden">
+                      <svg class="h-3.5 w-3.5 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="20 6 9 17 4 12" />
+                      </svg>
+                      <span>已订</span>
+                    </span>
+                    <span class="hidden items-center gap-1 group-hover:inline-flex">
+                      <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18" />
+                        <line x1="6" y1="6" x2="18" y2="18" />
+                      </svg>
+                      <span>退订</span>
+                    </span>
+                  </template>
+
+                  <!-- 未订阅态 -->
+                  <template v-else>
+                    <svg class="h-3.5 w-3.5 stroke-[2.5]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                      <line x1="12" y1="5" x2="12" y2="19" />
+                      <line x1="5" y1="12" x2="19" y2="12" />
+                    </svg>
+                    <span>订阅</span>
+                  </template>
                 </button>
 
                 <a
@@ -102,26 +131,20 @@
                     :href="detail.siteUrl"
                     target="_blank"
                     rel="noopener noreferrer"
-                    class="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-text-secondary bg-surface-container rounded-full hover:bg-surface-container/70 transition-colors">
-                  访问网站
-                  <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    class="inline-flex h-9.5 items-center gap-1.5 rounded-full bg-surface px-4.5 text-xs font-medium text-text shadow-xs transition hover:bg-surface-container active:scale-95">
+                  <span>访问网站</span>
+                  <svg class="h-3.5 w-3.5 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                           d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
                   </svg>
                 </a>
               </div>
-              <div v-if="detail?.url" class="flex items-center gap-2 text-xs text-text-muted">
-                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/>
-                </svg>
-                <span class="truncate">{{ detail.url }}</span>
-              </div>
-              <!-- Error Warning -->
+
+              <!-- 抓取异常警告 -->
               <div
                   v-if="hasFetchIssue"
-                  class="flex items-start gap-2 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-sm text-red-700 dark:text-red-400">
-                <svg class="h-5 w-5 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                  class="flex items-start gap-2 rounded-2xl bg-red-500/10 p-3 text-xs text-red-600 dark:text-red-400">
+                <svg class="mt-0.5 h-4 w-4 shrink-0" fill="currentColor" viewBox="0 0 20 20">
                   <path fill-rule="evenodd"
                         d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
                         clip-rule="evenodd"/>
@@ -129,68 +152,62 @@
                 <span class="truncate">{{ fetchIssueLabel }}</span>
               </div>
 
-              <p v-if="feedError" class="text-sm text-red-600 dark:text-red-400">
-                {{ feedError }}
-              </p>
-              <p v-if="subscriptionError" class="text-sm text-red-600 dark:text-red-400" role="alert">
-                {{ subscriptionError }}
-              </p>
+              <p v-if="feedError" class="text-xs text-red-600 dark:text-red-400">{{ feedError }}</p>
+              <p v-if="subscriptionError" class="text-xs text-red-600 dark:text-red-400" role="alert">{{ subscriptionError }}</p>
             </div>
           </div>
         </section>
 
-        <!-- Tag Filter -->
+        <!-- 标签筛选条 -->
         <div
             v-if="selectedTagDisplay"
-            class="mb-6 flex items-center justify-between gap-4 p-3 bg-secondary/5 border border-secondary/20 rounded-lg">
-        <span class="text-sm text-text-secondary">
-          标签筛选：<span class="font-medium text-secondary">{{ selectedTagDisplay }}</span>
-        </span>
-          <button
-              class="text-sm font-medium text-secondary hover:underline"
-              @click="clearTag">
+            class="mb-6 flex items-center justify-between gap-4 rounded-2xl bg-primary/10 px-4 py-2 text-xs font-medium text-primary">
+          <span>标签筛选：#{{ selectedTagDisplay }}</span>
+          <button class="hover:underline font-semibold" @click="clearTag">
             清除
           </button>
         </div>
       </template>
     </article-list>
 
-    <p v-if="articleError" class="text-sm text-red-600 dark:text-red-400">
+    <p v-if="articleError" class="text-xs text-red-600 dark:text-red-400 text-center py-4">
       {{ articleError }}
     </p>
 
-    <div v-if="items.length" class="mt-6 flex flex-col items-center gap-3" aria-live="polite">
-      <div v-if="isFetchingNextPage" class="text-sm text-text-secondary">正在加载更多文章...</div>
+    <!-- 底部滚动指示 -->
+    <div v-if="items.length" class="mt-8 flex flex-col items-center gap-2.5" aria-live="polite">
+      <div v-if="isFetchingNextPage" class="text-xs text-text-secondary">正在加载更多文章...</div>
       <template v-else-if="nextPageError">
-        <p class="text-sm text-red-700">加载更多失败，请重试。</p>
+        <p class="text-xs text-red-600 dark:text-red-400">加载失败</p>
         <button
             type="button"
-            class="px-4 py-2 text-sm font-medium rounded-md bg-red-600 text-white hover:bg-red-700 transition-colors"
+            class="inline-flex h-8 items-center rounded-full bg-surface-container px-4 text-xs font-semibold text-text hover:bg-surface-container-high transition"
             @click="loadMore"
         >
           重试
         </button>
       </template>
-      <p v-else-if="!hasNextPage" class="text-sm text-text-muted">已加载全部文章</p>
+      <p v-else-if="!hasNextPage" class="text-xs text-text-secondary/60">已加载全部文章</p>
     </div>
     <div ref="loadMoreSentinel" class="h-1" aria-hidden="true"></div>
   </div>
 </template>
 
 <script setup lang="ts">
-import {computed, ref, watch} from 'vue';
-import {useRouter} from 'vue-router';
-import {useMutation} from '@tanstack/vue-query';
-import {normalizeArticle} from '../stores/articles/types';
-import {useFeedQuery, useInfiniteFeedArticlesQuery} from '../queries/feed';
-import {useSubscriptionMutation} from '../queries/subscriptions';
-import {useDocumentTitle} from '../composables/documentTitle';
-import {useSubscriptionsStore} from '../stores/subscriptions';
-import {useReadFeedStore} from '../stores/readfeed'
-import {formatRelativeTime} from '../utils/datetime';
-import {useInfiniteScroll} from '../composables/infiniteScroll';
+import { computed, ref, watch } from 'vue';
+import { useRouter } from 'vue-router';
+import { useMutation } from '@tanstack/vue-query';
+import { normalizeArticle } from '../stores/articles/types';
+import { useFeedQuery, useInfiniteFeedArticlesQuery } from '../queries/feed';
+import { useSubscriptionMutation } from '../queries/subscriptions';
+import { useDocumentTitle } from '../composables/documentTitle';
+import { useSubscriptionsStore } from '../stores/subscriptions';
+import { useReadFeedStore } from '../stores/readfeed';
+import { formatRelativeTime } from '../utils/datetime';
+import { useInfiniteScroll } from '../composables/infiniteScroll';
+import ArticleList from '../components/ArticleList.vue';
 
-defineOptions({name: 'FeedDetailPage'});
+defineOptions({ name: 'FeedDetailPage' });
 
 const props = defineProps<{
   feedId: string;
@@ -212,8 +229,8 @@ const feedQuery = useFeedQuery(currentFeedId);
 const feedArticlesQuery = useInfiniteFeedArticlesQuery(currentFeedId, normalizedTag);
 const detail = computed(() => feedQuery.data.value ?? null);
 const items = computed(() => feedArticlesQuery.data.value?.pages
-  .flatMap((page) => page.content)
-  .map(normalizeArticle) ?? []);
+    .flatMap((page) => page.content)
+    .map(normalizeArticle) ?? []);
 const feedLoading = computed(() => feedQuery.isPending.value);
 const feedError = computed(() => feedQuery.error.value instanceof Error ? feedQuery.error.value.message : null);
 const articlesLoading = computed(() => feedArticlesQuery.isPending.value);
@@ -226,9 +243,9 @@ const articleError = computed(() => {
 });
 const nextPageError = computed(() => feedArticlesQuery.isFetchNextPageError.value);
 useDocumentTitle(() => (
-  detail.value?.title?.trim()
-  || detail.value?.siteUrl?.trim()
-  || detail.value?.url?.trim()
+    detail.value?.title?.trim()
+    || detail.value?.siteUrl?.trim()
+    || detail.value?.url?.trim()
 ));
 
 const selectedTagDisplay = computed(() => routeTag.value);
@@ -294,24 +311,21 @@ const buildQuery = (overrides?: { tags?: string | null }) => {
 
 const refreshArticles = () => feedArticlesQuery.refetch();
 
-
 const handleSelectTag = (tag: string) => {
   if (!tag || !currentFeedId.value) return;
-
   router.push({
     name: 'feed',
-    params: {feedId: currentFeedId.value},
-    query: buildQuery({tags: tag.toLowerCase()})
+    params: { feedId: currentFeedId.value },
+    query: buildQuery({ tags: tag.toLowerCase() })
   });
 };
 
 const clearTag = () => {
   if (!routeTag.value || !currentFeedId.value) return;
-
   router.push({
     name: 'feed',
-    params: {feedId: currentFeedId.value},
-    query: buildQuery({tags: null})
+    params: { feedId: currentFeedId.value },
+    query: buildQuery({ tags: null })
   });
 };
 
@@ -351,9 +365,9 @@ const readFeed = async () => {
 
 watch([() => feedQuery.data.value, () => subscriptionsStore.items], () => {
   void readFeed();
-}, {immediate: true});
+}, { immediate: true });
 
-const {sentinel: loadMoreSentinel, loadMore} = useInfiniteScroll({
+const { sentinel: loadMoreSentinel, loadMore } = useInfiniteScroll({
   hasNextPage,
   isLoading: feedArticlesQuery.isFetching,
   hasError: feedArticlesQuery.isError,

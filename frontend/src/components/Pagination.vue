@@ -1,61 +1,60 @@
 <template>
   <nav
-      class="flex items-center justify-center gap-2 mt-6 sm:mt-8 pt-4 sm:pt-6 border-t border-outline/10"
-      aria-label="分页导航"
       v-if="hasPreviousPage || hasNextPage"
+      class="mt-6 sm:mt-8 flex items-center justify-center gap-2 border-t border-outline/10 pt-4 sm:pt-6"
+      aria-label="Pannagna iti Panid"
   >
     <button
+        type="button"
         @click="handlePrevPage"
         :disabled="!hasPreviousPage || disabled"
-        class="p-2 hover:bg-surface-container rounded-full disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent transition-colors"
-        aria-label="上一页"
+        class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-text-secondary transition hover:bg-surface-container hover:text-text active:scale-95 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent"
+        aria-label="Napalabas a panid"
     >
-      <svg class="w-5 h-5 text-text-secondary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <polyline points="15 18 9 12 15 6"/>
+      <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="15 18 9 12 15 6" />
       </svg>
     </button>
 
-    <div class="px-3 sm:px-4 py-1 text-xs sm:text-sm text-text-secondary">
-      第 {{ currentPage }} 页
+    <div class="rounded-full bg-surface-container/60 px-4 py-1.5 text-xs font-semibold text-text shadow-2xs">
+       {{ currentPage }}
     </div>
 
     <button
+        type="button"
         @click="handleNextPage"
         :disabled="!hasNextPage || disabled"
-        class="p-2 hover:bg-surface-container rounded-full disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent transition-colors"
-        aria-label="下一页"
+        class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-text-secondary transition hover:bg-surface-container hover:text-text active:scale-95 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent"
+        aria-label="Sumaruno a panid"
     >
-      <svg class="w-5 h-5 text-text-secondary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <polyline points="9 18 15 12 9 6"/>
+      <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="9 18 15 12 9 6" />
       </svg>
     </button>
   </nav>
 </template>
 
 <script setup>
+defineOptions({ name: 'Pagination' })
 
 const props = defineProps({
-  // 当前页码
   currentPage: {
     type: Number,
     required: true,
     default: 1
   },
-  // 是否有上一页
   hasPreviousPage: {
     type: Boolean,
     default: false
   },
-  // 是否有下一页
   hasNextPage: {
     type: Boolean,
     default: false
   },
-  // 是否禁用（加载中时）
   disabled: {
     type: Boolean,
     default: false
-  },
+  }
 })
 
 const emit = defineEmits(['prev-page', 'next-page', 'update:currentPage'])
@@ -74,6 +73,3 @@ const handleNextPage = () => {
   }
 }
 </script>
-
-<style scoped>
-</style>
