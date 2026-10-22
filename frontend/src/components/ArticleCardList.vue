@@ -46,7 +46,7 @@
             </h3>
             <div :class="['flex items-center gap-1.5 text-text-secondary', sizes.meta]">
               <span v-if="item.feedTitle" class="truncate font-medium">{{ item.feedTitle }}</span>
-              <span v-if="item.feedTitle && item._meta" class="shrink-0">·</span>
+              <span v-if="item.feedTitle && item._meta" class="shrink-0 text-outline">·</span>
               <span v-if="item._meta" class="shrink-0">{{ item._meta }}</span>
             </div>
             <p v-if="item.summary && !compact" class="text-xs text-text-secondary line-clamp-2 leading-relaxed sm:text-sm">
@@ -188,24 +188,26 @@ const itemsWithMeta = computed<AugmentedItem[]>(() =>
 const sizes = computed(() => {
   const c = props.compact;
   return {
-    skeletonOuter:  c ? 'space-y-2'                             : 'space-y-3',
-    skeletonRow:    c ? 'flex items-start gap-2.5'              : 'flex flex-col sm:flex-row gap-3 sm:gap-4',
-    skeletonLine1:  c ? 'h-3.5'                                 : 'h-4 sm:h-5',
-    skeletonLine2:  c ? 'h-2.5'                                 : 'h-3 sm:h-4',
-    listGap:        c ? 'space-y-1.5'                           : 'space-y-2.5',
-    cardFlex:       c ? 'flex items-center'                     : 'sm:flex sm:items-start',
-    cardPad:        c ? 'p-2'                                   : 'p-3 sm:p-3.5',
-    link:           c ? 'flex-1 flex flex-row items-center gap-2.5' : 'flex-1 flex flex-col sm:flex-row gap-3 sm:gap-4',
-    thumbnail:      c ? 'w-24 h-16'                             : 'w-full sm:w-48 h-40 sm:h-28',
-    thumbIcon:      c ? 'w-5 h-5'                               : 'w-7 h-7 sm:w-8 sm:h-8',
-    title:          c ? 'text-xs mb-0.5'                        : 'text-sm sm:text-base mb-1.5',
-    meta:           c ? 'text-[11px]'                           : 'text-xs mb-1.5',
-    actionWrapper:  c ? 'ml-1'                                  : 'hidden sm:flex ml-2',
-    actionBtn:      c ? 'p-1.5'                                 : 'p-2 opacity-0 group-hover:opacity-100',
-    actionIcon:     c ? 'w-4 h-4'                               : 'w-5 h-5',
-    emptyPad:       c ? 'py-6'                                  : 'py-16',
-    emptyIcon:      c ? 'w-6 h-6'                               : 'w-8 h-8',
-    emptyText:      c ? 'text-xs'                               : 'text-sm',
+    skeletonOuter:  c ? 'space-y-2'                                 : 'space-y-3',
+    skeletonRow:    c ? 'flex items-start gap-2.5'                  : 'flex flex-col sm:flex-row gap-3 sm:gap-4',
+    skeletonLine1:  c ? 'h-3.5'                                     : 'h-4 sm:h-5',
+    skeletonLine2:  c ? 'h-2.5'                                     : 'h-3 sm:h-4',
+    listGap:        c ? 'space-y-2'                                 : 'space-y-2.5',
+    cardFlex:       c ? 'flex items-center'                         : 'sm:flex sm:items-start',
+    // 增加 compact 模式下的纵向和横向留白，使其更显大气和现代
+    cardPad:        c ? 'p-2.5 sm:px-3.5 sm:py-3'                   : 'p-3 sm:p-3.5',
+    link:           c ? 'flex-1 flex flex-row items-center gap-3.5' : 'flex-1 flex flex-col sm:flex-row gap-3 sm:gap-4',
+    // 稍微放大 compact 模式下的缩略图（从 w-24 h-16 改为 w-28 h-20 左右或等比），让视觉质感更好
+    thumbnail:      c ? 'w-24 h-18 sm:w-28 sm:h-20 rounded-2xl'     : 'w-full sm:w-48 h-40 sm:h-28',
+    thumbIcon:      c ? 'w-5 h-5'                                   : 'w-7 h-7 sm:w-8 sm:h-8',
+    title:          c ? 'text-xs sm:text-sm mb-1'                   : 'text-sm sm:text-base mb-1.5',
+    meta:           c ? 'text-[11px] sm:text-xs'                    : 'text-xs mb-1.5',
+    actionWrapper:  c ? 'ml-2'                                      : 'hidden sm:flex ml-2',
+    actionBtn:      c ? 'p-2'                                       : 'p-2 opacity-0 group-hover:opacity-100',
+    actionIcon:     c ? 'w-4 h-4'                                   : 'w-5 h-5',
+    emptyPad:       c ? 'py-6'                                      : 'py-16',
+    emptyIcon:      c ? 'w-6 h-6'                                   : 'w-8 h-8',
+    emptyText:      c ? 'text-xs'                                   : 'text-sm',
   };
 });
 

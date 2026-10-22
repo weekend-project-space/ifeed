@@ -25,7 +25,8 @@
     <div v-else-if="articleError" class="mx-auto max-w-screen-md px-4 py-12 sm:px-6">
       <div class="rounded-3xl bg-red-500/10 p-6">
         <div class="flex items-start gap-4">
-          <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-red-500/20 text-red-600 dark:text-red-400">
+          <div
+              class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-red-500/20 text-red-600 dark:text-red-400">
             <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
               <path fill-rule="evenodd"
                     d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
@@ -49,7 +50,8 @@
       <header class="pt-10 pb-6 sm:pt-12">
         <!-- 标题 -->
         <h1 class="mb-6 font-serif text-2xl font-bold leading-tight tracking-tight text-text break-words sm:text-3xl lg:text-4xl">
-          <a :href="article.link" v-text="article.title" target="_blank" rel="noopener noreferrer" class="hover:text-primary transition-colors"></a>
+          <a :href="article.link" v-text="article.title" target="_blank" rel="noopener noreferrer"
+             class="hover:text-primary transition-colors"></a>
         </h1>
 
         <!-- 来源与元信息 -->
@@ -63,7 +65,9 @@
               {{ article.feedTitle?.charAt(0).toUpperCase() }}
             </div>
             <div class="flex flex-col">
-              <span class="text-xs font-semibold text-text group-hover:text-primary transition-colors sm:text-sm">{{ article.feedTitle }}</span>
+              <span class="text-xs font-semibold text-text group-hover:text-primary transition-colors sm:text-sm">{{
+                  article.feedTitle
+                }}</span>
               <div class="flex items-center gap-1.5 text-[11px] text-text-secondary">
                 <span>{{ article.timeAgo }}</span>
                 <span>•</span>
@@ -86,23 +90,26 @@
               @click="toggleFeedSubscription">
             <!-- 正在处理态 -->
             <template v-if="subscriptionSubmitting">
-              <svg class="h-3.5 w-3.5 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+              <svg class="h-3.5 w-3.5 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                   stroke-width="2.5">
+                <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
               </svg>
             </template>
 
             <!-- 已订阅态：默认对勾，Hover时变叉 -->
             <template v-else-if="feedDetail.subscribed">
               <span class="inline-flex items-center gap-1 group-hover:hidden">
-                <svg class="h-3.5 w-3.5 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                  <polyline points="20 6 9 17 4 12" />
+                <svg class="h-3.5 w-3.5 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                     stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="20 6 9 17 4 12"/>
                 </svg>
                 <span>已订</span>
               </span>
               <span class="hidden items-center gap-1 group-hover:inline-flex">
-                <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                  <line x1="18" y1="6" x2="6" y2="18" />
-                  <line x1="6" y1="6" x2="18" y2="18" />
+                <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                     stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18"/>
+                  <line x1="6" y1="6" x2="18" y2="18"/>
                 </svg>
                 <span>退订</span>
               </span>
@@ -110,9 +117,10 @@
 
             <!-- 未订阅态 -->
             <template v-else>
-              <svg class="h-3.5 w-3.5 stroke-[2.5]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
-                <line x1="12" y1="5" x2="12" y2="19" />
-                <line x1="5" y1="12" x2="19" y2="12" />
+              <svg class="h-3.5 w-3.5 stroke-[2.5]" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                   stroke-linecap="round" stroke-linejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19"/>
+                <line x1="5" y1="12" x2="19" y2="12"/>
               </svg>
               <span>订阅</span>
             </template>
@@ -137,36 +145,21 @@
           <div class="flex items-center gap-1">
             <template v-if="headerActionExists && route.name === 'article'">
               <Teleport to="#header-action">
-                <button
-                    class="flex h-9 w-9 items-center justify-center rounded-full text-text-secondary transition hover:bg-surface-container hover:text-text"
-                    :class="linkCopied ? 'text-green-600 dark:text-green-400' : ''"
-                    title="复制链接"
-                    aria-label="复制文章链接"
-                    @click="copyArticleLink">
-                  <svg v-if="!linkCopied" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
-                       stroke="currentColor">
-                    <rect x="8" y="8" width="13" height="13" rx="2"
-                          stroke-width="1.8"/>
-                    <path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"
-                          stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-                  </svg>
-
-                  <svg v-else class="h-4 w-4" fill="none" viewBox="0 0 24 24"
-                       stroke="currentColor">
-                    <path d="M5 12.5l4.5 4.5L19 7"
-                          stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                  </svg>
-                </button>
-                <ArticleActions :article-id="article.id" :collected="article.collected ?? false" :liked="article.liked" :folder-id="article.folderId" />
+                <ArticleActions :article-id="article.id" :collected="article.collected ?? false" :liked="article.liked"
+                                :folder-id="article.folderId" :link-copied="linkCopied"/>
               </Teleport>
             </template>
-            <ArticleActions v-if="!headerActionExists" :article-id="article.id" :collected="article.collected ?? false" :liked="article.liked" :folder-id="article.folderId" />
+            <ArticleActions v-if="!headerActionExists" :article-id="article.id" :collected="article.collected ?? false"
+                            :liked="article.liked" :folder-id="article.folderId"/>
           </div>
         </div>
       </header>
 
       <p v-if="historyMutation.isError.value" role="alert" class="py-2 text-xs text-red-600">
-        阅读记录保存失败 <button class="underline ml-1 font-semibold" :disabled="historyMutation.isPending.value" @click="historyMutation.mutate(articleId)">重试</button>
+        阅读记录保存失败
+        <button class="underline ml-1 font-semibold" :disabled="historyMutation.isPending.value"
+                @click="historyMutation.mutate(articleId)">重试
+        </button>
       </p>
 
       <!-- MD3 黏性导航分段 (Content / Summary / Mindmap) -->
@@ -223,7 +216,8 @@
           <div class="prose-custom">
             <div v-if="article.content" ref="articleContentRef" class="article-content" v-html="article.content"></div>
             <div v-else-if="!article.enclosure" class="py-20 text-center">
-              <svg class="mx-auto mb-2.5 h-10 w-10 text-text-secondary/40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg class="mx-auto mb-2.5 h-10 w-10 text-text-secondary/40" fill="none" stroke="currentColor"
+                   viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"
                       d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
               </svg>
@@ -258,7 +252,8 @@
 
           <div v-else-if="article.summary" class="prose-custom space-y-4">
             <div class="flex items-start gap-3 rounded-2xl bg-surface-container/50 p-4">
-              <svg class="mt-0.5 h-4 w-4 shrink-0 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg class="mt-0.5 h-4 w-4 shrink-0 text-text-secondary" fill="none" stroke="currentColor"
+                   viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                       d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
               </svg>
@@ -298,7 +293,8 @@
 
           <div v-else-if="mindmapMarkdown" class="overflow-hidden rounded-3xl bg-surface-container/30 shadow-xs">
             <iframe ref="mindmapFrame" src="/md2mindmap.html" class="w-full"
-                    :style="`max-height: 500rem; height: ${mindmapHeight}rem;`" frameborder="0" @load="sendMindmapData"/>
+                    :style="`max-height: 500rem; height: ${mindmapHeight}rem;`" frameborder="0"
+                    @load="sendMindmapData"/>
           </div>
 
           <div v-else class="py-20 text-center">
@@ -335,30 +331,31 @@
     <div v-if="detailsItems.length > 0" class="mt-12 rounded-t-[32px] bg-surface-container/25 py-12">
       <div class="mx-auto max-w-screen-md px-4 sm:px-6">
         <h2 class="mb-6 text-xl font-bold tracking-tight text-text">推荐阅读</h2>
-        <article-card-list :items="detailsItems" :loading="detailsLoading" key-field="id" compact/>
+        <article-card-list :items="detailsItems" :loading="detailsLoading" key-field="id" meta-field="publishedAt"
+                           compact/>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, onActivated, onBeforeUnmount, onDeactivated, onMounted, ref, watch } from 'vue';
-import { useMutation, useQueryClient } from '@tanstack/vue-query';
-import { useRoute, useRouter } from 'vue-router';
-import { useArticlesStore } from '../stores/articles/articles';
+import {computed, nextTick, onActivated, onBeforeUnmount, onDeactivated, onMounted, ref, watch} from 'vue';
+import {useMutation, useQueryClient} from '@tanstack/vue-query';
+import {useRoute, useRouter} from 'vue-router';
+import {useArticlesStore} from '../stores/articles/articles';
 import ArticleActions from '../components/ArticleActions.vue';
-import { useHistoryMutation } from '../queries/articleActions';
+import {useHistoryMutation} from '../queries/articleActions';
 import MediaAttachment from "../components/MediaAttachment.vue";
 import ArticleCardList from "../components/ArticleCardList.vue";
-import { useAuthStore } from "../stores/auth";
-import { md2html } from "../utils/markdown";
-import { normalizeArticle, type ArticleDetail } from '../stores/articles/types';
-import { articleQueryKey, useArticleQuery, useArticleRecommendationsQuery } from '../queries/article';
-import { useFeedQuery } from '../queries/feed';
-import { useDocumentTitle } from '../composables/documentTitle';
-import { useSubscriptionMutation } from '../queries/subscriptions';
+import {useAuthStore} from "../stores/auth";
+import {md2html} from "../utils/markdown";
+import {normalizeArticle, type ArticleDetail} from '../stores/articles/types';
+import {articleQueryKey, useArticleQuery, useArticleRecommendationsQuery} from '../queries/article';
+import {useFeedQuery} from '../queries/feed';
+import {useDocumentTitle} from '../composables/documentTitle';
+import {useSubscriptionMutation} from '../queries/subscriptions';
 
-defineOptions({ name: 'ArticleDetailPage' });
+defineOptions({name: 'ArticleDetailPage'});
 
 interface Props {
   id: string;
@@ -444,14 +441,14 @@ const sendMindmapData = () => {
 };
 
 const handleTabSwitch = async (tab: MainTab) => {
-  const query = { ...route.query };
+  const query = {...route.query};
   if (tab === 'content') {
     delete query.tab;
   } else {
     query.tab = tab;
   }
   if (props.tab !== tab) {
-    await router.push({ query });
+    await router.push({query});
   }
   if (tab === 'content') return;
   if (tab === 'summary' && article.value?.summary) return;
@@ -501,39 +498,9 @@ const toggleFeedSubscription = async () => {
 
 const handleTagClick = (tag: string) => {
   if (!tag) return;
-  router.push({ name: 'feedsSubscriptions', query: { tags: tag.toLowerCase() } });
+  router.push({name: 'feedsSubscriptions', query: {tags: tag.toLowerCase()}});
 };
 
-const copyArticleLink = async () => {
-  try {
-    const url = window.location.href;
-    if (navigator.clipboard && window.isSecureContext) {
-      await navigator.clipboard.writeText(url);
-    } else {
-      const textArea = document.createElement('textarea');
-      textArea.value = url;
-      textArea.style.position = 'fixed';
-      textArea.style.left = '-999999px';
-      textArea.style.top = '-999999px';
-      document.body.appendChild(textArea);
-      textArea.focus();
-      textArea.select();
-      try {
-        document.execCommand('copy');
-        textArea.remove();
-      } catch (err) {
-        textArea.remove();
-        throw err;
-      }
-    }
-    linkCopied.value = true;
-    setTimeout(() => {
-      linkCopied.value = false;
-    }, 2000);
-  } catch (err) {
-    console.error('复制链接失败:', err);
-  }
-};
 
 const setupLazyLoading = () => {
   const container = articleContentRef.value;
@@ -541,7 +508,9 @@ const setupLazyLoading = () => {
   if (lazyLoadObserver.value) lazyLoadObserver.value.disconnect();
   const images = Array.from(container.querySelectorAll('img')) as HTMLImageElement[];
   if ('loading' in HTMLImageElement.prototype) {
-    images.forEach((img) => { img.loading = 'lazy'; });
+    images.forEach((img) => {
+      img.loading = 'lazy';
+    });
     return;
   }
   lazyLoadObserver.value = new IntersectionObserver((entries) => {
@@ -556,7 +525,7 @@ const setupLazyLoading = () => {
         }
       }
     });
-  }, { rootMargin: '50px 0px', threshold: 0.01 });
+  }, {rootMargin: '50px 0px', threshold: 0.01});
 
   images.forEach((img) => {
     if (img.src && !img.hasAttribute('data-lazy-src')) {
@@ -572,7 +541,9 @@ onMounted(async () => {
   pageActive.value = true;
 });
 
-onActivated(() => { pageActive.value = true; });
+onActivated(() => {
+  pageActive.value = true;
+});
 onDeactivated(() => {
   pageActive.value = false;
   linkCopied.value = false;
@@ -589,10 +560,10 @@ onBeforeUnmount(() => {
 watch([() => article.value?.id, () => article.value?.content, () => article.value?.mindMap], async ([id], previous) => {
   if (!article.value) return;
   mindmapMarkdown.value = article.value.mindMap ?? '';
-  if (id !== previous?.[0]) window.scrollTo({ top: 0, behavior: 'auto' });
+  if (id !== previous?.[0]) window.scrollTo({top: 0, behavior: 'auto'});
   await nextTick();
   setupLazyLoading();
-}, { immediate: true });
+}, {immediate: true});
 
 watch(activeMainTab, async (newTab) => {
   if (newTab === 'mindmap' && mindmapMarkdown.value) {
@@ -625,9 +596,17 @@ watch(activeMainTab, async (newTab) => {
   @apply font-bold text-text mt-8 mb-3 tracking-tight;
 }
 
-.article-content :deep(h1) { @apply text-2xl leading-tight; }
-.article-content :deep(h2) { @apply text-xl leading-snug; }
-.article-content :deep(h3) { @apply text-lg leading-snug; }
+.article-content :deep(h1) {
+  @apply text-2xl leading-tight;
+}
+
+.article-content :deep(h2) {
+  @apply text-xl leading-snug;
+}
+
+.article-content :deep(h3) {
+  @apply text-lg leading-snug;
+}
 
 .article-content :deep(ul),
 .article-content :deep(ol) {

@@ -134,7 +134,7 @@
 
             <!-- 用户信息菜单 (MD3 Surface Dropdown) -->
             <div class="relative group">
-              <router-link to="/upgrade">
+              <router-link :to="{ name: 'upgrade'}" >
                 <img v-if="user && user.avatarUrl" :src="user.avatarUrl" class="h-8.5 w-8.5 rounded-full object-cover shadow-2xs cursor-pointer group-hover:ring-2 group-hover:ring-primary/25 transition-all" />
                 <div v-else
                      class="flex h-8.5 w-8.5 items-center justify-center rounded-full bg-surface-container-high text-xs font-bold text-text cursor-pointer shadow-2xs group-hover:ring-2 group-hover:ring-primary/25 transition-all">
@@ -323,15 +323,7 @@
                   </div>
 
                   <div class="max-h-80 overflow-y-auto space-y-0.5 pr-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                    <RouterLink :to="{ name: 'feedsSubscriptions' }"
-                                class="flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-xs font-medium text-text transition hover:bg-surface-container select-none">
-                      <div class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-surface-container-high text-text">
-                        <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
-                        </svg>
-                      </div>
-                      <span class="truncate flex-1">全部订阅文章</span>
-                    </RouterLink>
+
 
                     <RouterLink
                         v-for="sub in subscriptionsStore.items"

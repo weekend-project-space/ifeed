@@ -233,14 +233,14 @@
               v-for="item in items"
               :key="item.id"
               class="group relative flex h-full w-full flex-col overflow-hidden rounded-xl p-3
-                     bg-surface dark:bg-surface-container/60 hover:bg-surface-container/60
+                     hover:bg-surface-container/60
                      transition-colors duration-200 cursor-pointer"
               @click="handleArticleContainerClick(item, $event)">
 
             <!-- 封面图：固定纵横比，移动端 100% 满宽 -->
             <router-link
                 :to="{ name: 'article', params: { id: item.id } }"
-                class="relative block aspect-video w-full overflow-hidden bg-surface-container rounded-xl
+                class="relative block aspect-video w-full overflow-hidden  rounded-xl
                        focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
               <img
                   v-if="item.thumbnail && !thumbErrorMap[item.id]"
@@ -384,7 +384,7 @@
           <article
               v-for="item in items"
               :key="item.id"
-              class="cursor-pointer rounded-3xl bg-surface-container/25 p-4.5 transition hover:bg-surface-container/50 sm:p-5"
+              class="cursor-pointer rounded-3xl  p-4.5 transition hover:bg-surface-container/50 sm:p-5"
               @click="handleArticleContainerClick(item, $event)"
           >
             <div class="flex gap-3.5">
