@@ -4,11 +4,11 @@
       <!-- 页面头部 -->
       <div class="mb-7">
         <h1 class="mb-5 text-2xl font-bold tracking-tight text-text sm:text-3xl">
-          所有订阅
+          {{ tr('subscriptionsListPage.allSubscriptions') }}
         </h1>
 
         <!-- MD3 Filter Chips 标签页导航 -->
-        <nav class="flex items-center gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" aria-label="订阅管理标签页">
+        <nav class="flex items-center gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" :aria-label="tr('subscriptionsListPage.tabsLabel')">
           <button
               v-for="tab in tabs"
               :key="tab.key"
@@ -39,16 +39,19 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { translate as tr } from '@/i18n';
+import { useDocumentTitle } from '@/composables/documentTitle';
+import { computed, ref } from 'vue';
 import SubscriptionMixFeedManager from './components/SubscriptionMixFeedManager.vue';
 import SubscriptionFeedList from './components/SubscriptionFeedList.vue';
 
 defineOptions({ name: 'SubscriptionsPage' });
+useDocumentTitle(() => tr('subscriptionsListPage.allSubscriptions'));
 
-const tabs = [
-  { key: 'subscriptions', name: '订阅列表' },
-  { key: 'mix-feeds', name: '我创建的订阅' }
-] as const;
+const tabs = computed(() => [
+  { key: 'subscriptions', name: tr('subscriptionsListPage.subscriptionList') },
+  { key: 'mix-feeds', name: tr('subscriptionsListPage.createdFeeds') }
+] as const);
 
-const currentTab = ref(tabs[0].key);
+const currentTab = ref<'subscriptions' | 'mix-feeds'>('subscriptions');
 </script>

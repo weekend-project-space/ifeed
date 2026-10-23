@@ -6,18 +6,18 @@
           v-if="articleError"
           class="mb-6 rounded-2xl bg-red-500/10 p-4 text-xs text-red-600 dark:text-red-400"
       >
-        <p class="font-semibold mb-2">请求出错：{{ articleError }}</p>
+        <p class="font-semibold mb-2">{{ tr('feedSubscriptionsPage.requestError') }}{{ articleError }}</p>
         <button
             type="button"
             class="inline-flex h-8 items-center justify-center rounded-full bg-red-600 px-4 text-xs font-semibold text-white shadow-xs transition hover:bg-red-700 active:scale-95"
             @click="refresh"
         >
-          重试
+          {{ tr('common.retry') }}
         </button>
       </div>
 
       <article-list
-          title="最新"
+          :title="tr('feedSubscriptionsPage.latest')"
           :items="items"
           :loading="articlesLoading"
           @select-tag="handleSelectTag"
@@ -34,11 +34,11 @@
                     : 'bg-surface-container/60 text-text-secondary hover:bg-surface-container hover:text-text'"
                   @click="clearCategoryFilter"
               >
-                全部
+                {{ tr('common.all') }}
               </button>
 
               <template v-if="insightsLoading">
-                <span class="text-xs text-text-secondary px-3">加载中...</span>
+                <span class="text-xs text-text-secondary px-3">{{ tr('common.loadingDots') }}</span>
               </template>
               <template v-else>
                 <button
@@ -53,7 +53,7 @@
                   <span>{{ c.category }}</span>
                   <small v-if="c.category === 'Today'" class="opacity-75">({{ c.count }})</small>
                 </button>
-                <span v-if="!topCategories.length" class="text-xs text-text-secondary px-3">暂无分类</span>
+                <span v-if="!topCategories.length" class="text-xs text-text-secondary px-3">{{ tr('feedSubscriptionsPage.noCategories') }}</span>
               </template>
             </div>
 
@@ -76,7 +76,7 @@
           <router-link
               class="inline-flex h-8 items-center rounded-full bg-surface-container/60 px-3.5 text-xs font-medium text-text-secondary hover:bg-surface-container hover:text-text transition"
               to="/feed/channels">
-            所有订阅
+            {{ tr('feedSubscriptionsPage.allSubscriptions') }}
           </router-link>
         </template>
 
@@ -87,31 +87,31 @@
                 <path d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
               </svg>
             </div>
-            <h2 class="text-base font-bold text-text">还没有订阅</h2>
-            <p class="mt-1 text-xs text-text-secondary mb-5">添加你感兴趣的订阅源开始使用</p>
+            <h2 class="text-base font-bold text-text">{{ tr('feedSubscriptionsPage.noSubscriptions') }}</h2>
+            <p class="mt-1 text-xs text-text-secondary mb-5">{{ tr('feedSubscriptionsPage.addFeedsHint') }}</p>
             <router-link
                 to="/discover"
                 class="inline-flex h-9 items-center gap-1.5 rounded-full bg-primary px-5 text-xs font-semibold text-white shadow-xs transition hover:brightness-105 active:scale-[0.98]"
             >
-              添加订阅
+              {{ tr('feedSubscriptionsPage.addSubscription') }}
             </router-link>
           </div>
         </template>
       </article-list>
 
       <div v-if="items.length" class="mt-8 flex flex-col items-center gap-2.5" aria-live="polite">
-        <div v-if="isFetchingNextPage" class="text-xs text-text-secondary">正在加载更多文章...</div>
+        <div v-if="isFetchingNextPage" class="text-xs text-text-secondary">{{ tr('feedSubscriptionsPage.loadingArticles') }}</div>
         <template v-else-if="nextPageError">
-          <p class="text-xs text-red-600 dark:text-red-400">加载失败</p>
+          <p class="text-xs text-red-600 dark:text-red-400">{{ tr('common.loadFailed') }}</p>
           <button
               type="button"
               class="inline-flex h-8 items-center rounded-full bg-surface-container px-4 text-xs font-semibold text-text hover:bg-surface-container-high transition"
               @click="loadMore"
           >
-            重试
+            {{ tr('common.retry') }}
           </button>
         </template>
-        <p v-else-if="!hasNextPage" class="text-xs text-text-secondary/60">已加载全部文章</p>
+        <p v-else-if="!hasNextPage" class="text-xs text-text-secondary/60">{{ tr('feedSubscriptionsPage.allArticlesLoaded') }}</p>
       </div>
       <div ref="loadMoreSentinel" class="h-1" aria-hidden="true"></div>
     </main>
@@ -119,6 +119,8 @@
 </template>
 
 <script setup lang="ts">
+import { translate as tr } from '@/i18n';
+import { useDocumentTitle } from '@/composables/documentTitle';
 import { computed, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { useMutation } from '@tanstack/vue-query';
@@ -133,6 +135,7 @@ import { useInfiniteScroll } from '../composables/infiniteScroll';
 import ArticleList from '../components/ArticleList.vue';
 
 defineOptions({ name: 'FeedSubscriptionsPage' });
+useDocumentTitle(() => tr('feedSubscriptionsPage.latest'));
 
 const router = useRouter();
 const props = defineProps<{
@@ -163,7 +166,7 @@ const hasNextPage = computed(() => Boolean(articlesQuery.hasNextPage.value));
 const articleError = computed(() => {
   const error = articlesQuery.error.value;
   if (items.value.length > 0) return null;
-  return error instanceof Error ? error.message : error ? '订阅文章加载失败' : null;
+  return error instanceof Error ? error.message : error ? tr('feedSubscriptionsPage.articlesLoadFailed') : null;
 });
 const nextPageError = computed(() => articlesQuery.isFetchNextPageError.value);
 const insightsLoading = computed(() => insightsQuery.isPending.value);

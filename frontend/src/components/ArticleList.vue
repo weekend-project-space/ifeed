@@ -15,8 +15,8 @@
               class="flex h-8 w-8 items-center justify-center rounded-full text-text-secondary transition hover:bg-surface-container hover:text-text disabled:cursor-not-allowed disabled:opacity-40"
               @click="emit('refresh')"
               :disabled="loading"
-              aria-label="刷新列表"
-              title="刷新">
+              :aria-label="tr('common.refreshList')"
+              :title="tr('common.refresh')">
             <svg
                 xmlns="http://www.w3.org/2000/svg"
                 class="h-4 w-4 transition-transform"
@@ -38,8 +38,8 @@
         <button
             @click="setView('magazine')"
             :class="btnClass(view === 'magazine')"
-            title="杂志视图"
-            aria-label="杂志视图">
+            :title="tr('common.magazineView')"
+            :aria-label="tr('common.magazineView')">
           <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"
                :stroke-width="view === 'magazine' ? 2.5 : 2">
             <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h8m-8 4h5m-5 5h8m-8 4h5"/>
@@ -50,8 +50,8 @@
         <button
             @click="setView('social')"
             :class="btnClass(view === 'social')"
-            title="社交视图"
-            aria-label="社交视图">
+            :title="tr('common.socialView')"
+            :aria-label="tr('common.socialView')">
           <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"
                :stroke-width="view === 'social' ? 2.5 : 2">
             <path stroke-linecap="round" stroke-linejoin="round"
@@ -61,8 +61,8 @@
         <button
             @click="setView('card')"
             :class="btnClass(view === 'card')"
-            title="卡片视图"
-            aria-label="卡片视图">
+            :title="tr('common.cardView')"
+            :aria-label="tr('common.cardView')">
           <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"
                :stroke-width="view === 'card' ? 2.5 : 2">
             <path stroke-linecap="round" stroke-linejoin="round"
@@ -72,8 +72,8 @@
         <button
             @click="setView('only-title')"
             :class="btnClass(view === 'only-title')"
-            title="仅标题视图"
-            aria-label="仅标题视图">
+            :title="tr('common.titleView')"
+            :aria-label="tr('common.titleView')">
           <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"
                :stroke-width="view === 'only-title' ? 2.5 : 2">
             <path stroke-linecap="round" stroke-linejoin="round" d="M4 8h16M4 16h16"/>
@@ -146,7 +146,7 @@
                     d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
             </svg>
           </div>
-          <span class="max-w-xs text-xs text-text-secondary">{{ emptyMessage }}</span>
+          <span class="max-w-xs text-xs text-text-secondary">{{ emptyMessage || tr('common.emptyArticlesHint') }}</span>
         </slot>
       </div>
 
@@ -270,7 +270,7 @@
                     v-if="item.feedId"
                     :to="{ name: 'feed', params: { feedId: item.feedId } }"
                     class="shrink-0 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-                    :aria-label="`查看 ${item.feedTitle}`">
+                    :aria-label="tr('common.viewFeed', { value0: item.feedTitle })">
                   <img v-if="item.feedAvatar && !avatarErrorMap[item.id]"
                        :src="item.feedAvatar"
                        :alt="item.feedTitle"
@@ -440,6 +440,7 @@
 </template>
 
 <script setup lang="ts">
+import { translate as tr } from '@/i18n';
 import {reactive, ref, watch} from 'vue'
 import {useRouter} from 'vue-router'
 
@@ -475,7 +476,7 @@ const props = withDefaults(defineProps<{
   title: '',
   subtitle: '',
   loading: false,
-  emptyMessage: '暂无文章，添加订阅后即可看到推荐内容。'
+  emptyMessage: ''
 })
 
 const emit = defineEmits<{

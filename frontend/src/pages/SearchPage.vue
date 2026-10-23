@@ -4,11 +4,11 @@
       <!-- 搜索头部 -->
       <div class="mb-6 sm:mb-8">
         <h1 class="text-2xl font-bold tracking-tight text-text sm:text-3xl">
-          {{ hasQuery ? '搜索结果' : '搜索' }}
+          {{ hasQuery ? t('searchPage.results') : t('searchPage.search') }}
         </h1>
         <p v-if="hasQuery" class="mt-1 text-xs text-text-secondary sm:text-sm">
-          关键词: "{{ searchQuery }}"
-          <span v-if="totalElements !== null" class="ml-2">· {{ totalElements }} 条结果</span>
+          {{ t('searchPage.keyword', { query: searchQuery }) }}
+          <span v-if="totalElements !== null" class="ml-2">{{ t('searchPage.resultCount', { count: totalElements }) }}</span>
         </p>
       </div>
 
@@ -22,7 +22,7 @@
                     ? 'bg-primary/15 font-semibold text-primary shadow-xs'
                     : 'text-text-secondary hover:bg-surface-container hover:text-text'"
                   @click="setSearchType('semantic')">
-            语义匹配
+            {{ t('searchPage.semantic') }}
           </button>
           <button type="button"
                   class="rounded-full px-4 py-1.5 text-xs font-medium transition select-none sm:text-xs"
@@ -30,7 +30,7 @@
                     ? 'bg-primary/15 font-semibold text-primary shadow-xs'
                     : 'text-text-secondary hover:bg-surface-container hover:text-text'"
                   @click="setSearchType('keyword')">
-            关键词匹配
+            {{ t('searchPage.keywordMatch') }}
           </button>
         </div>
 
@@ -41,7 +41,7 @@
           <svg class="h-3.5 w-3.5 text-text-secondary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path stroke-linecap="round" stroke-linejoin="round" d="M19 12H5M12 19l-7-7 7-7" />
           </svg>
-          <span>返回推荐</span>
+          <span>{{ t('searchPage.backHome') }}</span>
         </button>
       </div>
 
@@ -53,22 +53,22 @@
             <path stroke-linecap="round" d="m21 21-4.35-4.35" />
           </svg>
         </div>
-        <h2 class="text-base font-bold text-text">开始搜索</h2>
-        <p class="mt-1 text-xs text-text-secondary">输入关键词查找你感兴趣的文章与资讯</p>
+        <h2 class="text-base font-bold text-text">{{ t('searchPage.start') }}</h2>
+        <p class="mt-1 text-xs text-text-secondary">{{ t('searchPage.prompt') }}</p>
       </div>
 
       <!-- 错误横幅 -->
       <div v-else-if="searchError" role="alert" class="rounded-2xl bg-red-500/10 p-4 text-xs text-red-600 dark:text-red-400">
         <div class="flex items-center justify-between gap-3">
           <span>{{ searchError }}</span>
-          <button type="button" class="shrink-0 font-semibold underline" :disabled="searchFetching" @click="searchQueryResult.refetch()">重试</button>
+          <button type="button" class="shrink-0 font-semibold underline" :disabled="searchFetching" @click="searchQueryResult.refetch()">{{ t('searchPage.retry') }}</button>
         </div>
       </div>
 
       <!-- 搜索结果列表 -->
       <div v-else-if="searchLoading || searchArticleItems.length > 0">
         <article-card-list :loading="searchLoading" :items="searchArticleItems" meta-field="timeAgo"
-                           show-action action-label="文章选项菜单">
+                           show-action :action-label="tr('common.articleOptions')">
           <template #empty-thumbnail>
             <svg class="h-8 w-8 text-text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
               <path stroke-linecap="round" stroke-linejoin="round" d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
@@ -78,7 +78,7 @@
           <template #action-dropdown="{ item, close }">
             <router-link :to="`/articles/${item.articleId}`" target="_blank"
                          class="block w-full px-4 py-2 text-left text-xs font-medium text-text transition hover:bg-surface-container"
-                         @click="close">在新标签页打开</router-link>
+                         @click="close">{{ t('searchPage.openNewTab') }}</router-link>
           </template>
         </article-card-list>
 
@@ -97,19 +97,23 @@
             <line x1="12" y1="16" x2="12.01" y2="16" />
           </svg>
         </div>
-        <h2 class="text-base font-bold text-text">未找到相关结果</h2>
-        <p class="mt-1 text-xs text-text-secondary">换个关键词或缩短词汇再试</p>
+        <h2 class="text-base font-bold text-text">{{ t('searchPage.notFound') }}</h2>
+        <p class="mt-1 text-xs text-text-secondary">{{ t('searchPage.tryAgain') }}</p>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
+import { translate as tr } from '@/i18n';
 import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
+import { useDocumentTitle } from '@/composables/documentTitle';
 import { useRouter } from 'vue-router';
 import { useSearchQuery, type SearchType, type Source } from '../queries/search';
 
 defineOptions({ name: 'SearchPage' });
+const { t } = useI18n();
 
 const props = defineProps<{
   query: string;
@@ -133,13 +137,14 @@ const filters = {
 };
 
 const hasQuery = computed(() => Boolean(searchQuery.value));
+useDocumentTitle(() => t(hasQuery.value ? 'searchPage.results' : 'searchPage.search'));
 
 const searchQueryResult = useSearchQuery(searchQuery, searchType, source, routePage, filters);
 const searchLoading = computed(() => searchQueryResult.isPending.value);
 const searchFetching = computed(() => searchQueryResult.isFetching.value);
 const searchError = computed(() => {
   const error = searchQueryResult.error.value;
-  return error instanceof Error ? error.message : error ? '搜索失败' : null;
+  return error instanceof Error ? error.message : error ? t('searchPage.failed') : null;
 });
 const results = computed(() => searchQueryResult.data.value?.content ?? []);
 const totalPages = computed(() => searchQueryResult.data.value?.totalPages ?? 0);
@@ -151,8 +156,8 @@ const searchArticleItems = computed(() =>
     results.value.map((item) => ({
       articleId: item.id,
       feedId: item.feedId,
-      title: item.title ?? '未命名文章',
-      summary: item.summary ?? '暂无摘要',
+      title: item.title ?? tr('common.untitledArticle'),
+      summary: item.summary ?? tr('common.noSummary'),
       thumbnail: item.thumbnail,
       feedTitle: item.feedTitle,
       feedAvatar: item.feedAvatar,

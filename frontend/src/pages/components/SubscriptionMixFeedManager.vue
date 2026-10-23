@@ -6,7 +6,7 @@
           @click="refresh"
           :disabled="mixFeedsStore.loading || isRefreshing"
           class="flex h-9 w-9 items-center justify-center rounded-full text-text-secondary transition hover:bg-surface-container hover:text-text disabled:opacity-40"
-          aria-label="刷新"
+          :aria-label="tr('common.refresh')"
       >
         <svg
             class="h-4 w-4"
@@ -28,15 +28,15 @@
         <svg class="h-4 w-4 stroke-[2.2]" viewBox="0 0 24 24" fill="none" stroke="currentColor">
           <path stroke-linecap="round" d="M12 5v14M5 12h14"/>
         </svg>
-        <span>新建订阅</span>
+        <span>{{ tr('subscriptionMixFeedManager.createFeed') }}</span>
       </button>
     </div>
 
     <!-- 错误横幅 -->
     <div v-if="loadError" class="mb-6 rounded-2xl bg-red-500/10 p-4 text-xs text-red-600 dark:text-red-400" role="alert">
-      <p class="font-semibold">订阅聚合加载失败</p>
+      <p class="font-semibold">{{ tr('subscriptionMixFeedManager.mixFeedsFailed') }}</p>
       <p class="mt-0.5 opacity-90">{{ loadError }}</p>
-      <button type="button" class="mt-2 font-semibold underline underline-offset-2 hover:opacity-80" @click="refresh">重试</button>
+      <button type="button" class="mt-2 font-semibold underline underline-offset-2 hover:opacity-80" @click="refresh">{{ tr('common.retry') }}</button>
     </div>
 
     <!-- 骨架屏 -->
@@ -58,13 +58,13 @@
           <path d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
         </svg>
       </div>
-      <h2 class="text-base font-bold text-text">没有聚合订阅</h2>
-      <p class="mt-1 text-xs text-text-secondary mb-5">创建订阅以聚合多个来源的内容</p>
+      <h2 class="text-base font-bold text-text">{{ tr('subscriptionMixFeedManager.noMixFeeds') }}</h2>
+      <p class="mt-1 text-xs text-text-secondary mb-5">{{ tr('subscriptionMixFeedManager.createFeedHint') }}</p>
       <button
           @click="openCreateModal"
           class="inline-flex h-9 items-center gap-1.5 rounded-full bg-primary px-5 text-xs font-semibold text-white shadow-xs transition hover:brightness-105 active:scale-[0.98]"
       >
-        新建订阅
+        {{ tr('subscriptionMixFeedManager.createFeed') }}
       </button>
     </div>
 
@@ -97,7 +97,7 @@
                   class="flex h-7 w-7 items-center justify-center rounded-full text-text-secondary transition hover:bg-surface hover:text-text"
                   @click.stop="toggleDropdown(feed.id)"
                   :aria-expanded="activeDropdown === feed.id"
-                  aria-label="更多操作"
+                  :aria-label="tr('common.moreActions')"
               >
                 <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <circle cx="12" cy="12" r="1" fill="currentColor"/>
@@ -113,13 +113,13 @@
                     @click.stop="openEditModal(feed)"
                     class="w-full px-4 py-2 text-left text-xs font-medium text-text transition hover:bg-surface-container"
                 >
-                  编辑
+                  {{ tr('common.edit') }}
                 </button>
                 <button
                     @click.stop="confirmDelete(feed)"
                     class="w-full px-4 py-2 text-left text-xs font-medium text-red-600 transition hover:bg-red-500/10 dark:text-red-400"
                 >
-                  删除
+                  {{ tr('common.delete') }}
                 </button>
               </div>
             </div>
@@ -127,17 +127,17 @@
 
           <router-link :to="`/feed/${feed.id}`" class="block">
             <p class="mb-2 line-clamp-2 text-xs leading-relaxed text-text-secondary">
-              {{ feed.description || '暂无描述' }}
+              {{ feed.description || tr('subscriptionMixFeedManager.noDescription') }}
             </p>
             <div class="flex flex-wrap items-center gap-2 text-xs text-text-secondary">
               <span v-if="feed.isPublic" class="inline-flex items-center rounded-full bg-primary/10 px-2.5 py-0.5 text-[10px] font-semibold text-primary">
-                公开
+                {{ tr('subscriptionMixFeedManager.public') }}
               </span>
               <span v-else class="inline-flex items-center rounded-full bg-surface-container px-2.5 py-0.5 text-[10px] font-semibold text-text-secondary">
-                私有
+                {{ tr('subscriptionMixFeedManager.private') }}
               </span>
               <span>•</span>
-              <span>{{ feed.subscriberCount }} 订阅者</span>
+              <span>{{ tr('common.subscriberCount', { count: feed.subscriberCount }) }}</span>
               <span>•</span>
               <span>{{ formatDate(feed.createdAt) }}</span>
             </div>
@@ -157,7 +157,7 @@
         <div class="relative z-10 flex max-h-[90vh] w-full max-w-lg flex-col overflow-hidden rounded-[28px] bg-surface shadow-2xl">
           <div class="flex items-center justify-between border-b border-outline/10 px-6 py-4">
             <h3 class="text-base font-semibold text-text">
-              {{ isEditing ? '编辑订阅' : '新建订阅' }}
+              {{ isEditing ? tr('subscriptionMixFeedManager.editFeed') : tr('subscriptionMixFeedManager.createFeed') }}
             </h3>
             <button
                 @click="closeModal"
@@ -173,32 +173,32 @@
             <form @submit.prevent="handleSubmit" class="space-y-4">
               <!-- MD3 Filled Text Field: 名称 -->
               <div class="rounded-t-2xl bg-surface-container/60 px-4 pt-2.5 pb-2 border-b-2 border-outline/40 transition focus-within:border-primary focus-within:bg-surface-container/80">
-                <label class="block text-[11px] font-medium text-text-secondary">名称</label>
+                <label class="block text-[11px] font-medium text-text-secondary">{{ tr('subscriptionMixFeedManager.name') }}</label>
                 <input
                     v-model.trim="form.name"
                     type="text"
                     required
                     class="mt-0.5 block w-full border-0 bg-transparent p-0 text-xs text-text outline-none ring-0 placeholder:text-text-secondary/60 sm:text-sm"
-                    placeholder="例如：科技精选"
+                    :placeholder="tr('subscriptionMixFeedManager.namePlaceholder')"
                 />
               </div>
 
               <!-- MD3 Filled Text Field: 描述 -->
               <div class="rounded-t-2xl bg-surface-container/60 px-4 pt-2.5 pb-2 border-b-2 border-outline/40 transition focus-within:border-primary focus-within:bg-surface-container/80">
-                <label class="block text-[11px] font-medium text-text-secondary">描述</label>
+                <label class="block text-[11px] font-medium text-text-secondary">{{ tr('subscriptionMixFeedManager.description') }}</label>
                 <textarea
                     v-model.trim="form.description"
                     rows="3"
                     class="mt-1 block min-h-16 w-full resize-y border-0 bg-transparent p-0 text-xs leading-relaxed text-text outline-none ring-0 placeholder:text-text-secondary/60"
-                    placeholder="描述这个订阅的内容..."
+                    :placeholder="tr('subscriptionMixFeedManager.descriptionPlaceholder')"
                 ></textarea>
               </div>
 
               <!-- 公开 Switch / Checkbox -->
               <label class="flex cursor-pointer items-center justify-between rounded-2xl bg-surface-container/40 p-3.5 transition hover:bg-surface-container/70 select-none">
                 <div>
-                  <div class="text-xs font-semibold text-text">公开此订阅</div>
-                  <div class="text-[11px] text-text-secondary">允许其他用户浏览和订阅该合集</div>
+                  <div class="text-xs font-semibold text-text">{{ tr('subscriptionMixFeedManager.makePublic') }}</div>
+                  <div class="text-[11px] text-text-secondary">{{ tr('subscriptionMixFeedManager.publicHint') }}</div>
                 </div>
                 <input
                     id="isPublic"
@@ -210,10 +210,10 @@
 
               <!-- 选择源列表 -->
               <div>
-                <label class="block text-xs font-semibold text-text-secondary mb-2">选择订阅源</label>
+                <label class="block text-xs font-semibold text-text-secondary mb-2">{{ tr('subscriptionMixFeedManager.chooseSources') }}</label>
                 <div class="max-h-48 overflow-y-auto rounded-2xl bg-surface-container/40 p-2.5 space-y-1">
                   <div v-if="!items.length" class="text-xs text-text-secondary text-center py-4">
-                    暂无可聚合的订阅源
+                    {{ tr('subscriptionMixFeedManager.noSourceFeeds') }}
                   </div>
                   <label
                       v-for="sub in items"
@@ -229,36 +229,36 @@
                         class="h-4 w-4 shrink-0 rounded-sm border-outline text-primary focus:ring-primary/20"
                     />
                     <span class="truncate text-xs font-medium text-text flex-1">
-                      {{ sub.title || sub.siteUrl || '未命名订阅' }}
+                      {{ sub.title || sub.siteUrl || tr('common.untitledFeed') }}
                     </span>
                   </label>
                 </div>
                 <p class="mt-1.5 text-[11px] text-text-secondary">
-                  已选择 <strong class="font-semibold text-text">{{ selectedSourceFeedIds.length }}</strong> 个订阅源
+                  <i18n-t keypath="common.selectedFeeds" scope="global" :plural="selectedSourceFeedIds.length" tag="span"><template #count><strong class="font-semibold text-text">{{ selectedSourceFeedIds.length }}</strong></template></i18n-t>
                 </p>
               </div>
 
               <!-- 过滤规则 -->
               <div class="pt-2 border-t border-outline/10">
-                <h4 class="text-xs font-semibold text-text-secondary mb-2.5">过滤规则</h4>
+                <h4 class="text-xs font-semibold text-text-secondary mb-2.5">{{ tr('subscriptionMixFeedManager.filterRules') }}</h4>
                 <div class="space-y-2.5">
                   <div class="rounded-t-2xl bg-surface-container/60 px-4 pt-2 pb-1.5 border-b-2 border-outline/40 transition focus-within:border-primary">
-                    <label class="block text-[11px] font-medium text-text-secondary">包含关键词 (逗号分隔)</label>
+                    <label class="block text-[11px] font-medium text-text-secondary">{{ tr('subscriptionMixFeedManager.includeKeywords') }}</label>
                     <input
                         v-model="keywordsInclude"
                         type="text"
                         class="mt-0.5 block w-full border-0 bg-transparent p-0 text-xs text-text outline-none ring-0 placeholder:text-text-secondary/60"
-                        placeholder="例如：AI, 机器学习"
+                        :placeholder="tr('subscriptionMixFeedManager.includePlaceholder')"
                     />
                   </div>
 
                   <div class="rounded-t-2xl bg-surface-container/60 px-4 pt-2 pb-1.5 border-b-2 border-outline/40 transition focus-within:border-primary">
-                    <label class="block text-[11px] font-medium text-text-secondary">排除关键词 (逗号分隔)</label>
+                    <label class="block text-[11px] font-medium text-text-secondary">{{ tr('subscriptionMixFeedManager.excludeKeywords') }}</label>
                     <input
                         v-model="keywordsExclude"
                         type="text"
                         class="mt-0.5 block w-full border-0 bg-transparent p-0 text-xs text-text outline-none ring-0 placeholder:text-text-secondary/60"
-                        placeholder="例如：广告, 推广"
+                        :placeholder="tr('subscriptionMixFeedManager.excludePlaceholder')"
                     />
                   </div>
                 </div>
@@ -274,14 +274,14 @@
                     @click="closeModal"
                     class="inline-flex h-9 items-center justify-center rounded-full px-4 text-xs font-semibold text-text-secondary transition hover:bg-surface-container"
                 >
-                  取消
+                  {{ tr('common.cancel') }}
                 </button>
                 <button
                     type="submit"
                     :disabled="mixFeedsStore.loading"
                     class="inline-flex h-9 items-center justify-center rounded-full bg-primary px-5 text-xs font-semibold text-white shadow-xs transition hover:brightness-105 active:scale-[0.98] disabled:opacity-40"
                 >
-                  {{ mixFeedsStore.loading ? '保存中...' : '保存' }}
+                  {{ mixFeedsStore.loading ? tr('subscriptionMixFeedManager.savingDots') : tr('common.save') }}
                 </button>
               </div>
             </form>
@@ -298,9 +298,9 @@
     >
       <div class="absolute inset-0 bg-black/45" />
       <div class="relative z-10 w-full max-w-sm rounded-[28px] bg-surface p-6 shadow-2xl">
-        <h3 class="text-base font-bold text-text mb-2">确认删除</h3>
+        <h3 class="text-base font-bold text-text mb-2">{{ tr('common.confirmDelete') }}</h3>
         <p class="text-xs text-text-secondary mb-5 leading-relaxed">
-          确定要删除订阅 <strong>{{ feedToDelete.name }}</strong> 吗？此操作无法撤销。
+          <i18n-t keypath="subscriptionMixFeedManager.deleteQuestion" scope="global" tag="span"><template #name><strong>{{ feedToDelete.name }}</strong></template></i18n-t>
         </p>
 
         <div v-if="mixFeedsStore.error" class="mb-4 rounded-xl bg-red-500/10 p-3 text-xs text-red-600 dark:text-red-400">
@@ -309,14 +309,14 @@
 
         <div class="flex gap-2.5 justify-end">
           <button @click="feedToDelete = null" class="inline-flex h-9 items-center justify-center rounded-full px-4 text-xs font-semibold text-text-secondary hover:bg-surface-container transition">
-            取消
+            {{ tr('common.cancel') }}
           </button>
           <button
               @click="handleDelete"
               :disabled="mixFeedsStore.loading"
               class="inline-flex h-9 items-center justify-center rounded-full bg-red-600 px-4 text-xs font-semibold text-white shadow-xs transition hover:bg-red-700 disabled:opacity-40"
           >
-            {{ mixFeedsStore.loading ? '删除中...' : '确认删除' }}
+            {{ mixFeedsStore.loading ? tr('subscriptionMixFeedManager.deleting') : tr('common.confirmDelete') }}
           </button>
         </div>
       </div>
@@ -328,6 +328,7 @@
 </template>
 
 <script setup lang="ts">
+import { translate as tr } from '@/i18n';
 import { computed, onMounted, ref } from 'vue';
 import { type MixFeedListResponse, type MixFeedRequest, useMixFeedsStore } from '../../stores/mixFeeds';
 import { useSubscriptionsStore } from '../../stores/subscriptions';
@@ -386,7 +387,7 @@ const selectedSourceFeedIds = computed({
     val.forEach(id => {
       const feed = subscriptionsStore.items.find(item => item.feedId === id);
       if (feed) {
-        newSourceFeeds[id] = feed.title || feed.siteUrl || '未命名订阅';
+        newSourceFeeds[id] = feed.title || feed.siteUrl || tr('common.untitledFeed');
       }
     });
     form.value.filterConfig.sourceFeeds = newSourceFeeds;
@@ -406,7 +407,7 @@ const refresh = async () => {
     loadError.value = null;
     await mixFeedsStore.fetchMyMixFeeds();
   } catch (error) {
-    loadError.value = error instanceof Error ? error.message : '订阅聚合加载失败，请重试';
+    loadError.value = error instanceof Error ? error.message : tr('subscriptionMixFeedManager.mixFeedLoadFailed');
   } finally {
     setTimeout(() => isRefreshing.value = false, 500);
   }

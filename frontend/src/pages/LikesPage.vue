@@ -1,22 +1,22 @@
 <template>
   <LibraryPageLayout
-      title="我的喜欢"
+      :title="tr('likesPage.title')"
       :total="total"
-      :total-text="total ? '共 ' + total + ' 条喜欢' : '暂无喜欢'"
+      :total-text="total ? tr('likesPage.likeCount', { count: total }) : tr('likesPage.noLikes')"
       :pending="query.isPending.value"
       :fetching="query.isFetching.value"
       :error="errorMessage"
-      refresh-label="刷新我的喜欢"
-      login-text="登录后即可查看你的喜欢"
-      empty-title="还没有喜欢的文章"
-      empty-text="阅读时点击爱心，你喜欢的文章将展示在这里"
+      :refresh-label="tr('likesPage.refreshLikes')"
+      :login-text="tr('likesPage.loginHint')"
+      :empty-title="tr('likesPage.emptyTitle')"
+      :empty-text="tr('likesPage.emptyDescription')"
       @refresh="query.refetch()"
   >
     <DatedArticleList
         :items="items"
         time-field="likedAt"
         :removing="mutation.isPending.value"
-        remove-label="取消喜欢"
+        :remove-label="tr('common.unlike')"
         @remove="unlike"
     />
     <template #footer>
@@ -34,6 +34,7 @@
 </template>
 
 <script setup lang="ts">
+import { translate as tr } from '@/i18n';
 import { computed } from 'vue';
 import LibraryPageLayout from '@/components/LibraryPageLayout.vue';
 import DatedArticleList from '@/components/DatedArticleList.vue';

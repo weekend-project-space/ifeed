@@ -2,14 +2,14 @@
   <nav
       v-if="hasPreviousPage || hasNextPage"
       class="mt-6 sm:mt-8 flex items-center justify-center gap-2 border-t border-outline/10 pt-4 sm:pt-6"
-      aria-label="Pannagna iti Panid"
+      :aria-label="tr('common.pagination')"
   >
     <button
         type="button"
         @click="handlePrevPage"
         :disabled="!hasPreviousPage || disabled"
         class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-text-secondary transition hover:bg-surface-container hover:text-text active:scale-95 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent"
-        aria-label="Napalabas a panid"
+        :aria-label="tr('common.previousPage')"
     >
       <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
         <polyline points="15 18 9 12 15 6" />
@@ -25,7 +25,7 @@
         @click="handleNextPage"
         :disabled="!hasNextPage || disabled"
         class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-text-secondary transition hover:bg-surface-container hover:text-text active:scale-95 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent"
-        aria-label="Sumaruno a panid"
+        :aria-label="tr('common.nextPage')"
     >
       <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
         <polyline points="9 18 15 12 9 6" />
@@ -35,6 +35,7 @@
 </template>
 
 <script setup>
+import { translate as tr } from '@/i18n';
 defineOptions({ name: 'Pagination' })
 
 const props = defineProps({

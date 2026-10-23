@@ -1,3 +1,4 @@
+import { translate as tr } from '@/i18n';
 import { ref } from 'vue';
 import { defineStore } from 'pinia';
 import {
@@ -36,7 +37,7 @@ export const useSubscriptionsStore = defineStore('subscriptions', () => {
                 }))
                 : [];
         } catch (err) {
-            const message = err instanceof Error ? err.message : '订阅列表加载失败';
+            const message = err instanceof Error ? err.message : tr('common.listFailed');
             error.value = message;
             throw err;
         } finally {
@@ -48,7 +49,7 @@ export const useSubscriptionsStore = defineStore('subscriptions', () => {
         const trimmed = query.trim();
         if (!trimmed) {
             searchResults.value = [];
-            searchError.value = '请输入关键词、URL 或标题';
+            searchError.value = tr('common.searchRequired');
             activeSearchQuery.value = '';
             searchLoading.value = false;
             return;
@@ -75,7 +76,7 @@ export const useSubscriptionsStore = defineStore('subscriptions', () => {
             if (activeSearchQuery.value !== trimmed) {
                 return;
             }
-            const message = err instanceof Error ? err.message : '搜索订阅失败';
+            const message = err instanceof Error ? err.message : tr('common.feedSearchFailed');
             searchError.value = message;
             throw err;
         } finally {

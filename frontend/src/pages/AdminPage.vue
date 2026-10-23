@@ -11,10 +11,10 @@
           </div>
           <div>
             <h1 class="text-xl font-bold tracking-tight text-text sm:text-2xl">
-              用户订阅计划管理
+              {{ tr('adminPage.title') }}
             </h1>
             <p class="text-xs text-text-secondary sm:text-sm">
-              管理用户的会员套餐与权限等级
+              {{ tr('adminPage.subtitle') }}
             </p>
           </div>
         </div>
@@ -25,7 +25,7 @@
         <!-- 用户名输入：MD3 Filled Text Field -->
         <div class="mb-6">
           <div class="rounded-t-2xl bg-surface px-4 pt-2.5 pb-2 border-b-2 border-outline/40 transition focus-within:border-primary focus-within:bg-surface/80">
-            <label for="username" class="block text-[11px] font-medium text-text-secondary">用户名</label>
+            <label for="username" class="block text-[11px] font-medium text-text-secondary">{{ tr('adminPage.username') }}</label>
             <div class="relative mt-0.5 flex items-center">
               <svg class="absolute left-0 h-4 w-4 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
@@ -34,7 +34,7 @@
                   type="text"
                   id="username"
                   v-model="username"
-                  placeholder="输入目标账号用户名"
+                  :placeholder="tr('adminPage.usernamePlaceholder')"
                   class="block w-full border-0 bg-transparent pl-7 pr-0 text-sm text-text outline-none ring-0 placeholder:text-text-secondary/60"
               />
             </div>
@@ -44,7 +44,7 @@
         <!-- 计划选择器：MD3 柔和状态选择网格 -->
         <div class="mb-6">
           <label class="block text-xs font-semibold text-text-secondary mb-3">
-            选择套餐
+            {{ tr('adminPage.choosePlan') }}
           </label>
           <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
             <button
@@ -113,14 +113,14 @@
             <svg v-if="loading" class="h-4 w-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
             </svg>
-            <span>{{ loading ? '更新中...' : '确认更新套餐' }}</span>
+            <span>{{ loading ? tr('adminPage.updating') : tr('adminPage.updatePlan') }}</span>
           </button>
           <button
               @click="reset"
               type="button"
               class="inline-flex h-10 items-center justify-center rounded-full bg-surface px-5 text-xs font-semibold text-text-secondary transition hover:bg-surface-container active:scale-[0.98]"
           >
-            重置
+            {{ tr('adminPage.reset') }}
           </button>
         </div>
 
@@ -129,7 +129,7 @@
           <svg class="h-3.5 w-3.5 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
           </svg>
-          <span>此操作需具备管理员特权 (Admin Privileges)</span>
+          <span>{{ tr('adminPage.adminRequired') }}</span>
         </div>
       </div>
     </div>
@@ -137,42 +137,52 @@
 </template>
 
 <script>
+import { translate as tr } from '@/i18n';
 import { updateUserPlan } from '@/api/admin';
+import { useDocumentTitle } from '@/composables/documentTitle';
 
 export default {
   name: 'UserPlanAdmin',
+  setup() {
+    useDocumentTitle(() => tr('adminPage.title'));
+    return { tr };
+  },
   data() {
     return {
       username: '',
       selectedPlan: 'FREE',
       loading: false,
       message: null,
-      plans: [
+    };
+  },
+  computed: {
+    plans() {
+      return [
         {
           value: 'FREE',
           label: 'Free',
-          desc: '基础订阅功能',
+          desc: tr('adminPage.freeDescription'),
           icon: 'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z',
         },
         {
           value: 'STANDARD',
           label: 'Standard',
-          desc: '个人深度阅读',
+          desc: tr('adminPage.standardDescription'),
           icon: 'M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z',
         },
         {
           value: 'PRO',
           label: 'Pro',
-          desc: '专业与智能推荐',
+          desc: tr('adminPage.proDescription'),
           icon: 'M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z',
         }
-      ]
-    };
+      ];
+    },
   },
   methods: {
     async updatePlan() {
       if (!this.username.trim()) {
-        this.message = { type: 'error', text: '请输入用户名' };
+        this.message = { type: 'error', text: tr('adminPage.usernameRequired') };
         return;
       }
 
@@ -185,23 +195,23 @@ export default {
         const planLabel = this.plans.find(p => p.value === this.selectedPlan)?.label;
         this.message = {
           type: 'success',
-          text: `成功将 ${this.username} 更新为 ${planLabel} 方案`
+          text: tr('adminPage.planUpdated', { value0: this.username, value1: planLabel })
         };
         this.username = '';
       } catch (error) {
         if (error.response) {
           if (error.response.status === 401) {
-            this.message = { type: 'error', text: '未授权：请先登录' };
+            this.message = { type: 'error', text: tr('adminPage.unauthorized') };
           } else if (error.response.status === 403) {
-            this.message = { type: 'error', text: '拒绝访问：需要管理员权限' };
+            this.message = { type: 'error', text: tr('adminPage.forbidden') };
           } else {
             this.message = {
               type: 'error',
-              text: error.response.data || '更新失败'
+              text: error.response.data || tr('adminPage.updateFailed')
             };
           }
         } else {
-          this.message = { type: 'error', text: '网络请求错误' };
+          this.message = { type: 'error', text: tr('adminPage.networkError') };
         }
       } finally {
         this.loading = false;

@@ -38,7 +38,7 @@
               <div v-if="coverImage" class="h-20 w-20 overflow-hidden rounded-2xl shadow-xs sm:h-24 sm:w-24">
                 <img
                     :src="coverImage"
-                    :alt="title || '封面'"
+                    :alt="title || tr('common.cover')"
                     class="h-full w-full object-cover"
                     @error="handleImageError"
                 />
@@ -54,7 +54,7 @@
                   @click="toggleAudio"
                   class="absolute inset-0 flex items-center justify-center rounded-2xl bg-black/35 opacity-0 transition duration-200 group-hover:opacity-100 focus:opacity-100"
                   :class="{ 'opacity-100': isPlaying }"
-                  aria-label="播放/暂停"
+                  :aria-label="tr('common.togglePlayback')"
               >
                 <div class="flex h-11 w-11 items-center justify-center rounded-full bg-surface text-text shadow-xs transition hover:scale-105 active:scale-95">
                   <svg v-if="!isPlaying" class="ml-0.5 h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
@@ -93,7 +93,7 @@
               </div>
 
               <div v-if="audioError" class="mt-1 text-xs text-red-600 dark:text-red-400">
-                音频加载失败
+                {{ tr('common.audioLoadFailed') }}
               </div>
             </div>
           </div>
@@ -105,7 +105,7 @@
             <!-- 缩略图 -->
             <div class="shrink-0">
               <div v-if="coverImage" class="h-14 w-14 overflow-hidden rounded-xl shadow-2xs">
-                <img :src="coverImage" :alt="title || '封面'" class="h-full w-full object-cover" @error="handleImageError" />
+                <img :src="coverImage" :alt="title || tr('common.cover')" class="h-full w-full object-cover" @error="handleImageError" />
               </div>
               <div v-else class="flex h-14 w-14 items-center justify-center rounded-xl bg-surface-container text-primary">
                 <svg class="h-6 w-6" fill="currentColor" viewBox="0 0 20 20">
@@ -132,7 +132,7 @@
               <button
                   @click="playInGlobalPlayer"
                   class="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-white shadow-xs transition hover:brightness-105 active:scale-95"
-                  aria-label="播放"
+                  :aria-label="tr('common.play')"
               >
                 <svg v-if="!isCurrentTrack || !isPlaying" class="ml-0.5 h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
                   <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"/>
@@ -146,7 +146,7 @@
                   @click="addToPlaylist"
                   class="flex h-9 w-9 items-center justify-center rounded-full bg-surface text-text-secondary shadow-2xs transition hover:bg-surface-container active:scale-95"
                   :class="{ 'text-primary font-bold': isInPlaylist }"
-                  aria-label="添加到播放列表"
+                  :aria-label="tr('common.addToPlaylist')"
               >
                 <svg v-if="!isInPlaylist" class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
@@ -202,12 +202,13 @@
               d="M8 4a3 3 0 00-3 3v4a5 5 0 0010 0V7a1 1 0 112 0v4a7 7 0 11-14 0V7a5 5 0 0110 0v4a3 3 0 11-6 0V7a1 1 0 012 0v4a1 1 0 102 0V7a3 3 0 00-3-3z"
               clip-rule="evenodd"/>
       </svg>
-      <span>查看附件</span>
+      <span>{{ tr('common.viewAttachment') }}</span>
     </a>
   </section>
 </template>
 
 <script setup lang="ts">
+import { translate as tr } from '@/i18n';
 import { computed, ref, watch, onBeforeUnmount, inject } from 'vue';
 
 interface Props {
@@ -276,7 +277,7 @@ const isSupported = computed(() =>
 );
 
 const displayFileName = computed(() =>
-    props.url?.split('/').pop()?.split('?')[0] || '未知文件'
+    props.url?.split('/').pop()?.split('?')[0] || tr('common.unknownFile')
 );
 
 const progressPercent = computed(() =>
@@ -311,7 +312,7 @@ const playInGlobalPlayer = () => {
     id: props.trackId || `track-${Date.now()}`,
     url: props.url,
     title: props.title || displayFileName.value,
-    artist: props.artist || '未知艺术家',
+    artist: props.artist || tr('common.unknownArtist'),
     coverImage: props.coverImage
   };
   if (isCurrentTrack.value) {
@@ -327,7 +328,7 @@ const addToPlaylist = () => {
     id: props.trackId || `track-${Date.now()}`,
     url: props.url,
     title: props.title || displayFileName.value,
-    artist: props.artist || '未知艺术家',
+    artist: props.artist || tr('common.unknownArtist'),
     coverImage: props.coverImage
   };
   if (isInPlaylist.value) {
@@ -380,7 +381,7 @@ const updateMediaSession = () => {
   try {
     navigator.mediaSession.metadata = new MediaMetadata({
       title: props.title || displayFileName.value,
-      artist: props.artist || '未知艺术家',
+      artist: props.artist || tr('common.unknownArtist'),
       album: '',
       artwork: props.coverImage ? [
         { src: props.coverImage, sizes: '96x96', type: 'image/jpeg' },

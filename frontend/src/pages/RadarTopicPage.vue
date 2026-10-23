@@ -8,7 +8,7 @@
               type="button"
               class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-text-secondary transition hover:bg-surface hover:text-text active:scale-95"
               @click="goBack"
-              aria-label="返回"
+              :aria-label="tr('radarTopicPage.back')"
           >
             <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path stroke-linecap="round" stroke-linejoin="round" d="M15 18l-6-6 6-6" />
@@ -17,7 +17,7 @@
 
           <div class="min-w-0 flex-1">
             <h1 class="text-xl font-bold tracking-tight text-text line-clamp-2 sm:text-2xl">
-              {{ topic?.title || '话题详情' }}
+              {{ topic?.title || tr('radarTopicPage.title') }}
             </h1>
             <p v-if="topic?.description" class="mt-1 text-xs leading-relaxed text-text-secondary line-clamp-2 sm:text-sm">
               {{ topic.description }}
@@ -29,7 +29,7 @@
               @click="refresh"
               :disabled="topicLoading"
               class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-text-secondary transition hover:bg-surface hover:text-text disabled:cursor-not-allowed disabled:opacity-40"
-              aria-label="刷新话题"
+              :aria-label="tr('radarTopicPage.refreshTopic')"
           >
             <svg
                 class="h-4 w-4 transition-transform"
@@ -45,8 +45,8 @@
         </div>
 
         <div class="flex items-center justify-between border-t border-outline/10 pt-3 text-xs text-text-secondary">
-          <span v-if="topic">{{ topic.articleCount }} 篇文章</span>
-          <span v-if="snapshotId" class="opacity-75">快照: {{ snapshotId }}</span>
+          <span v-if="topic">{{ tr('common.articleCount', { count: topic.articleCount }) }}</span>
+          <span v-if="snapshotId" class="opacity-75">{{ tr('radarTopicPage.snapshot') }} {{ snapshotId }}</span>
         </div>
 
         <!-- 关键词胶囊群 -->
@@ -82,8 +82,8 @@
             <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h10" />
           </svg>
         </div>
-        <h2 class="text-base font-bold text-text">暂无文章</h2>
-        <p class="mt-1 text-xs text-text-secondary">该话题当前没有可展示的文章</p>
+        <h2 class="text-base font-bold text-text">{{ tr('common.noArticles') }}</h2>
+        <p class="mt-1 text-xs text-text-secondary">{{ tr('radarTopicPage.emptyDescription') }}</p>
       </div>
 
       <pagination
@@ -100,6 +100,8 @@
 </template>
 
 <script setup lang="ts">
+import { translate as tr } from '@/i18n';
+import { useDocumentTitle } from '@/composables/documentTitle';
 import { computed, onMounted, watch } from 'vue';
 import { storeToRefs } from 'pinia';
 import { useRoute, useRouter } from 'vue-router';
@@ -121,6 +123,7 @@ const {
   topicHasNextPage,
   topicHasPreviousPage
 } = storeToRefs(radarStore);
+useDocumentTitle(() => topic.value?.title || tr('radarTopicPage.title'));
 
 const topicId = computed(() => {
   const raw = route.params.topicId;

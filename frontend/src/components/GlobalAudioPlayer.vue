@@ -7,7 +7,7 @@
           v-if="currentTrack && isMinimized"
           @click="isMinimized = false"
           class="fixed bottom-6 right-6 z-50 flex h-14 w-14 items-center justify-center overflow-hidden rounded-full shadow-2xl transition-all duration-300 hover:scale-105 active:scale-95 group select-none"
-          aria-label="展开播放器"
+          :aria-label="tr('common.expandPlayer')"
       >
         <!-- 封面底图 -->
         <div class="absolute inset-0">
@@ -107,7 +107,7 @@
                   @click="playPrevious"
                   :disabled="!hasPrevious"
                   class="flex h-9 w-9 items-center justify-center rounded-full text-text-secondary transition hover:bg-surface-container hover:text-text disabled:opacity-30 disabled:cursor-not-allowed"
-                  aria-label="上一首"
+                  :aria-label="tr('common.previousTrack')"
               >
                 <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
                   <path d="M8.445 14.832A1 1 0 0010 14v-2.798l5.445 3.63A1 1 0 0017 14V6a1 1 0 00-1.555-.832L10 8.798V6a1 1 0 00-1.555-.832l-6 4a1 1 0 000 1.664l6 4z"/>
@@ -117,7 +117,7 @@
               <button
                   @click="togglePlay"
                   class="flex h-11 w-11 items-center justify-center rounded-full bg-primary text-white shadow-xs transition hover:brightness-105 active:scale-95"
-                  aria-label="播放/暂停"
+                  :aria-label="tr('common.togglePlayback')"
               >
                 <svg v-if="!isPlaying" class="ml-0.5 h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
                   <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"/>
@@ -131,7 +131,7 @@
                   @click="playNext"
                   :disabled="!hasNext"
                   class="flex h-9 w-9 items-center justify-center rounded-full text-text-secondary transition hover:bg-surface-container hover:text-text disabled:opacity-30 disabled:cursor-not-allowed"
-                  aria-label="下一首"
+                  :aria-label="tr('common.nextTrack')"
               >
                 <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
                   <path d="M4.555 5.168A1 1 0 003 6v8a1 1 0 001.555.832L10 11.202V14a1 1 0 001.555.832l6-4a1 1 0 000-1.664l-6-4A1 1 0 0010 6v2.798l-5.445-3.63z"/>
@@ -163,7 +163,7 @@
                   @click="showPlaylist = !showPlaylist"
                   class="relative flex h-8 w-8 items-center justify-center rounded-full text-text-secondary transition hover:bg-surface-container hover:text-text"
                   :class="{ 'bg-surface-container text-primary': showPlaylist }"
-                  aria-label="播放列表"
+                  :aria-label="tr('common.playlist')"
               >
                 <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
                   <path d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h6a1 1 0 110 2H4a1 1 0 01-1-1z"/>
@@ -176,7 +176,7 @@
               <button
                   @click="minimizePlayer"
                   class="flex h-8 w-8 items-center justify-center rounded-full text-text-secondary transition hover:bg-surface-container hover:text-text"
-                  aria-label="最小化播放器"
+                  :aria-label="tr('common.minimizePlayer')"
               >
                 <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
                   <path fill-rule="evenodd" d="M3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd"/>
@@ -186,7 +186,7 @@
               <button
                   @click="closePlayer"
                   class="flex h-8 w-8 items-center justify-center rounded-full text-text-secondary transition hover:bg-surface-container hover:text-text"
-                  aria-label="关闭播放器"
+                  :aria-label="tr('common.closePlayer')"
               >
                 <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
                   <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
@@ -223,19 +223,19 @@
             <div class="mx-auto max-w-screen-xl px-4 py-4">
               <div class="mb-3 flex items-center justify-between">
                 <h3 class="text-xs font-bold text-text sm:text-sm">
-                  播放列表 ({{ playlist.length }})
+                  {{ tr('common.playlistCount', { count: playlist.length }) }}
                 </h3>
                 <button
                     v-if="playlist.length > 0"
                     @click="clearPlaylist"
                     class="text-xs font-semibold text-red-600 dark:text-red-400 hover:underline"
                 >
-                  清空列表
+                  {{ tr('common.clearPlaylist') }}
                 </button>
               </div>
 
               <div v-if="playlist.length === 0" class="py-8 text-center text-xs text-text-secondary">
-                <p>播放列表为空</p>
+                <p>{{ tr('common.emptyPlaylist') }}</p>
               </div>
 
               <div v-else class="space-y-1">
@@ -265,7 +265,7 @@
                   <button
                       @click.stop="removeFromPlaylist(track.id)"
                       class="flex h-7 w-7 items-center justify-center rounded-full text-text-secondary opacity-0 transition hover:bg-red-500/10 hover:text-red-600 group-hover:opacity-100"
-                      aria-label="移除"
+                      :aria-label="tr('common.remove')"
                   >
                     ✕
                   </button>
@@ -293,6 +293,7 @@
 </template>
 
 <script setup lang="ts">
+import { translate as tr } from '@/i18n';
 import { ref, computed, provide, watch, onMounted, onBeforeUnmount } from 'vue';
 
 interface AudioTrack {

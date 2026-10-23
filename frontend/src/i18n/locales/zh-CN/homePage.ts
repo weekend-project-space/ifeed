@@ -1,0 +1,1 @@
+export default { recommendationError: '推荐请求出错：', retry: '重试', subtitle: '实时为你刷新阅读灵感', empty: '暂无推荐结果，尝试刷新或多收藏一些文章吧。', loadingMore: '正在加载更多推荐...', loadMoreFailed: '加载更多失败，请重试。', allLoaded: '已加载全部推荐', loadFailed: '推荐文章加载失败' };

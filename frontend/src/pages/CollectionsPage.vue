@@ -1,16 +1,16 @@
 <template>
   <LibraryPageLayout
-      title="我的收藏"
+      :title="t('collectionsPage.title')"
       :total="total"
       :pending="collectionsQuery.isPending.value"
       :fetching="collectionsQuery.isFetching.value"
       :error="errorMessage"
-      :empty-text="folderId ? '这个文件夹还没有收藏' : '这里还没有收藏，阅读文章时可以点击收藏按钮。'"
+      :empty-text="folderId ? t('collectionsPage.folderEmpty') : t('collectionsPage.empty')"
       @refresh="refresh"
   >
     <template #controls>
       <!-- MD3 Filter Chips 文件夹筛选 -->
-      <div class="mb-5 flex flex-wrap items-center gap-1.5" role="group" aria-label="收藏文件夹">
+      <div class="mb-5 flex flex-wrap items-center gap-1.5" role="group" :aria-label="t('collectionsPage.folders')">
         <button
             v-for="filter in filters"
             :key="filter.id"
@@ -33,29 +33,29 @@
             class="inline-flex h-7 items-center rounded-full px-3 text-xs font-medium text-text-secondary transition hover:bg-surface-container hover:text-text disabled:opacity-40"
             @click="foldersQuery.fetchNextPage()"
         >
-          {{ foldersQuery.isFetchingNextPage.value ? '加载中…' : '更多文件夹' }}
+          {{ foldersQuery.isFetchingNextPage.value ? t('collectionsPage.loading') : t('collectionsPage.moreFolders') }}
         </button>
       </div>
 
-      <p v-if="foldersQuery.isPending.value" role="status" class="mb-4 text-xs text-text-secondary">正在加载文件夹…</p>
+      <p v-if="foldersQuery.isPending.value" role="status" class="mb-4 text-xs text-text-secondary">{{ t('collectionsPage.loadingFolders') }}</p>
 
       <div v-if="foldersQuery.isError.value" role="alert" class="mb-4 rounded-2xl bg-red-500/10 p-3 text-xs text-red-600 dark:text-red-400">
-        文件夹加载失败
+        {{ t('collectionsPage.foldersFailed') }}
         <button
             :disabled="foldersQuery.isFetching.value"
             class="ml-1 font-semibold underline disabled:opacity-40"
             @click="foldersQuery.isFetchNextPageError.value ? foldersQuery.fetchNextPage() : foldersQuery.refetch()"
         >
-          重试加载
+          {{ t('collectionsPage.retryLoading') }}
         </button>
       </div>
     </template>
 
-    <ArticleCardList v-if="items.length" :items="items" :loading="false" show-action meta-field="collectedAt" meta-prefix="收藏于 ">
+    <ArticleCardList v-if="items.length" :items="items" :loading="false" show-action meta-field="collectedAt" :meta-prefix="t('collectionsPage.collectedAt')">
       <template #action-dropdown="{ item, close }">
-        <router-link :to="'/articles/' + item.articleId" target="_blank" class="menu-action" @click="close">在新标签页打开</router-link>
+        <router-link :to="'/articles/' + item.articleId" target="_blank" class="menu-action" @click="close">{{ t('collectionsPage.openNewTab') }}</router-link>
         <div class="my-1 border-t border-outline/10"></div>
-        <button :disabled="mutation.isPending.value" class="menu-action text-red-600 dark:text-red-400 hover:bg-red-500/10" @click="remove(item.articleId); close()">取消收藏</button>
+        <button :disabled="mutation.isPending.value" class="menu-action text-red-600 dark:text-red-400 hover:bg-red-500/10" @click="remove(item.articleId); close()">{{ t('collectionsPage.remove') }}</button>
       </template>
     </ArticleCardList>
 
@@ -86,8 +86,10 @@ import { collectionsQueryKey, useCollectionsQuery } from '@/queries/collections'
 import { useCollectionFoldersQuery } from '@/queries/collectionFolders';
 import { useCollectionMutation } from '@/queries/articleActions';
 import { confirm } from '@/composables/confirm';
+import { useI18n } from 'vue-i18n';
 
 defineOptions({ name: 'CollectionsPage' });
+const { t } = useI18n();
 
 const props = defineProps<{ folderId?: string }>();
 const auth = useAuthStore();
@@ -99,8 +101,8 @@ const selectedFolder = computed(() => props.folderId ?? 'all');
 const foldersQuery = useCollectionFoldersQuery();
 
 const filters = computed(() => [
-  { id: 'all', name: '全部收藏' },
-  { id: 'default', name: '默认收藏夹' },
+  { id: 'all', name: t('collectionsPage.all') },
+  { id: 'default', name: t('collectionsPage.default') },
   ...(foldersQuery.data.value?.pages.flatMap(page => page.content) ?? [])
       .map(folder => ({ id: folder.folderId, name: folder.name })),
 ]);
@@ -121,7 +123,7 @@ const refresh = () => Promise.all([collectionsQuery.refetch(), foldersQuery.refe
 
 const remove = async (articleId: string) => {
   if (mutation.isPending.value) return;
-  const confirmed = await confirm({ title: '取消收藏', description: '确定要取消收藏这篇文章吗？' }).catch(() => false);
+  const confirmed = await confirm({ title: t('collectionsPage.cancelTitle'), description: t('collectionsPage.cancelDescription') }).catch(() => false);
   if (confirmed) {
     mutation.mutate({ articleId, collected: false });
   }

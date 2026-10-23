@@ -1,3 +1,4 @@
+import { translate as tr } from '@/i18n';
 import { formatRelativeTime } from '@/utils/datetime';
 import { md2html } from '@/utils/markdown';
 import type { ArticleDto } from '@/api/articles';
@@ -33,14 +34,14 @@ export interface ArticleDetail extends ArticleListItem {
 
 
 export const normalizeArticle = (article: ArticleDto): ArticleListItem => {
-    const feedTitle = article.feedTitle ?? '未知来源';
+    const feedTitle = article.feedTitle ?? tr('common.unknownSource');
     const publishedAt = article.publishedAt;
     const tags = article.tags ?? [];
     return {
         id: String(article.id),
         feedId: article.feedId,
-        title: article.title ?? '未命名文章',
-        summary: article.summary ?? '暂无摘要。',
+        title: article.title ?? tr('common.untitledArticle'),
+        summary: article.summary ?? tr('common.noSummaryPeriod'),
         link: article.link,
         thumbnail: article.thumbnail,
         enclosure: article.enclosure,
@@ -54,7 +55,7 @@ export const normalizeArticle = (article: ArticleDto): ArticleListItem => {
 };
 
 export const normalizeArticleDetail = (article: ArticleDto): ArticleDetail => {
-    const feedTitle = article.feedTitle ?? '未知来源';
+    const feedTitle = article.feedTitle ?? tr('common.unknownSource');
     const publishedAt = article.publishedAt;
     const tags = article.tags ?? [];
     const rawContent = article.content ?? article.summary ?? '';
@@ -62,7 +63,7 @@ export const normalizeArticleDetail = (article: ArticleDto): ArticleDetail => {
     return {
         ...article,
         id: String(article.id),
-        title: article.title ?? '未命名文章',
+        title: article.title ?? tr('common.untitledArticle'),
         summary:article.summary? md2html(article.summary) : '',
         content: md2html(rawContent),
         link: article.link,

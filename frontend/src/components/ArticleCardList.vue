@@ -1,7 +1,7 @@
 <template>
   <!-- 骨架屏 -->
   <div v-if="loading" role="status" aria-live="polite" :class="sizes.skeletonOuter">
-    <span class="sr-only">正在加载列表</span>
+    <span class="sr-only">{{ tr('common.loadingList') }}</span>
     <div v-for="i in 3" :key="i" :class="[sizes.skeletonRow, 'animate-pulse']">
       <div :class="['bg-surface-container rounded-2xl shrink-0', sizes.thumbnail]"></div>
       <div class="flex-1 space-y-2 py-1 sm:space-y-3 sm:py-2">
@@ -22,7 +22,7 @@
             <img
                 v-if="shouldShowImage(item)"
                 :src="item.thumbnail"
-                :alt="item.title || '文章缩略图'"
+                :alt="item.title || tr('common.articleThumbnail')"
                 class="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
                 loading="lazy"
                 referrerpolicy="no-referrer"
@@ -42,7 +42,7 @@
           <!-- 内容主体 -->
           <div class="flex-1 min-w-0 flex flex-col justify-center py-0.5">
             <h3 :class="['font-semibold text-text line-clamp-2 leading-snug group-hover:text-primary transition-colors', sizes.title]">
-              {{ item.title || '未命名文章' }}
+              {{ item.title || tr('common.untitledArticle') }}
             </h3>
             <div :class="['flex items-center gap-1.5 text-text-secondary', sizes.meta]">
               <span v-if="item.feedTitle" class="truncate font-medium">{{ item.feedTitle }}</span>
@@ -61,7 +61,7 @@
               @click.stop.prevent="onActionClick(item, $event)"
               :aria-expanded="activeDropdown === item._key"
               class="flex h-8 w-8 items-center justify-center rounded-full bg-surface/80 shadow-xs backdrop-blur-sm transition-all relative z-20 text-text"
-              :aria-label="actionLabel"
+              :aria-label="actionLabel || tr('common.options')"
           >
             <slot name="action-icon" :item="item">
               <svg class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
@@ -80,7 +80,7 @@
               @click.stop.prevent="onActionClick(item, $event)"
               :aria-expanded="activeDropdown === item._key"
               :class="['rounded-full transition-all relative z-20 hover:bg-surface-container', sizes.actionBtn]"
-              :aria-label="actionLabel"
+              :aria-label="actionLabel || tr('common.options')"
           >
             <slot name="action-icon" :item="item">
               <svg :class="['text-text-secondary', sizes.actionIcon]" viewBox="0 0 24 24" fill="currentColor">
@@ -105,13 +105,14 @@
         <path d="M9 21V9"/>
       </svg>
     </div>
-    <p :class="['text-text-secondary', sizes.emptyText]">暂无文章</p>
+    <p :class="['text-text-secondary', sizes.emptyText]">{{ tr('common.noArticles') }}</p>
   </div>
 
   <div v-if="hasDropdownSlot && activeDropdown" @click="closeDropdown" class="fixed inset-0 z-0"></div>
 </template>
 
 <script setup lang="ts">
+import { translate as tr } from '@/i18n';
 import { ref, computed, useSlots } from 'vue';
 import { formatRelativeTime } from '../utils/datetime';
 
@@ -144,7 +145,7 @@ interface Props {
 
 const props = withDefaults(defineProps<Props>(), {
   showAction: false,
-  actionLabel: '选项',
+  actionLabel: '',
   metaField: 'readAt',
   metaPrefix: '',
   keyField: 'articleId',

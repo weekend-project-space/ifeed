@@ -5,9 +5,9 @@
       <!-- Header -->
       <div class="mb-6 flex items-start justify-between sm:mb-8">
         <div>
-          <h1 class="text-2xl font-bold tracking-tight text-text sm:text-3xl">今日热榜</h1>
+          <h1 class="text-2xl font-bold tracking-tight text-text sm:text-3xl">{{ tr('radarPage.title') }}</h1>
           <p class="mt-1 text-xs text-text-secondary sm:text-sm">
-            过去 {{ windowHoursText }}h
+            {{ tr('radarPage.timeWindow', { hours: windowHoursText }) }}
             <span v-if="generatedAtText" class="before:mx-1.5 before:content-['·']">{{ generatedAtText }}</span>
           </p>
         </div>
@@ -17,7 +17,7 @@
             @click="refresh"
             :disabled="loading"
             class="inline-flex h-9 items-center gap-1.5 rounded-full bg-surface-container/60 px-4 text-xs font-semibold text-text shadow-xs transition hover:bg-surface-container active:scale-[0.98] disabled:opacity-40"
-            aria-label="刷新"
+            :aria-label="tr('common.refresh')"
         >
           <svg
               class="h-3.5 w-3.5 text-text-secondary transition-transform"
@@ -26,7 +26,7 @@
           >
             <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2" />
           </svg>
-          <span>刷新</span>
+          <span>{{ tr('common.refresh') }}</span>
         </button>
       </div>
 
@@ -71,7 +71,7 @@
           <div class="min-w-0 flex-1">
             <div class="flex items-start justify-between gap-3">
               <h2 class="text-sm font-semibold leading-snug text-text line-clamp-2 transition group-hover:text-primary sm:text-base">
-                {{ t.title || '未命名话题' }}
+                {{ t.title || tr('radarPage.untitledTopic') }}
               </h2>
               <svg
                   class="mt-1 h-4 w-4 shrink-0 text-text-secondary opacity-0 transition-opacity group-hover:opacity-100"
@@ -88,7 +88,7 @@
             <!-- 篇数与标签指示条 -->
             <div class="mt-3 flex flex-wrap items-center gap-1.5">
               <span class="inline-flex items-center rounded-full bg-primary/15 px-2.5 py-0.5 text-[11px] font-semibold text-primary">
-                {{ t.articleCount }} 篇
+                {{ tr('common.articleCount', { count: t.articleCount }) }}
               </span>
               <span
                   v-for="kw in (t.topKeywords ?? []).slice(0, 5)"
@@ -122,8 +122,8 @@
             <circle cx="12" cy="12" r="4" />
           </svg>
         </div>
-        <p class="text-base font-bold text-text">暂无热点话题</p>
-        <p class="mt-1 text-xs text-text-secondary">稍后再试，或调整时间窗口</p>
+        <p class="text-base font-bold text-text">{{ tr('radarPage.emptyTitle') }}</p>
+        <p class="mt-1 text-xs text-text-secondary">{{ tr('radarPage.emptyDescription') }}</p>
       </div>
 
     </div>
@@ -131,6 +131,8 @@
 </template>
 
 <script setup lang="ts">
+import { i18n, translate as tr } from '@/i18n';
+import { useDocumentTitle } from '@/composables/documentTitle';
 import { computed, onMounted, watch } from 'vue';
 import { storeToRefs } from 'pinia';
 import { useRoute, useRouter } from 'vue-router';
@@ -138,6 +140,7 @@ import Pagination from '@/components/Pagination.vue';
 import { useRadarStore } from '@/stores/radar';
 
 defineOptions({ name: 'RadarPage' });
+useDocumentTitle(() => tr('radarPage.title'));
 
 const router = useRouter();
 const route = useRoute();
@@ -166,7 +169,7 @@ const generatedAtText = computed(() => {
   try {
     const dt = new Date(generatedAt.value);
     if (Number.isNaN(dt.getTime())) return '';
-    return dt.toLocaleString();
+    return dt.toLocaleString(i18n.global.locale.value);
   } catch {
     return '';
   }

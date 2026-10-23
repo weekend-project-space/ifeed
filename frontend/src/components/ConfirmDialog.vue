@@ -14,11 +14,11 @@
       <div class="flex gap-2.5 justify-end pt-2">
         <button @click="handleCancel"
                 class="inline-flex h-9 items-center justify-center rounded-full px-4 text-xs font-semibold text-text-secondary hover:bg-surface-container transition active:scale-95">
-          {{ cancelText }}
+          {{ cancelText || t('common.cancel') }}
         </button>
         <button @click="handleConfirm" :disabled="confirmDisabled || confirmLoading"
                 class="inline-flex h-9 items-center justify-center rounded-full bg-red-600 px-4 text-xs font-semibold text-white shadow-xs transition hover:bg-red-700 disabled:opacity-40 active:scale-95">
-          {{ confirmLoading ? (confirmLoadingText || confirmText) : confirmText }}
+          {{ confirmLoading ? (confirmLoadingText || t('common.processing')) : (confirmText || t('common.confirm')) }}
         </button>
       </div>
     </div>
@@ -27,6 +27,7 @@
 
 <script setup lang="ts">
 import { withDefaults, defineProps, defineEmits } from 'vue';
+import { useI18n } from 'vue-i18n';
 
 interface Props {
   visible: boolean;
@@ -40,10 +41,8 @@ interface Props {
   closeOnBackdrop?: boolean;
 }
 
+const { t } = useI18n();
 const props = withDefaults(defineProps<Props>(), {
-  confirmText: '确认',
-  cancelText: '取消',
-  confirmLoadingText: '处理中...',
   confirmLoading: false,
   confirmDisabled: false,
   closeOnBackdrop: true,

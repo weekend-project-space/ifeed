@@ -11,11 +11,11 @@
           <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z" />
         </svg>
       </div>
-      <h2 class="text-base font-bold text-text mb-1">请先登录</h2>
-      <p class="mb-5 text-xs text-text-secondary">{{ loginText ?? '登录后即可查看' + title }}</p>
+      <h2 class="text-base font-bold text-text mb-1">{{ tr('common.loginRequired') }}</h2>
+      <p class="mb-5 text-xs text-text-secondary">{{ loginText ?? tr('common.loginToView', { title }) }}</p>
       <router-link :to="{ name: 'auth', query: { redirect: route.fullPath } }"
                    class="inline-flex h-9 items-center justify-center rounded-full bg-primary px-6 text-xs font-semibold text-white shadow-xs transition hover:brightness-105 active:scale-95">
-        前往登录
+        {{ tr('common.goToLogin') }}
       </router-link>
     </div>
 
@@ -23,8 +23,8 @@
     <template v-else>
       <slot name="controls" />
       <div class="mb-4 flex items-center justify-between sm:mb-6">
-        <div class="text-xs font-medium text-text-secondary">{{ totalText ?? '共 ' + total + ' 条' }}</div>
-        <button :disabled="fetching" :aria-label="refreshLabel ?? '刷新' + title"
+        <div class="text-xs font-medium text-text-secondary">{{ totalText ?? tr('common.entryCount', { count: total }) }}</div>
+        <button :disabled="fetching" :aria-label="refreshLabel ?? tr('common.refreshTitle', { title })"
                 class="flex h-8 w-8 items-center justify-center rounded-full text-text-secondary transition hover:bg-surface-container hover:text-text disabled:opacity-40"
                 @click="$emit('refresh')">
           <svg class="h-4 w-4 transition-transform" :class="{ 'animate-spin': fetching }" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -41,7 +41,7 @@
           </svg>
           <span>{{ error }}</span>
         </div>
-        <button :disabled="fetching" class="mt-2 font-semibold underline hover:opacity-80" @click="$emit('refresh')">重试加载列表</button>
+        <button :disabled="fetching" class="mt-2 font-semibold underline hover:opacity-80" @click="$emit('refresh')">{{ tr('common.retryList') }}</button>
       </div>
 
       <ArticleCardList v-if="pending" :items="[]" loading />
@@ -64,6 +64,7 @@
 </template>
 
 <script setup lang="ts">
+import { translate as tr } from '@/i18n';
 import { useRoute } from 'vue-router';
 import ArticleCardList from './ArticleCardList.vue';
 import { useAuthStore } from '@/stores/auth';

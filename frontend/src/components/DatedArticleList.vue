@@ -5,7 +5,7 @@
       <h2 class="text-xs font-semibold tracking-wide text-text-secondary sm:text-sm">{{ group.label }}</h2>
 
       <!-- 文章卡片列表 -->
-      <ArticleCardList :loading="false" :items="group.items" :meta-field="timeField" show-action action-label="文章选项菜单">
+      <ArticleCardList :loading="false" :items="group.items" :meta-field="timeField" show-action :action-label="tr('common.articleOptions')">
         <template #empty-thumbnail>
           <svg class="h-7 w-7 text-text-muted sm:h-8 sm:w-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
             <path stroke-linecap="round" stroke-linejoin="round" d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
@@ -14,7 +14,7 @@
         </template>
         <template #action-dropdown="{ item, close }">
           <router-link :to="`/articles/${item.articleId}`" target="_blank" class="menu-action" @click="close">
-            在新标签页打开
+            {{ tr('common.openInNewTab') }}
           </router-link>
           <div class="border-t border-outline/10 my-1"></div>
           <button :disabled="removing" class="menu-action text-red-600 dark:text-red-400 hover:bg-red-500/10 disabled:opacity-40" @click="$emit('remove', item.articleId); close()">
@@ -27,12 +27,15 @@
 </template>
 
 <script setup lang="ts">
+import { translate as tr } from '@/i18n';
 import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 import ArticleCardList from './ArticleCardList.vue';
 import type { HistoryEntryDto } from '@/api/history';
 
 type DatedArticle = HistoryEntryDto & { likedAt?: string };
 const props = defineProps<{ items: DatedArticle[]; timeField: 'readAt' | 'likedAt'; removing: boolean; removeLabel: string }>();
+const { t, locale } = useI18n();
 defineEmits<{ remove: [articleId: string] }>();
 
 const groups = computed(() => {
@@ -44,8 +47,8 @@ const groups = computed(() => {
   for (const item of props.items) {
     const date = new Date(item[props.timeField] ?? '');
     const day = Number.isNaN(date.getTime()) ? -Infinity : new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
-    const label = day === -Infinity ? '时间未知' : day === todayStart ? '今天' : day === yesterdayStart ? '昨天'
-        : `${date.getFullYear() === today.getFullYear() ? '' : `${date.getFullYear()}年`}${date.getMonth() + 1}月${date.getDate()}日`;
+    const label = day === -Infinity ? t('common.unknownTime') : day === todayStart ? t('common.today') : day === yesterdayStart ? t('common.yesterday')
+        : new Intl.DateTimeFormat(locale.value, { year: 'numeric', month: 'long', day: 'numeric' }).format(date);
     if (!grouped.has(day)) grouped.set(day, { key: day, label, items: [] });
     grouped.get(day)!.items.push(item);
   }

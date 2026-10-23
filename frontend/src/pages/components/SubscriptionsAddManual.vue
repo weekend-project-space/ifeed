@@ -1,7 +1,7 @@
 <template>
   <div class="text-text">
     <p class="mb-4 text-xs leading-relaxed text-text-secondary sm:text-sm">
-      粘贴 RSS 地址或网站链接，系统会自动探测并生成标准化订阅源
+      {{ tr('subscriptionsAddManual.manualHint') }}
     </p>
 
     <div class="mb-5">
@@ -19,7 +19,7 @@
         <input
             v-model.trim="newFeedUrl"
             type="search"
-            placeholder="粘贴 RSS 地址或网站主页链接..."
+            :placeholder="tr('subscriptionsAddManual.urlPlaceholder')"
             class="w-full rounded-full border border-outline/25 bg-surface-container/40 py-3 pl-11 pr-24 text-xs text-text outline-none transition placeholder:text-text-secondary/60 focus:border-primary focus:bg-surface focus:ring-2 focus:ring-primary/20 sm:text-sm"
         />
 
@@ -33,7 +33,7 @@
               <path d="M21 12a9 9 0 1 1-6.219-8.56" />
             </svg>
           </span>
-          <span v-else>添加</span>
+          <span v-else>{{ tr('common.add') }}</span>
         </button>
       </form>
     </div>
@@ -46,6 +46,7 @@
 </template>
 
 <script setup lang="ts">
+import { translate as tr } from '@/i18n';
 import { ref } from 'vue';
 import { useSubscriptionMutation } from '@/queries/subscriptions';
 

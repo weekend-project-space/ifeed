@@ -4,10 +4,10 @@
       <!-- 页面头部 -->
       <div class="mb-7">
         <h1 class="text-2xl font-bold tracking-tight text-text sm:text-3xl">
-          发现订阅源
+          {{ tr('subscriptionDiscoveryPage.title') }}
         </h1>
         <p class="mt-1 text-xs text-text-secondary sm:text-sm">
-          浏览并订阅你感兴趣的内容源
+          {{ tr('subscriptionDiscoveryPage.subtitle') }}
         </p>
       </div>
 
@@ -24,7 +24,7 @@
                 v-model="searchQuery"
                 @input="scheduleSearch"
                 type="text"
-                placeholder="搜索订阅源名称、描述或网址..."
+                :placeholder="tr('subscriptionDiscoveryPage.searchPlaceholder')"
                 class="w-full rounded-full border border-outline/20 bg-surface-container/40 py-2.5 pl-11 pr-4 text-xs text-text outline-none transition placeholder:text-text-secondary/60 focus:border-primary focus:bg-surface focus:ring-2 focus:ring-primary/20 sm:text-sm"
             />
           </div>
@@ -34,12 +34,12 @@
               type="button"
               @click="showManualAddDialog = true"
               class="inline-flex h-10 items-center gap-2 rounded-full bg-surface-container/60 px-4 text-xs font-semibold text-text shadow-xs transition hover:bg-surface-container active:scale-[0.98] sm:text-xs"
-              title="手动添加订阅源"
+              :title="tr('subscriptionDiscoveryPage.addManuallyTitle')"
           >
             <svg class="h-4 w-4 text-text-secondary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14M5 12h14" />
             </svg>
-            <span class="hidden sm:inline">手动添加</span>
+            <span class="hidden sm:inline">{{ tr('subscriptionDiscoveryPage.addManually') }}</span>
           </button>
 
           <!-- OPML 导入按钮 -->
@@ -47,14 +47,14 @@
               type="button"
               @click="showOpmlDialog = true"
               class="inline-flex h-10 items-center gap-2 rounded-full bg-surface-container/60 px-4 text-xs font-semibold text-text shadow-xs transition hover:bg-surface-container active:scale-[0.98] sm:text-xs"
-              title="导入 OPML 文件"
+              :title="tr('subscriptionDiscoveryPage.importOpmlTitle')"
           >
             <svg class="h-4 w-4 text-text-secondary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path stroke-linecap="round" stroke-linejoin="round" d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
               <polyline stroke-linecap="round" stroke-linejoin="round" points="7 10 12 15 17 10" />
               <line stroke-linecap="round" stroke-linejoin="round" x1="12" y1="15" x2="12" y2="3" />
             </svg>
-            <span class="hidden sm:inline">导入 OPML</span>
+            <span class="hidden sm:inline">{{ tr('subscriptionDiscoveryPage.importOpml') }}</span>
           </button>
         </div>
       </div>
@@ -69,7 +69,7 @@
             <rect x="3" y="14" width="7" height="7" rx="2" />
           </svg>
           <h2 class="text-xs font-semibold tracking-wide text-text-secondary">
-            推荐分类
+            {{ tr('subscriptionDiscoveryPage.categories') }}
           </h2>
         </div>
 
@@ -92,10 +92,10 @@
       <!-- 内容区 -->
       <div>
         <div v-if="categoriesQuery.isError.value" class="mb-4 rounded-xl bg-red-500/10 px-4 py-2.5 text-xs text-red-600 dark:text-red-400" role="alert">
-          分类加载失败。<button type="button" class="underline ml-1 font-semibold" @click="categoriesQuery.refetch()">重试</button>
+          {{ tr('subscriptionDiscoveryPage.categoriesFailed') }}<button type="button" class="underline ml-1 font-semibold" @click="categoriesQuery.refetch()">{{ tr('common.retry') }}</button>
         </div>
         <div v-if="feedError" class="mb-4 rounded-xl bg-red-500/10 px-4 py-2.5 text-xs text-red-600 dark:text-red-400" role="alert">
-          订阅源加载失败。<button type="button" class="underline ml-1 font-semibold" @click="feedsQuery.refetch()">重试</button>
+          {{ tr('subscriptionDiscoveryPage.feedsFailed') }}<button type="button" class="underline ml-1 font-semibold" @click="feedsQuery.refetch()">{{ tr('common.retry') }}</button>
         </div>
         <div v-if="subscriptionError" class="mb-4 rounded-xl bg-red-500/10 px-4 py-2.5 text-xs text-red-600 dark:text-red-400" role="alert">
           {{ subscriptionError }}
@@ -164,7 +164,7 @@
             <button
                 @click.stop.prevent="toggleSubscribe(feed)"
                 :disabled="subscribing.has(feed.feedId)"
-                :title="feed.subscribed ? '取消订阅' : '订阅'"
+                :title="feed.subscribed ? tr('common.unsubscribe') : tr('common.subscribe')"
                 class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition-all duration-200 disabled:opacity-40"
                 :class="feed.subscribed
                   ? 'bg-surface-container text-text-secondary hover:bg-surface-container-high'
@@ -221,10 +221,10 @@
                 <svg class="h-3.5 w-3.5 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <path d="M21 12a9 9 0 1 1-6.219-8.56" />
                 </svg>
-                <span>处理中</span>
+                <span>{{ tr('common.processingShort') }}</span>
               </span>
               <span v-else>
-                {{ feed.subscribed ? '已订阅' : '订阅' }}
+                {{ feed.subscribed ? tr('common.subscribed') : tr('common.subscribe') }}
               </span>
             </button>
           </article>
@@ -238,19 +238,19 @@
               <path d="m21 21-4.35-4.35" />
             </svg>
           </div>
-          <h3 class="text-sm font-semibold text-text">未找到订阅源</h3>
-          <p class="mt-1 text-xs text-text-secondary">尝试切换其他分类或精简搜索关键词</p>
+          <h3 class="text-sm font-semibold text-text">{{ tr('subscriptionDiscoveryPage.emptyTitle') }}</h3>
+          <p class="mt-1 text-xs text-text-secondary">{{ tr('subscriptionDiscoveryPage.emptyDescription') }}</p>
         </div>
       </div>
 
       <!-- 分页与加载状态 -->
       <div v-if="feeds.length" class="mt-8 flex flex-col items-center gap-2.5" aria-live="polite">
-        <p v-if="isFetchingNextPage" class="text-xs text-text-secondary">正在加载更多订阅源…</p>
+        <p v-if="isFetchingNextPage" class="text-xs text-text-secondary">{{ tr('subscriptionDiscoveryPage.loadingMoreFeeds') }}</p>
         <template v-else-if="nextPageError">
-          <p class="text-xs text-red-600 dark:text-red-400">加载失败</p>
-          <button type="button" class="inline-flex h-8 items-center rounded-full bg-surface-container px-4 text-xs font-semibold text-text hover:bg-surface-container-high" @click="loadMore">重试</button>
+          <p class="text-xs text-red-600 dark:text-red-400">{{ tr('common.loadFailed') }}</p>
+          <button type="button" class="inline-flex h-8 items-center rounded-full bg-surface-container px-4 text-xs font-semibold text-text hover:bg-surface-container-high" @click="loadMore">{{ tr('common.retry') }}</button>
         </template>
-        <p v-else-if="!hasNextPage" class="text-xs text-text-secondary/60">已加载全部订阅源</p>
+        <p v-else-if="!hasNextPage" class="text-xs text-text-secondary/60">{{ tr('subscriptionDiscoveryPage.allFeedsLoaded') }}</p>
       </div>
       <div ref="loadMoreSentinel" class="h-1" aria-hidden="true"></div>
     </div>
@@ -265,7 +265,7 @@
         <div class="absolute inset-0 bg-black/45" />
         <div class="relative z-10 w-full max-w-md overflow-hidden rounded-[28px] bg-surface shadow-2xl">
           <div class="flex items-center justify-between border-b border-outline/10 px-6 py-4">
-            <h3 class="text-base font-semibold text-text">手动添加订阅源</h3>
+            <h3 class="text-base font-semibold text-text">{{ tr('subscriptionDiscoveryPage.addManuallyTitle') }}</h3>
             <button
                 @click="showManualAddDialog = false"
                 class="flex h-8 w-8 items-center justify-center rounded-full text-text-secondary transition hover:bg-surface-container hover:text-text"
@@ -292,7 +292,7 @@
         <div class="absolute inset-0 bg-black/45" />
         <div class="relative z-10 w-full max-w-2xl overflow-hidden rounded-[28px] bg-surface shadow-2xl">
           <div class="flex items-center justify-between border-b border-outline/10 px-6 py-4">
-            <h3 class="text-base font-semibold text-text">导入 OPML 文件</h3>
+            <h3 class="text-base font-semibold text-text">{{ tr('subscriptionDiscoveryPage.importOpmlTitle') }}</h3>
             <button
                 @click="showOpmlDialog = false"
                 class="flex h-8 w-8 items-center justify-center rounded-full text-text-secondary transition hover:bg-surface-container hover:text-text"
@@ -312,6 +312,8 @@
 </template>
 
 <script setup lang="ts">
+import { translate as tr } from '@/i18n';
+import { useDocumentTitle } from '@/composables/documentTitle';
 import { computed, onActivated, onBeforeUnmount, onDeactivated, ref, watch } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { useDiscoveryCategoriesQuery, useInfiniteDiscoveryFeedsQuery } from '@/queries/discovery';
@@ -345,12 +347,13 @@ const isFetchingNextPage = feedsQuery.isFetchingNextPage;
 const nextPageError = feedsQuery.isFetchNextPageError;
 const feedError = computed(() => feedsQuery.isError.value && !nextPageError.value);
 const selectedCategoryName = computed(() =>
-    categories.value.find(category => category.id === selectedCategory.value)?.name ?? '全部',
+    categories.value.find(category => category.id === selectedCategory.value)?.name ?? tr('common.all'),
 );
-const viewModes = [
-  { id: 'grid', name: '网格视图' },
-  { id: 'list', name: '列表视图' },
-];
+useDocumentTitle(() => tr('subscriptionDiscoveryPage.title'));
+const viewModes = computed(() => [
+  { id: 'grid', name: tr('subscriptionDiscoveryPage.gridView') },
+  { id: 'list', name: tr('subscriptionDiscoveryPage.listView') },
+]);
 
 const subscriptionMutation = useSubscriptionMutation();
 const subscribing = ref(new Set<string>());
@@ -364,7 +367,7 @@ const toggleSubscribe = async (feed: typeof feeds.value[number]) => {
       feedId: feed.feedId, feedUrl: feed.url, subscribed: feed.subscribed,
     });
   } catch (error) {
-    subscriptionError.value = error instanceof Error ? error.message : '订阅操作失败，请重试';
+    subscriptionError.value = error instanceof Error ? error.message : tr('subscriptionDiscoveryPage.subscriptionFailed');
   } finally {
     subscribing.value.delete(feed.feedId);
   }

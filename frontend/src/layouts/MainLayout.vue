@@ -20,7 +20,7 @@
           <!-- 移动端非首页返回按钮 -->
           <button v-else type="button"
                   class="-ml-2 flex h-9 w-9 items-center justify-center rounded-full text-text-secondary transition hover:bg-surface-container hover:text-text lg:hidden"
-                  @click="router.back()" aria-label="返回">
+                  @click="router.back()" :aria-label="t('mainLayout.back')">
             <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
             </svg>
@@ -39,7 +39,7 @@
         <!-- 中间：桌面端 MD3 搜索胶囊 -->
         <div class="hidden lg:flex flex-1 max-w-xl mx-auto">
           <div class="relative w-full group">
-            <input v-model="search" type="search" placeholder="搜索文章、标签、订阅..."
+            <input v-model="search" type="search" :placeholder="t('mainLayout.searchPlaceholder')"
                    class="w-full h-10 pl-24 pr-11 rounded-full border border-outline/20 bg-surface-container/50 text-xs text-text outline-none transition placeholder:text-text-secondary/60 focus:border-primary focus:bg-surface focus:ring-2 focus:ring-primary/20 sm:text-sm"
                    @focus="searchFocused = true" @blur="searchFocused = false" @keyup.enter="handleSearch" />
 
@@ -49,7 +49,7 @@
                       class="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold transition select-none"
                       :class="searchFocused ? 'bg-primary/10 text-primary' : 'bg-surface text-text-secondary hover:bg-surface-container-high hover:text-text shadow-2xs'"
                       @click="toggleSourceDropdown">
-                <span>{{ searchSource === 'owner' ? '订阅' : '发现' }}</span>
+                <span>{{ searchSource === 'owner' ? t('mainLayout.feedsShort') : t('mainLayout.discover') }}</span>
                 <svg class="h-3 w-3 opacity-75" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
                 </svg>
@@ -62,13 +62,13 @@
                         class="w-full px-3.5 py-2 text-xs text-left transition select-none"
                         :class="searchSource === 'owner' ? 'bg-primary/10 font-bold text-primary' : 'text-text hover:bg-surface-container'"
                         @click="selectSource('owner')">
-                  订阅
+                  {{ t('mainLayout.feedsShort') }}
                 </button>
                 <button type="button"
                         class="w-full px-3.5 py-2 text-xs text-left transition select-none"
                         :class="searchSource === 'global' ? 'bg-primary/10 font-bold text-primary' : 'text-text hover:bg-surface-container'"
                         @click="selectSource('global')">
-                  发现
+                  {{ t('mainLayout.discover') }}
                 </button>
               </div>
             </div>
@@ -91,6 +91,7 @@
 
           <!-- 移动端搜索与头像 -->
           <div v-show="route.name !== 'article'" class="flex items-center gap-2 lg:hidden">
+            <button type="button" class="rounded-full px-2.5 py-1.5 text-[11px] font-semibold text-text-secondary hover:bg-surface-container" :aria-label="t('mainLayout.language')" @click="setLocale(locale === 'en' ? 'zh-CN' : 'en')">{{ locale === 'en' ? tr('mainLayout.chineseSwitch') : 'EN' }}</button>
             <button type="button"
                     class="flex h-9 w-9 items-center justify-center rounded-full text-text-secondary transition hover:bg-surface-container hover:text-text active:scale-95"
                     @click="openSearchPage">
@@ -129,7 +130,7 @@
               <svg class="h-4 w-4 text-text-secondary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M12 5v14M5 12h14"></path>
               </svg>
-              <span>订阅</span>
+              <span>{{ t('mainLayout.subscribeAction') }}</span>
             </RouterLink>
 
             <!-- 用户信息菜单 (MD3 Surface Dropdown) -->
@@ -147,7 +148,7 @@
                   class="absolute right-0 mt-2 w-60 origin-top-right rounded-2xl bg-surface border border-outline/10 shadow-2xl overflow-hidden z-50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 transform scale-95 group-hover:scale-100">
                 <div class="px-4 py-3.5 border-b border-outline/10 bg-surface-container/20">
                   <p class="text-xs font-bold text-text truncate">
-                    {{ user?.username ?? '访客' }}
+                    {{ user?.username ?? t('mainLayout.guest') }}
                   </p>
                   <p class="text-[11px] text-text-secondary truncate mt-0.5">
                     {{ user?.email ?? '' }}
@@ -162,7 +163,7 @@
                             d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 010 .255c-.007.378.138.75.43.99l1.005.828c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 010-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.281z" />
                       <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                     </svg>
-                    <span>管理订阅</span>
+                    <span>{{ t('mainLayout.manageSubscriptions') }}</span>
                   </RouterLink>
                 </div>
 
@@ -174,8 +175,13 @@
                       <path stroke-linecap="round" stroke-linejoin="round"
                             d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                     </svg>
-                    <span>退出登录</span>
-                  </button>
+                  <span>{{ t('mainLayout.logout') }}</span>
+                </button>
+              </div>
+                <div class="border-t border-outline/10 p-1">
+                  <p class="px-3 py-1.5 text-[10px] font-semibold text-text-secondary">{{ t('mainLayout.language') }}</p>
+                  <button type="button" class="w-full rounded-xl px-3 py-2 text-left text-xs text-text hover:bg-surface-container" @click="setLocale('zh-CN')">{{ t('mainLayout.chinese') }}<span v-if="locale === 'zh-CN'" class="float-right text-primary">✓</span></button>
+                  <button type="button" class="w-full rounded-xl px-3 py-2 text-left text-xs text-text hover:bg-surface-container" @click="setLocale('en')">{{ t('mainLayout.english') }}<span v-if="locale === 'en'" class="float-right text-primary">✓</span></button>
                 </div>
               </div>
             </div>
@@ -197,7 +203,7 @@
               </svg>
             </button>
             <div class="flex-1 relative">
-              <input ref="mobileSearchInput" v-model="search" type="search" placeholder="搜索文章、标签、订阅..."
+              <input ref="mobileSearchInput" v-model="search" type="search" :placeholder="t('mainLayout.searchPlaceholder')"
                      class="w-full h-10 pl-4 pr-11 rounded-full border border-outline/20 bg-surface-container/40 text-xs text-text outline-none focus:border-primary focus:bg-surface focus:ring-2 focus:ring-primary/20 transition"
                      @keyup.enter="handleSearchAndClose" />
               <button v-if="search" type="button"
@@ -214,19 +220,19 @@
             <button type="button" class="flex-1 py-1.5 px-4 rounded-full text-xs font-semibold transition"
                     :class="searchSource === 'owner' ? 'bg-primary/15 text-primary' : 'bg-surface-container/60 text-text-secondary'"
                     @click="searchSource = 'owner'">
-              我的订阅
+              {{ t('mainLayout.subscribed') }}
             </button>
             <button type="button" class="flex-1 py-1.5 px-4 rounded-full text-xs font-semibold transition"
                     :class="searchSource === 'global' ? 'bg-primary/15 text-primary' : 'bg-surface-container/60 text-text-secondary'"
                     @click="searchSource = 'global'">
-              全局发现
+              {{ t('mainLayout.discover') }}
             </button>
           </div>
 
           <div class="flex-1 overflow-y-auto p-4">
             <div v-if="!search" class="space-y-4">
               <div v-if="recentSearches.length > 0">
-                <h3 class="text-xs font-bold text-text-secondary uppercase tracking-wider mb-2.5">最近搜索</h3>
+                <h3 class="text-xs font-bold text-text-secondary uppercase tracking-wider mb-2.5">{{ t('mainLayout.recentSearches') }}</h3>
                 <div class="space-y-1">
                   <button v-for="term in recentSearches" :key="term" type="button"
                           class="flex items-center gap-3 w-full px-3.5 py-2.5 rounded-2xl hover:bg-surface-container/60 transition text-left"
@@ -268,33 +274,33 @@
             <RouterLink :to="{ name: 'home' }"
                         class="flex flex-col items-center justify-center w-14 py-2 rounded-2xl transition text-xs select-none"
                         :class="isActiveRoute('home') ? 'bg-primary/15 font-bold text-primary shadow-2xs' : 'text-text-secondary hover:bg-surface-container/60 hover:text-text'"
-                        title="首页">
+                        :title="t('mainLayout.home')">
               <svg class="h-5 w-5 mb-1" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" :d="icons.home" />
               </svg>
-              <span class="text-[10px]">首页</span>
+              <span class="text-[10px]">{{ t('mainLayout.home') }}</span>
             </RouterLink>
 
             <!-- 今日 -->
             <RouterLink :to="{ name: 'radar' }"
                         class="flex flex-col items-center justify-center w-14 py-2 rounded-2xl transition text-xs select-none"
                         :class="isActiveRoute('radar') ? 'bg-primary/15 font-bold text-primary shadow-2xs' : 'text-text-secondary hover:bg-surface-container/60 hover:text-text'"
-                        title="今日">
+                        :title="t('mainLayout.today')">
               <svg class="h-5 w-5 mb-1" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" :d="icons.radar" />
               </svg>
-              <span class="text-[10px]">今日</span>
+              <span class="text-[10px]">{{ t('mainLayout.today') }}</span>
             </RouterLink>
 
             <!-- 追踪 -->
             <RouterLink :to="{ name: 'topicTracking' }"
                         class="flex flex-col items-center justify-center w-14 py-2 rounded-2xl transition text-xs select-none"
                         :class="isActiveRoute('topicTracking') ? 'bg-primary/15 font-bold text-primary shadow-2xs' : 'text-text-secondary hover:bg-surface-container/60 hover:text-text'"
-                        title="追踪">
+                        :title="t('mainLayout.tracking')">
               <svg class="h-5 w-5 mb-1" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" :d="icons.topic" />
               </svg>
-              <span class="text-[10px]">追踪</span>
+              <span class="text-[10px]">{{ t('mainLayout.tracking') }}</span>
             </RouterLink>
 
             <!-- 订阅项：带透明连桥的 Hover 展开菜单 -->
@@ -303,11 +309,11 @@
               <RouterLink :to="{ name: 'feedsSubscriptions' }"
                           class="flex flex-col items-center justify-center w-14 py-2 rounded-2xl transition text-xs relative select-none"
                           :class="isActiveRoute('feedsSubscriptions') ? 'bg-primary/15 font-bold text-primary shadow-2xs' : 'text-text-secondary hover:bg-surface-container/60 hover:text-text'"
-                          title="订阅">
+                          :title="t('mainLayout.subscriptions')">
                 <svg class="h-5 w-5 mb-1" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" :d="icons.inbox" />
                 </svg>
-                <span class="text-[10px]">订阅</span>
+                <span class="text-[10px]">{{ t('mainLayout.feedsShort') }}</span>
                 <span v-if="hasUnreadSubscriptions" class="absolute top-2 right-3 h-2 w-2 rounded-full bg-primary" />
               </RouterLink>
 
@@ -316,9 +322,9 @@
                   class="invisible opacity-0 group-hover/sub:visible group-hover/sub:opacity-100 transition-all duration-200 ease-out transform scale-95 group-hover/sub:scale-100 absolute left-full top-0 pl-2 w-64 z-50 pointer-events-none group-hover/sub:pointer-events-auto">
                 <div class="rounded-[24px] border border-outline/15 bg-surface/95 backdrop-blur-xl shadow-2xl p-2">
                   <div class="flex items-center justify-between px-3 py-2 border-b border-outline/10 mb-1">
-                    <span class="text-xs font-bold text-text">我的订阅源</span>
+                    <span class="text-xs font-bold text-text">{{ t('mainLayout.feeds') }}</span>
                     <RouterLink :to="{ name: 'feedsSubscriptions' }" class="text-[11px] font-medium text-primary hover:underline">
-                      查看全部 ({{ subscriptionsStore.items.length }})
+                      {{ t('mainLayout.viewAll', { count: subscriptionsStore.items.length }) }}
                     </RouterLink>
                   </div>
 
@@ -343,7 +349,7 @@
                     </RouterLink>
 
                     <div v-if="!subscriptionsStore.items.length" class="py-6 text-center text-xs text-text-secondary">
-                      暂无订阅
+                      {{ t('mainLayout.emptySubscriptions') }}
                     </div>
                   </div>
                 </div>
@@ -354,7 +360,7 @@
             <RouterLink :to="{ name: 'upgrade' }"
                         class="flex flex-col items-center justify-center w-14 py-2 rounded-2xl transition text-xs select-none"
                         :class="isActiveRoute('upgrade') ? 'bg-primary/15 font-bold text-primary shadow-2xs' : 'text-text-secondary hover:bg-surface-container/60 hover:text-text'"
-                        title="我的">
+                        :title="t('mainLayout.my')">
               <div class="relative mb-1">
                 <img v-if="user && user.avatarUrl" :src="user.avatarUrl" class="h-5 w-5 rounded-full object-cover" />
                 <div v-else
@@ -362,7 +368,7 @@
                   {{ userInitials }}
                 </div>
               </div>
-              <span class="text-[10px]">我的</span>
+              <span class="text-[10px]">{{ t('mainLayout.my') }}</span>
             </RouterLink>
           </nav>
 
@@ -439,7 +445,7 @@
                     </svg>
                   </div>
                 </div>
-                <span class="text-[11px] text-center text-text font-medium leading-tight">全部</span>
+                <span class="text-[11px] text-center text-text font-medium leading-tight">{{ t('mainLayout.all') }}</span>
               </RouterLink>
 
               <RouterLink v-for="subscription in subscriptionsStore.items" :key="subscription.feedId"
@@ -503,7 +509,7 @@
               <path stroke-linecap="round" stroke-linejoin="round" :d="icons.home" />
             </svg>
           </div>
-          <span class="text-[10px] font-semibold mt-0.5">首页</span>
+          <span class="text-[10px] font-semibold mt-0.5">{{ t('mainLayout.home') }}</span>
         </RouterLink>
 
         <!-- 追踪 Tab -->
@@ -516,7 +522,7 @@
               <path stroke-linecap="round" stroke-linejoin="round" :d="icons.topic" />
             </svg>
           </div>
-          <span class="text-[10px] font-semibold mt-0.5">追踪</span>
+          <span class="text-[10px] font-semibold mt-0.5">{{ t('mainLayout.tracking') }}</span>
         </RouterLink>
 
         <!-- 发现 Tab -->
@@ -540,7 +546,7 @@
               <path stroke-linecap="round" stroke-linejoin="round" :d="icons.inbox" />
             </svg>
           </div>
-          <span class="text-[10px] font-semibold mt-0.5">订阅</span>
+          <span class="text-[10px] font-semibold mt-0.5">{{ t('mainLayout.feedsShort') }}</span>
           <span v-if="hasUnreadSubscriptions" class="absolute top-1.5 right-6 h-2 w-2 rounded-full bg-primary" />
         </RouterLink>
 
@@ -556,7 +562,7 @@
               {{ userInitials }}
             </div>
           </div>
-          <span class="text-[10px] font-semibold mt-0.5">我的</span>
+          <span class="text-[10px] font-semibold mt-0.5">{{ t('mainLayout.my') }}</span>
         </RouterLink>
       </div>
     </nav>
@@ -564,6 +570,7 @@
 </template>
 
 <script setup lang="ts">
+import { translate as tr } from '@/i18n';
 import { computed, onMounted, onUnmounted, reactive, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import type { RouteLocationNormalizedLoaded, RouteLocationRaw } from 'vue-router';
@@ -573,6 +580,11 @@ import { useThemeStore } from '../stores/theme';
 import { useSubscriptionsStore } from '../stores/subscriptions';
 import { useMixFeedsStore } from "../stores/mixFeeds";
 import GlobalAudioPlayer from "../components/GlobalAudioPlayer.vue";
+import { useI18n } from 'vue-i18n';
+import { setLocale as changeLocale, type Locale } from '@/i18n';
+
+const { t, locale } = useI18n();
+const setLocale = (nextLocale: Locale) => changeLocale(nextLocale);
 
 const icons = {
   menu: 'M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5',
@@ -640,13 +652,13 @@ type NavSection = {
   items: NavItem[];
 };
 
-const baseNavSections: NavSection[] = [
+const baseNavSections = computed<NavSection[]>(() => [
   {
     id: 'primary',
     items: [
       {
         id: 'home',
-        label: '首页',
+        label: t('mainLayout.home'),
         to: { name: 'home' as const },
         icon: { stroke: true, paths: [icons.home], viewBox: '0 0 24 24' },
         activeMatch: (current) => {
@@ -657,21 +669,21 @@ const baseNavSections: NavSection[] = [
       },
       {
         id: 'radar',
-        label: '今日',
+        label: t('mainLayout.today'),
         to: { name: 'radar' as const },
         icon: { stroke: true, paths: [icons.radar], viewBox: '0 0 24 24' },
         activeMatch: (current) => current.name === 'radar' || current.name === 'radarTopic'
       },
       {
         id: 'topic-tracking',
-        label: '追踪',
+        label: t('mainLayout.tracking'),
         to: { name: 'topicTracking' as const },
         icon: { stroke: true, paths: [icons.topic], viewBox: '0 0 24 24' },
         activeMatch: (current) => current.name === 'topicTracking'
       }
     ]
   }
-];
+]);
 
 const showAllSubscriptions = ref(false);
 
@@ -681,7 +693,7 @@ const subscriptionNavSection = computed<NavSection>(() => {
         s.title?.trim() ||
         (() => {
           const candidate = s.siteUrl || s.url;
-          if (!candidate) return '订阅源';
+          if (!candidate) return tr('common.feed');
           try {
             return new URL(candidate).hostname || candidate;
           } catch {
@@ -722,7 +734,7 @@ const subscriptionNavSection = computed<NavSection>(() => {
   if (entries.length > 7) {
     items.push({
       id: 'toggle-subscriptions',
-      label: showAllSubscriptions.value ? '折叠' : `展开（${entries.length}）`,
+      label: showAllSubscriptions.value ? t('mainLayout.collapse') : t('mainLayout.expand', { count: entries.length }),
       action: () => {
         showAllSubscriptions.value = !showAllSubscriptions.value;
       },
@@ -736,7 +748,7 @@ const subscriptionNavSection = computed<NavSection>(() => {
 
   return {
     id: 'subscriptions',
-    title: '订阅',
+    title: t('mainLayout.subscriptions'),
     to: { name: 'feedsSubscriptions' as const },
     activeMatch: (current) => current.name === 'feedsSubscriptions',
     items
@@ -745,24 +757,24 @@ const subscriptionNavSection = computed<NavSection>(() => {
 
 const navSections = computed<NavSection[]>(() => {
   return [
-    ...baseNavSections,
+    ...baseNavSections.value,
     subscriptionNavSection.value,
     {
       id: 'you',
-      title: '我',
+      title: t('mainLayout.my'),
       to: { name: 'upgrade' as const },
       activeMatch: (current) => current.name === 'upgrade',
       items: [
         {
           id: 'history',
-          label: '历史记录',
+          label: t('mainLayout.history'),
           to: { name: 'history' as const },
           icon: { stroke: true, paths: [icons.clock], viewBox: '0 0 24 24' },
           activeMatch: (current) => current.name === 'history'
         },
         {
           id: 'library',
-          label: '收藏夹',
+          label: t('mainLayout.collections'),
           to: { name: 'collections' as const },
           icon: { stroke: true, paths: [icons.bookmark], viewBox: '0 0 24 24' },
           activeMatch: (current) => {
@@ -772,7 +784,7 @@ const navSections = computed<NavSection[]>(() => {
         },
         {
           id: 'likes',
-          label: '喜欢',
+          label: t('mainLayout.likes'),
           to: { name: 'likes' as const },
           icon: {
             stroke: true,
@@ -871,7 +883,7 @@ const getSubscriptionLabel = (subscription: any): string => {
     return subscription.title.trim();
   }
   const candidate = subscription.siteUrl || subscription.url;
-  if (!candidate) return '订阅源';
+  if (!candidate) return tr('common.feed');
   try {
     return new URL(candidate).hostname || candidate;
   } catch {

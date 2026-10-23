@@ -6,7 +6,7 @@
       <div class="p-5">
         <header class="mb-4 flex items-center justify-between gap-3">
           <h2 class="text-lg font-semibold">{{ title }}</h2>
-          <button type="button" aria-label="关闭弹窗" :disabled="busy"
+          <button type="button" :aria-label="tr('common.closeDialog')" :disabled="busy"
             class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-text-secondary transition hover:bg-surface-container hover:text-text disabled:opacity-50"
             @click="close">
             <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
@@ -21,6 +21,7 @@
 </template>
 
 <script setup lang="ts">
+import { translate as tr } from '@/i18n';
 import { onBeforeUnmount, onMounted, ref } from 'vue';
 
 const props = defineProps<{ title: string; busy?: boolean }>();

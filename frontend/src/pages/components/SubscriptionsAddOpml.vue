@@ -1,7 +1,7 @@
 <template>
   <div class="text-text">
     <p class="mb-4 text-xs leading-relaxed text-text-secondary sm:text-sm">
-      上传 OPML 文件批量导入订阅，文件大小建议不超过 2 MB
+      {{ tr('subscriptionsAddOpml.uploadHint') }}
     </p>
 
     <!-- 选择文件表面容器 -->
@@ -13,8 +13,8 @@
           </svg>
         </div>
         <div class="min-w-0 flex-1">
-          <p class="text-xs font-semibold text-text sm:text-sm">选择本地 OPML 文件</p>
-          <p class="mt-0.5 text-[11px] text-text-secondary">支持各大阅读器导出的 .opml 与 .xml 格式</p>
+          <p class="text-xs font-semibold text-text sm:text-sm">{{ tr('subscriptionsAddOpml.chooseFile') }}</p>
+          <p class="mt-0.5 text-[11px] text-text-secondary">{{ tr('subscriptionsAddOpml.fileFormats') }}</p>
         </div>
       </div>
 
@@ -34,7 +34,7 @@
           <svg v-if="opmlPreviewLoading" class="h-3.5 w-3.5 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
             <path d="M21 12a9 9 0 1 1-6.219-8.56" />
           </svg>
-          <span v-else>解析</span>
+          <span v-else>{{ tr('subscriptionsAddOpml.parse') }}</span>
         </button>
       </div>
     </div>
@@ -56,8 +56,8 @@
           <!-- 头部 -->
           <div class="flex items-center justify-between border-b border-outline/10 px-6 py-4">
             <div>
-              <h3 class="text-base font-bold text-text">OPML 导入预览</h3>
-              <p class="mt-0.5 text-xs text-text-secondary">勾选需要导入至本地的订阅源</p>
+              <h3 class="text-base font-bold text-text">{{ tr('subscriptionsAddOpml.previewTitle') }}</h3>
+              <p class="mt-0.5 text-xs text-text-secondary">{{ tr('subscriptionsAddOpml.previewHint') }}</p>
             </div>
             <button
                 class="flex h-8 w-8 items-center justify-center rounded-full text-text-secondary transition hover:bg-surface-container hover:text-text"
@@ -76,7 +76,7 @@
                 <svg class="h-4 w-4 shrink-0" fill="currentColor" viewBox="0 0 20 20">
                   <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
                 </svg>
-                解析提醒
+                {{ tr('subscriptionsAddOpml.parseWarnings') }}
               </p>
               <ul class="space-y-1 pl-5 list-disc opacity-90 leading-relaxed">
                 <li v-for="(warning, index) in opmlWarnings" :key="`warning-${index}`">
@@ -89,13 +89,13 @@
             <div v-if="opmlPreviewFeeds.length" class="space-y-3">
               <div class="flex items-center justify-between pb-2 border-b border-outline/10 text-xs">
                 <span class="text-text-secondary">
-                  共 <strong class="font-semibold text-text">{{ opmlPreviewFeeds.length }}</strong> 个订阅源
+                  <i18n-t keypath="common.feedCount" scope="global" :plural="opmlPreviewFeeds.length" tag="span"><template #count><strong class="font-semibold text-text">{{ opmlPreviewFeeds.length }}</strong></template></i18n-t>
                 </span>
                 <button
                     class="font-semibold text-primary hover:underline"
                     type="button"
                     @click="toggleSelectAll">
-                  {{ isAllSelected ? '取消全选' : '全选所有' }}
+                  {{ isAllSelected ? tr('subscriptionsAddOpml.deselectAll') : tr('subscriptionsAddOpml.selectAllFeeds') }}
                 </button>
               </div>
 
@@ -117,12 +117,12 @@
                       <span
                           v-if="feed.alreadySubscribed"
                           class="rounded-full bg-surface-container px-2 py-0.2 text-[10px] font-medium text-text-secondary shrink-0">
-                        已订阅
+                        {{ tr('common.subscribed') }}
                       </span>
                       <span
                           v-if="feed.errors.length"
                           class="rounded-full bg-red-500/10 px-2 py-0.2 text-[10px] font-medium text-red-600 dark:text-red-400 shrink-0">
-                        无法导入
+                        {{ tr('subscriptionsAddOpml.cannotImport') }}
                       </span>
                     </div>
 
@@ -143,7 +143,7 @@
             </div>
 
             <p v-else-if="!opmlConfirmResult" class="py-16 text-center text-xs text-text-secondary">
-              暂无可预览的订阅源
+              {{ tr('subscriptionsAddOpml.noPreviewFeeds') }}
             </p>
 
             <!-- 导入成功结果 -->
@@ -156,20 +156,20 @@
                     </svg>
                   </div>
                   <div>
-                    <p class="text-sm font-bold text-text">导入完成</p>
-                    <p class="text-xs text-text-secondary">成功导入 {{ opmlConfirmResult.importedCount }} 个订阅源</p>
+                    <p class="text-sm font-bold text-text">{{ tr('subscriptionsAddOpml.importComplete') }}</p>
+                    <p class="text-xs text-text-secondary">{{ tr('subscriptionsAddOpml.importCount', { count: opmlConfirmResult.importedCount }) }}</p>
                   </div>
                 </div>
                 <button
                     class="inline-flex h-8 items-center justify-center rounded-full bg-surface px-4 text-xs font-semibold text-text shadow-xs hover:bg-surface-container transition"
                     @click="handleSuccessClose">
-                  关闭
+                  {{ tr('common.close') }}
                 </button>
               </div>
 
               <ul v-if="opmlConfirmResult.skipped.length" class="space-y-1 text-xs text-text-secondary pl-2 border-t border-outline/10 pt-2.5">
                 <li v-for="(item, index) in opmlConfirmResult.skipped" :key="`${item.feedUrl}-${index}`" class="truncate">
-                  • {{ item.feedUrl || '未知源' }}：{{ translateSkippedReason(item.reason) }}
+                  • {{ item.feedUrl || tr('subscriptionsAddOpml.unknownFeed') }}：{{ translateSkippedReason(item.reason) }}
                 </li>
               </ul>
             </div>
@@ -178,11 +178,11 @@
           <!-- 弹窗底部操作栏 -->
           <div v-if="!opmlConfirmResult" class="flex flex-wrap items-center justify-between gap-3 border-t border-outline/10 bg-surface-container/20 px-6 py-4">
             <div class="text-xs text-text-secondary">
-              <span>已选 <strong class="font-semibold text-text">{{ selectedCount }}</strong> 项</span>
+              <i18n-t keypath="common.selectedCount" scope="global" :plural="selectedCount" tag="span"><template #count><strong class="font-semibold text-text">{{ selectedCount }}</strong></template></i18n-t>
               <span class="mx-2">•</span>
-              <span>剩余额度 <strong class="font-semibold text-text">{{ remainingQuota }}</strong></span>
+              <i18n-t keypath="subscriptionsAddOpml.remainingCount" scope="global" tag="span"><template #count><strong class="font-semibold text-text">{{ remainingQuota }}</strong></template></i18n-t>
               <span v-if="selectedCount > remainingQuota" class="ml-2 font-semibold text-red-600 dark:text-red-400">
-                (已超可用额度)
+                {{ tr('subscriptionsAddOpml.overQuota') }}
               </span>
             </div>
 
@@ -194,7 +194,7 @@
               <svg v-if="opmlConfirmLoading" class="h-3.5 w-3.5 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                 <path d="M21 12a9 9 0 1 1-6.219-8.56" />
               </svg>
-              <span v-else>确认导入</span>
+              <span v-else>{{ tr('subscriptionsAddOpml.confirmImport') }}</span>
             </button>
           </div>
         </div>
@@ -204,6 +204,7 @@
 </template>
 
 <script setup lang="ts">
+import { translate as tr } from '@/i18n';
 import { computed, ref } from 'vue';
 import {
   type OpmlImportResultDto,
@@ -241,7 +242,7 @@ const handleOpmlFileChange = (event: Event) => {
 
 const handlePreviewOpml = async () => {
   if (!opmlFile.value) {
-    opmlError.value = '请选择一个 OPML 文件';
+    opmlError.value = tr('subscriptionsAddOpml.fileRequired');
     return;
   }
   opmlError.value = null;
@@ -256,7 +257,7 @@ const handlePreviewOpml = async () => {
     }));
     showOpmlModal.value = true;
   } catch (error) {
-    const message = error instanceof Error ? error.message : '解析 OPML 失败';
+    const message = error instanceof Error ? error.message : tr('subscriptionsAddOpml.parseFailed');
     opmlError.value = message;
     opmlPreviewFeeds.value = [];
     opmlWarnings.value = [];
@@ -299,11 +300,11 @@ const handleSuccessClose = () => {
 
 const handleConfirmOpml = async () => {
   if (!hasSelectedFeeds.value) {
-    opmlError.value = '请至少选择一个订阅项';
+    opmlError.value = tr('subscriptionsAddOpml.selectionRequired');
     return;
   }
   if (selectedCount.value > remainingQuota.value) {
-    opmlError.value = '超过剩余额度，请取消部分订阅后再试';
+    opmlError.value = tr('subscriptionsAddOpml.quotaExceeded');
     return;
   }
   opmlError.value = null;
@@ -321,17 +322,17 @@ const handleConfirmOpml = async () => {
     opmlWarnings.value = [];
     resetOpmlInput();
   } catch (error) {
-    const message = error instanceof Error ? error.message : '导入失败';
+    const message = error instanceof Error ? error.message : tr('subscriptionsAddOpml.importFailed');
     opmlError.value = message;
   }
 };
 
 const translateSkippedReason = (reason: string) => {
   const mapping: Record<string, string> = {
-    ALREADY_SUBSCRIBED: '已订阅',
-    INVALID_FEED: '无效订阅',
-    DUPLICATE: '重复条目',
-    FAILED: '导入失败'
+    ALREADY_SUBSCRIBED: tr('common.subscribed'),
+    INVALID_FEED: tr('subscriptionsAddOpml.invalidFeed'),
+    DUPLICATE: tr('subscriptionsAddOpml.duplicateEntry'),
+    FAILED: tr('subscriptionsAddOpml.importFailed')
   };
   return mapping[reason] ?? reason;
 };

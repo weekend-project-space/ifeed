@@ -12,7 +12,7 @@
         <input
             v-model="searchQuery"
             type="text"
-            placeholder="搜索订阅源名称或网址..."
+            :placeholder="tr('subscriptionFeedList.searchPlaceholder')"
             class="w-full rounded-full border border-outline/20 bg-surface-container/40 py-2.5 pl-10 pr-9 text-xs text-text outline-none transition placeholder:text-text-secondary/60 focus:border-primary focus:bg-surface focus:ring-2 focus:ring-primary/20 sm:text-sm"
         />
         <button
@@ -35,8 +35,8 @@
                 v-model="sortBy"
                 class="appearance-none cursor-pointer rounded-full bg-surface-container/60 py-2 pl-3.5 pr-8 text-xs font-medium text-text outline-none transition hover:bg-surface-container focus:ring-2 focus:ring-primary/20"
             >
-              <option value="relevance">相关度 (从高到低)</option>
-              <option value="lastUpdated">最近更新</option>
+              <option value="relevance">{{ tr('subscriptionFeedList.sortRelevance') }}</option>
+              <option value="lastUpdated">{{ tr('subscriptionFeedList.lastUpdated') }}</option>
             </select>
             <svg class="pointer-events-none absolute right-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-text-secondary"
                  viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -49,7 +49,7 @@
               @click="enterBatchMode"
               class="inline-flex h-8 items-center rounded-full bg-surface-container/50 px-3.5 text-xs font-medium text-text-secondary transition hover:bg-surface-container hover:text-text"
           >
-            批量操作
+            {{ tr('subscriptionFeedList.batchActions') }}
           </button>
         </div>
 
@@ -59,7 +59,7 @@
               @click="refresh"
               :disabled="subscriptionsStore.loading || isRefreshing"
               class="flex h-9 w-9 items-center justify-center rounded-full text-text-secondary transition hover:bg-surface-container hover:text-text disabled:opacity-40"
-              aria-label="刷新"
+              :aria-label="tr('common.refresh')"
           >
             <svg class="h-4 w-4" :class="{ 'animate-spin': subscriptionsStore.loading || isRefreshing }"
                  viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -73,35 +73,35 @@
             <svg class="h-4 w-4 stroke-[2.2]" viewBox="0 0 24 24" fill="none" stroke="currentColor">
               <path stroke-linecap="round" d="M12 5v14M5 12h14" />
             </svg>
-            <span>添加订阅</span>
+            <span>{{ tr('subscriptionFeedList.addSubscription') }}</span>
           </router-link>
         </div>
 
         <!-- 批量操作激活栏 -->
         <div v-else class="flex flex-wrap items-center gap-2">
           <span class="text-xs text-text-secondary">
-            已选择 {{ selectedItems.size }} 项
+            {{ tr('common.selectedCount', { count: selectedItems.size }) }}
           </span>
           <button
               @click="selectAll"
               :disabled="isBatchProcessing"
               class="inline-flex h-8 items-center rounded-full bg-surface-container px-3 text-xs font-medium text-text hover:bg-surface-container-high transition"
           >
-            {{ selectedItems.size === filteredItems.length ? '取消全选' : '全选' }}
+            {{ selectedItems.size === filteredItems.length ? tr('subscriptionFeedList.deselectAll') : tr('subscriptionFeedList.selectAll') }}
           </button>
           <button
               @click="confirmBatchRemove"
               :disabled="selectedItems.size === 0 || isBatchProcessing"
               class="inline-flex h-8 items-center rounded-full bg-red-500/10 px-3.5 text-xs font-semibold text-red-600 transition hover:bg-red-500/20 disabled:opacity-40 dark:text-red-400"
           >
-            批量取消订阅
+            {{ tr('subscriptionFeedList.batchUnsubscribe') }}
           </button>
           <button
               @click="exitBatchMode"
               :disabled="isBatchProcessing"
               class="inline-flex h-8 items-center rounded-full px-3 text-xs font-medium text-text-secondary hover:bg-surface-container transition"
           >
-            退出
+            {{ tr('subscriptionFeedList.exit') }}
           </button>
         </div>
       </div>
@@ -116,9 +116,9 @@
 
     <div v-if="subscriptionsStore.error && !subscriptionsStore.loading"
          class="mb-6 rounded-2xl bg-red-500/10 p-4 text-xs text-red-600 dark:text-red-400">
-      <p class="font-semibold">订阅列表加载失败</p>
+      <p class="font-semibold">{{ tr('subscriptionFeedList.listFailed') }}</p>
       <p class="mt-0.5 opacity-90">{{ subscriptionsStore.error }}</p>
-      <button type="button" class="mt-2 font-semibold underline underline-offset-2 hover:opacity-80" @click="refresh">重试</button>
+      <button type="button" class="mt-2 font-semibold underline underline-offset-2 hover:opacity-80" @click="refresh">{{ tr('common.retry') }}</button>
     </div>
 
     <!-- 骨架屏 -->
@@ -140,13 +140,13 @@
           <path d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
         </svg>
       </div>
-      <h2 class="text-base font-bold text-text">还没有订阅</h2>
-      <p class="mt-1 text-xs text-text-secondary mb-5">添加你感兴趣的订阅源开始使用</p>
+      <h2 class="text-base font-bold text-text">{{ tr('subscriptionFeedList.noSubscriptions') }}</h2>
+      <p class="mt-1 text-xs text-text-secondary mb-5">{{ tr('subscriptionFeedList.addFeedsHint') }}</p>
       <router-link
           to="/discover"
           class="inline-flex h-9 items-center gap-1.5 rounded-full bg-primary px-5 text-xs font-semibold text-white shadow-xs transition hover:brightness-105 active:scale-[0.98]"
       >
-        添加订阅
+        {{ tr('subscriptionFeedList.addSubscription') }}
       </router-link>
     </div>
 
@@ -158,13 +158,13 @@
           <path d="m21 21-4.35-4.35" />
         </svg>
       </div>
-      <h2 class="text-sm font-bold text-text">未找到匹配的订阅源</h2>
-      <p class="mt-1 text-xs text-text-secondary mb-4">尝试使用其他关键词搜索</p>
+      <h2 class="text-sm font-bold text-text">{{ tr('subscriptionFeedList.noMatchingFeeds') }}</h2>
+      <p class="mt-1 text-xs text-text-secondary mb-4">{{ tr('subscriptionFeedList.tryOtherKeywords') }}</p>
       <button
           @click="searchQuery = ''"
           class="inline-flex h-8 items-center rounded-full bg-surface-container px-4 text-xs font-semibold text-text hover:bg-surface-container-high transition"
       >
-        清除搜索
+        {{ tr('subscriptionFeedList.clearSearch') }}
       </button>
     </div>
 
@@ -219,7 +219,7 @@
                   class="flex h-7 w-7 items-center justify-center rounded-full text-text-secondary transition hover:bg-surface hover:text-text"
                   @click.stop="toggleDropdown(item.feedId)"
                   :aria-expanded="activeDropdown === item.feedId"
-                  aria-label="更多操作"
+                  :aria-label="tr('common.moreActions')"
               >
                 <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <circle cx="12" cy="12" r="1" fill="currentColor" />
@@ -236,14 +236,14 @@
                     class="block w-full px-4 py-2 text-left text-xs font-medium text-text transition hover:bg-surface-container"
                     @click="activeDropdown = null"
                 >
-                  查看详情
+                  {{ tr('subscriptionFeedList.viewDetails') }}
                 </router-link>
                 <button
                     @click.stop="confirmRemove(item)"
                     :disabled="subscriptionSubmitting"
                     class="w-full px-4 py-2 text-left text-xs font-medium text-red-600 transition hover:bg-red-500/10 disabled:opacity-40 dark:text-red-400"
                 >
-                  取消订阅
+                  {{ tr('common.unsubscribe') }}
                 </button>
               </div>
             </div>
@@ -251,7 +251,7 @@
 
           <router-link :to="`/feed/${item.feedId}`" class="block" :class="{ 'pointer-events-none': batchMode }">
             <p class="mb-2 line-clamp-1 text-xs text-text-secondary">
-              {{ getDescription(item) || '暂无描述' }}
+              {{ getDescription(item) || tr('subscriptionFeedList.noDescription') }}
             </p>
             <div class="flex flex-wrap items-center gap-2 text-xs text-text-secondary">
               <span class="truncate max-w-[180px]">@{{ getUsername(item) }}</span>
@@ -267,7 +267,7 @@
               <svg class="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
                 <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 001.137-.089l4-5.5z" clip-rule="evenodd" />
               </svg>
-              <span>抓取异常</span>
+              <span>{{ tr('subscriptionFeedList.fetchFailed') }}</span>
             </div>
           </router-link>
         </div>
@@ -276,7 +276,7 @@
 
     <!-- 底部统计 -->
     <div v-if="feedItems.length" class="mt-6 text-center text-xs text-text-secondary/60">
-      显示 {{ filteredItems.length }} / {{ feedItems.length }} 个订阅源
+      {{ tr('subscriptionFeedList.showingFeeds', { visible: filteredItems.length, total: feedItems.length }) }}
     </div>
 
     <!-- 点击遮罩收起下拉 -->
@@ -290,9 +290,9 @@
     >
       <div class="absolute inset-0 bg-black/45" />
       <div class="relative z-10 w-full max-w-sm rounded-[28px] bg-surface p-6 shadow-2xl">
-        <h3 class="text-base font-bold text-text mb-2">确认取消订阅</h3>
+        <h3 class="text-base font-bold text-text mb-2">{{ tr('subscriptionFeedList.confirmUnsubscribe') }}</h3>
         <p class="text-xs text-text-secondary mb-5 leading-relaxed">
-          确定要取消订阅 <strong>{{ displayTitle(itemToRemove) }}</strong> 吗？
+          <i18n-t keypath="subscriptionFeedList.unsubscribeQuestion" scope="global" tag="span"><template #name><strong>{{ displayTitle(itemToRemove) }}</strong></template></i18n-t>
         </p>
         <div v-if="subscriptionError" class="mb-4 rounded-xl bg-red-500/10 p-3 text-xs text-red-600 dark:text-red-400" role="alert">
           {{ subscriptionError }}
@@ -303,14 +303,14 @@
               :disabled="subscriptionSubmitting"
               class="inline-flex h-9 items-center justify-center rounded-full px-4 text-xs font-semibold text-text-secondary hover:bg-surface-container transition"
           >
-            取消
+            {{ tr('common.cancel') }}
           </button>
           <button
               @click="remove(itemToRemove.feedId)"
               :disabled="subscriptionSubmitting"
               class="inline-flex h-9 items-center justify-center rounded-full bg-red-600 px-4 text-xs font-semibold text-white shadow-xs transition hover:bg-red-700 disabled:opacity-40"
           >
-            确认取消订阅
+            {{ tr('subscriptionFeedList.confirmUnsubscribe') }}
           </button>
         </div>
       </div>
@@ -324,9 +324,9 @@
     >
       <div class="absolute inset-0 bg-black/45" />
       <div class="relative z-10 w-full max-w-md rounded-[28px] bg-surface p-6 shadow-2xl">
-        <h3 class="text-base font-bold text-text mb-2">确认批量取消订阅</h3>
+        <h3 class="text-base font-bold text-text mb-2">{{ tr('subscriptionFeedList.confirmBatchUnsubscribe') }}</h3>
         <p class="text-xs text-text-secondary mb-3 leading-relaxed">
-          确定要取消订阅以下 <strong>{{ batchItemsToRemove.length }}</strong> 个订阅源吗？
+          <i18n-t keypath="subscriptionFeedList.batchUnsubscribeQuestion" scope="global" :plural="batchItemsToRemove.length" tag="span"><template #count><strong>{{ batchItemsToRemove.length }}</strong></template></i18n-t>
         </p>
         <div class="max-h-48 overflow-y-auto mb-5 rounded-2xl bg-surface-container/40 p-3">
           <ul class="space-y-1 text-xs text-text">
@@ -344,14 +344,14 @@
               :disabled="isBatchProcessing"
               class="inline-flex h-9 items-center justify-center rounded-full px-4 text-xs font-semibold text-text-secondary hover:bg-surface-container transition disabled:opacity-40"
           >
-            取消
+            {{ tr('common.cancel') }}
           </button>
           <button
               @click="batchRemove"
               :disabled="isBatchProcessing"
               class="inline-flex h-9 items-center justify-center rounded-full bg-red-600 px-4 text-xs font-semibold text-white shadow-xs transition hover:bg-red-700 disabled:opacity-40"
           >
-            {{ isBatchProcessing ? '处理中...' : '确认取消订阅' }}
+            {{ isBatchProcessing ? tr('common.processing') : tr('subscriptionFeedList.confirmUnsubscribe') }}
           </button>
         </div>
       </div>
@@ -360,6 +360,7 @@
 </template>
 
 <script setup lang="ts">
+import { translate as tr } from '@/i18n';
 import { computed, onMounted, ref } from 'vue';
 import { storeToRefs } from 'pinia';
 import { useSubscriptionsStore, type SubscriptionListItemDto } from '../../stores/subscriptions';
@@ -431,7 +432,7 @@ const refresh = async () => {
   try {
     await subscriptionsStore.fetchSubscriptions();
   } catch (error) {
-    subscriptionError.value = error instanceof Error ? error.message : '订阅列表加载失败，请重试';
+    subscriptionError.value = error instanceof Error ? error.message : tr('subscriptionFeedList.listLoadFailed');
   } finally {
     setTimeout(() => isRefreshing.value = false, 500);
   }
@@ -460,7 +461,7 @@ const remove = async (feedId: string) => {
     });
     itemToRemove.value = null;
   } catch (error) {
-    subscriptionError.value = error instanceof Error ? error.message : '取消订阅失败，请重试';
+    subscriptionError.value = error instanceof Error ? error.message : tr('subscriptionFeedList.unsubscribeFailed');
   }
 };
 
@@ -518,20 +519,20 @@ const batchRemove = async () => {
     const failedIds = new Set(result.failedFeedIds);
     batchItemsToRemove.value = batchItemsToRemove.value.filter((item) => failedIds.has(item.feedId));
     if (failedIds.size) {
-      subscriptionError.value = `${failedIds.size} 个订阅取消失败，请重试。`;
+      subscriptionError.value = tr('subscriptionFeedList.batchPartialFailure', { value0: failedIds.size });
     } else {
       exitBatchMode();
     }
   } catch (error) {
-    subscriptionError.value = error instanceof Error ? error.message : '批量取消订阅失败，请重试';
+    subscriptionError.value = error instanceof Error ? error.message : tr('subscriptionFeedList.batchUnsubscribeFailed');
   }
 };
 
-const displayTitle = (item: SubscriptionListItemDto) => item.title || item.siteUrl || item.url || '未命名订阅';
+const displayTitle = (item: SubscriptionListItemDto) => item.title || item.siteUrl || item.url || tr('common.untitledFeed');
 
 const getUsername = (item: SubscriptionListItemDto) => {
   const url = item.siteUrl || item.url;
-  if (!url) return '未知来源';
+  if (!url) return tr('common.unknownSource');
   try {
     const hostname = new URL(url).hostname.replace('www.', '');
     return hostname.length > 30 ? hostname.substring(0, 30) + '...' : hostname;
@@ -542,7 +543,7 @@ const getUsername = (item: SubscriptionListItemDto) => {
 
 const getSubscriberCount = (item: SubscriptionListItemDto) => {
   const timeStr = item.lastUpdated || item.lastFetched;
-  return timeStr ? formatRelativeTime(timeStr) : '暂无更新';
+  return timeStr ? formatRelativeTime(timeStr) : tr('common.noUpdates');
 };
 
 const getDescription = (item: SubscriptionListItemDto) => item.description;

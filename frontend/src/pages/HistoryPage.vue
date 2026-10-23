@@ -1,22 +1,22 @@
 <template>
   <LibraryPageLayout
-      title="阅读记录"
+      :title="tr('historyPage.title')"
       :total="total"
-      :total-text="total ? '共 ' + total + ' 条记录' : '暂无记录'"
+      :total-text="total ? tr('historyPage.recordCount', { count: total }) : tr('common.noRecords')"
       :pending="query.isPending.value"
       :fetching="query.isFetching.value"
       :error="errorMessage"
-      refresh-label="刷新阅读历史"
-      login-text="登录后即可查看你的阅读记录"
-      empty-title="还没有阅读记录"
-      empty-text="开始阅读文章后，你的历史轨迹将展示在这里"
+      :refresh-label="tr('historyPage.refreshHistory')"
+      :login-text="tr('historyPage.loginHint')"
+      :empty-title="tr('historyPage.emptyTitle')"
+      :empty-text="tr('historyPage.emptyDescription')"
       @refresh="query.refetch()"
   >
     <DatedArticleList
         :items="items"
         time-field="readAt"
         :removing="mutation.isPending.value"
-        remove-label="删除记录"
+        :remove-label="tr('historyPage.removeRecord')"
         @remove="remove"
     />
     <template #footer>
@@ -34,6 +34,7 @@
 </template>
 
 <script setup lang="ts">
+import { translate as tr } from '@/i18n';
 import { computed } from 'vue';
 import LibraryPageLayout from '@/components/LibraryPageLayout.vue';
 import DatedArticleList from '@/components/DatedArticleList.vue';
@@ -51,7 +52,7 @@ const errorMessage = computed(() => query.errorMessage.value || mutation.error.v
 
 const remove = async (articleId: string) => {
   if (mutation.isPending.value) return;
-  const confirmed = await confirm({ title: '删除记录', description: '确定要删除这条阅读记录吗？' }).catch(() => false);
+  const confirmed = await confirm({ title: tr('historyPage.removeRecord'), description: tr('historyPage.confirmRemove') }).catch(() => false);
   if (confirmed) {
     mutation.mutate(articleId);
   }

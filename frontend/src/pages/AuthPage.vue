@@ -4,13 +4,14 @@
     <div class="fixed top-6 left-6 z-50 flex items-center gap-2.5">
       <h2 class="text-xl font-bold tracking-tight text-text">IFeed</h2>
     </div>
+    <LanguageSwitcher class="fixed right-6 top-6 z-50" />
 
     <div class="w-full max-w-[360px] flex flex-col items-center">
       <!-- 标题区域 -->
       <div class="mb-8 text-center">
-        <h1 class="text-3xl font-normal tracking-tight text-text mb-2">登录或注册</h1>
+        <h1 class="text-3xl font-normal tracking-tight text-text mb-2">{{ tr('authPage.title') }}</h1>
         <p class="text-xs text-text-secondary sm:text-sm">
-          智能聚合，精准阅读
+          {{ tr('authPage.subtitle') }}
         </p>
       </div>
 
@@ -28,12 +29,12 @@
       <form class="w-full space-y-3.5" @submit.prevent="handleSubmit">
         <!-- 账号输入 -->
         <div class="rounded-t-2xl bg-surface-container/60 px-4 pt-2.5 pb-2 border-b-2 border-outline/40 transition focus-within:border-primary focus-within:bg-surface-container/80">
-          <label for="email_input" class="block text-[11px] font-medium text-text-secondary">电子邮箱 / 用户名</label>
+          <label for="email_input" class="block text-[11px] font-medium text-text-secondary">{{ tr('authPage.account') }}</label>
           <input
               v-model.trim="form.username"
               type="text"
               required
-              placeholder="输入你的账号"
+              :placeholder="tr('authPage.accountPlaceholder')"
               id="email_input"
               class="mt-0.5 block w-full border-0 bg-transparent p-0 text-sm text-text outline-none ring-0 placeholder:text-text-secondary/60"
           />
@@ -41,12 +42,12 @@
 
         <!-- 密码输入 -->
         <div class="rounded-t-2xl bg-surface-container/60 px-4 pt-2.5 pb-2 border-b-2 border-outline/40 transition focus-within:border-primary focus-within:bg-surface-container/80">
-          <label for="password_input" class="block text-[11px] font-medium text-text-secondary">密码</label>
+          <label for="password_input" class="block text-[11px] font-medium text-text-secondary">{{ tr('authPage.password') }}</label>
           <input
               v-model="form.password"
               type="password"
               required
-              placeholder="输入密码"
+              :placeholder="tr('authPage.passwordPlaceholder')"
               id="password_input"
               class="mt-0.5 block w-full border-0 bg-transparent p-0 text-sm text-text outline-none ring-0 placeholder:text-text-secondary/60"
           />
@@ -55,12 +56,12 @@
         <!-- 确认密码（注册模式） -->
         <transition name="fade">
           <div v-if="mode === 'register'" class="rounded-t-2xl bg-surface-container/60 px-4 pt-2.5 pb-2 border-b-2 border-outline/40 transition focus-within:border-primary focus-within:bg-surface-container/80">
-            <label for="confirm_input" class="block text-[11px] font-medium text-text-secondary">确认密码</label>
+            <label for="confirm_input" class="block text-[11px] font-medium text-text-secondary">{{ tr('authPage.confirmPassword') }}</label>
             <input
                 v-model="form.confirmPassword"
                 type="password"
                 required
-                placeholder="再次输入密码"
+                :placeholder="tr('authPage.confirmPasswordPlaceholder')"
                 id="confirm_input"
                 class="mt-0.5 block w-full border-0 bg-transparent p-0 text-sm text-text outline-none ring-0 placeholder:text-text-secondary/60"
             />
@@ -78,21 +79,21 @@
               <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
               <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 0 1 8-8v4a4 4 0 0 0-4 4H4z" />
             </svg>
-            处理中...
+            {{ tr('common.processing') }}
           </span>
-          <span v-else>{{ mode === 'login' ? '继续登录' : '立即注册' }}</span>
+          <span v-else>{{ mode === 'login' ? tr('authPage.continueLogin') : tr('authPage.register') }}</span>
         </button>
       </form>
 
       <!-- 模式切换 -->
       <div class="mt-6 text-center text-xs text-text-secondary">
-        <span>{{ mode === 'login' ? '还没有账号？' : '已有账号？' }}</span>
+        <span>{{ mode === 'login' ? tr('authPage.noAccount') : tr('authPage.hasAccount') }}</span>
         <button
             type="button"
             class="ml-1.5 font-semibold text-primary hover:underline"
             @click="toggleMode"
         >
-          {{ mode === 'login' ? '注册新账号' : '直接登录' }}
+          {{ mode === 'login' ? tr('authPage.newAccount') : tr('authPage.signIn') }}
         </button>
       </div>
     </div>
@@ -102,7 +103,7 @@
       <button
           type="button"
           class="flex h-11 w-11 items-center justify-center rounded-full bg-surface-container text-text shadow-sm transition hover:bg-surface-container-high active:scale-95"
-          :aria-label="`切换主题，当前${themeLabel}`"
+          :aria-label="tr('authPage.switchTheme', { value0: themeLabel })"
           @click="toggleTheme"
       >
         <svg v-if="isDark" class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
@@ -117,6 +118,10 @@
 </template>
 
 <script setup lang="ts">
+import { translate as tr } from '@/i18n';
+import LanguageSwitcher from '@/components/LanguageSwitcher.vue';
+import { useDocumentTitle } from '@/composables/documentTitle';
+import type { MessageKey } from '@/i18n/schema';
 import { computed, onMounted, reactive, ref, watch } from 'vue';
 import { storeToRefs } from 'pinia';
 import { useRouter, useRoute } from 'vue-router';
@@ -126,6 +131,7 @@ import { useThemeStore } from '../stores/theme';
 type Mode = 'login' | 'register';
 
 defineOptions({ name: 'AuthPage' });
+useDocumentTitle(() => tr('authPage.title'));
 
 const router = useRouter();
 const route = useRoute();
@@ -142,6 +148,7 @@ const form = reactive({
   confirmPassword: ''
 });
 const localError = ref('');
+const validationError = ref<MessageKey | null>(null);
 
 const redirectToTarget = async () => {
   const redirect = typeof route.query.redirect === 'string' ? route.query.redirect : '/';
@@ -149,12 +156,13 @@ const redirectToTarget = async () => {
 };
 
 const handleSubmit = async () => {
+  validationError.value = null;
   if (!form.username || !form.password) {
-    localError.value = '请输入邮箱/用户名和密码';
+    validationError.value = 'authPage.credentialsRequired';
     return;
   }
   if (mode.value === 'register' && form.password !== form.confirmPassword) {
-    localError.value = '两次输入的密码不一致';
+    validationError.value = 'authPage.passwordMismatch';
     return;
   }
   submitting.value = true;
@@ -167,7 +175,7 @@ const handleSubmit = async () => {
     }
     await redirectToTarget();
   } catch (err) {
-    const message = err instanceof Error && err.message ? err.message : error.value || '操作失败，请稍后再试';
+    const message = err instanceof Error && err.message ? err.message : error.value || tr('authPage.operationFailed');
     localError.value = message;
   } finally {
     submitting.value = false;
@@ -181,6 +189,7 @@ const toggleMode = () => {
 const switchMode = (target: Mode) => {
   if (mode.value === target) return;
   mode.value = target;
+  validationError.value = null;
   localError.value = '';
   error.value = null;
   form.password = '';
@@ -201,7 +210,7 @@ watch(
     { immediate: true }
 );
 
-const errorMessage = computed(() => localError.value || error.value || '');
+const errorMessage = computed(() => validationError.value ? tr(validationError.value) : localError.value || error.value || '');
 </script>
 
 <style scoped>

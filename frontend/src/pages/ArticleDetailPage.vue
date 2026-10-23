@@ -34,11 +34,11 @@
             </svg>
           </div>
           <div class="flex-1">
-            <h3 class="text-sm font-semibold text-red-900 dark:text-red-200">加载失败</h3>
+            <h3 class="text-sm font-semibold text-red-900 dark:text-red-200">{{ tr('common.loadFailed') }}</h3>
             <p class="mt-1 text-xs text-red-700 dark:text-red-300">{{ articleError }}</p>
             <button @click="articleQuery.refetch()"
                     class="mt-3 inline-flex h-8 items-center rounded-full bg-red-600 px-4 text-xs font-semibold text-white shadow-xs hover:bg-red-700 transition">
-              重试
+              {{ tr('common.retry') }}
             </button>
           </div>
         </div>
@@ -71,7 +71,7 @@
               <div class="flex items-center gap-1.5 text-[11px] text-text-secondary">
                 <span>{{ article.timeAgo }}</span>
                 <span>•</span>
-                <span>{{ readingTime }} 分钟阅读</span>
+                <span>{{ tr('articleDetailPage.readingTime', { count: readingTime }) }}</span>
               </div>
             </div>
           </router-link>
@@ -103,7 +103,7 @@
                      stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                   <polyline points="20 6 9 17 4 12"/>
                 </svg>
-                <span>已订</span>
+                <span>{{ tr('common.subscribedShort') }}</span>
               </span>
               <span class="hidden items-center gap-1 group-hover:inline-flex">
                 <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
@@ -111,7 +111,7 @@
                   <line x1="18" y1="6" x2="6" y2="18"/>
                   <line x1="6" y1="6" x2="18" y2="18"/>
                 </svg>
-                <span>退订</span>
+                <span>{{ tr('common.unsubscribeShort') }}</span>
               </span>
             </template>
 
@@ -122,7 +122,7 @@
                 <line x1="12" y1="5" x2="12" y2="19"/>
                 <line x1="5" y1="12" x2="19" y2="12"/>
               </svg>
-              <span>订阅</span>
+              <span>{{ tr('common.subscribe') }}</span>
             </template>
           </button>
         </div>
@@ -156,9 +156,9 @@
       </header>
 
       <p v-if="historyMutation.isError.value" role="alert" class="py-2 text-xs text-red-600">
-        阅读记录保存失败
+        {{ tr('articleDetailPage.historySaveFailed') }}
         <button class="underline ml-1 font-semibold" :disabled="historyMutation.isPending.value"
-                @click="historyMutation.mutate(articleId)">重试
+                @click="historyMutation.mutate(articleId)">{{ tr('common.retry') }}
         </button>
       </p>
 
@@ -175,7 +175,7 @@
               role="tab"
               :aria-selected="activeMainTab === 'content'"
           >
-            正文
+            {{ tr('articleDetailPage.body') }}
           </button>
           <button
               v-if="article.summary || article.requiresUpgrade"
@@ -187,7 +187,7 @@
               role="tab"
               :aria-selected="activeMainTab === 'summary'"
           >
-            AI 摘要
+            {{ tr('articleDetailPage.aiSummary') }}
           </button>
           <button
               v-if="article.mindMap || article.requiresUpgrade"
@@ -199,7 +199,7 @@
               role="tab"
               :aria-selected="activeMainTab === 'mindmap'"
           >
-            思维导图
+            {{ tr('articleDetailPage.mindMap') }}
           </button>
         </nav>
       </div>
@@ -221,7 +221,7 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"
                       d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
               </svg>
-              <p class="text-xs text-text-secondary">暂无正文内容</p>
+              <p class="text-xs text-text-secondary">{{ tr('articleDetailPage.noBody') }}</p>
             </div>
           </div>
 
@@ -229,7 +229,7 @@
             <div class="flex items-center justify-between text-xs text-text-secondary">
               <a v-if="article.link" :href="article.link" target="_blank" rel="noopener noreferrer"
                  class="inline-flex items-center gap-1.5 font-semibold text-text hover:text-primary transition-colors">
-                <span>查看原文</span>
+                <span>{{ tr('articleDetailPage.viewOriginal') }}</span>
                 <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
@@ -247,7 +247,7 @@
               <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
               <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/>
             </svg>
-            <p class="text-xs text-text-secondary">AI 正在生成精炼摘要...</p>
+            <p class="text-xs text-text-secondary">{{ tr('articleDetailPage.generatingSummary') }}</p>
           </div>
 
           <div v-else-if="article.summary" class="prose-custom space-y-4">
@@ -258,8 +258,8 @@
                       d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
               </svg>
               <div class="text-xs leading-relaxed text-text-secondary">
-                <strong class="font-semibold text-text">智能推荐摘要</strong>
-                <p class="mt-0.5">由 AI 语言模型自动抓取并总结核心提炼，仅供参考。</p>
+                <strong class="font-semibold text-text">{{ tr('articleDetailPage.recommendedSummary') }}</strong>
+                <p class="mt-0.5">{{ tr('articleDetailPage.summaryDisclaimer') }}</p>
               </div>
             </div>
             <div v-html="article.summary" class="article-content"></div>
@@ -272,11 +272,11 @@
                       d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
               </svg>
             </div>
-            <h3 class="text-sm font-bold text-text mb-1">高级智能摘要</h3>
-            <p class="text-xs text-text-secondary mb-5">此功能仅限会员套餐使用</p>
+            <h3 class="text-sm font-bold text-text mb-1">{{ tr('articleDetailPage.premiumSummary') }}</h3>
+            <p class="text-xs text-text-secondary mb-5">{{ tr('articleDetailPage.membersOnly') }}</p>
             <router-link to="/upgrade"
                          class="inline-flex h-9 items-center justify-center rounded-full bg-primary px-5 text-xs font-semibold text-white shadow-xs hover:brightness-105 transition">
-              升级会员体验
+              {{ tr('articleDetailPage.upgrade') }}
             </router-link>
           </div>
         </div>
@@ -288,7 +288,7 @@
               <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
               <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/>
             </svg>
-            <p class="text-xs text-text-secondary">AI 正在生成思维导图结构...</p>
+            <p class="text-xs text-text-secondary">{{ tr('articleDetailPage.generatingMindMap') }}</p>
           </div>
 
           <div v-else-if="mindmapMarkdown" class="overflow-hidden rounded-3xl bg-surface-container/30 shadow-xs">
@@ -304,11 +304,11 @@
                       d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
               </svg>
             </div>
-            <h3 class="text-sm font-bold text-text mb-1">文章思维导图</h3>
-            <p class="text-xs text-text-secondary mb-5">可视化知识结构仅限会员使用</p>
+            <h3 class="text-sm font-bold text-text mb-1">{{ tr('articleDetailPage.articleMindMap') }}</h3>
+            <p class="text-xs text-text-secondary mb-5">{{ tr('articleDetailPage.mindMapMembersOnly') }}</p>
             <router-link to="/upgrade"
                          class="inline-flex h-9 items-center justify-center rounded-full bg-primary px-5 text-xs font-semibold text-white shadow-xs hover:brightness-105 transition">
-              升级会员体验
+              {{ tr('articleDetailPage.upgrade') }}
             </router-link>
           </div>
         </div>
@@ -323,14 +323,14 @@
                 d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
         </svg>
       </div>
-      <h3 class="text-base font-bold text-text mb-1">未找到文章</h3>
-      <p class="text-xs text-text-secondary">该文章可能已被删除或源已下线</p>
+      <h3 class="text-base font-bold text-text mb-1">{{ tr('articleDetailPage.articleNotFound') }}</h3>
+      <p class="text-xs text-text-secondary">{{ tr('articleDetailPage.articleUnavailable') }}</p>
     </div>
 
     <!-- 底部推荐阅读 -->
     <div v-if="detailsItems.length > 0" class="mt-12 rounded-t-[32px] bg-surface-container/25 py-12">
       <div class="mx-auto max-w-screen-md px-4 sm:px-6">
-        <h2 class="mb-6 text-xl font-bold tracking-tight text-text">推荐阅读</h2>
+        <h2 class="mb-6 text-xl font-bold tracking-tight text-text">{{ tr('articleDetailPage.recommendedReading') }}</h2>
         <article-card-list :items="detailsItems" :loading="detailsLoading" key-field="id" meta-field="publishedAt"
                            compact/>
       </div>
@@ -339,6 +339,7 @@
 </template>
 
 <script setup lang="ts">
+import { translate as tr } from '@/i18n';
 import {computed, nextTick, onActivated, onBeforeUnmount, onDeactivated, onMounted, ref, watch} from 'vue';
 import {useMutation, useQueryClient} from '@tanstack/vue-query';
 import {useRoute, useRouter} from 'vue-router';
@@ -393,7 +394,7 @@ const feedDetail = computed(() => feedQuery.data.value ?? null);
 const articleLoading = computed(() => articleQuery.isPending.value);
 const articleError = computed(() => {
   const error = articleQuery.error.value;
-  return error instanceof Error ? error.message : error ? '文章加载失败，请稍后重试' : '';
+  return error instanceof Error ? error.message : error ? tr('articleDetailPage.articleLoadFailed') : '';
 });
 const detailsItems = computed(() => (recommendationsQuery.data.value ?? []).map(normalizeArticle));
 const detailsLoading = computed(() => recommendationsQuery.isPending.value);
@@ -492,7 +493,7 @@ const toggleFeedSubscription = async () => {
       feedId: feed.feedId, feedUrl: feed.url, subscribed: feed.subscribed,
     });
   } catch (error) {
-    subscriptionError.value = error instanceof Error ? error.message : '订阅操作失败，请重试';
+    subscriptionError.value = error instanceof Error ? error.message : tr('articleDetailPage.subscriptionFailed');
   }
 };
 

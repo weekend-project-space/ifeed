@@ -1,3 +1,4 @@
+import { translate as tr } from '@/i18n';
 import {computed, ref} from 'vue';
 import {defineStore} from 'pinia';
 import {setAuthToken} from '../api/client';
@@ -68,7 +69,7 @@ export const useAuthStore = defineStore('auth', () => {
             await fetchUser();
             return response;
         } catch (err) {
-            const message = extractMessage(err, '登录失败');
+            const message = extractMessage(err, tr('common.loginFailed'));
             error.value = message;
             throw err;
         } finally {
@@ -85,7 +86,7 @@ export const useAuthStore = defineStore('auth', () => {
             await fetchUser();
             return response;
         } catch (err) {
-            const message = extractMessage(err, '注册失败');
+            const message = extractMessage(err, tr('common.registerFailed'));
             error.value = message;
             console.log(err)
             throw err;
@@ -134,7 +135,7 @@ export const useAuthStore = defineStore('auth', () => {
             const authUrl = await fetchLinuxDoAuthUrl();
             return authUrl;
         } catch (err) {
-            const message = extractMessage(err, '获取授权地址失败');
+            const message = extractMessage(err, tr('common.authUrlFailed'));
             error.value = message;
             throw err;
         }
@@ -149,7 +150,7 @@ export const useAuthStore = defineStore('auth', () => {
             await fetchUser();
             return response;
         } catch (err) {
-            const message = extractMessage(err, 'Linux.do 登录失败');
+            const message = extractMessage(err, tr('common.linuxLoginFailed'));
             error.value = message;
             throw err;
         } finally {

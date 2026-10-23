@@ -1,3 +1,4 @@
+import { translate as tr } from '@/i18n';
 import {createApp} from 'vue';
 import {createPinia} from 'pinia';
 import {VueQueryPlugin} from '@tanstack/vue-query';
@@ -11,10 +12,12 @@ import {useThemeStore} from './stores/theme';
 import {usePWAStore} from './stores/pwa';
 import {registerSW} from 'virtual:pwa-register';
 import {queryClient} from './queryClient';
+import {i18n} from './i18n';
 
 const app = createApp(App);
 const pinia = createPinia();
 app.use(pinia);
+app.use(i18n);
 app.use(router);
 app.use(VueQueryPlugin, {queryClient});
 app.component('pagination',Pagination)
@@ -32,7 +35,7 @@ app.mount('#app');
 // 注册 Service Worker
 const updateSW = registerSW({
     onNeedRefresh() {
-        if (confirm('新版本可用，是否立即更新？')) {
+        if (confirm(tr('common.updateAvailable'))) {
             updateSW(true);
         }
     },

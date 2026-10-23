@@ -3,7 +3,7 @@
     <article-list
         :items="items"
         :loading="articlesLoading"
-        empty-message="该频道暂时没有文章，稍后再来看看。"
+        :empty-message="tr('feedDetailPage.empty')"
         @select-tag="handleSelectTag"
         @refresh="refreshArticles">
       <template #header>
@@ -17,7 +17,7 @@
                     v-if="detail?.avatar"
                     :src="detail.avatar"
                     class="h-16 w-16 rounded-full bg-surface object-cover shadow-xs p-0.5 sm:h-20 sm:w-20"
-                    alt="频道头像"/>
+                    :alt="tr('feedDetailPage.feedAvatar')"/>
                 <div
                     v-else
                     class="flex h-16 w-16 items-center justify-center rounded-full bg-surface-container-high text-xl font-bold text-text sm:h-20 sm:w-20 shadow-xs">
@@ -35,7 +35,7 @@
                   </a>
                 </h1>
                 <p class="mt-1 text-xs text-text-secondary leading-relaxed sm:text-sm">
-                  {{ detail?.description || '暂无频道描述' }} · 最近更新 {{ latestUpdateText }} · 最近抓取 {{ lastFetchedText }}
+                  {{ tr('feedDetailPage.descriptionMeta', { description: detail?.description || tr('feedDetailPage.noDescription'), updated: latestUpdateText, fetched: lastFetchedText }) }}
                 </p>
               </div>
 
@@ -46,14 +46,14 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                           d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
                   </svg>
-                  {{ detail.sources.length }} 个来源
+                  {{ tr('common.sourceCount', { count: detail.sources.length }) }}
                 </span>
                 <span v-else class="flex items-center gap-1.5 font-medium">
                   <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                           d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                   </svg>
-                  {{ detail?.articleCount ?? 0 }} 篇文章
+                  {{ tr('common.articleCount', { count: detail?.articleCount ?? 0 }) }}
                 </span>
 
                 <span class="flex items-center gap-1.5 font-medium">
@@ -61,7 +61,7 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                           d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
                   </svg>
-                  {{ detail?.subscriberCount ?? 0 }} 订阅者
+                  {{ tr('common.subscriberCount', { count: detail?.subscriberCount ?? 0 }) }}
                 </span>
               </div>
 
@@ -105,14 +105,14 @@
                       <svg class="h-3.5 w-3.5 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                         <polyline points="20 6 9 17 4 12" />
                       </svg>
-                      <span>已订</span>
+                      <span>{{ tr('common.subscribedShort') }}</span>
                     </span>
                     <span class="hidden items-center gap-1 group-hover:inline-flex">
                       <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                         <line x1="18" y1="6" x2="6" y2="18" />
                         <line x1="6" y1="6" x2="18" y2="18" />
                       </svg>
-                      <span>退订</span>
+                      <span>{{ tr('common.unsubscribeShort') }}</span>
                     </span>
                   </template>
 
@@ -122,7 +122,7 @@
                       <line x1="12" y1="5" x2="12" y2="19" />
                       <line x1="5" y1="12" x2="19" y2="12" />
                     </svg>
-                    <span>订阅</span>
+                    <span>{{ tr('common.subscribe') }}</span>
                   </template>
                 </button>
 
@@ -132,7 +132,7 @@
                     target="_blank"
                     rel="noopener noreferrer"
                     class="inline-flex h-9.5 items-center gap-1.5 rounded-full bg-surface px-4.5 text-xs font-medium text-text shadow-xs transition hover:bg-surface-container active:scale-95">
-                  <span>访问网站</span>
+                  <span>{{ tr('feedDetailPage.visitWebsite') }}</span>
                   <svg class="h-3.5 w-3.5 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                           d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
@@ -162,9 +162,9 @@
         <div
             v-if="selectedTagDisplay"
             class="mb-6 flex items-center justify-between gap-4 rounded-2xl bg-primary/10 px-4 py-2 text-xs font-medium text-primary">
-          <span>标签筛选：#{{ selectedTagDisplay }}</span>
+          <span>{{ tr('feedDetailPage.selectedTag', { tag: selectedTagDisplay }) }}</span>
           <button class="hover:underline font-semibold" @click="clearTag">
-            清除
+            {{ tr('common.clear') }}
           </button>
         </div>
       </template>
@@ -176,24 +176,25 @@
 
     <!-- 底部滚动指示 -->
     <div v-if="items.length" class="mt-8 flex flex-col items-center gap-2.5" aria-live="polite">
-      <div v-if="isFetchingNextPage" class="text-xs text-text-secondary">正在加载更多文章...</div>
+      <div v-if="isFetchingNextPage" class="text-xs text-text-secondary">{{ tr('feedDetailPage.loadingArticles') }}</div>
       <template v-else-if="nextPageError">
-        <p class="text-xs text-red-600 dark:text-red-400">加载失败</p>
+        <p class="text-xs text-red-600 dark:text-red-400">{{ tr('common.loadFailed') }}</p>
         <button
             type="button"
             class="inline-flex h-8 items-center rounded-full bg-surface-container px-4 text-xs font-semibold text-text hover:bg-surface-container-high transition"
             @click="loadMore"
         >
-          重试
+          {{ tr('common.retry') }}
         </button>
       </template>
-      <p v-else-if="!hasNextPage" class="text-xs text-text-secondary/60">已加载全部文章</p>
+      <p v-else-if="!hasNextPage" class="text-xs text-text-secondary/60">{{ tr('feedDetailPage.allArticlesLoaded') }}</p>
     </div>
     <div ref="loadMoreSentinel" class="h-1" aria-hidden="true"></div>
   </div>
 </template>
 
 <script setup lang="ts">
+import { translate as tr } from '@/i18n';
 import { computed, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { useMutation } from '@tanstack/vue-query';
@@ -239,7 +240,7 @@ const hasNextPage = computed(() => Boolean(feedArticlesQuery.hasNextPage.value))
 const articleError = computed(() => {
   const error = feedArticlesQuery.error.value;
   if (items.value.length > 0) return null;
-  return error instanceof Error ? error.message : error ? '文章加载失败' : null;
+  return error instanceof Error ? error.message : error ? tr('feedDetailPage.articleLoadError') : null;
 });
 const nextPageError = computed(() => feedArticlesQuery.isFetchNextPageError.value);
 useDocumentTitle(() => (
@@ -251,7 +252,7 @@ useDocumentTitle(() => (
 const selectedTagDisplay = computed(() => routeTag.value);
 
 const channelTitle = computed(() => {
-  if (!detail.value) return '订阅源频道';
+  if (!detail.value) return tr('feedDetailPage.feedChannel');
   const title = detail.value.title?.trim();
   if (title) return title;
   const site = detail.value.siteUrl?.trim();
@@ -268,14 +269,14 @@ const channelInitial = computed(() => {
 
 const latestUpdateText = computed(() => {
   const target = detail.value;
-  if (!target) return '暂无更新';
+  if (!target) return tr('common.noUpdates');
   const timestamp = target.latestPublishedAt ?? target.lastUpdated ?? target.lastFetched;
-  return timestamp ? formatRelativeTime(timestamp) : '暂无更新';
+  return timestamp ? formatRelativeTime(timestamp) : tr('common.noUpdates');
 });
 
 const lastFetchedText = computed(() => {
   const target = detail.value;
-  if (!target || !target.lastFetched) return '暂无记录';
+  if (!target || !target.lastFetched) return tr('common.noRecords');
   return formatRelativeTime(target.lastFetched);
 });
 
@@ -293,12 +294,12 @@ const hasFetchIssue = computed(() => failureCount.value > 0 || !!fetchErrorMessa
 const fetchIssueLabel = computed(() => {
   const parts: string[] = [];
   if (failureCount.value > 0) {
-    parts.push(`连续失败 ${failureCount.value} 次`);
+    parts.push(tr('feedDetailPage.consecutiveFailures', { value0: failureCount.value }));
   }
   if (fetchErrorMessage.value) {
-    parts.push(`错误：${fetchErrorMessage.value}`);
+    parts.push(tr('feedDetailPage.fetchError', { value0: fetchErrorMessage.value }));
   }
-  return parts.join(' · ') || '抓取异常';
+  return parts.join(' · ') || tr('feedDetailPage.fetchFailed');
 });
 
 const buildQuery = (overrides?: { tags?: string | null }) => {
@@ -341,7 +342,7 @@ const toggleSubscription = async () => {
       feedId: feed.feedId, feedUrl: feed.url, subscribed: feed.subscribed,
     });
   } catch (error) {
-    subscriptionError.value = error instanceof Error ? error.message : '订阅操作失败，请重试';
+    subscriptionError.value = error instanceof Error ? error.message : tr('feedDetailPage.subscriptionFailed');
   }
 };
 

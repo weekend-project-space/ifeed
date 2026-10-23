@@ -1,3 +1,4 @@
+import { translate as tr } from '@/i18n';
 import { computed, ref } from 'vue';
 import { defineStore } from 'pinia';
 import {
@@ -64,7 +65,7 @@ export const useRadarStore = defineStore('radar', () => {
 
       return response;
     } catch (err) {
-      const message = err instanceof Error ? err.message : '热点雷达加载失败';
+      const message = err instanceof Error ? err.message : tr('common.radarLoadFailed');
       error.value = message;
       throw err;
     } finally {
@@ -123,7 +124,7 @@ export const useRadarStore = defineStore('radar', () => {
 
       return response;
     } catch (err) {
-      const message = err instanceof Error ? err.message : '话题详情加载失败';
+      const message = err instanceof Error ? err.message : tr('common.radarTopicLoadFailed');
       topicError.value = message;
       throw err;
     } finally {

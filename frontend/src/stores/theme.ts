@@ -1,3 +1,4 @@
+import { translate as tr } from '@/i18n';
 import { defineStore } from 'pinia';
 
 export type ThemeMode = 'light' | 'dark' | 'system';
@@ -91,9 +92,9 @@ export const useThemeStore = defineStore('theme', {
   getters: {
     label: (state) => {
       if (state.mode === 'system') {
-        return '系统主题';
+        return tr('common.systemTheme');
       }
-      return state.mode === 'dark' ? '深色模式' : '浅色模式';
+      return state.mode === 'dark' ? tr('common.darkTheme') : tr('common.lightTheme');
     }
   }
 });
