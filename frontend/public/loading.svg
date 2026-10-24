@@ -1,32 +1,285 @@
-<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <path
-            d="M2 8 C6 4,10 4,14 8 S22 12,26 8"
-            stroke="currentColor"
-            stroke-width="1.8"
-            stroke-linecap="round"
-            stroke-dasharray="1 6">
-        <animate
-                attributeName="stroke-dashoffset"
-                from="0"
-                to="-7"
-                dur="1.6s"
-                repeatCount="indefinite"/>
-    </path>
 
-    <path
-            d="M2 14 C6 10,10 10,14 14 S22 18,26 14"
-            stroke="currentColor"
-            stroke-width="1.5"
-            stroke-linecap="round"
-            opacity="0.4"
-            stroke-dasharray="1 7">
-        <animate
-                attributeName="stroke-dashoffset"
-                from="0"
-                to="-8"
-                dur="2.2s"
-                repeatCount="indefinite"/>
-    </path>
+<svg viewBox="0 0 200 200" width="200" height="200"
+     fill="none" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+        <linearGradient id="brandGrad" x1="35" y1="160" x2="150" y2="45"
+                        gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#2563EB"/>
+            <stop offset="48%" stop-color="#4F46E5"/>
+            <stop offset="100%" stop-color="#9333EA"/>
+        </linearGradient>
 
-    <circle cx="5" cy="18" r="1.6" fill="currentColor"/>
+        <linearGradient id="cometGrad" x1="48" y1="125" x2="150" y2="65"
+                        gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#3B82F6" stop-opacity=".15"/>
+            <stop offset="50%" stop-color="#4F46E5" stop-opacity=".85"/>
+            <stop offset="100%" stop-color="#9333EA"/>
+        </linearGradient>
+
+        <filter id="ambientBlur" x="-80%" y="-80%" width="260%" height="260%">
+            <feGaussianBlur stdDeviation="12"/>
+        </filter>
+    </defs>
+
+    <style>
+        .stage {
+        transform-origin: 100px 100px;
+        animation: stage 4.4s ease-in-out infinite;
+        }
+
+        .swirl {
+        transform-origin: 100px 100px;
+        animation: rotate 4.4s cubic-bezier(.45,0,.2,1) infinite;
+        }
+
+        .line {
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        animation-iteration-count: infinite;
+        animation-duration: 4.4s;
+        animation-timing-function: cubic-bezier(.4,0,.2,1);
+        }
+
+        .line1 {
+        stroke-dasharray: 0 400;
+        animation-name: draw1;
+        }
+
+        .line2 {
+        stroke-dasharray: 0 400;
+        animation-name: draw2;
+        }
+
+        .line3 {
+        stroke-dasharray: 0 400;
+        animation-name: draw3;
+        }
+
+        .final-logo {
+        transform-origin: 100px 100px;
+        animation: reveal 4.4s ease-in-out infinite;
+        }
+
+        .logo-dot {
+        transform-box: fill-box;
+        transform-origin: center;
+        animation: dotIn 4.4s cubic-bezier(.2,.8,.2,1) infinite;
+        }
+
+        .glow {
+        transform-origin: 100px 100px;
+        animation: glow 4.4s ease-in-out infinite;
+        }
+
+        @keyframes draw1 {
+        0%, 2% {
+        stroke-dasharray: 0 400;
+        stroke-dashoffset: 0;
+        opacity: 0;
+        }
+        5% { opacity: 1; }
+        15%, 23% {
+        stroke-dasharray: 100 400;
+        stroke-dashoffset: 0;
+        opacity: 1;
+        }
+        38% {
+        stroke-dasharray: 70 400;
+        stroke-dashoffset: -100;
+        opacity: .9;
+        }
+        50%, 100% {
+        stroke-dasharray: 0 400;
+        stroke-dashoffset: -180;
+        opacity: 0;
+        }
+        }
+
+        @keyframes draw2 {
+        0%, 9% {
+        stroke-dasharray: 0 400;
+        stroke-dashoffset: 0;
+        opacity: 0;
+        }
+        12% { opacity: 1; }
+        21%, 26% {
+        stroke-dasharray: 68 400;
+        stroke-dashoffset: 0;
+        opacity: 1;
+        }
+        40% {
+        stroke-dasharray: 45 400;
+        stroke-dashoffset: -90;
+        opacity: .8;
+        }
+        51%, 100% {
+        stroke-dasharray: 0 400;
+        stroke-dashoffset: -140;
+        opacity: 0;
+        }
+        }
+
+        @keyframes draw3 {
+        0%, 16% {
+        stroke-dasharray: 0 400;
+        stroke-dashoffset: 0;
+        opacity: 0;
+        }
+        19% { opacity: 1; }
+        27%, 30% {
+        stroke-dasharray: 38 400;
+        stroke-dashoffset: 0;
+        opacity: 1;
+        }
+        43% {
+        stroke-dasharray: 25 400;
+        stroke-dashoffset: -60;
+        opacity: .7;
+        }
+        52%, 100% {
+        stroke-dasharray: 0 400;
+        stroke-dashoffset: -100;
+        opacity: 0;
+        }
+        }
+
+        @keyframes rotate {
+        0%, 28% {
+        transform: rotate(0deg) scale(1);
+        }
+        43% {
+        transform: rotate(155deg) scale(.96);
+        }
+        55% {
+        transform: rotate(290deg) scale(.9);
+        }
+        65%, 100% {
+        transform: rotate(360deg) scale(.9);
+        }
+        }
+
+        @keyframes reveal {
+        0%, 43% {
+        opacity: 0;
+        transform: scale(.88);
+        }
+        52% {
+        opacity: 1;
+        transform: scale(1.025);
+        }
+        60%, 85% {
+        opacity: 1;
+        transform: scale(1);
+        }
+        94%, 100% {
+        opacity: 0;
+        transform: scale(.96);
+        }
+        }
+
+        @keyframes dotIn {
+        0%, 48% {
+        opacity: 0;
+        transform: scale(.15);
+        }
+        57% {
+        opacity: 1;
+        transform: scale(1.12);
+        }
+        64%, 85% {
+        opacity: 1;
+        transform: scale(1);
+        }
+        94%, 100% {
+        opacity: 0;
+        transform: scale(.85);
+        }
+        }
+
+        @keyframes glow {
+        0%, 58% {
+        opacity: 0;
+        transform: scale(.8);
+        }
+        69% {
+        opacity: .32;
+        transform: scale(1.05);
+        }
+        79% {
+        opacity: .12;
+        transform: scale(1);
+        }
+        88%, 100% {
+        opacity: 0;
+        transform: scale(.9);
+        }
+        }
+
+        @keyframes stage {
+        0%, 86% { opacity: 1; }
+        95%, 100% { opacity: 0; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+        .stage, .swirl, .line, .final-logo, .logo-dot, .glow {
+        animation: none !important;
+        }
+        .final-logo, .logo-dot { opacity: 1; }
+        }
+    </style>
+
+    <g class="stage">
+        <!-- 微光背景 -->
+        <circle class="glow" cx="87" cy="108" r="43"
+                fill="url(#brandGrad)" filter="url(#ambientBlur)"/>
+
+        <!-- 三条弧形流线依次出现并旋转 -->
+        <g class="swirl" fill="none">
+            <path class="line line1"
+                  d="M43 78 C61 55 88 51 112 64 S151 92 137 117 S89 150 60 127"
+                  stroke="url(#cometGrad)" stroke-width="20"/>
+
+            <path class="line line2"
+                  d="M54 96 C72 77 94 73 113 85 S140 108 125 126 S90 143 70 126"
+                  stroke="url(#cometGrad)" stroke-width="17"/>
+
+            <path class="line line3"
+                  d="M69 113 C83 99 101 96 114 105 S126 122 109 134"
+                  stroke="url(#cometGrad)" stroke-width="14"/>
+        </g>
+
+        <!-- 最终 Logo -->
+        <g class="final-logo">
+            <!-- 主体轮廓 -->
+            <path
+                    d="M35 151
+           V105
+           C35 83 48 69 72 62
+           L145 42
+           V58
+           C145 76 134 87 116 92
+           L85 101
+           C77 104 73 111 73 122
+           V155
+           C73 171 64 180 51 180
+           C41 180 35 172 35 162
+           Z"
+                    fill="url(#brandGrad)"/>
+
+            <!-- 下部笔画 -->
+            <path
+                    d="M85 118
+           L128 106
+           V120
+           C128 132 121 139 110 143
+           L85 152
+           Z"
+                    fill="url(#brandGrad)"/>
+
+            <!-- 顶部圆点：向左上移动 -->
+            <circle class="logo-dot"
+                    cx="67" cy="46" r="17"
+                    fill="url(#brandGrad)"/>
+        </g>
+    </g>
 </svg>

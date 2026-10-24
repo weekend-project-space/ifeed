@@ -1,24 +1,27 @@
 <template>
   <div class="min-h-screen text-text transition-colors duration-300 pt-safe bg-surface">
 
-    <!-- 顶部导航栏：MD3 Top App Bar -->
-    <header class="sticky top-0 z-30 bg-surface/90 backdrop-blur-md transition-transform duration-200"
+    <!-- 顶部导航栏：YouTube 经典贯穿式顶栏（最左侧为汉堡菜单 + Logo） -->
+    <header class="sticky top-0 z-40 bg-surface/90 backdrop-blur-md transition-transform duration-200"
             :class="[
-        isSidebarCollapsed ? 'lg:pl-16' : 'lg:pl-72',
         isHeaderHidden ? '-translate-y-full lg:translate-y-0' : 'translate-y-0',
         route.name === 'home' || route.name === 'article' ? '' : 'hidden lg:block'
       ]">
-      <div class="flex items-center justify-between gap-3 px-4 py-3 lg:px-6 lg:py-2.5">
-        <!-- 左侧：移动端 Logo / 返回 与 桌面侧边栏折叠按钮 -->
+      <div class="flex items-center justify-between gap-3 px-4 py-2.5">
+        <!-- 左侧：YouTube 经典布局（汉堡菜单按钮在前，Logo 与标题紧随其后） -->
         <div class="flex items-center gap-3">
-          <!-- 移动端 Logo -->
-          <RouterLink :to="{ name: 'home' }" class="flex items-center gap-2.5 lg:hidden" v-if="route.name === 'home'">
-            <img class="h-8 w-8 rounded-2xl shadow-2xs dark:invert" src="/logo.svg" alt="iFeed" />
-            <span class="text-base font-bold tracking-tight text-text">IFeed</span>
-          </RouterLink>
+          <!-- 桌面端侧边栏切换按钮 -->
+          <button type="button"
+                  class="hidden lg:flex h-9 w-9 items-center justify-center rounded-full text-text-secondary transition hover:bg-surface-container hover:text-text active:scale-95"
+                  @click="toggleSidebar"
+                  :aria-label="t('mainLayout.menu')">
+            <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" :d="icons.menu" />
+            </svg>
+          </button>
 
           <!-- 移动端非首页返回按钮 -->
-          <button v-else type="button"
+          <button v-if="route.name !== 'home'" type="button"
                   class="-ml-2 flex h-9 w-9 items-center justify-center rounded-full text-text-secondary transition hover:bg-surface-container hover:text-text lg:hidden"
                   @click="router.back()" :aria-label="t('mainLayout.back')">
             <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -26,14 +29,11 @@
             </svg>
           </button>
 
-          <!-- 桌面端侧边栏切换按钮：MD3 标准图标按钮 -->
-          <button type="button"
-                  class="hidden lg:flex h-9 w-9 items-center justify-center rounded-full text-text-secondary transition hover:bg-surface-container hover:text-text active:scale-95"
-                  @click="toggleSidebar">
-            <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" :d="icons.menu" />
-            </svg>
-          </button>
+          <!-- 品牌 Logo + 标题 -->
+          <RouterLink :to="{ name: 'home' }" class="flex items-center gap-2.5 select-none">
+            <img class="h-7 w-7  shadow-2xs " src="/logo.svg" alt="iFeed" />
+            <span class="text-base font-bold tracking-tight text-text">IFeed</span>
+          </RouterLink>
         </div>
 
         <!-- 中间：桌面端 MD3 搜索胶囊 -->
@@ -135,7 +135,7 @@
 
             <!-- 用户信息菜单 (MD3 Surface Dropdown) -->
             <div class="relative group">
-              <router-link :to="{ name: 'upgrade'}" >
+              <router-link :to="{ name: 'upgrade' }">
                 <img v-if="user && user.avatarUrl" :src="user.avatarUrl" class="h-8.5 w-8.5 rounded-full object-cover shadow-2xs cursor-pointer group-hover:ring-2 group-hover:ring-primary/25 transition-all" />
                 <div v-else
                      class="flex h-8.5 w-8.5 items-center justify-center rounded-full bg-surface-container-high text-xs font-bold text-text cursor-pointer shadow-2xs group-hover:ring-2 group-hover:ring-primary/25 transition-all">
@@ -175,9 +175,9 @@
                       <path stroke-linecap="round" stroke-linejoin="round"
                             d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                     </svg>
-                  <span>{{ t('mainLayout.logout') }}</span>
-                </button>
-              </div>
+                    <span>{{ t('mainLayout.logout') }}</span>
+                  </button>
+                </div>
                 <div class="border-t border-outline/10 p-1">
                   <p class="px-3 py-1.5 text-[10px] font-semibold text-text-secondary">{{ t('mainLayout.language') }}</p>
                   <button type="button" class="w-full rounded-xl px-3 py-2 text-left text-xs text-text hover:bg-surface-container" @click="setLocale('zh-CN')">{{ t('mainLayout.chinese') }}<span v-if="locale === 'zh-CN'" class="float-right text-primary">✓</span></button>
@@ -250,24 +250,14 @@
       </div>
     </transition>
 
-    <!-- 布局主体 -->
-    <div class="flex" :class="isSidebarCollapsed ? 'lg:pl-16' : 'lg:pl-72'">
-      <!-- 桌面端侧边抽屉：支持内容向右弹出菜单，解除外层 overflow-hidden -->
+    <!-- 布局主体：主内容区根据侧边栏展开/折叠动态保留左外边距 -->
+    <div class="flex" :class="isSidebarCollapsed ? 'lg:pl-18' : 'lg:pl-72'">
+      <!-- 桌面端侧边抽屉：顶部紧贴 Header 下边缘 (top-[53px])，去掉侧栏内多余的顶部占位 -->
       <aside :class="[
-        'fixed left-0 top-0 bottom-0 z-30 hidden lg:block transition-all duration-200 bg-surface ',
+        'fixed left-0 top-[53px] bottom-0 z-30 hidden lg:block transition-all duration-200 bg-surface',
         isSidebarCollapsed ? 'w-18' : 'w-72'
       ]">
-        <div class="flex h-full flex-col py-2">
-          <!-- Logo 品牌区 -->
-          <RouterLink :to="{ name: 'home' }"
-                      class="flex items-center px-5 pt-1 pb-5 text-text transition select-none"
-                      :class="isSidebarCollapsed ? 'justify-center px-0' : 'gap-3'">
-            <img class="h-7 w-7 rounded-2xl shadow-xs dark:invert shrink-0" src="/logo.svg" alt="iFeed" />
-            <span v-if="!isSidebarCollapsed" class="flex items-center gap-2 text-lg font-bold tracking-tight">
-              IFeed
-            </span>
-          </RouterLink>
-
+        <div class="flex h-full flex-col py-3">
           <!-- A. 折叠迷你导航模式：Hover 订阅项向右弹出面板（使用 pl-2 连桥无缝衔接） -->
           <nav v-if="isSidebarCollapsed" class="flex-1 flex flex-col items-center space-y-2 px-1 overflow-visible">
             <!-- 首页 -->
@@ -329,8 +319,6 @@
                   </div>
 
                   <div class="max-h-80 overflow-y-auto space-y-0.5 pr-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-
-
                     <RouterLink
                         v-for="sub in subscriptionsStore.items"
                         :key="sub.feedId"

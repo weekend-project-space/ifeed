@@ -1,25 +1,37 @@
-<!-- 流动的曲线 -->
-<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <path
-            d="M2 8
-       C6 4, 10 4, 14 8
-       S22 12, 26 8"
-            stroke="currentColor"
-            stroke-width="1.8"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-    />
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 150 150" fill="none">
+    <defs>
+        <!-- 蓝紫高定渐变：左下活力蓝 -> 右上电光紫 -->
+        <linearGradient id="ifeed-gradient" x1="24" y1="132" x2="128" y2="24" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#2563EB" />
+            <stop offset="50%" stop-color="#4F46E5" />
+            <stop offset="100%" stop-color="#8B3DFF" />
+        </linearGradient>
+    </defs>
 
-    <path
-            d="M2 14
-       C6 10, 10 10, 14 14
-       S22 18, 26 14"
-            stroke="currentColor"
-            stroke-width="1.5"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            opacity="0.45"
-    />
+    <!-- 1. 顶部信号圆点：与下方立柱同宽对齐 (r=16, 直径32)，留出呼吸间距 -->
+    <circle cx="52" cy="30" r="16" fill="url(#ifeed-gradient)" />
 
-    <circle cx="5" cy="18" r="1.6" fill="currentColor"/>
+    <!-- 2. 主体 F 脊梁：压低斜率更显方正，右上角加入精致圆角过渡 -->
+    <path d="M 24 92
+       C 24 68, 36 55, 58 50
+       L 118 36
+       C 123.5 34.7, 128 38.8, 128 44.5
+       V 52
+       C 128 65, 119 74, 105 77.5
+       L 68 86.5
+       C 60 88.5, 56 94, 56 102
+       V 118
+       C 56 126.8, 48.8 134, 40 134
+       C 31.2 134, 24 126.8, 24 118
+       Z" fill="url(#ifeed-gradient)" />
+
+    <!-- 3. 下部平行短横梁：与上横梁严格保持平行斜率与等距留白 -->
+    <path d="M 68 101
+       L 106 92
+       C 110.5 91, 114 94.3, 114 99
+       V 104
+       C 114 114, 107.5 121, 97.5 123.5
+       L 74 129.5
+       C 70.5 130.4, 68 127.8, 68 124.2
+       Z" fill="url(#ifeed-gradient)" />
 </svg>
