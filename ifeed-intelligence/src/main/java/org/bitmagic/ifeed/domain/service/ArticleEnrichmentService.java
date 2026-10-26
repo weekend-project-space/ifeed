@@ -12,6 +12,9 @@ import org.bitmagic.ifeed.domain.repository.ArticleEnrichmentRepository;
 import org.bitmagic.ifeed.domain.repository.FeedRepository;
 import org.bitmagic.ifeed.domain.spec.ArticleEnrichmentSpec;
 import org.bitmagic.ifeed.infrastructure.ai.rerank.RerankerModel;
+import org.bitmagic.ifeed.infrastructure.ai.systemone.SystemOneModel;
+import org.bitmagic.ifeed.infrastructure.ai.systemone.SystemOneQuestion;
+import org.bitmagic.ifeed.infrastructure.ai.systemone.SystemOneRequest;
 import org.bitmagic.ifeed.infrastructure.score.ContentQualityEvaluator;
 import org.bitmagic.ifeed.infrastructure.score.ScoreMerger;
 import org.springframework.ai.chat.client.ChatClient;
@@ -30,6 +33,7 @@ public class ArticleEnrichmentService {
 
     private final ChatClient chatClient;
     private final RerankerModel rerankerModel;
+    private final SystemOneModel systemOneModel;
     private final ContentQualityEvaluator qualityEvaluator = new ContentQualityEvaluator();
     private final ArticleEnrichmentRepository enrichmentRepository;
     private final FeedRepository feedRepository;
@@ -39,9 +43,10 @@ public class ArticleEnrichmentService {
     private String mindMapPromptTemplate;
     private Map<String, String> ratingPromptMap;
 
-    public ArticleEnrichmentService(ChatClient chatClient, RerankerModel rerankerModel, PromptProvider promptProvider, ArticleEnrichmentRepository enrichmentRepository, FeedRepository feedRepository) {
+    public ArticleEnrichmentService(ChatClient chatClient, RerankerModel rerankerModel, SystemOneModel systemOneModel, PromptProvider promptProvider, ArticleEnrichmentRepository enrichmentRepository, FeedRepository feedRepository) {
         this.chatClient = chatClient;
         this.rerankerModel = rerankerModel;
+        this.systemOneModel = systemOneModel;
         this.enrichmentRepository = enrichmentRepository;
         this.feedRepository = feedRepository;
         this.summaryPromptTemplate = promptProvider.getPrompt("summary-prompt");
@@ -171,7 +176,11 @@ public class ArticleEnrichmentService {
         try {
             String content = removeImagesAndLinks(article.getContent());
             String category = feedRepository.findById(article.getFeed().getId()).map(Feed::getCategory).orElse("other").toUpperCase();
-            return rerankerModel.documentScore(ratingPromptMap.getOrDefault(category, ""), truncateContent(content, 650), null);
+            var request = new SystemOneRequest(truncateContent(content, 500), Map.of(
+                    "优质内容", SystemOneQuestion.noul(
+                            ratingPromptMap.getOrDefault(category, ""))));
+            return systemOneModel.call(request).noul("优质内容").noul();
+//            return rerankerModel.documentScore(ratingPromptMap.getOrDefault(category, ""), truncateContent(content, 650), null);
         } catch (Exception e) {
             log.error("生成打分失败: articleId={}", article.getId(), e);
             return -10;
@@ -206,10 +215,10 @@ public class ArticleEnrichmentService {
      */
     public static String toGrade(double score) {
         // 不需要 Sigmoid，直接用原始分数
-        if (score >= 0) return "A";  // 最优质
-        if (score >= -1.5) return "B";
-        if (score >= -3.0) return "C";
-        if (score >= -4.5) return "D";
+        if (score >= 0.85) return "A";  // 最优质
+        if (score >= 0.65) return "B";
+        if (score >= 0.6) return "C";
+        if (score >= 0.3) return "D";
         return "F";
     }
 

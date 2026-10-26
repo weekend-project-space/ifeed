@@ -84,10 +84,20 @@ app:
         model: 'Qwen/Qwen3-Embedding-4B'
         options:
           dimensions: 1024
+      embedding-mini:
+        base-url: '${app.ai.provider.endpoint}'
+        api-key: '${app.ai.provider.api-key}'
+        model: 'bge-small-zh-v1.5'
+        options:
+          dimensions: 384
       reranker:
         base-url: '${app.ai.provider.endpoint}'
         api-key: '${app.ai.provider.api-key}'
         model: 'bge-reranker-v2-m3'
+      systemone:
+        base-url: '${SYSTEMONE_BASE_URL:http://localhost:8083}'
+        connect-timeout: PT5S
+        read-timeout: PT30S
   # 检索
   search:
     retrieval:
@@ -102,14 +112,30 @@ app:
 
   radar:
     fixed-delay: PT12H
-    initial-delay: PT10m
+    initial-delay: PT1m
     window-hours: 72
     similarity-threshold: 0.7
-    neighbors: 10
     min-cluster-size: 5
     max-topics: 12
-    snapshot-ttl: PT2H
+    snapshot-ttl: PT24H
     include-global: true
+  topic-tracking:
+    fixed-delay: PT30M
+    initial-delay: PT1M
+    history-days: 7
+    candidate-page-size: 200
+    embedding-batch-size: 16
+    embedding-text-max-length: 512
+    summary-content-article-limit: 30
+    summary-text-max-length: 4096
+    summary-input-max-bytes: 12000
+    summary-max-tokens: 512
+    cluster-similarity-threshold: 0.73
+    jev-enabled: true
+    jev-relevance-threshold: 0.5
+    jev-text-max-length: 2000
+    max-categories: 3
+    max-sources-per-category: 10
   # 召回
   recall:
     preference:
@@ -136,3 +162,4 @@ logging:
     org.bitmagic.ifeed:
       application:
         feed: debug
+#        recommendation: debug

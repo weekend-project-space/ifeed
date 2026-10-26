@@ -21,6 +21,12 @@ import java.util.UUID;
 
 public interface ArticleRepository extends JpaRepository<Article, Long>, JpaSpecificationExecutor<Article> {
 
+    @Query("select new org.bitmagic.ifeed.domain.record.ArticleTitle(a.uid, a.id, a.title) from Article a where a.id in :ids")
+    List<ArticleTitle> findTitlesByIdIn(@Param("ids") Collection<Long> ids);
+
+    @Query("select a from Article a left join fetch a.feed where a.id in :ids")
+    List<Article> findAllWithFeedByIdIn(@Param("ids") Collection<Long> ids);
+
     boolean existsByFeedAndLink(Feed feed, String link);
 
     @Query(value = """
@@ -152,6 +158,12 @@ public interface ArticleRepository extends JpaRepository<Article, Long>, JpaSpec
     long countByFeed(Feed feed);
 
     Optional<Article> findTopByFeedOrderByPublishedAtDesc(Feed feed);
+
+    List<Article> findByFeed_IdInAndPublishedAtAfterOrderByPublishedAtDesc(
+            Collection<Integer> feedIds, Instant publishedAfter, Pageable pageable);
+
+    List<Article> findByFeed_IdInAndPublishedAtAfterOrderByPublishedAtDesc(
+            Collection<Integer> feedIds, Instant publishedAfter);
 
     @Query("""
             select a.feed.id, count(a), max(a.publishedAt)
