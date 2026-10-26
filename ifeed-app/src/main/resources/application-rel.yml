@@ -30,19 +30,29 @@ app:
 #      base-url: 'https://oneapi.jisuai.cn/'
 #      api-key: 'sk-HGq0GZEFP3xI5lGksbthh71U3p2VE04YcxUmTMbTgkpAl9zp'
 #      model: 'gpt-oss-120b'
-      base-url: 'http://192.168.8.58:8080/'
+      base-url: 'http://192.168.8.56:8080/'
       api-key: 'sk-HGq0GZEFP3xI5lGksbthh71U3p2VE04YcxUmTMbTgkpAl9zp'
-      model: 'gemma-4-E2B-it-qat-UD-Q4_K_XL.gguf'
+      model: 'ling-3.0'
       embedding:
         #        base-url: 'http://192.168.8.232:8081'
         #        model: 'bge-m3-Q4_K_M.gguf'
-        base-url: 'http://192.168.8.58:8081'
-        model: 'bge-m3-Q4_K_S.gguf'
+        base-url: 'http://192.168.8.56:8080'
+        model: 'bge-m3'
+      embedding-mini:
+        base-url: 'http://192.168.8.56:8080'
+#        base-url: 'http://192.168.8.58:8085'
+        model: 'bge-small'
+        options:
+          dimensions: 384
       reranker:
         #        base-url: 'http://192.168.8.232:8082'
         #        model: 'bge-reranker-v2-m3-Q4_K_M.gguf'
-        base-url: 'http://192.168.8.58:8082'
-        model: 'bge-reranker-v2-m3-Q4_K_M.gguf'
+        base-url: 'http://192.168.8.56:8080'
+#        base-url: 'http://192.168.8.58:8082'
+        model: 'bge-reranker'
+      systemone:
+        base-url: '${SYSTEMONE_BASE_URL:http://192.168.8.56:8080}'
+        model: 'jev-3b'
   oauth:
     linux-do:
       client-id: ${OAUTH_LINUX_DO_CLIENT_ID:PeXlJCOmunsYupcKmvTx86Bcxg00y5oe}
