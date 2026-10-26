@@ -8,7 +8,7 @@
           Intelligence
         </span>
       </div>
-      <!-- MD3 标准 Filled Button：清晰的高对比白色/反色字，告别黑字沉闷 -->
+      <!-- MD3 标准 Filled Button -->
       <button v-if="authStore.isAuthenticated" type="button"
               class="inline-flex h-10 items-center justify-center gap-2 rounded-full bg-primary px-5 text-xs font-semibold text-white shadow-xs transition hover:shadow-md hover:brightness-105 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40"
               :disabled="!limitsReady" @click="openCreate">
@@ -34,7 +34,7 @@
     <div class="grid grid-cols-1 gap-6 lg:grid-cols-[256px_minmax(0,1fr)] lg:gap-8">
       <!-- 左侧导航：MD3 Filter Chips & Navigation Item -->
       <aside class="min-w-0 lg:sticky lg:top-5 lg:self-start">
-        <!-- MD3 Filter Chips：替换原本刺眼的纯黑块，使用 Tonal 色系 -->
+        <!-- MD3 Filter Chips -->
         <div class="mb-3.5 flex items-center gap-1.5">
           <button v-if="authStore.isAuthenticated" type="button"
                   class="inline-flex h-8 items-center rounded-full px-3.5 text-xs font-medium transition"
@@ -94,6 +94,8 @@
               </svg>
             </button>
           </div>
+          <!-- 话题无限滚动哨兵：兼顾移动端水平滚动与桌面端垂直滚动 -->
+          <div ref="topicSentinel" class="h-1 w-1 shrink-0" aria-hidden="true" />
         </div>
 
         <p v-if="topics.length === 0 && !topicsLoading && !topicsError" class="px-3 py-4 text-xs text-text-secondary">
@@ -102,7 +104,6 @@
         <p v-if="topicsError" class="px-2 py-2 text-xs text-red-600">
           {{ topicsError }} <button type="button" class="underline" :disabled="topicsLoading" @click="retryTopics">{{ tr('common.retry') }}</button>
         </p>
-        <div ref="topicSentinel" class="h-1" aria-hidden="true" />
         <p v-if="topicsLoading" class="px-2 py-2 text-xs text-text-secondary" role="status">{{ tr('topicTrackingPage.loadingTopics') }}</p>
         <button v-else-if="hasMoreTopics && !topicsError" type="button"
                 class="mt-2 inline-flex h-8 w-full items-center justify-center rounded-full bg-surface-container px-4 text-xs font-medium text-text transition hover:bg-surface-container/70 active:scale-[0.98]"
@@ -168,7 +169,7 @@
             <template v-if="selectedTopic.blockedKeywords.length">
               <span class="ml-2 font-medium text-text-secondary">{{ tr('topicTrackingPage.blocked') }}</span>
               <span v-for="bkw in selectedTopic.blockedKeywords" :key="bkw"
-                    class="rounded-lg bg-surface px-2.5 py-1 font-medium text-text shadow-xs line-through ">{{ bkw }}</span>
+                    class="rounded-lg bg-surface px-2.5 py-1 font-medium text-text shadow-xs line-through">{{ bkw }}</span>
             </template>
 
             <details class="group ml-auto">
@@ -246,6 +247,23 @@
               </div>
             </div>
           </article>
+        </div>
+
+        <!-- 总结流的无限滚动哨兵与加载状态反馈 -->
+        <div ref="summarySentinel" class="h-4" aria-hidden="true" />
+
+        <div v-if="summariesLoading" class="py-6 text-center text-xs text-text-secondary" role="status">
+          {{ tr('common.loading') }}
+        </div>
+        <div v-else-if="summariesError" class="py-6 text-center text-xs text-red-600">
+          {{ summariesError }}
+          <button type="button" class="ml-1 underline" @click="retrySummaries">{{ tr('common.retry') }}</button>
+        </div>
+        <div v-else-if="!hasMoreSummaries && summaries.length" class="py-6 text-center text-xs text-text-secondary/50">
+          {{ tr('common.noMore') || '已加载全部总结' }}
+        </div>
+        <div v-else-if="!summaries.length && !summariesLoading" class="py-12 text-center text-xs text-text-secondary">
+          {{ tr('topicTrackingPage.noSummaries') || '暂无相关追踪总结' }}
         </div>
       </main>
     </div>
@@ -761,6 +779,7 @@ const resetArticles = () => {
 };
 
 const loadSummaries = async (append = false, reset = false, replace = false) => {
+  if (append && summariesLoading.value) return;
   const request = summariesRequest.begin();
   const topicId = selectedTopicId.value;
   summariesLoading.value = true;
@@ -787,7 +806,7 @@ const loadSummaries = async (append = false, reset = false, replace = false) => 
     }
     if (!preserveCursor) {
       summaryCursor.value = result.nextCursor ?? undefined;
-      hasMoreSummaries.value = result.hasNext;
+      hasMoreSummaries.value = Boolean(result.hasNext && result.nextCursor);
     }
   } catch (reason) {
     if (request.current()) {
@@ -807,8 +826,11 @@ const visibleArticles = (summary: TopicTrackSummary) => expandedSummaries.value.
 
 const loadArticles = async (summary: TopicTrackSummary) => {
   articlePages[summary.summaryId] ??= {
-    articles: [...summary.articles], cursor: summary.articles[summary.articles.length - 1]?.articleId,
-    hasNext: summary.articleCount > summary.articles.length, loading: false, error: '',
+    articles: [...summary.articles],
+    cursor: summary.articles[summary.articles.length - 1]?.articleId,
+    hasNext: summary.articleCount > summary.articles.length,
+    loading: false,
+    error: '',
   };
   const state = articlePages[summary.summaryId];
   if (state.loading || !state.hasNext) return;
@@ -886,9 +908,19 @@ const loadMoreSummaries = async () => {
   if (!summariesLoading.value && hasMoreSummaries.value) await loadSummaries(true);
 };
 
+// 1. 话题列表无限滚动挂载
 const { sentinel: topicSentinel } = useInfiniteScroll({
   hasNextPage: hasMoreTopics, isLoading: topicsLoading, hasError: () => !!topicsError.value,
   onLoadMore: loadMoreTopics, rootMargin: '100px 0px',
+});
+
+// 2. 核心主内容区：总结流无限滚动挂载
+const { sentinel: summarySentinel } = useInfiniteScroll({
+  hasNextPage: hasMoreSummaries,
+  isLoading: summariesLoading,
+  hasError: () => !!summariesError.value,
+  onLoadMore: loadMoreSummaries,
+  rootMargin: '250px 0px',
 });
 
 const subscribeSelected = async () => {
