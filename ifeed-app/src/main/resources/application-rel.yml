@@ -31,7 +31,7 @@ app:
 #      api-key: 'sk-HGq0GZEFP3xI5lGksbthh71U3p2VE04YcxUmTMbTgkpAl9zp'
 #      model: 'gpt-oss-120b'
       base-url: 'http://192.168.8.56:8080/'
-      api-key: 'sk-HGq0GZEFP3xI5lGksbthh71U3p2VE04YcxUmTMbTgkpAl9zp'
+      api-key: 'sk-xxx'
       model: 'ling-3.0'
       embedding:
         #        base-url: 'http://192.168.8.232:8081'
