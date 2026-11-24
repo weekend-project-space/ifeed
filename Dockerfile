@@ -30,7 +30,7 @@ FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
 
 # 复制 JAR 文件到容器
-COPY target/*.jar app.jar
+COPY ifeed-app/target/*.jar app.jar
 
 # 暴露应用端口（根据你的应用修改）
 EXPOSE 8080

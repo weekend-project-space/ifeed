@@ -1,172 +1,148 @@
 <template>
-  <div class="min-h-screen">
-    <div class="max-w-screen-lg mx-auto px-3 sm:px-6 py-4 sm:py-6">
-      <!-- Page Header -->
-      <div class="mb-6 sm:mb-8">
-        <h1 class="text-2xl sm:text-3xl font-bold text-text mb-2">我的收藏</h1>
+  <LibraryPageLayout
+      :title="t('collectionsPage.title')"
+      :total="total"
+      :pending="collectionsQuery.isPending.value"
+      :fetching="collectionsQuery.isFetching.value"
+      :error="errorMessage"
+      :empty-text="folderId ? t('collectionsPage.folderEmpty') : t('collectionsPage.empty')"
+      @refresh="refresh"
+  >
+    <template #controls>
+      <!-- MD3 Filter Chips 文件夹筛选 -->
+      <div class="mb-5 flex flex-wrap items-center gap-1.5" role="group" :aria-label="t('collectionsPage.folders')">
+        <button
+            v-for="filter in filters"
+            :key="filter.id"
+            type="button"
+            :aria-pressed="selectedFolder === filter.id"
+            :title="filter.name"
+            class="max-w-full truncate rounded-full px-3.5 py-1.5 text-xs font-medium transition select-none active:scale-95"
+            :class="selectedFolder === filter.id
+              ? 'bg-primary/15 font-semibold text-primary shadow-xs'
+              : 'bg-surface-container/60 text-text-secondary hover:bg-surface-container hover:text-text'"
+            @click="selectFolder(filter.id)"
+        >
+          {{ filter.name }}
+        </button>
+
+        <button
+            v-if="foldersQuery.hasNextPage.value && !foldersQuery.isError.value"
+            type="button"
+            :disabled="foldersQuery.isFetching.value"
+            class="inline-flex h-7 items-center rounded-full px-3 text-xs font-medium text-text-secondary transition hover:bg-surface-container hover:text-text disabled:opacity-40"
+            @click="foldersQuery.fetchNextPage()"
+        >
+          {{ foldersQuery.isFetchingNextPage.value ? t('collectionsPage.loading') : t('collectionsPage.moreFolders') }}
+        </button>
       </div>
 
-      <!-- Unauthenticated State -->
-      <div v-if="!authStore.isAuthenticated"
-        class="flex flex-col items-center justify-center py-16 sm:py-20 text-center">
-        <div
-          class="w-20 h-20 sm:w-24 sm:h-24 mb-4 sm:mb-6 flex items-center justify-center rounded-full bg-surface-container">
-          <svg class="w-10 h-10 sm:w-12 sm:h-12 text-text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-            stroke-width="1.5">
-            <path
-              d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z" />
-          </svg>
-        </div>
-        <h2 class="text-lg sm:text-xl font-semibold text-text mb-2">请先登录</h2>
-        <p class="text-xs sm:text-sm text-text-secondary px-4 mb-6">登录后即可查看和管理你的收藏</p>
-        <router-link to="/auth"
-          class="inline-block px-6 py-2.5 bg-secondary text-white rounded-full hover:bg-secondary-hover transition-colors text-sm font-medium">
-          前往登录
-        </router-link>
+      <p v-if="foldersQuery.isPending.value" role="status" class="mb-4 text-xs text-text-secondary">{{ t('collectionsPage.loadingFolders') }}</p>
+
+      <div v-if="foldersQuery.isError.value" role="alert" class="mb-4 rounded-2xl bg-red-500/10 p-3 text-xs text-red-600 dark:text-red-400">
+        {{ t('collectionsPage.foldersFailed') }}
+        <button
+            :disabled="foldersQuery.isFetching.value"
+            class="ml-1 font-semibold underline disabled:opacity-40"
+            @click="foldersQuery.isFetchNextPageError.value ? foldersQuery.fetchNextPage() : foldersQuery.refetch()"
+        >
+          {{ t('collectionsPage.retryLoading') }}
+        </button>
       </div>
+    </template>
 
-      <!-- Authenticated Content -->
-      <template v-else>
-        <!-- Controls Bar -->
-        <div class="flex items-center justify-between mb-4 sm:mb-6">
-          <div class="text-xs sm:text-sm text-text-secondary">
-            {{ totalText }}
-          </div>
-          <button @click="refresh" :disabled="loading"
-            class="p-2 hover:bg-surface-container rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            aria-label="刷新收藏列表">
-            <svg class="w-5 h-5 text-text-secondary transition-transform" :class="{ 'animate-spin': loading }"
-              viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2" />
-            </svg>
-          </button>
-        </div>
-
-        <!-- Error State -->
-        <div v-if="error" class="mb-4 p-3 sm:p-4 bg-red-50 border border-red-200 rounded-lg">
-          <div class="flex items-center gap-2 text-xs sm:text-sm text-red-800">
-            <svg class="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-              stroke-width="2">
-              <circle cx="12" cy="12" r="10" />
-              <line x1="12" y1="8" x2="12" y2="12" />
-              <line x1="12" y1="16" x2="12.01" y2="16" />
-            </svg>
-            <span>{{ error }}</span>
-          </div>
-        </div>
-
-        <!-- Collection Items -->
-        <article-card-list v-if="loading || items.length" :loading="loading" show-action :items="items" meta-field="collectedAt"
-          meta-prefix="收藏于 " action-label="取消收藏">
-
-          <template #action-dropdown="{ item, close }">
-            <button @click.stop.prevent="handleOpenInNewTab(item); close()"
-              class="w-full px-4 py-2 text-left text-sm text-text hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center gap-2">
-              在新标签页打开
-            </button>
-
-            <div class="border-t border-gray-200 dark:border-gray-700 my-1"></div>
-
-            <button @click.stop.prevent="handleRemove(item); close()"
-              class="w-full px-4 py-2 text-left text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors flex items-center gap-2">
-              取消收藏
-            </button>
-          </template>
-        </article-card-list>
-
-        <!-- Empty State -->
-        <div v-else-if="!items.length && !loading"
-          class="flex flex-col items-center justify-center py-16 sm:py-20 text-center">
-          <div
-            class="w-20 h-20 sm:w-24 sm:h-24 mb-4 sm:mb-6 flex items-center justify-center rounded-full bg-surface-container">
-            <svg class="w-10 h-10 sm:w-12 sm:h-12 text-text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-              stroke-width="1.5">
-              <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
-            </svg>
-          </div>
-          <h2 class="text-lg sm:text-xl font-semibold text-text mb-2">还没有收藏的文章</h2>
-          <p class="text-xs sm:text-sm text-text-secondary px-4">收藏你喜欢的文章，它们将显示在这里</p>
-        </div>
-
-        <!-- Pagination -->
-        <pagination v-if="items.length && !loading" :current-page="page" :has-previous-page="hasPreviousPage"
-          :has-next-page="hasNextPage" :disabled="loading" @prev-page="prevPage" @next-page="nextPage" />
+    <ArticleCardList v-if="items.length" :items="items" :loading="false" show-action meta-field="collectedAt" :meta-prefix="t('collectionsPage.collectedAt')">
+      <template #action-dropdown="{ item, close }">
+        <router-link :to="'/articles/' + item.articleId" target="_blank" class="menu-action" @click="close">{{ t('collectionsPage.openNewTab') }}</router-link>
+        <div class="my-1 border-t border-outline/10"></div>
+        <button :disabled="mutation.isPending.value" class="menu-action text-red-600 dark:text-red-400 hover:bg-red-500/10" @click="remove(item.articleId); close()">{{ t('collectionsPage.remove') }}</button>
       </template>
-    </div>
-  </div>
+    </ArticleCardList>
 
+    <template #footer>
+      <InfiniteLoadMore
+          v-if="items.length"
+          :key="selectedFolder"
+          :has-next-page="collectionsQuery.hasNextPage.value"
+          :loading="collectionsQuery.isFetchingNextPage.value"
+          :fetching="collectionsQuery.isFetching.value"
+          :failed="collectionsQuery.isFetchNextPageError.value"
+          :blocked="collectionsQuery.isError.value"
+          :fetch-more="collectionsQuery.fetchNextPage"
+      />
+    </template>
+  </LibraryPageLayout>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted } from 'vue';
-import { storeToRefs } from 'pinia';
-import { useCollectionsStore } from '../stores/collections';
-import { useAuthStore } from '../stores/auth';
-import { confirm } from '../composables/confirm';
-const collectionsStore = useCollectionsStore();
-const authStore = useAuthStore();
-const { items, page, total, loading, hasNextPage, hasPreviousPage, error } = storeToRefs(collectionsStore);
+import { computed, watch } from 'vue';
+import { useRouter } from 'vue-router';
+import { useQueryClient } from '@tanstack/vue-query';
+import ArticleCardList from '@/components/ArticleCardList.vue';
+import LibraryPageLayout from '@/components/LibraryPageLayout.vue';
+import InfiniteLoadMore from '@/components/InfiniteLoadMore.vue';
+import { useAuthStore } from '@/stores/auth';
+import { collectionsQueryKey, useCollectionsQuery } from '@/queries/collections';
+import { useCollectionFoldersQuery } from '@/queries/collectionFolders';
+import { useCollectionMutation } from '@/queries/articleActions';
+import { confirm } from '@/composables/confirm';
+import { useI18n } from 'vue-i18n';
 
+defineOptions({ name: 'CollectionsPage' });
+const { t } = useI18n();
 
-// 抽象的加载方法，供页面其它地方调用
-const loadData = async (targetPage: number, options?: { scrollToTop?: boolean }) => {
-  if (loading.value || !authStore.isAuthenticated) return;
+const props = defineProps<{ folderId?: string }>();
+const auth = useAuthStore();
+const router = useRouter();
+const client = useQueryClient();
 
-  try {
-    await collectionsStore.fetchCollections({ page: targetPage });
+const folderId = computed(() => props.folderId);
+const selectedFolder = computed(() => props.folderId ?? 'all');
+const foldersQuery = useCollectionFoldersQuery();
 
-    if (options?.scrollToTop) {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-  } catch (err) {
-    console.error('加载收藏失败:', err);
-    throw err;
+const filters = computed(() => [
+  { id: 'all', name: t('collectionsPage.all') },
+  { id: 'default', name: t('collectionsPage.default') },
+  ...(foldersQuery.data.value?.pages.flatMap(page => page.content) ?? [])
+      .map(folder => ({ id: folder.folderId, name: folder.name })),
+]);
+
+const collectionsQuery = useCollectionsQuery(folderId);
+const { items, total } = collectionsQuery;
+const mutation = useCollectionMutation();
+const errorMessage = computed(() => collectionsQuery.errorMessage.value || mutation.error.value?.message || '');
+
+const selectFolder = async (selected: string) => {
+  if (selected === selectedFolder.value) return;
+  mutation.reset();
+  await client.resetQueries({ queryKey: collectionsQueryKey(auth.user?.userId ?? 'anonymous', selected === 'all' ? undefined : selected), exact: true });
+  return router.push({ name: 'collections', query: selected === 'all' ? {} : { folderId: selected } });
+};
+
+const refresh = () => Promise.all([collectionsQuery.refetch(), foldersQuery.refetch()]);
+
+const remove = async (articleId: string) => {
+  if (mutation.isPending.value) return;
+  const confirmed = await confirm({ title: t('collectionsPage.cancelTitle'), description: t('collectionsPage.cancelDescription') }).catch(() => false);
+  if (confirmed) {
+    mutation.mutate({ articleId, collected: false });
   }
 };
 
-const refresh = async () => {
-  await loadData(0);
-};
-
-const nextPage = async () => {
-  if (!hasNextPage.value) return;
-  await loadData(page.value + 1, { scrollToTop: true });
-};
-
-const prevPage = async () => {
-  if (!hasPreviousPage.value) return;
-  await loadData(Math.max(1, page.value - 1), { scrollToTop: true });
-};
-
-const handleOpenInNewTab = (item: any) => {
-  if (item?.articleId) {
-    const url = `/articles/${item.articleId}`;
-    window.open(url, '_blank');
+watch([selectedFolder, filters, foldersQuery.hasNextPage, foldersQuery.isFetching, foldersQuery.isError, collectionsQuery.isSuccess, () => router.currentRoute.value.name], () => {
+  if (router.currentRoute.value.name === 'collections' && collectionsQuery.isSuccess.value && !filters.value.some(filter => filter.id === selectedFolder.value)
+      && foldersQuery.hasNextPage.value && !foldersQuery.isFetching.value && !foldersQuery.isError.value) {
+    void foldersQuery.fetchNextPage();
   }
-};
+}, { immediate: true });
 
-const handleRemove = async  (item: any) => {
-  if (!item?.articleId) return;
-  try {
-    const confirmed = await confirm({
-      title: '取消收藏',
-      description: '确定要取消收藏这篇文章吗？'
-    });
-    if (confirmed) {
-      await collectionsStore.removeCollection(item.articleId);
-      // 如果当前页没有内容了且有上一页，自动跳转到上一页
-      if (!items.value.length && hasPreviousPage.value) {
-        await loadData(Math.max(1, page.value - 1));
-      }
-    }
-  } catch {
-    // 用户取消，无需操作
-  }
-};
-
-const totalText = computed(() =>
-  (total.value === null || total.value === 0) ? '暂无收藏' : `共 ${total.value} 条收藏`
-);
-
-onMounted(refresh);
+watch([folderId, () => auth.user?.userId], () => mutation.reset());
 </script>
+
+<style scoped>
+@reference "../styles/tailwind.css";
+
+.menu-action {
+  @apply block w-full px-4 py-2 text-left text-xs font-medium text-text transition hover:bg-surface-container disabled:opacity-40;
+}
+</style>

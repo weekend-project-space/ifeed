@@ -1,106 +1,78 @@
 <template>
-  <div class="mx-auto">
-    <!-- 错误提示 -->
-    <div v-if="articleError" class="mb-6 p-4 rounded-lg bg-red-50 border border-red-200">
-      <p class="text-sm text-red-800 font-medium mb-2">推荐请求出错：{{ articleError }}</p>
+  <div class="mx-auto text-text">
+    <!-- 错误提示：MD3 柔和警示卡片 -->
+    <div v-if="articleError" class="mb-6 rounded-2xl bg-red-500/10 p-4 text-xs text-red-600 dark:text-red-400" role="alert">
+      <p class="font-semibold mb-2">{{ t('homePage.recommendationError') }}{{ articleError }}</p>
       <button
           type="button"
-          class="px-4 py-2 text-sm font-medium rounded-md bg-red-600 text-white hover:bg-red-700 transition-colors"
+          class="inline-flex h-8 items-center justify-center rounded-full bg-red-600 px-4 text-xs font-semibold text-white shadow-xs transition hover:bg-red-700 active:scale-95"
           @click="refresh"
       >
-        重试
+        {{ t('homePage.retry') }}
       </button>
     </div>
 
-    <!-- 文章列表 -->
+    <!-- 文章列表组件 -->
     <article-list
-        subtitle="实时为你刷新阅读灵感"
+        :subtitle="t('homePage.subtitle')"
         :items="items"
         :loading="articlesLoading"
-        empty-message="暂无推荐结果，尝试刷新或多收藏一些文章吧。"
+        :empty-message="t('homePage.empty')"
         @refresh="refresh"
     />
 
-    <!-- 分页控件 -->
-    <pagination
-        v-if="items.length && !articlesLoading"
-        :current-page="currentPage"
-        :has-previous-page="hasPreviousPage"
-        :has-next-page="hasNextPage"
-        :disabled="articlesLoading"
-        @prev-page="prevPage"
-        @next-page="nextPage"
-    />
+    <!-- 分页加载指示 -->
+    <div v-if="items.length" class="mt-8 flex flex-col items-center gap-2.5" aria-live="polite">
+      <div v-if="isFetchingNextPage" class="text-xs text-text-secondary">{{ t('homePage.loadingMore') }}</div>
+      <template v-else-if="nextPageError">
+        <p class="text-xs text-red-600 dark:text-red-400">{{ t('homePage.loadMoreFailed') }}</p>
+        <button
+            type="button"
+            class="inline-flex h-8 items-center justify-center rounded-full bg-surface-container px-4 text-xs font-semibold text-text shadow-xs hover:bg-surface-container-high transition"
+            @click="loadMore"
+        >
+          {{ t('homePage.retry') }}
+        </button>
+      </template>
+      <p v-else-if="!hasNextPage" class="text-xs text-text-secondary/60">{{ t('homePage.allLoaded') }}</p>
+    </div>
+
+    <div ref="loadMoreSentinel" class="h-1" aria-hidden="true"></div>
   </div>
 </template>
 
 <script setup lang="ts">
-import {computed, onMounted, watch} from 'vue';
-import {useRouter, useRoute} from 'vue-router';
-import {storeToRefs} from 'pinia';
-import {useRecommendArticlesStore} from '../stores/articles/recommendArticles';
+import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
+import { useDocumentTitle } from '@/composables/documentTitle';
+import { normalizeArticle } from '../stores/articles/types';
+import { useInfiniteRecommendationsQuery } from '../queries/recommendations';
+import { useInfiniteScroll } from '../composables/infiniteScroll';
+import ArticleList from '../components/ArticleList.vue';
 
-const SIZE = 60;
+defineOptions({ name: 'HomePage' });
+const { t } = useI18n();
+useDocumentTitle(() => t('mainLayout.home'));
 
-const route = useRoute();
-const router = useRouter();
-const recommendStore = useRecommendArticlesStore();
-
-const {
-  items,
-  loading: articlesLoading,
-  error: articleError,
+const recommendationsQuery = useInfiniteRecommendationsQuery();
+const items = computed(() => recommendationsQuery.data.value?.pages
+    .flatMap((page) => page.content)
+    .map(normalizeArticle) ?? []);
+const articlesLoading = computed(() => recommendationsQuery.isPending.value);
+const isFetchingNextPage = computed(() => recommendationsQuery.isFetchingNextPage.value);
+const hasNextPage = computed(() => Boolean(recommendationsQuery.hasNextPage.value));
+const articleError = computed(() => {
+  const error = recommendationsQuery.error.value;
+  if (items.value.length > 0) return null;
+  return error instanceof Error ? error.message : error ? t('homePage.loadFailed') : null;
+});
+const nextPageError = computed(() => recommendationsQuery.isFetchNextPageError.value);
+const { sentinel: loadMoreSentinel, loadMore } = useInfiniteScroll({
   hasNextPage,
-  hasPreviousPage
-} = storeToRefs(recommendStore);
-
-const currentPage = computed(() => {
-  const raw = Array.isArray(route.query.page) ? route.query.page[0] : route.query.page;
-  const parsed = Number(raw);
-  return Number.isFinite(parsed) && parsed > 0 ? parsed : 1;
+  isLoading: recommendationsQuery.isFetching,
+  hasError: recommendationsQuery.isError,
+  onLoadMore: () => recommendationsQuery.fetchNextPage(),
 });
 
-const loadRecommendations = async (targetPage = 1) => {
-  if (targetPage < 1) targetPage = 1;
-
-  try {
-    await recommendStore.fetchArticles({
-      page: targetPage,
-      size: SIZE
-    });
-  } catch (err) {
-    console.error('加载推荐文章失败:', err);
-  }
-};
-
-const refresh = () => loadRecommendations(currentPage.value);
-
-
-const nextPage = () => {
-  if (hasNextPage.value) {
-    router.push({
-      query: {...route.query, page: String(currentPage.value + 1)}
-    });
-  }
-};
-
-const prevPage = () => {
-  if (hasPreviousPage.value) {
-    router.push({
-      query: {...route.query, page: String(Math.max(1, currentPage.value - 1))}
-    });
-  }
-};
-
-onMounted(() => {
-  if (sessionStorage.getItem('origin-list') != route.fullPath) {
-    loadRecommendations(currentPage.value);
-  }
-  sessionStorage.removeItem('origin-list')
-});
-
-watch(
-    () => currentPage.value,
-    (page) => loadRecommendations(page)
-);
+const refresh = () => recommendationsQuery.refetch();
 </script>

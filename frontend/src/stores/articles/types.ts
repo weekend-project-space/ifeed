@@ -1,26 +1,13 @@
+import { translate as tr } from '@/i18n';
 import { formatRelativeTime } from '@/utils/datetime';
 import { md2html } from '@/utils/markdown';
+import type { ArticleDto } from '@/api/articles';
 
-export interface ArticleDto {
-    id: string;
-    title: string;
-    summary?: string;
-    content?: string;
-    link?: string;
-    thumbnail?: string;
-    enclosure?: string;
-    enclosureType?: string;
-    feedId?: string;
-    feedTitle?: string;
-    feedAvatar?: string;
-    author?: string;
-    publishedAt?: string;
-    tags?: string[];
-    collected?: boolean;
-}
+export type { ArticleDto } from '@/api/articles';
 
 export interface ArticleListItem {
     id: string;
+    feedId?: string;
     title: string;
     summary: string;
     link?: string;
@@ -36,6 +23,8 @@ export interface ArticleListItem {
 
 
 export interface ArticleDetail extends ArticleListItem {
+    liked: boolean;
+    folderId: string | null;
     content: string;
     feedId?: string;
     feedAvatar?: string;
@@ -45,13 +34,14 @@ export interface ArticleDetail extends ArticleListItem {
 
 
 export const normalizeArticle = (article: ArticleDto): ArticleListItem => {
-    const feedTitle = article.feedTitle ?? '未知来源';
+    const feedTitle = article.feedTitle ?? tr('common.unknownSource');
     const publishedAt = article.publishedAt;
     const tags = article.tags ?? [];
     return {
         id: String(article.id),
-        title: article.title ?? '未命名文章',
-        summary: article.summary ?? '暂无摘要。',
+        feedId: article.feedId,
+        title: article.title ?? tr('common.untitledArticle'),
+        summary: article.summary ?? tr('common.noSummaryPeriod'),
         link: article.link,
         thumbnail: article.thumbnail,
         enclosure: article.enclosure,
@@ -65,7 +55,7 @@ export const normalizeArticle = (article: ArticleDto): ArticleListItem => {
 };
 
 export const normalizeArticleDetail = (article: ArticleDto): ArticleDetail => {
-    const feedTitle = article.feedTitle ?? '未知来源';
+    const feedTitle = article.feedTitle ?? tr('common.unknownSource');
     const publishedAt = article.publishedAt;
     const tags = article.tags ?? [];
     const rawContent = article.content ?? article.summary ?? '';
@@ -73,7 +63,7 @@ export const normalizeArticleDetail = (article: ArticleDto): ArticleDetail => {
     return {
         ...article,
         id: String(article.id),
-        title: article.title ?? '未命名文章',
+        title: article.title ?? tr('common.untitledArticle'),
         summary:article.summary? md2html(article.summary) : '',
         content: md2html(rawContent),
         link: article.link,
@@ -87,5 +77,7 @@ export const normalizeArticleDetail = (article: ArticleDto): ArticleDetail => {
         timeAgo: formatRelativeTime(publishedAt ?? Date.now()),
         tags: Array.from(new Set(tags)).slice(0, 6),
         collected: article.collected ?? false,
+        liked: article.liked ?? false,
+        folderId: article.folderId ?? null,
     };
 };

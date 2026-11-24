@@ -14,7 +14,6 @@ iFeed 由以下组件组成：
 -   **Frontend**: Vue 3 + Vite 单页应用。
 -   **Backend**: Spring Boot 3.5 应用。
 -   **Database**: PostgreSQL 16 (启用 pgvector 插件) 用于存储业务数据和向量数据。
--   **NoSQL**: MongoDB 用于存储非结构化数据。
 
 ## 环境变量配置
 
@@ -27,11 +26,6 @@ iFeed 由以下组件组成：
 | `PG_DATABASE`                        | `i_feed` | 数据库名称                           |
 | `PG_USERNAME`                        | `i_feed` | 数据库用户名                          |
 | `PG_PASSWORD`                        | `0123.` | 数据库密码                           |
-| `MONGO_DB`                           | `127.0.0.1` | MongoDB 主机地址                    |
-| `MONGO_DB_PORT`                      | `27017` | MongoDB 端口                      |
-| `MONGO_DB_DATABASE`                           | `i_feed` | 数据库名称                   |
-| `MONGO_DB_USERNAME`                  | `mongo_cTXZaN` | MongoDB 用户名                     |
-| `MONGO_DB_PASSWORD`                  | `mongo_MDNyW6` | MongoDB 密码                      |
 | `app.ai.provider.api-key`            | - | **必填** OpenAI 兼容接口的 API Key     |
 | `app.ai.provider.base-url`           | - | **必填** OpenAI 兼容接口的 Base URL    |
 | `app.ai.provider.model`              | `gpt-4o-mini` | 聊天模型名称                          |
@@ -46,7 +40,7 @@ iFeed 由以下组件组成：
 
 ### 1. 准备初始化脚本
 
-在项目根目录下创建 `init` 目录，并分别创建 PostgreSQL 和 MongoDB 的初始化脚本。
+在项目根目录下创建 `init/postgres` 目录，并放置 PostgreSQL 初始化脚本。
 
 **PostgreSQL 初始化脚本** (`init/postgres/init.sql`):
 
@@ -64,20 +58,6 @@ CREATE TABLE article_embeddings (
 CREATE INDEX ON article_embeddings USING ivfflat (embedding vector_cosine_ops);
 ```
 
-**MongoDB 初始化脚本** (`init/mongo/init.js`):
-
-```javascript
-// 这里的用户名密码应与 docker-compose.yml 中的环境变量一致
-// 如果使用 root 用户连接，此脚本可能不是必须的，但为了权限分离建议创建
-db.createUser({
-    user: "mongo_cTXZaN",
-    pwd: "mongo_MDNyW6",
-    roles: [
-        { role: "readWrite", db: "i_feed" }
-    ]
-});
-```
-
 ### 2. 创建 docker-compose.yml
 
 在项目根目录下创建一个 `docker-compose.yml` 文件：
@@ -90,7 +70,6 @@ services:
       - "8080:8080"
     environment:
       - PG=postgres
-      - MONGO_DB=mongo
       - app.ai.provider.api-key=your_api_key_here
       - app.ai.provider.base-url=your_base_url_here
       - app.ai.provider.embedding.api-key=your_api_key_here
@@ -99,7 +78,6 @@ services:
       - app.ai.provider.reranker.base-url=your_base_url_here
     depends_on:
       - postgres
-      - mongo
     restart: always
 
   postgres:
@@ -115,18 +93,6 @@ services:
       - ./init/postgres:/docker-entrypoint-initdb.d # 挂载初始化脚本
     restart: always
 
-  mongo:
-    image: mongo:latest
-    ports:
-      - "27017:27017"
-    environment:
-      - MONGO_INITDB_ROOT_USERNAME=mongo_cTXZaN
-      - MONGO_INITDB_ROOT_PASSWORD=mongo_MDNyW6
-      - MONGO_INITDB_DATABASE=i_feed
-    volumes:
-      - ./data/mongo:/data/db
-      - ./init/mongo:/docker-entrypoint-initdb.d # 挂载初始化脚本
-    restart: always
 ```
 
 ### 启动服务
@@ -145,10 +111,6 @@ docker run -d \
     -e PG_DATABASE=i_feed \
     -e PG_USERNAME=PG_USERNAME \
     -e PG_PASSWORD=PG_PASSWORD \
-    -e MONGO_DB=MONGO_DB \
-    -e MONGO_DB_DATABASE=i_feed \
-    -e MONGO_DB_USERNAME=MONGO_DB_USERNAME \
-    -e MONGO_DB_PASSWORD=MONGO_DB_PASSWORD \
     -e app.ai.provider.api-key=APIKEY \
     -e app.ai.provider.base-url=BASE_URL \
     -e app.ai.provider.reranker.api-key=APIKEY \
@@ -182,7 +144,7 @@ npm run build
 
 ### 3. 运行
 
-确保 PostgreSQL 和 MongoDB 已启动并配置正确。
+确保 PostgreSQL 已启动并配置正确。
 
 **注意**: 对于手动安装的 PostgreSQL，必须安装并启用 `pgvector` 扩展，并初始化向量表：
 
@@ -201,18 +163,6 @@ CREATE TABLE article_embeddings (
     embedding vector(1024)
 );
 CREATE INDEX ON article_embeddings USING ivfflat (embedding vector_cosine_ops);
-```
-
-**注意**: 对于手动安装的 MongoDB，需要创建数据库用户并授权：
-
-1.  连接到 MongoDB (使用 `mongosh`)。
-2.  执行以下命令：
-
-```javascript
-use admin
-db.auth('mongo_cTXZaN','mongo_MDNyW6')
-use i_feed
-db.createUser({user:"mongo_cTXZaN",pwd:"mongo_MDNyW6",roles:[{role:"readWrite",db:"i_feed"}]})
 ```
 
 ```bash

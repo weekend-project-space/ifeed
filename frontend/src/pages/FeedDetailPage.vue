@@ -1,98 +1,129 @@
 <template>
-  <div class="max-w-screen-lg mx-auto px-4 sm:px-6 py-6 sm:py-8">
-
-
+  <div class="mx-auto max-w-screen-lg py-6 sm:py-8 text-text">
     <article-list
         :items="items"
         :loading="articlesLoading"
-        empty-message="该频道暂时没有文章，稍后再来看看。"
+        :empty-message="tr('feedDetailPage.empty')"
         @select-tag="handleSelectTag"
         @refresh="refreshArticles">
       <template #header>
-        <!-- Channel Header -->
-        <section class="mb-8 space-y-4">
-          <!-- Channel Info -->
-          <div class="flex items-start gap-4">
-            <!-- Avatar -->
-            <div class="flex-shrink-0">
-              <img
-                  v-if="detail?.avatar"
-                  :src="detail.avatar"
-                  class="h-16 w-16 rounded-full bg-gray-100 dark:bg-gray-800 object-cover"
-                  alt="频道头像"/>
-              <div
-                  v-else
-                  class="flex h-16 w-16 items-center justify-center rounded-full bg-secondary/10 text-2xl font-semibold text-secondary">
-                {{ channelInitial }}
-              </div>
+        <!-- 频道头部：MD3 动态表面包裹卡片 -->
+        <section class="mb-8 rounded-[28px] bg-surface-container/40 p-5 sm:p-7">
+          <div class="flex flex-col gap-5 sm:flex-row sm:items-start sm:gap-6">
+            <!-- 频道头像 -->
+            <div class="shrink-0">
+              <a :href="detail?.siteUrl" target="_blank" rel="noopener noreferrer">
+                <img
+                    v-if="detail?.avatar"
+                    :src="detail.avatar"
+                    class="h-16 w-16 rounded-full bg-surface object-cover shadow-xs p-0.5 sm:h-20 sm:w-20"
+                    :alt="tr('feedDetailPage.feedAvatar')"/>
+                <div
+                    v-else
+                    class="flex h-16 w-16 items-center justify-center rounded-full bg-surface-container-high text-xl font-bold text-text sm:h-20 sm:w-20 shadow-xs">
+                  {{ channelInitial }}
+                </div>
+              </a>
             </div>
 
-            <!-- Info & Actions -->
-            <div class="flex-1 min-w-0 space-y-3">
+            <!-- 信息主体与操作 -->
+            <div class="min-w-0 flex-1 space-y-3.5">
               <div>
-                <h1 class="text-2xl sm:text-3xl font-bold text-text mb-1">
-                  {{ channelTitle }}
+                <h1 class="text-2xl font-bold tracking-tight text-text sm:text-3xl">
+                  <a :href="detail?.siteUrl" target="_blank" rel="noopener noreferrer" class="hover:text-primary transition-colors">
+                    {{ channelTitle }}
+                  </a>
                 </h1>
-                <p class="text-sm text-text-secondary">
-                  {{ detail?.description }} 最近更新 {{ latestUpdateText }} · 最近抓取 {{ lastFetchedText }}
+                <p class="mt-1 text-xs text-text-secondary leading-relaxed sm:text-sm">
+                  {{ tr('feedDetailPage.descriptionMeta', { description: detail?.description || tr('feedDetailPage.noDescription'), updated: latestUpdateText, fetched: lastFetchedText }) }}
                 </p>
               </div>
 
-              <!-- Stats -->
-              <div class="flex flex-wrap gap-4 text-sm text-text-secondary">
-              <span class="flex items-center gap-1.5" v-if="detail?.sources?.length ?? 0 ">
-               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
-                </svg>
-                {{ detail?.sources.length ?? 0 }} 个来源
-              </span>
-                <span class="flex items-center gap-1.5" v-else>
-                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                </svg>
-                {{ detail?.articleCount ?? 0 }} 篇文章
-              </span>
+              <!-- 统计数据 -->
+              <div class="flex flex-wrap gap-4 text-xs text-text-secondary">
+                <span v-if="detail?.sources?.length" class="flex items-center gap-1.5 font-medium">
+                  <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+                  </svg>
+                  {{ tr('common.sourceCount', { count: detail.sources.length }) }}
+                </span>
+                <span v-else class="flex items-center gap-1.5 font-medium">
+                  <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                  </svg>
+                  {{ tr('common.articleCount', { count: detail?.articleCount ?? 0 }) }}
+                </span>
 
-                <span class="flex items-center gap-1.5">
-                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
-                </svg>
-                {{ detail?.subscriberCount ?? 0 }} 订阅者
-              </span>
+                <span class="flex items-center gap-1.5 font-medium">
+                  <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
+                  </svg>
+                  {{ tr('common.subscriberCount', { count: detail?.subscriberCount ?? 0 }) }}
+                </span>
               </div>
 
-              <!-- Sources (for MixFeed) -->
-              <div v-if="detail?.sources && detail.sources.length > 0" class="space-y-2">
-                <!--            <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300">来源订阅 ({{ detail.sources.length }})</h3>-->
-                <div class="flex flex-wrap gap-2">
-              <span
-                  v-for="sourceId in detail.sources"
-                  :key="sourceId"
-                  class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-text-secondary bg-surface-container rounded-full"
-              >
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/>
-                </svg>
-                {{ sourceId }}
-              </span>
-                </div>
+              <!-- 混合源包含的子源 -->
+              <div v-if="detail?.sources && detail.sources.length > 0" class="flex flex-wrap gap-1.5 pt-1">
+                <span
+                    v-for="sourceId in detail.sources"
+                    :key="sourceId"
+                    class="inline-flex items-center gap-1 rounded-full bg-surface px-3 py-1 text-[11px] font-medium text-text-secondary shadow-2xs"
+                >
+                  <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/>
+                  </svg>
+                  {{ sourceId }}
+                </span>
               </div>
 
-              <!-- Actions -->
-              <div class="flex flex-wrap gap-2">
+              <!-- 操作按钮：锁定宽度 w-20 (80px)，精简文案 -->
+              <div class="flex flex-wrap items-center gap-2.5 pt-2">
                 <button
                     type="button"
-                    class="px-4 py-2 text-sm font-medium rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                    :class="detail?.subscribed
-                  ? 'text-secondary bg-secondary/10 hover:bg-secondary/20'
-                  : 'text-white bg-secondary hover:bg-secondary/90'"
+                    class="group relative inline-flex h-9.5 w-20 shrink-0 items-center justify-center gap-1.5 rounded-full text-xs font-semibold shadow-xs transition-all duration-200 select-none active:scale-95 disabled:cursor-not-allowed disabled:opacity-40"
+                    :class="[
+                      detail?.subscribed
+                        ? 'border border-outline/30 bg-surface text-text hover:border-red-500/40 hover:bg-red-500/10 hover:text-red-600 dark:hover:text-red-400'
+                        : 'bg-primary text-white hover:brightness-105 hover:shadow-sm'
+                    ]"
                     :disabled="subscriptionSubmitting || feedLoading"
                     @click="toggleSubscription">
-                  {{ detail?.subscribed ? '已订阅' : '订阅' }}
+                  <!-- 正在处理态 -->
+                  <template v-if="subscriptionSubmitting">
+                    <svg class="h-3.5 w-3.5 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                      <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+                    </svg>
+                  </template>
+
+                  <!-- 已订阅态：默认对勾，Hover时变叉 -->
+                  <template v-else-if="detail?.subscribed">
+                    <span class="inline-flex items-center gap-1 group-hover:hidden">
+                      <svg class="h-3.5 w-3.5 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="20 6 9 17 4 12" />
+                      </svg>
+                      <span>{{ tr('common.subscribedShort') }}</span>
+                    </span>
+                    <span class="hidden items-center gap-1 group-hover:inline-flex">
+                      <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18" />
+                        <line x1="6" y1="6" x2="18" y2="18" />
+                      </svg>
+                      <span>{{ tr('common.unsubscribeShort') }}</span>
+                    </span>
+                  </template>
+
+                  <!-- 未订阅态 -->
+                  <template v-else>
+                    <svg class="h-3.5 w-3.5 stroke-[2.5]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                      <line x1="12" y1="5" x2="12" y2="19" />
+                      <line x1="5" y1="12" x2="19" y2="12" />
+                    </svg>
+                    <span>{{ tr('common.subscribe') }}</span>
+                  </template>
                 </button>
 
                 <a
@@ -100,26 +131,20 @@
                     :href="detail.siteUrl"
                     target="_blank"
                     rel="noopener noreferrer"
-                    class="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-text-secondary bg-surface-container rounded-full hover:bg-surface-container/70 transition-colors">
-                  访问网站
-                  <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    class="inline-flex h-9.5 items-center gap-1.5 rounded-full bg-surface px-4.5 text-xs font-medium text-text shadow-xs transition hover:bg-surface-container active:scale-95">
+                  <span>{{ tr('feedDetailPage.visitWebsite') }}</span>
+                  <svg class="h-3.5 w-3.5 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                           d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
                   </svg>
                 </a>
               </div>
-              <div v-if="detail?.url" class="flex items-center gap-2 text-xs text-text-muted">
-                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/>
-                </svg>
-                <span class="truncate">{{ detail.url }}</span>
-              </div>
-              <!-- Error Warning -->
+
+              <!-- 抓取异常警告 -->
               <div
                   v-if="hasFetchIssue"
-                  class="flex items-start gap-2 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-sm text-red-700 dark:text-red-400">
-                <svg class="h-5 w-5 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                  class="flex items-start gap-2 rounded-2xl bg-red-500/10 p-3 text-xs text-red-600 dark:text-red-400">
+                <svg class="mt-0.5 h-4 w-4 shrink-0" fill="currentColor" viewBox="0 0 20 20">
                   <path fill-rule="evenodd"
                         d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
                         clip-rule="evenodd"/>
@@ -127,105 +152,107 @@
                 <span class="truncate">{{ fetchIssueLabel }}</span>
               </div>
 
-              <p v-if="feedError" class="text-sm text-red-600 dark:text-red-400">
-                {{ feedError }}
-              </p>
+              <p v-if="feedError" class="text-xs text-red-600 dark:text-red-400">{{ feedError }}</p>
+              <p v-if="subscriptionError" class="text-xs text-red-600 dark:text-red-400" role="alert">{{ subscriptionError }}</p>
             </div>
           </div>
         </section>
 
-        <!-- Tag Filter -->
+        <!-- 标签筛选条 -->
         <div
             v-if="selectedTagDisplay"
-            class="mb-6 flex items-center justify-between gap-4 p-3 bg-secondary/5 border border-secondary/20 rounded-lg">
-        <span class="text-sm text-text-secondary">
-          标签筛选：<span class="font-medium text-secondary">{{ selectedTagDisplay }}</span>
-        </span>
-          <button
-              class="text-sm font-medium text-secondary hover:underline"
-              @click="clearTag">
-            清除
+            class="mb-6 flex items-center justify-between gap-4 rounded-2xl bg-primary/10 px-4 py-2 text-xs font-medium text-primary">
+          <span>{{ tr('feedDetailPage.selectedTag', { tag: selectedTagDisplay }) }}</span>
+          <button class="hover:underline font-semibold" @click="clearTag">
+            {{ tr('common.clear') }}
           </button>
         </div>
       </template>
     </article-list>
 
-    <p v-if="articleError" class="text-sm text-red-600 dark:text-red-400">
+    <p v-if="articleError" class="text-xs text-red-600 dark:text-red-400 text-center py-4">
       {{ articleError }}
     </p>
 
-    <!-- Pagination -->
-    <pagination
-        v-if="items.length && !articlesLoading"
-        :current-page="page"
-        :has-previous-page="hasPreviousPage"
-        :has-next-page="hasNextPage"
-        :disabled="articlesLoading"
-        @prev-page="prevPage"
-        @next-page="nextPage"
-    />
+    <!-- 底部滚动指示 -->
+    <div v-if="items.length" class="mt-8 flex flex-col items-center gap-2.5" aria-live="polite">
+      <div v-if="isFetchingNextPage" class="text-xs text-text-secondary">{{ tr('feedDetailPage.loadingArticles') }}</div>
+      <template v-else-if="nextPageError">
+        <p class="text-xs text-red-600 dark:text-red-400">{{ tr('common.loadFailed') }}</p>
+        <button
+            type="button"
+            class="inline-flex h-8 items-center rounded-full bg-surface-container px-4 text-xs font-semibold text-text hover:bg-surface-container-high transition"
+            @click="loadMore"
+        >
+          {{ tr('common.retry') }}
+        </button>
+      </template>
+      <p v-else-if="!hasNextPage" class="text-xs text-text-secondary/60">{{ tr('feedDetailPage.allArticlesLoaded') }}</p>
+    </div>
+    <div ref="loadMoreSentinel" class="h-1" aria-hidden="true"></div>
   </div>
 </template>
 
 <script setup lang="ts">
-import {computed, onMounted, watch} from 'vue';
-import {useRoute, useRouter} from 'vue-router';
-import {storeToRefs} from 'pinia';
-import {useFeedArticlesStore} from '../stores/articles/feedArticles';
-import {useFeedStore} from '../stores/feeds';
-import {useSubscriptionsStore} from '../stores/subscriptions';
-import {useReadFeedStore} from '../stores/readfeed'
-import {formatRelativeTime} from '../utils/datetime';
+import { translate as tr } from '@/i18n';
+import { computed, ref, watch } from 'vue';
+import { useRouter } from 'vue-router';
+import { useMutation } from '@tanstack/vue-query';
+import { normalizeArticle } from '../stores/articles/types';
+import { useFeedQuery, useInfiniteFeedArticlesQuery } from '../queries/feed';
+import { useSubscriptionMutation } from '../queries/subscriptions';
+import { useDocumentTitle } from '../composables/documentTitle';
+import { useSubscriptionsStore } from '../stores/subscriptions';
+import { useReadFeedStore } from '../stores/readfeed';
+import { formatRelativeTime } from '../utils/datetime';
+import { useInfiniteScroll } from '../composables/infiniteScroll';
+import ArticleList from '../components/ArticleList.vue';
 
-const route = useRoute();
+defineOptions({ name: 'FeedDetailPage' });
+
+const props = defineProps<{
+  feedId: string;
+  tags: string | null;
+}>();
 const router = useRouter();
-const feedStore = useFeedStore();
-const feedArticlesStore = useFeedArticlesStore();
 const subscriptionsStore = useSubscriptionsStore();
 const readFeedStore = useReadFeedStore();
 
-const {detail, loading: feedLoading, error: feedError} = storeToRefs(feedStore);
-const {
-  items,
-  feedId: storeFeedId,
-  loading: articlesLoading,
-  error: articleError,
-  hasNextPage,
-  hasPreviousPage,
-  page
-} = storeToRefs(feedArticlesStore);
-const {submitting: subscriptionSubmitting} = storeToRefs(subscriptionsStore);
-
-const currentFeedId = computed(() => {
-  const raw = route.params.feedId;
-  if (Array.isArray(raw)) return raw[0] ?? null;
-  return typeof raw === 'string' ? raw : null;
-});
-
-const routePage = computed(() => {
-  const raw = Array.isArray(route.query.page) ? route.query.page[0] : route.query.page;
-  const parsed = Number(raw);
-  return Number.isFinite(parsed) && parsed > 0 ? parsed : 1;
-});
-
-const routeTag = computed(() => {
-  const raw = Array.isArray(route.query.tags) ? route.query.tags[0] : route.query.tags;
-  if (typeof raw === 'string') {
-    const trimmed = raw.trim();
-    if (trimmed.length > 0) return trimmed;
-  }
-  return null;
-});
+const currentFeedId = computed(() => props.feedId);
+const routeTag = computed(() => props.tags);
 
 const normalizedTag = computed(() => {
   const tag = routeTag.value;
   return tag ? tag.toLowerCase() : null;
 });
 
+const feedQuery = useFeedQuery(currentFeedId);
+const feedArticlesQuery = useInfiniteFeedArticlesQuery(currentFeedId, normalizedTag);
+const detail = computed(() => feedQuery.data.value ?? null);
+const items = computed(() => feedArticlesQuery.data.value?.pages
+    .flatMap((page) => page.content)
+    .map(normalizeArticle) ?? []);
+const feedLoading = computed(() => feedQuery.isPending.value);
+const feedError = computed(() => feedQuery.error.value instanceof Error ? feedQuery.error.value.message : null);
+const articlesLoading = computed(() => feedArticlesQuery.isPending.value);
+const isFetchingNextPage = computed(() => feedArticlesQuery.isFetchingNextPage.value);
+const hasNextPage = computed(() => Boolean(feedArticlesQuery.hasNextPage.value));
+const articleError = computed(() => {
+  const error = feedArticlesQuery.error.value;
+  if (items.value.length > 0) return null;
+  return error instanceof Error ? error.message : error ? tr('feedDetailPage.articleLoadError') : null;
+});
+const nextPageError = computed(() => feedArticlesQuery.isFetchNextPageError.value);
+useDocumentTitle(() => (
+    detail.value?.title?.trim()
+    || detail.value?.siteUrl?.trim()
+    || detail.value?.url?.trim()
+));
+
 const selectedTagDisplay = computed(() => routeTag.value);
 
 const channelTitle = computed(() => {
-  if (!detail.value) return '订阅源频道';
+  if (!detail.value) return tr('feedDetailPage.feedChannel');
   const title = detail.value.title?.trim();
   if (title) return title;
   const site = detail.value.siteUrl?.trim();
@@ -242,14 +269,14 @@ const channelInitial = computed(() => {
 
 const latestUpdateText = computed(() => {
   const target = detail.value;
-  if (!target) return '暂无更新';
+  if (!target) return tr('common.noUpdates');
   const timestamp = target.latestPublishedAt ?? target.lastUpdated ?? target.lastFetched;
-  return timestamp ? formatRelativeTime(timestamp) : '暂无更新';
+  return timestamp ? formatRelativeTime(timestamp) : tr('common.noUpdates');
 });
 
 const lastFetchedText = computed(() => {
   const target = detail.value;
-  if (!target || !target.lastFetched) return '暂无记录';
+  if (!target || !target.lastFetched) return tr('common.noRecords');
   return formatRelativeTime(target.lastFetched);
 });
 
@@ -267,139 +294,84 @@ const hasFetchIssue = computed(() => failureCount.value > 0 || !!fetchErrorMessa
 const fetchIssueLabel = computed(() => {
   const parts: string[] = [];
   if (failureCount.value > 0) {
-    parts.push(`连续失败 ${failureCount.value} 次`);
+    parts.push(tr('feedDetailPage.consecutiveFailures', { value0: failureCount.value }));
   }
   if (fetchErrorMessage.value) {
-    parts.push(`错误：${fetchErrorMessage.value}`);
+    parts.push(tr('feedDetailPage.fetchError', { value0: fetchErrorMessage.value }));
   }
-  return parts.join(' · ') || '抓取异常';
+  return parts.join(' · ') || tr('feedDetailPage.fetchFailed');
 });
 
-const buildQuery = (overrides?: { page?: number; tags?: string | null }) => {
+const buildQuery = (overrides?: { tags?: string | null }) => {
   const query: Record<string, string> = {};
   const hasTagOverride = overrides && Object.prototype.hasOwnProperty.call(overrides, 'tags');
   const tag = hasTagOverride ? overrides?.tags ?? null : routeTag.value;
   if (tag) query.tags = tag;
-  const nextPage = overrides?.page ?? routePage.value;
-  if (nextPage > 1) query.page = String(nextPage);
   return query;
 };
 
-const fetchArticles = async (targetPage = 1) => {
-  const feedId = currentFeedId.value;
-  if (!feedId) return;
-
-  try {
-    await feedArticlesStore.fetchArticles({
-      page: targetPage,
-      size: 20,
-      sort: 'publishedAt,desc',
-      feedId,
-      tags: normalizedTag.value
-    });
-  } catch (err) {
-    console.warn('频道文章加载失败', err);
-  }
-};
-
-const loadFeed = async () => {
-  const feedId = currentFeedId.value;
-  if (!feedId) {
-    feedStore.clear();
-    return;
-  }
-
-  try {
-    await feedStore.fetchById(feedId);
-    await readFeed();
-  } catch (err) {
-    return;
-  }
-};
-
-onMounted(async () => {
-  if (currentFeedId.value != storeFeedId.value) {
-    await loadFeed();
-    await fetchArticles(routePage.value);
-  }
-
-});
-
-watch([currentFeedId, routePage, normalizedTag], async ([feedId, page]) => {
-  if (!feedId) return;
-  if (currentFeedId.value != storeFeedId.value) {
-    await loadFeed();
-  }
-  await fetchArticles(page || 1);
-}, {immediate: false});
-
-const refreshArticles = async () => {
-  const targetPage = routePage.value || 1;
-  await fetchArticles(targetPage);
-};
-
+const refreshArticles = () => feedArticlesQuery.refetch();
 
 const handleSelectTag = (tag: string) => {
   if (!tag || !currentFeedId.value) return;
-
   router.push({
     name: 'feed',
-    params: {feedId: currentFeedId.value},
-    query: buildQuery({page: 1, tags: tag.toLowerCase()})
+    params: { feedId: currentFeedId.value },
+    query: buildQuery({ tags: tag.toLowerCase() })
   });
 };
 
 const clearTag = () => {
   if (!routeTag.value || !currentFeedId.value) return;
-
   router.push({
     name: 'feed',
-    params: {feedId: currentFeedId.value},
-    query: buildQuery({page: 1, tags: null})
+    params: { feedId: currentFeedId.value },
+    query: buildQuery({ tags: null })
   });
 };
 
-const nextPage = () => {
-  if (!hasNextPage.value || !currentFeedId.value) return;
-
-  router.push({
-    name: 'feed',
-    params: {feedId: currentFeedId.value},
-    query: buildQuery({page: routePage.value + 1})
-  });
-};
-
-const prevPage = () => {
-  if (!hasPreviousPage.value || !currentFeedId.value) return;
-
-  router.push({
-    name: 'feed',
-    params: {feedId: currentFeedId.value},
-    query: buildQuery({page: Math.max(1, routePage.value - 1)})
-  });
-};
-
+const subscriptionMutation = useSubscriptionMutation();
+const subscriptionSubmitting = subscriptionMutation.isPending;
+const subscriptionError = ref('');
 const toggleSubscription = async () => {
-  if (!detail.value || !currentFeedId.value) return;
-  console.log(detail.value.subscribed)
+  const feed = detail.value;
+  if (!feed || !currentFeedId.value || subscriptionSubmitting.value) return;
+  subscriptionError.value = '';
   try {
-    if (detail.value.subscribed) {
-      await subscriptionsStore.removeSubscription(detail.value.feedId);
-    } else {
-      await subscriptionsStore.addSubscription(detail.value.url, detail.value.feedId);
-    }
-    await feedStore.fetchById(detail.value.feedId);
-  } catch (err) {
-    console.warn('订阅操作失败', err);
+    await subscriptionMutation.mutateAsync({
+      feedId: feed.feedId, feedUrl: feed.url, subscribed: feed.subscribed,
+    });
+  } catch (error) {
+    subscriptionError.value = error instanceof Error ? error.message : tr('feedDetailPage.subscriptionFailed');
   }
 };
 
+const readFeedMutation = useMutation({
+  mutationFn: (feedId: string) => readFeedStore.recordFeedRead(feedId),
+  onSuccess: () => subscriptionsStore.fetchSubscriptions(),
+});
+const readFeedAttempted = new Set<string>();
 const readFeed = async () => {
-  const canRead = subscriptionsStore.items.filter(item => !item.isRead && item.feedId == currentFeedId.value).length
-  if (canRead > 0) {
-    await readFeedStore.recordFeedRead(currentFeedId.value);
-    await subscriptionsStore.fetchSubscriptions();
+  const feedId = currentFeedId.value;
+  const canRead = feedId && subscriptionsStore.items.some(item => !item.isRead && item.feedId === feedId);
+  if (canRead && feedId && !readFeedMutation.isPending.value && !readFeedAttempted.has(feedId)) {
+    readFeedAttempted.add(feedId);
+    try {
+      await readFeedMutation.mutateAsync(feedId);
+    } catch {
+      readFeedAttempted.delete(feedId);
+    }
   }
-}
-</script>
+};
 
+watch([() => feedQuery.data.value, () => subscriptionsStore.items], () => {
+  void readFeed();
+}, { immediate: true });
+
+const { sentinel: loadMoreSentinel, loadMore } = useInfiniteScroll({
+  hasNextPage,
+  isLoading: feedArticlesQuery.isFetching,
+  hasError: feedArticlesQuery.isError,
+  onLoadMore: () => feedArticlesQuery.fetchNextPage(),
+});
+</script>

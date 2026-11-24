@@ -1,218 +1,183 @@
-<!--search.vue-->
 <template>
-  <div class="">
-    <div class="max-w-screen-lg mx-auto px-4 sm:px-6 py-4 sm:py-6">
-      <!-- Page Header -->
+  <div class="text-text">
+    <div class="mx-auto max-w-screen-lg px-4 py-4 sm:px-6 sm:py-6">
+      <!-- 搜索头部 -->
       <div class="mb-6 sm:mb-8">
-        <h1 class="text-2xl sm:text-3xl font-bold text-text mb-2">
-          {{ hasQuery ? '搜索结果' : '搜索' }}
+        <h1 class="text-2xl font-bold tracking-tight text-text sm:text-3xl">
+          {{ hasQuery ? t('searchPage.results') : t('searchPage.search') }}
         </h1>
-        <p v-if="hasQuery" class="text-xs sm:text-sm text-text-secondary">
-          关键词: "{{ searchQuery }}"
-          <!--          <span v-if="total !== null" class="ml-2">· {{ total }} 条结果</span>-->
+        <p v-if="hasQuery" class="mt-1 text-xs text-text-secondary sm:text-sm">
+          {{ t('searchPage.keyword', { query: searchQuery }) }}
+          <span v-if="totalElements !== null" class="ml-2">{{ t('searchPage.resultCount', { count: totalElements }) }}</span>
         </p>
       </div>
 
-      <!-- Controls Bar -->
-      <div class="flex items-center justify-between gap-4 mb-4 sm:mb-6 pb-4 border-b border-outline/20 flex-wrap">
-        <!-- Search Type Toggle -->
-        <div class="flex items-center gap-1 bg-surface-container rounded-full p-1">
+      <!-- 控制栏：MD3 Filter Chips 与返回胶囊 -->
+      <div class="mb-6 flex flex-wrap items-center justify-between gap-3 border-b border-outline/10 pb-4">
+        <!-- 搜索类型切换：MD3 Filter Chips 规范 -->
+        <div class="flex items-center gap-1.5 rounded-full bg-surface-container/50 p-1">
           <button type="button"
-            class="px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-medium transition-colors"
-            :class="searchType === 'semantic' ? 'bg-secondary text-secondary-foreground' : 'text-text'"
-            @click="setSearchType('semantic')">
-            语义匹配
+                  class="rounded-full px-4 py-1.5 text-xs font-medium transition select-none sm:text-xs"
+                  :class="searchType === 'semantic'
+                    ? 'bg-primary/15 font-semibold text-primary shadow-xs'
+                    : 'text-text-secondary hover:bg-surface-container hover:text-text'"
+                  @click="setSearchType('semantic')">
+            {{ t('searchPage.semantic') }}
           </button>
           <button type="button"
-            class="px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-medium transition-colors"
-            :class="searchType === 'keyword' ? 'bg-secondary text-secondary-foreground' : 'text-text'"
-            @click="setSearchType('keyword')">
-            关键词匹配
+                  class="rounded-full px-4 py-1.5 text-xs font-medium transition select-none sm:text-xs"
+                  :class="searchType === 'keyword'
+                    ? 'bg-primary/15 font-semibold text-primary shadow-xs'
+                    : 'text-text-secondary hover:bg-surface-container hover:text-text'"
+                  @click="setSearchType('keyword')">
+            {{ t('searchPage.keywordMatch') }}
           </button>
         </div>
 
-        <!-- Back Button -->
+        <!-- 返回主页按钮：MD3 Tonal 药丸 -->
         <button
-          class="flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 hover:bg-surface-container rounded-lg transition-colors text-xs sm:text-sm font-medium text-text"
-          @click="goBackToHome">
-          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M19 12H5M12 19l-7-7 7-7" />
+            class="inline-flex h-8 items-center gap-1.5 rounded-full bg-surface-container/60 px-4 text-xs font-medium text-text transition hover:bg-surface-container active:scale-[0.98]"
+            @click="goBackToHome">
+          <svg class="h-3.5 w-3.5 text-text-secondary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M19 12H5M12 19l-7-7 7-7" />
           </svg>
-          <span>返回推荐</span>
+          <span>{{ t('searchPage.backHome') }}</span>
         </button>
       </div>
 
-      <!-- Empty State (No Query) -->
-      <div v-if="!hasQuery" class="flex flex-col items-center justify-center py-16 sm:py-20 text-center">
-        <div
-          class="w-20 h-20 sm:w-24 sm:h-24 mb-4 sm:mb-6 flex items-center justify-center rounded-full bg-surface-container">
-          <svg class="w-10 h-10 sm:w-12 sm:h-12 text-text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-            stroke-width="1.5">
+      <!-- 空白引导态 -->
+      <div v-if="!hasQuery" class="flex flex-col items-center justify-center py-20 text-center">
+        <div class="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-surface-container/60">
+          <svg class="h-8 w-8 text-text-secondary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
             <circle cx="11" cy="11" r="8" />
-            <path d="m21 21-4.35-4.35" />
+            <path stroke-linecap="round" d="m21 21-4.35-4.35" />
           </svg>
         </div>
-        <h2 class="text-lg sm:text-xl font-semibold text-text mb-2">开始搜索</h2>
-        <p class="text-xs sm:text-sm text-text-secondary px-4">输入关键词查找你感兴趣的文章</p>
+        <h2 class="text-base font-bold text-text">{{ t('searchPage.start') }}</h2>
+        <p class="mt-1 text-xs text-text-secondary">{{ t('searchPage.prompt') }}</p>
       </div>
 
-      <!-- Loading or Results List -->
+      <!-- 错误横幅 -->
+      <div v-else-if="searchError" role="alert" class="rounded-2xl bg-red-500/10 p-4 text-xs text-red-600 dark:text-red-400">
+        <div class="flex items-center justify-between gap-3">
+          <span>{{ searchError }}</span>
+          <button type="button" class="shrink-0 font-semibold underline" :disabled="searchFetching" @click="searchQueryResult.refetch()">{{ t('searchPage.retry') }}</button>
+        </div>
+      </div>
+
+      <!-- 搜索结果列表 -->
       <div v-else-if="searchLoading || searchArticleItems.length > 0">
-        <article-card-list :loading="searchLoading" :items="searchArticleItems" meta-field="timeAgo" key-field="id"
-          action-label="文章选项菜单" @action="handleMenuClick">
+        <article-card-list :loading="searchLoading" :items="searchArticleItems" meta-field="timeAgo"
+                           show-action :action-label="tr('common.articleOptions')">
           <template #empty-thumbnail>
-            <svg class="w-8 h-8 sm:w-10 sm:h-10 text-text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-              stroke-width="1.5">
-              <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
-              <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
+            <svg class="h-8 w-8 text-text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
+              <path stroke-linecap="round" stroke-linejoin="round" d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
             </svg>
+          </template>
+          <template #action-dropdown="{ item, close }">
+            <router-link :to="`/articles/${item.articleId}`" target="_blank"
+                         class="block w-full px-4 py-2 text-left text-xs font-medium text-text transition hover:bg-surface-container"
+                         @click="close">{{ t('searchPage.openNewTab') }}</router-link>
           </template>
         </article-card-list>
 
-        <!-- Pagination -->
-        <pagination v-if="searchArticleItems.length > 0 && !searchLoading" :current-page="page"
-          :has-previous-page="hasPreviousPage" :has-next-page="hasNextPage" :disabled="searchLoading"
-          @prev-page="prevPage" @next-page="nextPage" />
+        <!-- 分页 -->
+        <pagination v-if="searchArticleItems.length > 0 && !searchLoading" :current-page="routePage"
+                    :has-previous-page="hasPreviousPage" :has-next-page="hasNextPage" :disabled="searchFetching"
+                    @prev-page="prevPage" @next-page="nextPage" />
       </div>
 
-      <!-- Error or Empty State -->
-      <div v-else>
-        <!-- Error State -->
-        <div v-if="searchError" class="mb-4 p-3 sm:p-4 bg-red-50 border border-red-200 rounded-lg">
-          <div class="flex items-center gap-2 text-xs sm:text-sm text-red-800">
-            <svg class="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-              stroke-width="2">
-              <circle cx="12" cy="12" r="10" />
-              <line x1="12" y1="8" x2="12" y2="12" />
-              <line x1="12" y1="16" x2="12.01" y2="16" />
-            </svg>
-            <span>{{ searchError }}</span>
-          </div>
+      <!-- 搜索无结果 -->
+      <div v-else class="flex flex-col items-center justify-center py-20 text-center">
+        <div class="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-surface-container/60">
+          <svg class="h-8 w-8 text-text-secondary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <circle cx="12" cy="12" r="10" />
+            <line x1="12" y1="8" x2="12" y2="12" />
+            <line x1="12" y1="16" x2="12.01" y2="16" />
+          </svg>
         </div>
-
-        <!-- Empty Results -->
-        <div class="flex flex-col items-center justify-center py-16 sm:py-20 text-center">
-          <div
-            class="w-20 h-20 sm:w-24 sm:h-24 mb-4 sm:mb-6 flex items-center justify-center rounded-full bg-surface-container">
-            <svg class="w-10 h-10 sm:w-12 sm:h-12 text-text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-              stroke-width="1.5">
-              <circle cx="12" cy="12" r="10" />
-              <line x1="12" y1="8" x2="12" y2="12" />
-              <line x1="12" y1="16" x2="12.01" y2="16" />
-            </svg>
-          </div>
-          <h2 class="text-lg sm:text-xl font-semibold text-text mb-2">未找到相关结果</h2>
-          <p class="text-xs sm:text-sm text-text-secondary px-4">换个关键词试试</p>
-        </div>
+        <h2 class="text-base font-bold text-text">{{ t('searchPage.notFound') }}</h2>
+        <p class="mt-1 text-xs text-text-secondary">{{ t('searchPage.tryAgain') }}</p>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, watch } from 'vue';
-import { storeToRefs } from 'pinia';
-import { useRoute, useRouter } from 'vue-router';
-import { useSearchStore, type SearchType } from '../stores/search';
+import { translate as tr } from '@/i18n';
+import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
+import { useDocumentTitle } from '@/composables/documentTitle';
+import { useRouter } from 'vue-router';
+import { useSearchQuery, type SearchType, type Source } from '../queries/search';
+
+defineOptions({ name: 'SearchPage' });
+const { t } = useI18n();
+
+const props = defineProps<{
+  query: string;
+  type: SearchType;
+  source?: Source;
+  page: number;
+  feedId: string | null;
+  tags: string | null;
+  category: string | null;
+}>();
 
 const router = useRouter();
-const route = useRoute();
-const searchStore = useSearchStore();
-
-const {
-  results,
-  page,
-  hasNextPage,
-  hasPreviousPage,
-  total,
-  loading: searchLoading,
-  error: searchError
-} = storeToRefs(searchStore);
-
-const searchQuery = computed(() => {
-  const q = route.query.q;
-  return typeof q === 'string' ? q.trim() : '';
-});
-
-const searchType = computed<SearchType>(() => {
-  const type = route.query.type;
-  return type === 'keyword' ? 'keyword' : 'semantic';
-});
-
-const source = computed(() => {
-  const s = route.query.source;
-  return typeof s === 'string' ? s : undefined;
-});
-
-const routePage = computed(() => {
-  const raw = Array.isArray(route.query.page) ? route.query.page[0] : route.query.page;
-  const parsed = Number(raw);
-  return Number.isFinite(parsed) && parsed > 0 ? parsed : 1;
-});
+const searchQuery = computed(() => props.query);
+const searchType = computed(() => props.type);
+const source = computed(() => props.source);
+const routePage = computed(() => props.page);
+const filters = {
+  feedId: computed(() => props.feedId),
+  tags: computed(() => props.tags),
+  category: computed(() => props.category),
+};
 
 const hasQuery = computed(() => Boolean(searchQuery.value));
+useDocumentTitle(() => t(hasQuery.value ? 'searchPage.results' : 'searchPage.search'));
+
+const searchQueryResult = useSearchQuery(searchQuery, searchType, source, routePage, filters);
+const searchLoading = computed(() => searchQueryResult.isPending.value);
+const searchFetching = computed(() => searchQueryResult.isFetching.value);
+const searchError = computed(() => {
+  const error = searchQueryResult.error.value;
+  return error instanceof Error ? error.message : error ? t('searchPage.failed') : null;
+});
+const results = computed(() => searchQueryResult.data.value?.content ?? []);
+const totalPages = computed(() => searchQueryResult.data.value?.totalPages ?? 0);
+const totalElements = computed(() => searchQueryResult.data.value?.totalElements ?? null);
+const hasNextPage = computed(() => routePage.value < totalPages.value);
+const hasPreviousPage = computed(() => routePage.value > 1);
 
 const searchArticleItems = computed(() =>
-  results.value.map((item) => ({
-    id: item.id,
-    title: item.title ?? '未命名文章',
-    summary: item.summary ?? '暂无摘要',
-    thumbnail: item.thumbnail,
-    feedTitle: item.feedTitle,
-    timeAgo: item.timeAgo,
-  }))
+    results.value.map((item) => ({
+      articleId: item.id,
+      feedId: item.feedId,
+      title: item.title ?? tr('common.untitledArticle'),
+      summary: item.summary ?? tr('common.noSummary'),
+      thumbnail: item.thumbnail,
+      feedTitle: item.feedTitle,
+      feedAvatar: item.feedAvatar,
+      timeAgo: item.timeAgo,
+    }))
 );
 
 const buildSearchQuery = (overrides?: { page?: number; type?: SearchType }) => {
   const query: Record<string, string> = {};
-
-  if (searchQuery.value) {
-    query.q = searchQuery.value;
-  }
-
+  if (searchQuery.value) query.q = searchQuery.value;
   const nextType = overrides?.type ?? searchType.value;
-  if (nextType !== 'keyword') {
-    query.type = nextType;
-  }
-
+  if (nextType !== 'semantic') query.type = nextType;
   const sourceValue = source.value;
-  if (sourceValue && sourceValue !== 'owner') {
-    query.source = sourceValue;
-  }
-
+  if (sourceValue && sourceValue !== 'owner') query.source = sourceValue;
   const nextPage = overrides?.page ?? routePage.value;
-  if (nextPage > 1) {
-    query.page = String(nextPage);
-  }
-
-  const feedId = typeof route.query.feedId === 'string' ? route.query.feedId : undefined;
-  if (feedId) query.feedId = feedId;
-
-  const tag = typeof route.query.tags === 'string' ? route.query.tags : undefined;
-  if (tag) query.tags = tag;
-
-  const category = typeof route.query.category === 'string' ? route.query.category : undefined;
-  if (category) query.category = category;
-
+  if (nextPage > 1) query.page = String(nextPage);
+  if (props.feedId) query.feedId = props.feedId;
+  if (props.tags) query.tags = props.tags;
+  if (props.category) query.category = props.category;
   return query;
-};
-
-const loadData = async () => {
-  if (!hasQuery.value) {
-    searchStore.clear();
-    return;
-  }
-
-  try {
-    await searchStore.searchArticles({
-      query: searchQuery.value,
-      source: source.value,
-      page: routePage.value,
-      type: searchType.value
-    });
-  } catch (err) {
-    console.error('搜索数据加载失败:', err);
-  }
 };
 
 const navigateToPage = (target: number) => {
@@ -222,12 +187,12 @@ const navigateToPage = (target: number) => {
 };
 
 const nextPage = () => {
-  if (!hasNextPage.value) return;
+  if (!hasNextPage.value || searchFetching.value) return;
   navigateToPage(routePage.value + 1);
 };
 
 const prevPage = () => {
-  if (!hasPreviousPage.value) return;
+  if (!hasPreviousPage.value || searchFetching.value) return;
   navigateToPage(Math.max(1, routePage.value - 1));
 };
 
@@ -238,31 +203,9 @@ const setSearchType = (type: SearchType) => {
 
 const goBackToHome = () => {
   const query: Record<string, string> = {};
-
-  const feedId = typeof route.query.feedId === 'string' ? route.query.feedId : undefined;
-  if (feedId) query.feedId = feedId;
-
-  const tag = typeof route.query.tags === 'string' ? route.query.tags : undefined;
-  if (tag) query.tags = tag;
-
-  const category = typeof route.query.category === 'string' ? route.query.category : undefined;
-  if (category) query.category = category;
-
+  if (props.feedId) query.feedId = props.feedId;
+  if (props.tags) query.tags = props.tags;
+  if (props.category) query.category = props.category;
   router.push({ name: 'home', query });
 };
-
-const handleMenuClick = (item: any) => {
-  console.log('菜单点击:', item);
-};
-
-watch(
-  () => [searchQuery.value, source.value, searchType.value, routePage.value],
-  () => {
-    loadData();
-  }
-);
-
-onMounted(() => {
-  loadData();
-});
 </script>

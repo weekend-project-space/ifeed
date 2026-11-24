@@ -1,13 +1,12 @@
 import { defineStore } from 'pinia';
-import { request } from '../api/client';
+import { recordFeedRead as recordFeedReadRequest } from '@/api/readfeed';
 
 export const useReadFeedStore = defineStore('readfeed', () => {
   const recordFeedRead = async (feedId: string) => {
-    await request(`/api/user/readfeed/${encodeURIComponent(feedId)}`, { method: 'POST' });
+    await recordFeedReadRequest(feedId);
   };
 
   return {
     recordFeedRead
   };
 });
-

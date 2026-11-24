@@ -1,5 +1,6 @@
 import { createApp, h, ref } from 'vue';
 import ConfirmModal from '@/components/ConfirmDialog.vue';
+import { i18n } from '@/i18n';
 
 interface ConfirmOptions {
     title: string;
@@ -48,6 +49,7 @@ export function confirm(options: ConfirmOptions): Promise<boolean> {
             },
         });
 
+        app.use(i18n);
         app.mount(div);
 
         function cleanup() {

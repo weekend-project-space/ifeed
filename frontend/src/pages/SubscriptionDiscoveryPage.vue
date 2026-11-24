@@ -1,373 +1,309 @@
 <template>
-  <div class="min-h-screen ">
-    <div class="max-w-screen-lg mx-auto px-4 sm:px-6 py-8">
-      <!-- Header -->
-      <div class="mb-8">
-        <h1 class="text-2xl sm:text-3xl font-bold text-text mb-2">
-          发现订阅源
+  <div class="min-h-screen text-text">
+    <div class="mx-auto max-w-screen-lg px-4 py-8 sm:px-6">
+      <!-- 页面头部 -->
+      <div class="mb-7">
+        <h1 class="text-2xl font-bold tracking-tight text-text sm:text-3xl">
+          {{ tr('subscriptionDiscoveryPage.title') }}
         </h1>
-        <p class="text-sm text-text-secondary">
-          浏览并订阅你感兴趣的内容源
+        <p class="mt-1 text-xs text-text-secondary sm:text-sm">
+          {{ tr('subscriptionDiscoveryPage.subtitle') }}
         </p>
       </div>
 
-      <!-- Search Bar -->
+      <!-- 搜索与操作栏：MD3 药丸胶囊搜索条与 Tonal 动作按钮 -->
       <div class="mb-8">
-        <div class="flex items-center gap-3">
-          <div class="relative flex-1 max-w-2xl">
-            <svg class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400"
+        <div class="flex flex-wrap items-center gap-2.5 sm:gap-3">
+          <div class="relative min-w-0 flex-1">
+            <svg class="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-text-secondary"
                  viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="11" cy="11" r="8"/>
-              <path d="m21 21-4.35-4.35"/>
+              <circle cx="11" cy="11" r="8" />
+              <path d="m21 21-4.35-4.35" />
             </svg>
             <input
                 v-model="searchQuery"
+                @input="scheduleSearch"
                 type="text"
-                placeholder="搜索订阅源..."
-                class="w-full pl-12 pr-4 py-3 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-full border border-gray-200 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-secondary focus:border-transparent transition-shadow"
+                :placeholder="tr('subscriptionDiscoveryPage.searchPlaceholder')"
+                class="w-full rounded-full border border-outline/20 bg-surface-container/40 py-2.5 pl-11 pr-4 text-xs text-text outline-none transition placeholder:text-text-secondary/60 focus:border-primary focus:bg-surface focus:ring-2 focus:ring-primary/20 sm:text-sm"
             />
           </div>
-          
-          <!-- Manual Add Button -->
+
+          <!-- 手动添加按钮：MD3 辅助动作胶囊 -->
           <button
+              type="button"
               @click="showManualAddDialog = true"
-              class="px-4 py-3 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700 rounded-full hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center gap-2 whitespace-nowrap"
-              title="手动添加订阅源"
+              class="inline-flex h-10 items-center gap-2 rounded-full bg-surface-container/60 px-4 text-xs font-semibold text-text shadow-xs transition hover:bg-surface-container active:scale-[0.98] sm:text-xs"
+              :title="tr('subscriptionDiscoveryPage.addManuallyTitle')"
           >
-            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M12 5v14M5 12h14"/>
+            <svg class="h-4 w-4 text-text-secondary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14M5 12h14" />
             </svg>
-            <span class="hidden sm:inline">手动添加</span>
+            <span class="hidden sm:inline">{{ tr('subscriptionDiscoveryPage.addManually') }}</span>
           </button>
-          
-          <!-- OPML Import Button -->
+
+          <!-- OPML 导入按钮 -->
           <button
+              type="button"
               @click="showOpmlDialog = true"
-              class="px-4 py-3 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700 rounded-full hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center gap-2 whitespace-nowrap"
-              title="导入 OPML 文件"
+              class="inline-flex h-10 items-center gap-2 rounded-full bg-surface-container/60 px-4 text-xs font-semibold text-text shadow-xs transition hover:bg-surface-container active:scale-[0.98] sm:text-xs"
+              :title="tr('subscriptionDiscoveryPage.importOpmlTitle')"
           >
-            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-              <polyline points="7 10 12 15 17 10"/>
-              <line x1="12" y1="15" x2="12" y2="3"/>
+            <svg class="h-4 w-4 text-text-secondary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline stroke-linecap="round" stroke-linejoin="round" points="7 10 12 15 17 10" />
+              <line stroke-linecap="round" stroke-linejoin="round" x1="12" y1="15" x2="12" y2="3" />
             </svg>
-            <span class="hidden sm:inline">导入 OPML</span>
+            <span class="hidden sm:inline">{{ tr('subscriptionDiscoveryPage.importOpml') }}</span>
           </button>
         </div>
       </div>
 
-      <!-- Categories -->
+      <!-- 分类筛选：标准 MD3 Filter Chips -->
       <div class="mb-8">
-        <div class="flex items-center gap-2 mb-4">
-          <svg class="w-5 h-5 text-gray-700 dark:text-gray-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <rect x="3" y="3" width="7" height="7" rx="1"/>
-            <rect x="14" y="3" width="7" height="7" rx="1"/>
-            <rect x="14" y="14" width="7" height="7" rx="1"/>
-            <rect x="3" y="14" width="7" height="7" rx="1"/>
+        <div class="mb-3 flex items-center gap-2">
+          <svg class="h-4 w-4 text-text-secondary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="7" height="7" rx="2" />
+            <rect x="14" y="3" width="7" height="7" rx="2" />
+            <rect x="14" y="14" width="7" height="7" rx="2" />
+            <rect x="3" y="14" width="7" height="7" rx="2" />
           </svg>
-          <h2 class="text-lg font-semibold text-text">
-            分类
+          <h2 class="text-xs font-semibold tracking-wide text-text-secondary">
+            {{ tr('subscriptionDiscoveryPage.categories') }}
           </h2>
         </div>
-        
+
         <div class="flex flex-wrap gap-2">
           <button
               v-for="category in categories"
               :key="category.id"
-              @click="selectedCategory = category.id"
-              :class="[
-                selectedCategory === category.id
-                  ? 'bg-secondary text-white shadow-md'
-                  : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700',
-                'px-4 py-2 rounded-full text-sm font-medium transition-all duration-200'
-              ]"
+              @click="selectCategory(category.id)"
+              class="inline-flex h-8 items-center gap-1.5 rounded-full px-3.5 text-xs font-medium transition select-none active:scale-[0.98]"
+              :class="selectedCategory === category.id
+                ? 'bg-primary/15 font-semibold text-primary shadow-xs'
+                : 'bg-surface-container/50 text-text-secondary hover:bg-surface-container hover:text-text'"
           >
-            <span class="flex items-center gap-2">
-              <span>{{ category.icon }}</span>
-              <span>{{ category.name }}</span>
-              <span v-if="category.feedCount" class="text-xs opacity-75">({{ category.feedCount }})</span>
-            </span>
+            <span v-if="category.icon">{{ category.icon }}</span>
+            <span>{{ category.name }}</span>
           </button>
         </div>
       </div>
 
-      <!-- Feed Grid -->
+      <!-- 内容区 -->
       <div>
-        <div class="flex items-center justify-between mb-6">
-          <h2 class="text-lg font-semibold text-text">
+        <div v-if="categoriesQuery.isError.value" class="mb-4 rounded-xl bg-red-500/10 px-4 py-2.5 text-xs text-red-600 dark:text-red-400" role="alert">
+          {{ tr('subscriptionDiscoveryPage.categoriesFailed') }}<button type="button" class="underline ml-1 font-semibold" @click="categoriesQuery.refetch()">{{ tr('common.retry') }}</button>
+        </div>
+        <div v-if="feedError" class="mb-4 rounded-xl bg-red-500/10 px-4 py-2.5 text-xs text-red-600 dark:text-red-400" role="alert">
+          {{ tr('subscriptionDiscoveryPage.feedsFailed') }}<button type="button" class="underline ml-1 font-semibold" @click="feedsQuery.refetch()">{{ tr('common.retry') }}</button>
+        </div>
+        <div v-if="subscriptionError" class="mb-4 rounded-xl bg-red-500/10 px-4 py-2.5 text-xs text-red-600 dark:text-red-400" role="alert">
+          {{ subscriptionError }}
+        </div>
+
+        <!-- 栏目标题与视图切换 -->
+        <div class="mb-5 flex items-center justify-between">
+          <h2 class="text-base font-bold text-text sm:text-lg">
             {{ selectedCategoryName }}
           </h2>
-          <div class="flex items-center gap-2">
+          <div class="flex items-center gap-1 rounded-full bg-surface-container/40 p-1">
             <button
                 v-for="view in viewModes"
                 :key="view.id"
                 @click="viewMode = view.id"
-                :class="[
-                  viewMode === view.id
-                    ? 'text-secondary bg-surface-container' : 'text-gray-500',
-                  'p-2 text-sm font-medium rounded-full transition-colors whitespace-nowrap hover:bg-surface-container',
-                ]"
+                class="flex h-7 w-7 items-center justify-center rounded-full transition"
+                :class="viewMode === view.id ? 'bg-surface text-text shadow-xs' : 'text-text-secondary hover:text-text'"
                 :title="view.name"
             >
-              <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path v-if="view.id === 'grid'" d="M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z"/>
+              <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path v-if="view.id === 'grid'" d="M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z" />
                 <path v-else stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16" />
               </svg>
             </button>
           </div>
         </div>
 
-        <!-- Loading State -->
-        <div v-if="loading" class="grid" :class="viewMode === 'grid' ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6' : 'grid-cols-1 gap-4'">
-          <div v-for="i in 6" :key="i" class="bg-white dark:bg-gray-800 rounded-2xl p-6 animate-pulse">
-            <div class="flex items-start gap-4">
-              <div class="w-16 h-16 bg-gray-200 dark:bg-gray-700 rounded-xl flex-shrink-0"></div>
-              <div class="flex-1 space-y-3">
-                <div class="h-5 bg-gray-200 dark:bg-gray-700 rounded w-3/4"></div>
-                <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-full"></div>
-                <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-5/6"></div>
-              </div>
+        <!-- 骨架屏 -->
+        <div v-if="loading" class="grid"
+             :class="viewMode === 'grid' ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5' : 'grid-cols-1 gap-2.5'">
+          <div v-for="i in 6" :key="i" class="flex items-center gap-3 rounded-2xl bg-surface-container/40 p-3.5 animate-pulse">
+            <div class="h-10 w-10 shrink-0 rounded-full bg-surface-container"></div>
+            <div class="flex-1 space-y-2">
+              <div class="h-3.5 w-3/4 rounded bg-surface-container"></div>
+              <div class="h-3 w-full rounded bg-surface-container"></div>
             </div>
           </div>
         </div>
 
-        <!-- Grid View -->
-        <div v-else-if="viewMode === 'grid'" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <!-- 网格视图：紧凑行与微型 32x32px 图标按钮 -->
+        <div v-else-if="viewMode === 'grid'" class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
           <article
-              v-for="feed in filteredFeeds"
-              :key="feed.id"
-              class="group bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-200 dark:border-gray-700 hover:shadow-lg hover:border-secondary/50 transition-all duration-200"
+              v-for="feed in feeds"
+              :key="feed.feedId"
+              class="group flex items-center gap-3 rounded-2xl bg-surface-container/30 p-3 transition hover:bg-surface-container/60 hover:shadow-xs"
           >
-            <!-- Feed Header -->
-            <router-link :to="'/feeds/'+feed.id" class="flex items-start gap-4 mb-4">
+            <!-- Feed 信息 -->
+            <router-link :to="'/feed/' + feed.feedId" class="flex min-w-0 flex-1 items-center gap-3">
               <img
                   :src="feed.favicon"
                   :alt="feed.name"
-                  class="w-16 h-16 rounded-full object-cover bg-gray-100 dark:bg-gray-700"
+                  class="h-10 w-10 shrink-0 rounded-full object-cover bg-surface p-1 shadow-xs"
                   @error="handleImageError"
               />
-              <div class="flex-1 min-w-0">
-                <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-1 line-clamp-1 group-hover:text-secondary transition-colors">
+              <div class="min-w-0 flex-1">
+                <h3 class="truncate text-xs font-semibold text-text transition group-hover:text-primary sm:text-sm">
                   {{ feed.name }}
                 </h3>
-                <p class="text-sm text-gray-500 dark:text-gray-400 line-clamp-1">
-                  {{ feed.url }}
+                <p class="mt-0.5 truncate text-[11px] text-text-secondary">
+                  {{ feed.description || feed.url }}
                 </p>
               </div>
             </router-link>
 
-            <!-- Feed Description -->
-            <p class="text-sm text-gray-600 dark:text-gray-400 line-clamp-3 mb-4 h-[60px]">
-              {{ feed.description || '暂无描述' }}
-            </p>
-
-            <!-- Feed Stats -->
-            <div class="flex items-center gap-4 mb-4 text-sm text-gray-500 dark:text-gray-400">
-              <span class="flex items-center gap-1">
-                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-                  <circle cx="9" cy="7" r="4"/>
-                  <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>
-                </svg>
-                {{ formatNumber(feed.subscribers) }}
-              </span>
-              <span class="flex items-center gap-1">
-                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                  <polyline points="14 2 14 8 20 8"/>
-                </svg>
-                {{ feed.articleCount }} 篇
-              </span>
-              <span>{{ feed.updateFrequency }}</span>
-            </div>
-
-            <!-- Subscribe Button -->
+            <!-- 订阅按钮：MD3 触控微型按钮 -->
             <button
-                @click="toggleSubscribe(feed)"
-                :disabled="subscribing === feed.id"
-                :class="[
-                  feed.subscribed
-                    ? 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
-                    : 'bg-secondary text-white hover:bg-secondary/90',
-                  'w-full py-2.5 rounded-full font-medium text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
-                ]"
+                @click.stop.prevent="toggleSubscribe(feed)"
+                :disabled="subscribing.has(feed.feedId)"
+                :title="feed.subscribed ? tr('common.unsubscribe') : tr('common.subscribe')"
+                class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition-all duration-200 disabled:opacity-40"
+                :class="feed.subscribed
+                  ? 'bg-surface-container text-text-secondary hover:bg-surface-container-high'
+                  : 'bg-primary text-white shadow-xs hover:brightness-105 active:scale-95'"
             >
-              <span v-if="subscribing === feed.id" class="flex items-center justify-center gap-2">
-                <svg class="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
-                </svg>
-                处理中...
-              </span>
-              <span v-else>
-                {{ feed.subscribed ? '已订阅' : '订阅' }}
-              </span>
+              <svg v-if="subscribing.has(feed.feedId)" class="h-3.5 w-3.5 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+              </svg>
+              <svg v-else-if="feed.subscribed" class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+              <svg v-else class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19" />
+                <line x1="5" y1="12" x2="19" y2="12" />
+              </svg>
             </button>
           </article>
         </div>
 
-        <!-- List View -->
-        <div v-else class="space-y-3">
+        <!-- 列表视图 -->
+        <div v-else class="space-y-2">
           <article
-              v-for="feed in filteredFeeds"
-              :key="feed.id"
-              class="group bg-white dark:bg-gray-800 rounded-xl p-5 border border-gray-200 dark:border-gray-700 hover:shadow-md hover:border-secondary/50 transition-all duration-200"
+              v-for="feed in feeds"
+              :key="feed.feedId"
+              class="group flex items-center justify-between gap-3 rounded-2xl bg-surface-container/25 p-3.5 transition hover:bg-surface-container/60 hover:shadow-xs sm:px-4"
           >
-            <div class="flex items-start gap-4">
-              <!-- Feed Icon -->
-              <router-link :to="'/feeds/'+feed.id">
+            <router-link :to="'/feed/' + feed.feedId" class="flex min-w-0 flex-1 items-center gap-3.5">
               <img
                   :src="feed.favicon"
                   :alt="feed.name"
-                  class="w-14 h-14 rounded-full object-cover bg-gray-100 dark:bg-gray-700 flex-shrink-0"
+                  class="h-11 w-11 shrink-0 rounded-full object-cover bg-surface p-1 shadow-xs"
                   @error="handleImageError"
               />
-              </router-link>
-
-              <!-- Feed Info -->
-              <div class="flex-1 min-w-0">
-                <div class="flex items-start justify-between gap-4 mb-2">
-                  <router-link :to="'/feeds/'+feed.id">
-                  <div class="flex-1 min-w-0">
-                    <h3 class="text-base font-semibold text-gray-900 dark:text-gray-100 mb-1 line-clamp-1 group-hover:text-secondary transition-colors">
-                      {{ feed.name }}
-                    </h3>
-                    <p class="text-sm text-gray-500 dark:text-gray-400 line-clamp-1 mb-2">
-                      {{ feed.url }}
-                    </p>
-                  </div>
-                  </router-link>
-                  <!-- Subscribe Button -->
-                  <button
-                      @click="toggleSubscribe(feed)"
-                      :disabled="subscribing === feed.id"
-                      :class="[
-                        feed.subscribed
-                          ? 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
-                          : 'bg-secondary text-white hover:bg-secondary/90',
-                        'px-6 py-2 rounded-full font-medium text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0'
-                      ]"
-                  >
-                    <span v-if="subscribing === feed.id" class="flex items-center gap-2">
-                      <svg class="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
-                      </svg>
-                      处理中
-                    </span>
-                    <span v-else>
-                      {{ feed.subscribed ? '已订阅' : '订阅' }}
-                    </span>
-                  </button>
-                </div>
-
-                <p class="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 mb-3 h-[40px]">
-                  {{ feed.description || '暂无描述' }}
+              <div class="min-w-0 flex-1">
+                <h3 class="truncate text-xs font-semibold text-text transition group-hover:text-primary sm:text-sm">
+                  {{ feed.name }}
+                </h3>
+                <p class="mt-0.5 line-clamp-1 text-[11px] text-text-secondary sm:text-xs">
+                  {{ feed.description || feed.url }}
                 </p>
-
-                <!-- Feed Stats -->
-                <div class="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
-                  <span class="flex items-center gap-1">
-                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-                      <circle cx="9" cy="7" r="4"/>
-                      <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>
-                    </svg>
-                    {{ formatNumber(feed.subscribers) }} 订阅者
-                  </span>
-                  <span>•</span>
-                  <span class="flex items-center gap-1">
-                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                      <polyline points="14 2 14 8 20 8"/>
-                    </svg>
-                    {{ feed.articleCount }} 篇文章
-                  </span>
-                  <span>•</span>
-                  <span>{{ feed.updateFrequency }}</span>
-                </div>
               </div>
-            </div>
+            </router-link>
+
+            <!-- 列表右侧胶囊按钮 -->
+            <button
+                @click="toggleSubscribe(feed)"
+                :disabled="subscribing.has(feed.feedId)"
+                class="inline-flex h-8 shrink-0 items-center justify-center rounded-full px-4 text-xs font-semibold transition active:scale-95 disabled:opacity-40"
+                :class="feed.subscribed
+                  ? 'bg-surface-container text-text-secondary hover:bg-surface-container-high'
+                  : 'bg-primary text-white shadow-xs hover:brightness-105'"
+            >
+              <span v-if="subscribing.has(feed.feedId)" class="flex items-center gap-1.5">
+                <svg class="h-3.5 w-3.5 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+                </svg>
+                <span>{{ tr('common.processingShort') }}</span>
+              </span>
+              <span v-else>
+                {{ feed.subscribed ? tr('common.subscribed') : tr('common.subscribe') }}
+              </span>
+            </button>
           </article>
         </div>
 
-        <!-- Empty State -->
-        <div v-if="!loading && filteredFeeds.length === 0" class="text-center py-16">
-          <div class="w-20 h-20 mx-auto mb-4 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center">
-            <svg class="w-10 h-10 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="11" cy="11" r="8"/>
-              <path d="m21 21-4.35-4.35"/>
+        <!-- 空状态 -->
+        <div v-if="!loading && !feedError && feeds.length === 0" class="py-16 text-center">
+          <div class="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-surface-container/70">
+            <svg class="h-6 w-6 text-text-secondary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8" />
+              <path d="m21 21-4.35-4.35" />
             </svg>
           </div>
-          <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">未找到订阅源</h3>
-          <p class="text-gray-600 dark:text-gray-400">尝试选择其他分类或调整搜索关键词</p>
+          <h3 class="text-sm font-semibold text-text">{{ tr('subscriptionDiscoveryPage.emptyTitle') }}</h3>
+          <p class="mt-1 text-xs text-text-secondary">{{ tr('subscriptionDiscoveryPage.emptyDescription') }}</p>
         </div>
       </div>
 
-      <!-- Pagination -->
-      <div v-if="filteredFeeds.length > 0" class="mt-8">
-        <Pagination
-            :current-page="currentPage + 1"
-            :has-previous-page="hasPreviousPage"
-            :has-next-page="hasNextPage"
-            :disabled="loading"
-            @prev-page="prevPage"
-            @next-page="nextPage"
-        />
+      <!-- 分页与加载状态 -->
+      <div v-if="feeds.length" class="mt-8 flex flex-col items-center gap-2.5" aria-live="polite">
+        <p v-if="isFetchingNextPage" class="text-xs text-text-secondary">{{ tr('subscriptionDiscoveryPage.loadingMoreFeeds') }}</p>
+        <template v-else-if="nextPageError">
+          <p class="text-xs text-red-600 dark:text-red-400">{{ tr('common.loadFailed') }}</p>
+          <button type="button" class="inline-flex h-8 items-center rounded-full bg-surface-container px-4 text-xs font-semibold text-text hover:bg-surface-container-high" @click="loadMore">{{ tr('common.retry') }}</button>
+        </template>
+        <p v-else-if="!hasNextPage" class="text-xs text-text-secondary/60">{{ tr('subscriptionDiscoveryPage.allFeedsLoaded') }}</p>
       </div>
+      <div ref="loadMoreSentinel" class="h-1" aria-hidden="true"></div>
     </div>
-    
-    <!-- Manual Add Dialog -->
+
+    <!-- 手动添加弹窗：MD3 28px 大圆角模态框 -->
     <transition name="modal">
       <div
           v-if="showManualAddDialog"
-          class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40"
+          class="fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-sm"
           @click.self="showManualAddDialog = false"
       >
-        <div class="relative w-full max-w-md bg-white dark:bg-gray-800 rounded-2xl shadow-2xl">
-          <!-- Dialog Header -->
-          <div class="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
-            <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">手动添加订阅源</h3>
+        <div class="absolute inset-0 bg-black/45" />
+        <div class="relative z-10 w-full max-w-md overflow-hidden rounded-[28px] bg-surface shadow-2xl">
+          <div class="flex items-center justify-between border-b border-outline/10 px-6 py-4">
+            <h3 class="text-base font-semibold text-text">{{ tr('subscriptionDiscoveryPage.addManuallyTitle') }}</h3>
             <button
                 @click="showManualAddDialog = false"
-                class="p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-all"
+                class="flex h-8 w-8 items-center justify-center rounded-full text-text-secondary transition hover:bg-surface-container hover:text-text"
             >
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+              <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
           </div>
-          
-          <!-- Dialog Content -->
           <div class="p-6">
-            <SubscriptionsAddManual @success="handleManualAddSuccess" />
+            <SubscriptionsAddManual @success="showManualAddDialog = false" />
           </div>
         </div>
       </div>
     </transition>
-    
-    <!-- OPML Import Dialog -->
+
+    <!-- OPML 导入弹窗：MD3 28px 大圆角模态框 -->
     <transition name="modal">
       <div
           v-if="showOpmlDialog"
-          class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40"
+          class="fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-sm"
           @click.self="showOpmlDialog = false"
       >
-        <div class="relative w-full max-w-2xl bg-white dark:bg-gray-800 rounded-2xl shadow-2xl">
-          <!-- Dialog Header -->
-          <div class="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
-            <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">导入 OPML 文件</h3>
+        <div class="absolute inset-0 bg-black/45" />
+        <div class="relative z-10 w-full max-w-2xl overflow-hidden rounded-[28px] bg-surface shadow-2xl">
+          <div class="flex items-center justify-between border-b border-outline/10 px-6 py-4">
+            <h3 class="text-base font-semibold text-text">{{ tr('subscriptionDiscoveryPage.importOpmlTitle') }}</h3>
             <button
                 @click="showOpmlDialog = false"
-                class="p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-all"
+                class="flex h-8 w-8 items-center justify-center rounded-full text-text-secondary transition hover:bg-surface-container hover:text-text"
             >
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+              <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
           </div>
-          
-          <!-- Dialog Content -->
           <div class="p-6">
-            <SubscriptionsAddOpml @success="handleOpmlSuccess" />
+            <SubscriptionsAddOpml @success="showOpmlDialog = false" />
           </div>
         </div>
       </div>
@@ -376,297 +312,120 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue';
+import { translate as tr } from '@/i18n';
+import { useDocumentTitle } from '@/composables/documentTitle';
+import { computed, onActivated, onBeforeUnmount, onDeactivated, ref, watch } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
-import { request } from '../api/client';
-import type { PageResponse } from '../types/api';
-import type { Category, CategoriesResponse, DiscoveryFeed } from '../types/discovery';
-import { useSubscriptionsStore } from '../stores/subscriptions';
+import { useDiscoveryCategoriesQuery, useInfiniteDiscoveryFeedsQuery } from '@/queries/discovery';
+import { useSubscriptionMutation } from '@/queries/subscriptions';
+import { useInfiniteScroll } from '@/composables/infiniteScroll';
 import SubscriptionsAddManual from './components/SubscriptionsAddManual.vue';
 import SubscriptionsAddOpml from './components/SubscriptionsAddOpml.vue';
-import Pagination from '../components/Pagination.vue';
 
-// Types
-interface Feed {
-  id: string;
-  name: string;
-  url: string;
-  description: string;
-  favicon: string;
-  category: string;
-  subscribers: number;
-  articleCount: number;
-  updateFrequency: string;
-  subscribed: boolean;
-}
-
-// Router
+defineOptions({ name: 'SubscriptionDiscoveryPage' });
+const props = defineProps<{ query: string; category: string }>();
 const router = useRouter();
 const route = useRoute();
-
-// State
-const searchQuery = ref('');
-const selectedCategory = ref('all');
+const active = computed(() => route.name === 'discover');
+const searchQuery = ref(props.query);
+const selectedCategory = computed(() => props.category);
 const viewMode = ref<'grid' | 'list'>('grid');
-const loading = ref(false);
-const subscribing = ref<string | null>(null);
-
-// Dialog states
 const showManualAddDialog = ref(false);
 const showOpmlDialog = ref(false);
-
-// Stores
-const subscriptionsStore = useSubscriptionsStore();
-
-// Categories
-const categories = ref<Category[]>([]);
-
-// View modes
-const viewModes = [
-  { id: 'grid', name: '网格视图' },
-  { id: 'list', name: '列表视图' },
-];
-
-// Feeds data
-const feeds = ref<Feed[]>([]);
-const currentPage = ref(0);
-const totalPages = ref(0);
-
-// Computed
-const selectedCategoryName = computed(() => {
-  const category = categories.value.find(c => c.id === selectedCategory.value);
-  return category ? category.name : '全部';
+const categoriesQuery = useDiscoveryCategoriesQuery();
+const feedsQuery = useInfiniteDiscoveryFeedsQuery(
+    computed(() => props.query), selectedCategory, active,
+);
+const categories = computed(() => categoriesQuery.data.value?.categories ?? []);
+const feeds = computed(() => {
+  const items = feedsQuery.data.value?.pages.flatMap(page => page.content) ?? [];
+  return [...new Map(items.map(feed => [feed.feedId, feed])).values()];
 });
+const loading = feedsQuery.isPending;
+const hasNextPage = feedsQuery.hasNextPage;
+const isFetchingNextPage = feedsQuery.isFetchingNextPage;
+const nextPageError = feedsQuery.isFetchNextPageError;
+const feedError = computed(() => feedsQuery.isError.value && !nextPageError.value);
+const selectedCategoryName = computed(() =>
+    categories.value.find(category => category.id === selectedCategory.value)?.name ?? tr('common.all'),
+);
+useDocumentTitle(() => tr('subscriptionDiscoveryPage.title'));
+const viewModes = computed(() => [
+  { id: 'grid', name: tr('subscriptionDiscoveryPage.gridView') },
+  { id: 'list', name: tr('subscriptionDiscoveryPage.listView') },
+]);
 
-const filteredFeeds = computed(() => {
-  return feeds.value;
-});
-
-const hasNextPage = computed(() => {
-  return currentPage.value < totalPages.value - 1;
-});
-
-const hasPreviousPage = computed(() => {
-  return currentPage.value > 0;
-});
-
-// Methods
-const formatNumber = (num: number): string => {
-  if (num >= 1000000) {
-    return (num / 1000000).toFixed(1) + 'M';
+const subscriptionMutation = useSubscriptionMutation();
+const subscribing = ref(new Set<string>());
+const subscriptionError = ref('');
+const toggleSubscribe = async (feed: typeof feeds.value[number]) => {
+  if (subscribing.value.has(feed.feedId)) return;
+  subscribing.value.add(feed.feedId);
+  subscriptionError.value = '';
+  try {
+    await subscriptionMutation.mutateAsync({
+      feedId: feed.feedId, feedUrl: feed.url, subscribed: feed.subscribed,
+    });
+  } catch (error) {
+    subscriptionError.value = error instanceof Error ? error.message : tr('subscriptionDiscoveryPage.subscriptionFailed');
+  } finally {
+    subscribing.value.delete(feed.feedId);
   }
-  if (num >= 1000) {
-    return (num / 1000).toFixed(1) + 'K';
-  }
-  return num.toString();
 };
+
+let searchTimeout: ReturnType<typeof setTimeout> | undefined;
+const cancelSearch = () => {
+  clearTimeout(searchTimeout);
+  searchTimeout = undefined;
+};
+const navigateFilters = (query: string, category: string) => {
+  cancelSearch();
+  if (query === props.query && category === props.category) return;
+  void router.push({
+    name: 'discover',
+    query: { q: query || undefined, category: category === 'all' ? undefined : category },
+  });
+};
+const selectCategory = (category: string) => navigateFilters(searchQuery.value.trim(), category);
+const scheduleSearch = () => {
+  cancelSearch();
+  searchTimeout = setTimeout(() => {
+    if (active.value) navigateFilters(searchQuery.value.trim(), props.category);
+  }, 500);
+};
+watch(() => [props.query, props.category], () => {
+  cancelSearch();
+  searchQuery.value = props.query;
+});
+watch(active, (value) => {
+  if (!value) cancelSearch();
+}, { flush: 'sync' });
+
+const { sentinel: loadMoreSentinel, loadMore } = useInfiniteScroll({
+  enabled: active,
+  hasNextPage,
+  isLoading: feedsQuery.isFetching,
+  hasError: feedsQuery.isError,
+  onLoadMore: () => feedsQuery.fetchNextPage(),
+});
+onActivated(() => {
+  searchQuery.value = props.query;
+});
+onDeactivated(cancelSearch);
+onBeforeUnmount(cancelSearch);
 
 const handleImageError = (event: Event) => {
   const img = event.target as HTMLImageElement;
-  img.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="%239CA3AF" stroke-width="2"%3E%3Ccircle cx="12" cy="12" r="3"/%3E%3Cpath d="M12 2v4m0 12v4M4.22 4.22l2.83 2.83m9.9 9.9 2.83 2.83M2 12h4m12 0h4M4.22 19.78l2.83-2.83m9.9-9.9 2.83-2.83"/%3E%3C/svg%3E';
+  img.onerror = null;
+  img.src = '/logo.svg';
 };
-
-const formatUpdateFrequency = (freq: string): string => {
-  const map: Record<string, string> = {
-    'REALTIME': '实时更新',
-    'HOURLY': '每小时更新',
-    'DAILY': '每日更新',
-    'WEEKLY': '每周更新',
-    'MONTHLY': '每月更新',
-    'UNKNOWN': '更新频率未知'
-  };
-  return map[freq] || freq;
-};
-
-const mapDiscoveryFeedToFeed = (discoveryFeed: DiscoveryFeed): Feed => {
-  return {
-    id: discoveryFeed.feedId,
-    name: discoveryFeed.name,
-    url: discoveryFeed.url,
-    description: discoveryFeed.description || '',
-    favicon: discoveryFeed.favicon,
-    category: discoveryFeed.category,
-    subscribers: discoveryFeed.subscriberCount,
-    articleCount: discoveryFeed.articleCount,
-    updateFrequency: formatUpdateFrequency(discoveryFeed.updateFrequency),
-    subscribed: discoveryFeed.subscribed,
-  };
-};
-
-const loadCategories = async () => {
-  try {
-    const response = await request<CategoriesResponse>('/api/discovery/categories');
-    categories.value = response.categories;
-  } catch (error) {
-    console.error('Failed to load categories:', error);
-  }
-};
-
-const loadFeeds = async () => {
-  loading.value = true;
-  try {
-    // Both browse and search now return Page<DiscoveryFeed>
-    const endpoint = searchQuery.value.trim() 
-      ? '/api/discovery/feeds/search' 
-      : '/api/discovery/feeds';
-    
-    const params: Record<string, any> = {
-      page: currentPage.value,
-      size: 30
-    };
-    
-    if (searchQuery.value.trim()) {
-      params.q = searchQuery.value.trim();
-    } else {
-      // params.sort = 'popular';
-    }
-    
-    if (selectedCategory.value !== 'all') {
-      params.category = selectedCategory.value;
-    }
-    
-    const response = await request<PageResponse<DiscoveryFeed>>(endpoint, {
-      query: params
-    });
-    
-    feeds.value = response.content.map(mapDiscoveryFeedToFeed);
-    totalPages.value = response.totalPages;
-  } catch (error) {
-    console.error('Failed to load feeds:', error);
-    feeds.value = [];
-  } finally {
-    loading.value = false;
-  }
-};
-
-const toggleSubscribe = async (feed: Feed) => {
-  subscribing.value = feed.id;
-  
-  try {
-    if (feed.subscribed) {
-      // Unsubscribe
-      await subscriptionsStore.removeSubscription(feed.id);
-      feed.subscribed = false;
-      feed.subscribers--;
-    } else {
-      // Subscribe
-      await subscriptionsStore.addSubscription(feed.url, feed.id);
-      feed.subscribed = true;
-      feed.subscribers++;
-    }
-  } catch (error) {
-    console.error('Failed to toggle subscription:', error);
-  } finally {
-    subscribing.value = null;
-  }
-};
-
-// Route synchronization
-const updateRoute = () => {
-  const query: Record<string, string | number> = {};
-  
-  if (searchQuery.value) {
-    query.q = searchQuery.value;
-  }
-  
-  if (selectedCategory.value !== 'all') {
-    query.category = selectedCategory.value;
-  }
-  
-  if (currentPage.value > 0) {
-    query.page = currentPage.value + 1;
-  }
-  
-  router.push({ query });
-};
-
-const nextPage = () => {
-  if (hasNextPage.value && !loading.value) {
-    currentPage.value++;
-    updateRoute();
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }
-};
-
-const prevPage = () => {
-  if (hasPreviousPage.value && !loading.value) {
-    currentPage.value--;
-    updateRoute();
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }
-};
-
-// Success handlers for dialogs
-const handleManualAddSuccess = () => {
-  showManualAddDialog.value = false;
-  loadFeeds(); // Refresh feeds list
-};
-
-const handleOpmlSuccess = () => {
-  showOpmlDialog.value = false;
-  loadFeeds(); // Refresh feeds list
-};
-
-// Watchers
-// Update route when filters change
-watch(selectedCategory, () => {
-  currentPage.value = 0;
-  updateRoute();
-});
-
-// Debounce search update
-let searchTimeout: number | null = null;
-watch(searchQuery, (newVal, oldVal) => {
-  // Only update route if the value actually changed and it's not the initial sync
-  if (newVal !== oldVal) {
-    if (searchTimeout) clearTimeout(searchTimeout);
-    searchTimeout = window.setTimeout(() => {
-      currentPage.value = 0;
-      updateRoute();
-    }, 500);
-  }
-});
-
-// React to route changes
-watch(
-  () => route.query,
-  (newQuery) => {
-    // Sync state from route
-    const q = (newQuery.q as string) || '';
-    const category = (newQuery.category as string) || 'all';
-    const page = parseInt(newQuery.page as string) || 1;
-    
-    // Only update if changed to avoid loops
-    if (searchQuery.value !== q) {
-      searchQuery.value = q;
-    }
-    
-    if (selectedCategory.value !== category) {
-      selectedCategory.value = category;
-    }
-    
-    // Internal page is 0-based
-    const targetPage = Math.max(0, page - 1);
-    if (currentPage.value !== targetPage) {
-      currentPage.value = targetPage;
-    }
-    
-    loadFeeds();
-  },
-  { immediate: true }
-);
-
-// Lifecycle
-onMounted(async () => {
-  await loadCategories();
-  // loadFeeds is called by the immediate route watcher
-});
 </script>
 
 <style scoped>
 .modal-enter-active, .modal-leave-active {
   transition: opacity 0.2s ease;
 }
+
 .modal-enter-from, .modal-leave-to {
   opacity: 0;
 }

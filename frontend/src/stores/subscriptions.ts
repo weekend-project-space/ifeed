@@ -1,59 +1,21 @@
+import { translate as tr } from '@/i18n';
 import { ref } from 'vue';
 import { defineStore } from 'pinia';
-import { request } from '../api/client';
+import {
+    listSubscriptions,
+    searchSubscriptions as searchSubscriptionsRequest,
+    type SubscriptionListItemDto,
+    type SubscriptionSearchResultDto,
+} from '@/api/subscriptions';
 
-export interface SubscriptionBaseDto {
-    feedId: string;
-    title?: string;
-    description?: string;
-    url: string;
-    siteUrl?: string;
-    avatar?: string;
-    lastFetched?: string;
-    lastUpdated?: string;
-    failureCount?: number;
-    fetchError?: string | null;
-}
-
-export interface SubscriptionListItemDto extends SubscriptionBaseDto {
-    isRead?: boolean;
-}
-
-export interface SubscriptionSearchResultDto extends SubscriptionBaseDto {
-    subscriberCount: number;
-    subscribed: boolean;
-}
-
-export interface OpmlPreviewFeedDto {
-    feedUrl: string;
-    title: string;
-    siteUrl: string;
-    avatar?: string | null;
-    alreadySubscribed: boolean;
-    errors: string[];
-}
-
-export interface OpmlPreviewResultDto {
-    feeds: OpmlPreviewFeedDto[];
-    warnings: string[];
-    remainingQuota: number;
-}
-
-export interface OpmlImportSkippedDto {
-    feedUrl: string | null;
-    reason: string;
-}
-
-export interface OpmlImportResultDto {
-    importedCount: number;
-    skipped: OpmlImportSkippedDto[];
-    message: string;
-}
+export type {
+    SubscriptionListItemDto,
+    SubscriptionSearchResultDto,
+} from '@/api/subscriptions';
 
 export const useSubscriptionsStore = defineStore('subscriptions', () => {
     const items = ref<SubscriptionListItemDto[]>([]);
     const loading = ref(false);
-    const submitting = ref(false);
     const error = ref<string | null>(null);
     const searchResults = ref<SubscriptionSearchResultDto[]>([]);
     const searchLoading = ref(false);
@@ -64,7 +26,7 @@ export const useSubscriptionsStore = defineStore('subscriptions', () => {
         loading.value = true;
         error.value = null;
         try {
-            const response = await request<SubscriptionListItemDto[]>('/api/subscriptions');
+            const response = await listSubscriptions();
             items.value = Array.isArray(response)
                 ? response.map((item) => ({
                     ...item,
@@ -75,7 +37,7 @@ export const useSubscriptionsStore = defineStore('subscriptions', () => {
                 }))
                 : [];
         } catch (err) {
-            const message = err instanceof Error ? err.message : '订阅列表加载失败';
+            const message = err instanceof Error ? err.message : tr('common.listFailed');
             error.value = message;
             throw err;
         } finally {
@@ -83,48 +45,11 @@ export const useSubscriptionsStore = defineStore('subscriptions', () => {
         }
     };
 
-    const addSubscription = async (feedUrl: string, feedId: string) => {
-        if (!feedUrl && !feedId) {
-            error.value = '请输入有效的订阅链接';
-            return;
-        }
-        submitting.value = true;
-        error.value = null;
-        try {
-            await request('/api/subscriptions', {
-                method: 'POST',
-                json: { feedUrl, feedId }
-            });
-            await fetchSubscriptions();
-        } catch (err) {
-            const message = err instanceof Error ? err.message : '添加订阅失败';
-            error.value = message;
-            throw err;
-        } finally {
-            submitting.value = false;
-        }
-    };
-
-    const removeSubscription = async (feedId: string) => {
-        submitting.value = true;
-        error.value = null;
-        try {
-            await request(`/api/subscriptions/${feedId}`, { method: 'DELETE' });
-            items.value = items.value.filter((item) => item.feedId !== feedId);
-        } catch (err) {
-            const message = err instanceof Error ? err.message : '取消订阅失败';
-            error.value = message;
-            throw err;
-        } finally {
-            submitting.value = false;
-        }
-    };
-
     const searchSubscriptions = async (query: string) => {
         const trimmed = query.trim();
         if (!trimmed) {
             searchResults.value = [];
-            searchError.value = '请输入关键词、URL 或标题';
+            searchError.value = tr('common.searchRequired');
             activeSearchQuery.value = '';
             searchLoading.value = false;
             return;
@@ -133,9 +58,7 @@ export const useSubscriptionsStore = defineStore('subscriptions', () => {
         searchLoading.value = true;
         searchError.value = null;
         try {
-            const response = await request<SubscriptionSearchResultDto[]>('/api/feeds/search', {
-                query: { query: trimmed }
-            });
+            const response = await searchSubscriptionsRequest(trimmed);
             if (activeSearchQuery.value !== trimmed) {
                 return;
             }
@@ -153,7 +76,7 @@ export const useSubscriptionsStore = defineStore('subscriptions', () => {
             if (activeSearchQuery.value !== trimmed) {
                 return;
             }
-            const message = err instanceof Error ? err.message : '搜索订阅失败';
+            const message = err instanceof Error ? err.message : tr('common.feedSearchFailed');
             searchError.value = message;
             throw err;
         } finally {
@@ -170,44 +93,15 @@ export const useSubscriptionsStore = defineStore('subscriptions', () => {
         activeSearchQuery.value = '';
     };
 
-    const previewOpmlImport = async (file: File) => {
-        const formData = new FormData();
-        formData.append('file', file);
-        return await request<OpmlPreviewResultDto>('/api/subscriptions/opml/preview', {
-            method: 'POST',
-            body: formData
-        });
-    };
-
-    const confirmOpmlImport = async (feeds: {
-        feedUrl: string;
-        title: string;
-        siteUrl: string;
-        avatar?: string | null;
-        selected: boolean;
-    }[]) => {
-        return await request<OpmlImportResultDto>('/api/subscriptions/opml/confirm', {
-            method: 'POST',
-            json: {
-                feeds
-            }
-        });
-    };
-
     return {
         items,
         loading,
-        submitting,
         error,
         searchResults,
         searchLoading,
         searchError,
         fetchSubscriptions,
-        addSubscription,
-        removeSubscription,
         searchSubscriptions,
-        clearSearchResults,
-        previewOpmlImport,
-        confirmOpmlImport
+        clearSearchResults
     };
 });
