@@ -2,6 +2,7 @@ import { computed, type ComputedRef } from 'vue';
 import { useInfiniteQuery, useQuery } from '@tanstack/vue-query';
 import { useAuthStore } from '@/stores/auth';
 import { getFeed, listFeedArticles } from '@/api/feed';
+import { useInfiniteQueryRefresh } from '@/composables/infiniteQueryRefresh';
 
 export const FEED_ARTICLES_PAGE_SIZE = 20;
 
@@ -26,10 +27,11 @@ export const useInfiniteFeedArticlesQuery = (
   const authStore = useAuthStore();
   const userId = computed(() => authStore.user?.userId ?? 'anonymous');
 
-  return useInfiniteQuery({
-    queryKey: computed(() => [
-      'feedArticles', userId.value, feedId.value, tag.value, FEED_ARTICLES_PAGE_SIZE, 'publishedAt,desc',
-    ] as const),
+  const queryKey = computed(() => [
+    'feedArticles', userId.value, feedId.value, tag.value, FEED_ARTICLES_PAGE_SIZE, 'publishedAt,desc',
+  ] as const);
+  const query = useInfiniteQuery({
+    queryKey,
     initialPageParam: 0,
     queryFn: ({ pageParam, signal }) => listFeedArticles(
       feedId.value!,
@@ -48,6 +50,13 @@ export const useInfiniteFeedArticlesQuery = (
     gcTime: 30 * 60 * 1000,
     refetchOnWindowFocus: false,
   });
+  const refreshState = useInfiniteQueryRefresh({
+    queryKey,
+    initialPageParam: 0,
+    enabled: () => Boolean(feedId.value),
+    fetchFirstPage: signal => listFeedArticles(feedId.value!, 0, FEED_ARTICLES_PAGE_SIZE, tag.value, signal),
+  });
+  return {...query, ...refreshState};
 };
 
 export type { FeedDetail } from '@/api/feed';

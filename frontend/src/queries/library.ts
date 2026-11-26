@@ -2,6 +2,8 @@ import { computed, toValue, type MaybeRefOrGetter } from 'vue';
 import { useInfiniteQuery, type InfiniteData, type QueryClient } from '@tanstack/vue-query';
 import { useAuthStore } from '@/stores/auth';
 import type { PageResponse } from '@/types/api';
+import { useInfiniteQueryRefresh } from '@/composables/infiniteQueryRefresh';
+import { translate as tr } from '@/i18n';
 
 const LIBRARY_PAGE_SIZE = 20;
 type LibraryItem = { articleId: string };
@@ -16,8 +18,9 @@ export const useInfiniteLibraryQuery = <Item extends LibraryItem>(
   filter?: MaybeRefOrGetter<string | undefined>,
 ) => {
   const auth = useAuthStore();
+  const queryKey = computed(() => libraryQueryKey(resource, auth.user?.userId ?? 'anonymous', sort, toValue(filter)));
   const query = useInfiniteQuery({
-    queryKey: computed(() => libraryQueryKey(resource, auth.user?.userId ?? 'anonymous', sort, toValue(filter))),
+    queryKey,
     initialPageParam: 0,
     queryFn: ({ pageParam, signal }) => fetchPage(pageParam, LIBRARY_PAGE_SIZE, signal, toValue(filter)),
     getNextPageParam: lastPage => lastPage.number + 1 < lastPage.totalPages ? lastPage.number + 1 : undefined,
@@ -25,6 +28,12 @@ export const useInfiniteLibraryQuery = <Item extends LibraryItem>(
     staleTime: 5 * 60 * 1000,
     gcTime: 30 * 60 * 1000,
     refetchOnWindowFocus: false,
+  });
+  const refreshState = useInfiniteQueryRefresh({
+    queryKey,
+    initialPageParam: 0,
+    enabled: () => auth.isAuthenticated,
+    fetchFirstPage: signal => fetchPage(0, LIBRARY_PAGE_SIZE, signal, toValue(filter)),
   });
   const items = computed(() => {
     const seen = new Set<string>();
@@ -36,9 +45,12 @@ export const useInfiniteLibraryQuery = <Item extends LibraryItem>(
   });
   return {
     ...query,
+    ...refreshState,
     items,
     total: computed(() => query.data.value?.pages[0]?.totalElements ?? 0),
-    errorMessage: computed(() => query.isFetchNextPageError.value ? '' : query.error.value?.message ?? ''),
+    errorMessage: computed(() => refreshState.refreshError.value
+      ? tr('common.refreshFailed')
+      : query.isFetchNextPageError.value ? '' : query.error.value?.message ?? ''),
   };
 };
 

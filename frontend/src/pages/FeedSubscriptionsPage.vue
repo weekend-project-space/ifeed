@@ -1,15 +1,18 @@
 <template>
-  <div class="mx-auto text-text">
+  <div ref="pullRefreshTarget" class="mx-auto text-text">
+    <PullRefreshIndicator v-bind="pullIndicator" />
     <main>
       <!-- 错误提示 -->
       <div
-          v-if="articleError"
+          v-if="articleError || refreshError"
           class="mb-6 rounded-2xl bg-red-500/10 p-4 text-xs text-red-600 dark:text-red-400"
+          role="alert"
       >
-        <p class="font-semibold mb-2">{{ tr('feedSubscriptionsPage.requestError') }}{{ articleError }}</p>
+        <p class="font-semibold mb-2">{{ refreshError ? tr('common.refreshFailed') : tr('feedSubscriptionsPage.requestError') + articleError }}</p>
         <button
             type="button"
-            class="inline-flex h-8 items-center justify-center rounded-full bg-red-600 px-4 text-xs font-semibold text-white shadow-xs transition hover:bg-red-700 active:scale-95"
+            class="inline-flex h-8 items-center justify-center rounded-full bg-red-600 px-4 text-xs font-semibold text-white shadow-xs transition hover:bg-red-700 active:scale-95 disabled:opacity-40"
+            :disabled="isRefreshing"
             @click="refresh"
         >
           {{ tr('common.retry') }}
@@ -132,7 +135,9 @@ import {
   useSubscriptionInsightsQuery,
 } from '../queries/subscriptionArticles';
 import { useInfiniteScroll } from '../composables/infiniteScroll';
+import { usePullRefresh } from '../composables/pullRefresh';
 import ArticleList from '../components/ArticleList.vue';
+import PullRefreshIndicator from '../components/PullRefreshIndicator.vue';
 
 defineOptions({ name: 'FeedSubscriptionsPage' });
 useDocumentTitle(() => tr('feedSubscriptionsPage.latest'));
@@ -187,7 +192,18 @@ const buildQuery = (overrides?: {
   return query;
 };
 
-const refresh = () => articlesQuery.refetch();
+const isRefreshing = computed(() => articlesQuery.isRefreshing.value || insightsQuery.isRefetching.value);
+const refreshError = computed(() => articlesQuery.refreshError.value
+    || (insightsQuery.isRefetchError.value ? insightsQuery.error.value : null));
+const refresh = () => {
+  if (isRefreshing.value) return;
+  return Promise.all([articlesQuery.refresh(), insightsQuery.refetch()]);
+};
+const {target: pullRefreshTarget, indicator: pullIndicator, busy: pullBusy} = usePullRefresh({
+  enabled: () => !articlesLoading.value,
+  refreshing: isRefreshing,
+  onRefresh: refresh,
+});
 
 const handleSelectTag = (tag: string) => {
   if (!tag) return;
@@ -239,7 +255,8 @@ watch([currentFeedId, () => subscriptionsStore.items], () => {
 const { sentinel: loadMoreSentinel, loadMore } = useInfiniteScroll({
   hasNextPage,
   isLoading: articlesQuery.isFetching,
-  hasError: articlesQuery.isError,
+  hasError: () => articlesQuery.isError.value || Boolean(refreshError.value),
+  enabled: () => !pullBusy.value,
   onLoadMore: () => articlesQuery.fetchNextPage(),
 });
 </script>

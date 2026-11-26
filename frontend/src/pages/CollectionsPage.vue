@@ -3,7 +3,8 @@
       :title="t('collectionsPage.title')"
       :total="total"
       :pending="collectionsQuery.isPending.value"
-      :fetching="collectionsQuery.isFetching.value"
+      :fetching="collectionsQuery.isFetching.value || isRefreshing"
+      :refreshing="isRefreshing"
       :error="errorMessage"
       :empty-text="folderId ? t('collectionsPage.folderEmpty') : t('collectionsPage.empty')"
       @refresh="refresh"
@@ -59,15 +60,15 @@
       </template>
     </ArticleCardList>
 
-    <template #footer>
+    <template #footer="{ refreshing }">
       <InfiniteLoadMore
           v-if="items.length"
           :key="selectedFolder"
           :has-next-page="collectionsQuery.hasNextPage.value"
           :loading="collectionsQuery.isFetchingNextPage.value"
-          :fetching="collectionsQuery.isFetching.value"
+          :fetching="collectionsQuery.isFetching.value || refreshing"
           :failed="collectionsQuery.isFetchNextPageError.value"
-          :blocked="collectionsQuery.isError.value"
+          :blocked="collectionsQuery.isError.value || Boolean(collectionsQuery.refreshError.value)"
           :fetch-more="collectionsQuery.fetchNextPage"
       />
     </template>
@@ -119,7 +120,11 @@ const selectFolder = async (selected: string) => {
   return router.push({ name: 'collections', query: selected === 'all' ? {} : { folderId: selected } });
 };
 
-const refresh = () => Promise.all([collectionsQuery.refetch(), foldersQuery.refetch()]);
+const isRefreshing = computed(() => collectionsQuery.isRefreshing.value || foldersQuery.isRefetching.value);
+const refresh = () => {
+  if (isRefreshing.value || !auth.isAuthenticated) return;
+  return Promise.all([collectionsQuery.refresh(), foldersQuery.refetch()]);
+};
 
 const remove = async (articleId: string) => {
   if (mutation.isPending.value) return;

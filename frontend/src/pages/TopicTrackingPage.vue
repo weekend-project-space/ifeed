@@ -1,5 +1,10 @@
 <template>
-  <div class="mx-auto max-w-screen-2xl px-4 pb-24 pt-5 text-text sm:px-6 lg:px-8">
+  <div ref="pullRefreshTarget" class="mx-auto max-w-screen-2xl px-4 pb-24 pt-5 text-text sm:px-6 lg:px-8">
+    <PullRefreshIndicator v-bind="pullIndicator" />
+    <div v-if="refreshError" role="alert" class="mb-5 rounded-2xl bg-red-500/10 p-4 text-xs text-red-600 dark:text-red-400">
+      {{ tr('common.refreshFailed') }}
+      <button type="button" class="ml-2 font-semibold underline disabled:opacity-40" :disabled="isRefreshing" @click="refresh">{{ tr('common.retry') }}</button>
+    </div>
     <!-- 顶部栏：MD3 干净利落 -->
     <header class="mb-5 flex items-center justify-between gap-4 border-b border-outline/15 pb-4">
       <div class="flex items-center gap-2.5">
@@ -532,6 +537,9 @@ import { formatRelativeTime } from '@/utils/datetime';
 import { latestRequest } from '@/utils/latestRequest';
 import { useDocumentTitle } from '@/composables/documentTitle';
 import { useInfiniteScroll } from '@/composables/infiniteScroll';
+import { usePullRefresh } from '@/composables/pullRefresh';
+import { useRefresh } from '@/composables/refresh';
+import PullRefreshIndicator from '@/components/PullRefreshIndicator.vue';
 import { listDiscoveryFeeds } from '@/api/discovery';
 import KeywordTagInput from '@/components/KeywordTagInput.vue';
 import {
@@ -738,6 +746,7 @@ const mergeTopics = (rows: TopicTrack[]) => {
 };
 
 const loadTopics = async (page = 0, append = false) => {
+  if (isRefreshing.value) return;
   const request = topicsRequest.begin();
   topicsLoading.value = true;
   topicsError.value = '';
@@ -779,6 +788,7 @@ const resetArticles = () => {
 };
 
 const loadSummaries = async (append = false, reset = false, replace = false) => {
+  if (isRefreshing.value) return;
   if (append && summariesLoading.value) return;
   const request = summariesRequest.begin();
   const topicId = selectedTopicId.value;
@@ -820,6 +830,46 @@ const loadSummaries = async (append = false, reset = false, replace = false) => 
 };
 
 const retrySummaries = () => loadSummaries(failedSummaryAppend, false, failedSummaryReplace);
+
+const {refresh, isRefreshing, refreshError} = useRefresh({
+  enabled: () => !showEditor.value,
+  resetOn: () => [scope.value, selectedTopicId.value, authStore.isAuthenticated, authStore.user?.userId],
+  onRefresh: async signal => {
+    clearTimeout(pollTimer);
+    [topicsRequest, summariesRequest, detailRequest, pollRequest].forEach(request => request.cancel());
+    topicsLoading.value = false;
+    summariesLoading.value = false;
+    const topicId = selectedTopicId.value;
+    const following = scope.value === 'following';
+    const [freshTopics, freshSummaries, freshDetail] = await Promise.all([
+      following ? listTopicTracks(0, 30, signal) : listPublicTopicTracks(0, 30, signal),
+      listTopicTrackSummaries(topicId ?? undefined, signal, following),
+      topicId ? getTopicTrack(topicId, signal) : Promise.resolve(null),
+    ]);
+    if (signal.aborted) return;
+
+    topics.value = freshTopics.content;
+    topicPage.value = freshTopics.number;
+    topicTotalPages.value = freshTopics.totalPages;
+    topicDetail.value = freshDetail;
+    if (freshDetail) mergeTopics([freshDetail]);
+    resetArticles();
+    summaries.value = freshSummaries.content;
+    summaryCursor.value = freshSummaries.nextCursor ?? undefined;
+    hasMoreSummaries.value = Boolean(freshSummaries.hasNext && freshSummaries.nextCursor);
+    newSummariesAvailable.value = false;
+    topicsError.value = '';
+    summariesError.value = '';
+    detailError.value = '';
+    pollError.value = '';
+  },
+});
+const {target: pullRefreshTarget, indicator: pullIndicator, busy: pullBusy} = usePullRefresh({
+  enabled: () => !showEditor.value && (topics.value.length > 0 || !topicsLoading.value)
+      && (summaries.value.length > 0 || !summariesLoading.value),
+  refreshing: isRefreshing,
+  onRefresh: refresh,
+});
 
 const visibleArticles = (summary: TopicTrackSummary) => expandedSummaries.value.has(summary.summaryId)
     ? articlePages[summary.summaryId]?.articles ?? summary.articles : summary.articles;
@@ -910,7 +960,8 @@ const loadMoreSummaries = async () => {
 
 // 1. 话题列表无限滚动挂载
 const { sentinel: topicSentinel } = useInfiniteScroll({
-  hasNextPage: hasMoreTopics, isLoading: topicsLoading, hasError: () => !!topicsError.value,
+  hasNextPage: hasMoreTopics, isLoading: topicsLoading, hasError: () => !!topicsError.value || !!refreshError.value,
+  enabled: () => !pullBusy.value,
   onLoadMore: loadMoreTopics, rootMargin: '100px 0px',
 });
 
@@ -918,7 +969,8 @@ const { sentinel: topicSentinel } = useInfiniteScroll({
 const { sentinel: summarySentinel } = useInfiniteScroll({
   hasNextPage: hasMoreSummaries,
   isLoading: summariesLoading,
-  hasError: () => !!summariesError.value,
+  hasError: () => !!summariesError.value || !!refreshError.value,
+  enabled: () => !pullBusy.value,
   onLoadMore: loadMoreSummaries,
   rootMargin: '250px 0px',
 });
@@ -1123,7 +1175,7 @@ const topicErrorMessage = (reason: unknown, fallback: string) => {
 };
 
 const poll = async () => {
-  if (disposed) return;
+  if (disposed || isRefreshing.value) return;
   const request = pollRequest.begin();
   const topicId = selectedTopicId.value;
   const ids = [...new Set([...(topicId ? [topicId] : []), ...topics.value.map(topic => topic.topicId)])];
@@ -1159,9 +1211,19 @@ const poll = async () => {
   } catch {
     if (request.current()) pollError.value = tr('topicTrackingPage.statusUpdateFailed');
   } finally {
-    if (!disposed) pollTimer = setTimeout(poll, selectedTopic.value && ['QUEUED', 'RUNNING'].includes(selectedTopic.value.scanStatus) ? 5000 : 15000);
+    schedulePoll();
   }
 };
+
+const schedulePoll = (delay = selectedTopic.value && ['QUEUED', 'RUNNING'].includes(selectedTopic.value.scanStatus) ? 5000 : 15000) => {
+  clearTimeout(pollTimer);
+  if (!disposed && !isRefreshing.value) pollTimer = setTimeout(poll, delay);
+};
+
+watch(isRefreshing, refreshing => {
+  if (refreshing) clearTimeout(pollTimer);
+  else schedulePoll(5000);
+});
 
 watch(showEditor, visible => {
   if (!visible) {
@@ -1227,7 +1289,7 @@ onMounted(async () => {
   } else {
     await Promise.all([loadTopics(), loadSummaries()]);
   }
-  if (!disposed) pollTimer = setTimeout(poll, 5000);
+  schedulePoll(5000);
 });
 
 onUnmounted(() => {

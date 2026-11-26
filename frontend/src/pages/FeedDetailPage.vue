@@ -1,5 +1,10 @@
 <template>
-  <div class="mx-auto max-w-screen-lg py-6 sm:py-8 text-text">
+  <div ref="pullRefreshTarget" class="mx-auto max-w-screen-lg py-6 sm:py-8 text-text">
+    <PullRefreshIndicator v-bind="pullIndicator" />
+    <div v-if="feedArticlesQuery.refreshError.value" role="alert" class="mb-6 rounded-2xl bg-red-500/10 p-4 text-xs text-red-600 dark:text-red-400">
+      {{ tr('common.refreshFailed') }}
+      <button type="button" class="ml-2 font-semibold underline disabled:opacity-40" :disabled="isRefreshing" @click="refreshArticles">{{ tr('common.retry') }}</button>
+    </div>
     <article-list
         :items="items"
         :loading="articlesLoading"
@@ -206,7 +211,9 @@ import { useSubscriptionsStore } from '../stores/subscriptions';
 import { useReadFeedStore } from '../stores/readfeed';
 import { formatRelativeTime } from '../utils/datetime';
 import { useInfiniteScroll } from '../composables/infiniteScroll';
+import { usePullRefresh } from '../composables/pullRefresh';
 import ArticleList from '../components/ArticleList.vue';
+import PullRefreshIndicator from '../components/PullRefreshIndicator.vue';
 
 defineOptions({ name: 'FeedDetailPage' });
 
@@ -310,7 +317,16 @@ const buildQuery = (overrides?: { tags?: string | null }) => {
   return query;
 };
 
-const refreshArticles = () => feedArticlesQuery.refetch();
+const isRefreshing = computed(() => feedArticlesQuery.isRefreshing.value || feedQuery.isRefetching.value);
+const refreshArticles = () => {
+  if (isRefreshing.value) return;
+  return Promise.all([feedArticlesQuery.refresh(), feedQuery.refetch()]);
+};
+const {target: pullRefreshTarget, indicator: pullIndicator, busy: pullBusy} = usePullRefresh({
+  enabled: () => !articlesLoading.value && !feedLoading.value,
+  refreshing: isRefreshing,
+  onRefresh: refreshArticles,
+});
 
 const handleSelectTag = (tag: string) => {
   if (!tag || !currentFeedId.value) return;
@@ -371,7 +387,8 @@ watch([() => feedQuery.data.value, () => subscriptionsStore.items], () => {
 const { sentinel: loadMoreSentinel, loadMore } = useInfiniteScroll({
   hasNextPage,
   isLoading: feedArticlesQuery.isFetching,
-  hasError: feedArticlesQuery.isError,
+  hasError: () => feedArticlesQuery.isError.value || Boolean(feedArticlesQuery.refreshError.value),
+  enabled: () => !pullBusy.value,
   onLoadMore: () => feedArticlesQuery.fetchNextPage(),
 });
 </script>

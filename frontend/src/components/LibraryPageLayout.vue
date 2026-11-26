@@ -1,5 +1,6 @@
 <template>
-  <div class="mx-auto max-w-screen-lg px-4 py-6 text-text sm:px-6 sm:py-8">
+  <div ref="pullRefreshTarget" class="mx-auto max-w-screen-lg px-4 py-6 text-text sm:px-6 sm:py-8">
+    <PullRefreshIndicator v-bind="pullIndicator" />
     <div class="mb-6 sm:mb-8">
       <h1 class="text-2xl font-bold tracking-tight text-text sm:text-3xl">{{ title }}</h1>
     </div>
@@ -57,7 +58,7 @@
           <h2 v-if="emptyTitle" class="text-base font-bold text-text mb-1">{{ emptyTitle }}</h2>
           <p class="text-xs text-text-secondary">{{ emptyText }}</p>
         </div>
-        <slot name="footer" />
+        <slot name="footer" :refreshing="pullBusy" />
       </template>
     </template>
   </div>
@@ -69,13 +70,20 @@ import { useRoute } from 'vue-router';
 import ArticleCardList from './ArticleCardList.vue';
 import { useAuthStore } from '@/stores/auth';
 import { useDocumentTitle } from '@/composables/documentTitle';
+import { usePullRefresh } from '@/composables/pullRefresh';
+import PullRefreshIndicator from './PullRefreshIndicator.vue';
 
 const props = defineProps<{
-  title: string; total: number; pending: boolean; fetching: boolean; error: string;
+  title: string; total: number; pending: boolean; fetching: boolean; error: string; refreshing?: boolean;
   emptyTitle?: string; emptyText: string; totalText?: string; refreshLabel?: string; loginText?: string;
 }>();
-defineEmits<{ refresh: [] }>();
+const emit = defineEmits<{ refresh: [] }>();
 const auth = useAuthStore();
 const route = useRoute();
 useDocumentTitle(() => props.title);
+const {target: pullRefreshTarget, indicator: pullIndicator, busy: pullBusy} = usePullRefresh({
+  enabled: () => auth.isAuthenticated && !props.pending,
+  refreshing: () => Boolean(props.refreshing),
+  onRefresh: () => emit('refresh'),
+});
 </script>

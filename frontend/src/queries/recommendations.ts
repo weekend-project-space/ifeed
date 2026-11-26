@@ -2,19 +2,21 @@ import {computed} from 'vue';
 import {useInfiniteQuery} from '@tanstack/vue-query';
 import {useAuthStore} from '@/stores/auth';
 import {listRecommendations} from '@/api/recommendations';
+import {useInfiniteQueryRefresh} from '@/composables/infiniteQueryRefresh';
 
 const RECOMMENDATION_PAGE_SIZE = 20;
 
 export const useInfiniteRecommendationsQuery = () => {
   const authStore = useAuthStore();
   const userId = computed(() => authStore.user?.userId ?? 'anonymous');
+  const queryKey = computed(() => [
+    'recommendations',
+    userId.value,
+    RECOMMENDATION_PAGE_SIZE,
+  ] as const);
 
-  return useInfiniteQuery({
-    queryKey: computed(() => [
-      'recommendations',
-      userId.value,
-      RECOMMENDATION_PAGE_SIZE,
-    ] as const),
+  const query = useInfiniteQuery({
+    queryKey,
     initialPageParam: 0,
     queryFn: ({ pageParam, signal }) => listRecommendations(
       pageParam,
@@ -30,6 +32,13 @@ export const useInfiniteRecommendationsQuery = () => {
     gcTime: 30 * 60 * 1000,
     refetchOnWindowFocus: false,
   });
+
+  const refreshState = useInfiniteQueryRefresh({
+    queryKey,
+    initialPageParam: 0,
+    fetchFirstPage: signal => listRecommendations(0, RECOMMENDATION_PAGE_SIZE, signal),
+  });
+  return {...query, ...refreshState};
 };
 
 export { RECOMMENDATION_PAGE_SIZE };

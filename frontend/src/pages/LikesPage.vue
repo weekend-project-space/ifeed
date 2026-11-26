@@ -4,13 +4,14 @@
       :total="total"
       :total-text="total ? tr('likesPage.likeCount', { count: total }) : tr('likesPage.noLikes')"
       :pending="query.isPending.value"
-      :fetching="query.isFetching.value"
+      :fetching="query.isFetching.value || query.isRefreshing.value"
+      :refreshing="query.isRefreshing.value"
       :error="errorMessage"
       :refresh-label="tr('likesPage.refreshLikes')"
       :login-text="tr('likesPage.loginHint')"
       :empty-title="tr('likesPage.emptyTitle')"
       :empty-text="tr('likesPage.emptyDescription')"
-      @refresh="query.refetch()"
+      @refresh="query.refresh"
   >
     <DatedArticleList
         :items="items"
@@ -19,14 +20,14 @@
         :remove-label="tr('common.unlike')"
         @remove="unlike"
     />
-    <template #footer>
+    <template #footer="{ refreshing }">
       <InfiniteLoadMore
           v-if="items.length"
           :has-next-page="query.hasNextPage.value"
           :loading="query.isFetchingNextPage.value"
-          :fetching="query.isFetching.value"
+          :fetching="query.isFetching.value || refreshing"
           :failed="query.isFetchNextPageError.value"
-          :blocked="query.isError.value"
+          :blocked="query.isError.value || Boolean(query.refreshError.value)"
           :fetch-more="query.fetchNextPage"
       />
     </template>
