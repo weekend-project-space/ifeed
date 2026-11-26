@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import org.bitmagic.ifeed.api.response.ArticleDetailResponse;
 import org.bitmagic.ifeed.api.response.ArticleEnrichResponse;
 import org.bitmagic.ifeed.api.response.ArticleSummaryResponse;
+import org.bitmagic.ifeed.api.response.ArticleWithStateResponse;
 import org.bitmagic.ifeed.api.response.UserSubscriptionInsightResponse;
 import org.bitmagic.ifeed.application.embedding.ArticleEnhancedService;
 import org.bitmagic.ifeed.api.util.IdentifierUtils;
@@ -24,6 +25,7 @@ import org.bitmagic.ifeed.domain.service.ArticleService;
 import org.bitmagic.ifeed.domain.service.MixFeedService;
 import org.bitmagic.ifeed.domain.service.UserCollectionService;
 import org.bitmagic.ifeed.domain.service.UserLikeService;
+import org.bitmagic.ifeed.domain.service.UserArticleStateService;
 import org.bitmagic.ifeed.exception.ApiException;
 import org.bitmagic.ifeed.infrastructure.util.DateUtils;
 import org.bitmagic.ifeed.infrastructure.util.FaviconResolver;
@@ -63,9 +65,10 @@ public class ArticleController {
     private final FeedRepository feedRepository;
     private final MixFeedRepository mixFeedRepository;
     private final MixFeedService mixFeedService;
+    private final UserArticleStateService articleStates;
 
     @GetMapping
-    public ResponseEntity<Page<ArticleSummaryResponse>> listArticles(@AuthenticationPrincipal UserPrincipal principal,
+    public ResponseEntity<Page<ArticleWithStateResponse<ArticleSummaryResponse>>> listArticles(@AuthenticationPrincipal UserPrincipal principal,
                                                                      @RequestParam(required = false) String feedId,
                                                                      @RequestParam(required = false, name = "tags") String tags,
                                                                      @RequestParam(required = false, name = "category") String category,
@@ -104,26 +107,27 @@ public class ArticleController {
                     null, normalizedTags, normalizedCategory, includeGlobal, pageable);
         }
 
-        return ResponseEntity.ok(articlePage.map(this::toSummaryResponse));
+        return ResponseEntity.ok(articleStates.attach(userId, articlePage.map(this::toSummaryResponse),
+                article -> UUID.fromString(article.id())));
     }
 
     @GetMapping("/recommendations")
-    public ResponseEntity<Page<RecResponse>> rec(@AuthenticationPrincipal UserPrincipal principal,
+    public ResponseEntity<Page<ArticleWithStateResponse<RecResponse>>> rec(@AuthenticationPrincipal UserPrincipal principal,
                                                  @RequestParam(defaultValue = "0") Integer page,
                                                  @RequestParam(required = false, defaultValue = "20") Integer size) {
         Integer userId = Objects.nonNull(principal) ? principal.getId() : 0;
-        return ResponseEntity.ok(recommendationService
-                .recommend(new RecRequest(userId, "home", Map.of(), Map.of()), page, size));
+        return ResponseEntity.ok(articleStates.attach(userId, recommendationService
+                .recommend(new RecRequest(userId, "home", Map.of(), Map.of()), page, size), RecResponse::id));
     }
 
     @GetMapping("/{articleId}/recommendations")
-    public ResponseEntity<List<RecResponse>> rec(@AuthenticationPrincipal UserPrincipal principal,
+    public ResponseEntity<List<ArticleWithStateResponse<RecResponse>>> rec(@AuthenticationPrincipal UserPrincipal principal,
                                                  @PathVariable String articleId,
                                                  @RequestParam(required = false, defaultValue = "6") Integer topK) {
         Integer userId = Objects.nonNull(principal) ? principal.getId() : 0;
         Long itemId = articleService.getArticle(IdentifierUtils.parseUuid(articleId, "article id")).getId();
-        return ResponseEntity.ok(recommendationService
-                .recommend(new RecRequest(userId, "details", Map.of(), Map.of("itemId", itemId)), topK));
+        return ResponseEntity.ok(articleStates.attach(userId, recommendationService
+                .recommend(new RecRequest(userId, "details", Map.of(), Map.of("itemId", itemId)), topK), RecResponse::id));
     }
 
     @GetMapping("/insights")

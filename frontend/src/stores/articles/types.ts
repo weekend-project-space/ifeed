@@ -19,6 +19,8 @@ export interface ArticleListItem {
     timeAgo: string;
     tags: string[];
     collected?: boolean;
+    liked?: boolean;
+    folderId?: string | null;
 }
 
 
@@ -50,7 +52,9 @@ export const normalizeArticle = (article: ArticleDto): ArticleListItem => {
         publishedAt,
         timeAgo: formatRelativeTime(publishedAt ?? Date.now()),
         tags: Array.from(new Set(tags)).slice(0, 6),
-        collected: article.collected ?? false
+        collected: article.collected ?? false,
+        liked: article.liked ?? false,
+        folderId: article.folderId ?? null,
     };
 };
 

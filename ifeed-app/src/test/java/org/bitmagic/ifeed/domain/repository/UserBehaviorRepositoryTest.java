@@ -72,6 +72,28 @@ class UserBehaviorRepositoryTest {
     }
 
     @Test
+    void batchArticleStateKeepsPublicFolderIdsAndUserActionsIndependent() {
+        var collections = new UserCollectionRepository(jdbcTemplate);
+        var likes = new UserLikeRepository(jdbcTemplate);
+        var states = new UserArticleStateRepository(jdbcTemplate);
+        var folder = collections.createFolder(7L, "Saved");
+        var folderId = collections.findFolder(7L, folder.folderId(), false).orElseThrow().id();
+        collections.save(7L, 3_000_000_001L, folderId, true);
+        likes.save(8L, 3_000_000_001L);
+
+        var mine = states.findStates(7, List.of(articleUid)).get(articleUid);
+        assertTrue(mine.collected());
+        assertFalse(mine.liked());
+        assertEquals(folder.folderId(), mine.folderId());
+        var other = states.findStates(8, List.of(articleUid)).get(articleUid);
+        assertFalse(other.collected());
+        assertTrue(other.liked());
+        assertNull(other.folderId());
+        assertTrue(states.findStates(0, List.of(articleUid)).isEmpty());
+        assertTrue(states.findStates(7, List.of()).isEmpty());
+    }
+
+    @Test
     void upsertsKeepLatestTimestampAndUseLongInternalIds() {
         repository.upsert(7L, 3_000_000_001L, readAt);
         repository.upsert(7L, 3_000_000_001L, readAt.minusSeconds(60));

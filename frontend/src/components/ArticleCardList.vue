@@ -16,7 +16,8 @@
   <div v-else-if="items.length > 0" :class="sizes.listGap">
     <article v-for="item in itemsWithMeta" :key="item._key">
       <div :class="['group relative rounded-3xl transition-colors hover:bg-surface-container/60', sizes.cardFlex, sizes.cardPad]">
-        <router-link :to="`/articles/${item._key}`" :class="sizes.link">
+        <div class="min-w-0 flex-1">
+        <router-link :to="`/articles/${item._key}`" :class="['min-w-0', sizes.link]">
           <!-- 缩略图 -->
           <div :class="['relative shrink-0 overflow-hidden rounded-2xl bg-surface-container shadow-2xs', sizes.thumbnail]">
             <img
@@ -54,6 +55,12 @@
             </p>
           </div>
         </router-link>
+
+        <div v-if="showArticleActions" class="mt-2 flex justify-start">
+          <ArticleActions :article-id="item._key" :liked="item.liked ?? false" :collected="item.collected ?? false"
+                          :folder-id="item.folderId ?? null" compact />
+        </div>
+        </div>
 
         <!-- 移动端非紧凑模式的操作按钮浮层 -->
         <div v-if="showAction && !compact" class="sm:hidden absolute top-2 right-2 z-10">
@@ -115,9 +122,11 @@
 import { translate as tr } from '@/i18n';
 import { ref, computed, useSlots } from 'vue';
 import { formatRelativeTime } from '../utils/datetime';
+import ArticleActions from './ArticleActions.vue';
 
 interface ArticleItem {
-  articleId: string;
+  articleId?: string;
+  id?: string;
   title?: string;
   thumbnail?: string;
   summary?: string;
@@ -125,6 +134,8 @@ interface ArticleItem {
   collectedAt?: string;
   likedAt?: string;
   folderId?: string | null;
+  liked?: boolean;
+  collected?: boolean;
   readAt?: string;
   timeAgo?: string;
   relativeTime?: string;
@@ -136,6 +147,7 @@ interface Props {
   items: ArticleItem[];
   loading: boolean;
   showAction?: boolean;
+  showArticleActions?: boolean;
   actionLabel?: string;
   metaField?: 'collectedAt' | 'likedAt' | 'readAt' | 'timeAgo' | 'relativeTime' | 'custom';
   metaPrefix?: string;
@@ -145,6 +157,7 @@ interface Props {
 
 const props = withDefaults(defineProps<Props>(), {
   showAction: false,
+  showArticleActions: false,
   actionLabel: '',
   metaField: 'readAt',
   metaPrefix: '',
@@ -179,9 +192,9 @@ const getMetaText = (item: ArticleItem): string => {
 };
 
 const itemsWithMeta = computed<AugmentedItem[]>(() =>
-    props.items.map(item => ({
+    props.items.map((item: ArticleItem) => ({
       ...item,
-      _key: String(item[props.keyField]),
+      _key: String(item[props.keyField as keyof ArticleItem]),
       _meta: getMetaText(item),
     }))
 );

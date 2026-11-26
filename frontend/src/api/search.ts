@@ -14,6 +14,9 @@ export interface SearchResultDto {
   feedAvatar?: string;
   timeAgo?: string;
   score?: number;
+  liked?: boolean;
+  collected?: boolean;
+  folderId?: string | null;
 }
 
 export const searchArticles = (

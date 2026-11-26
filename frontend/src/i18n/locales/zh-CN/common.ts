@@ -86,6 +86,7 @@ export default {
   copyArticleLink: "复制文章链接",
   adjustFolder: "调整收藏文件夹",
   collect: "收藏",
+  savedToDefaultFolder: "已收藏到默认收藏夹",
   removeCollection: "取消收藏",
   closeError: "关闭错误提示",
   loadingList: "正在加载列表",

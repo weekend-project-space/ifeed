@@ -68,7 +68,7 @@
       <!-- 搜索结果列表 -->
       <div v-else-if="searchLoading || searchArticleItems.length > 0">
         <article-card-list :loading="searchLoading" :items="searchArticleItems" meta-field="timeAgo"
-                           show-action :action-label="tr('common.articleOptions')">
+                           show-article-actions show-action :action-label="tr('common.articleOptions')">
           <template #empty-thumbnail>
             <svg class="h-8 w-8 text-text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
               <path stroke-linecap="round" stroke-linejoin="round" d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
@@ -162,6 +162,9 @@ const searchArticleItems = computed(() =>
       feedTitle: item.feedTitle,
       feedAvatar: item.feedAvatar,
       timeAgo: item.timeAgo,
+      liked: item.liked ?? false,
+      collected: item.collected ?? false,
+      folderId: item.folderId ?? null,
     }))
 );
 

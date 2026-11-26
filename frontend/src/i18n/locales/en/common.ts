@@ -86,6 +86,7 @@ export default {
   copyArticleLink: "Copy article link",
   adjustFolder: "Change collection folder",
   collect: "Save article",
+  savedToDefaultFolder: "Saved to the default folder",
   removeCollection: "Remove from collection",
   closeError: "Dismiss error",
   loadingList: "Loading list",

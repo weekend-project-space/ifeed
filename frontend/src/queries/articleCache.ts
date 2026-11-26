@@ -3,37 +3,45 @@ import type { ArticleDto } from '@/api/articles';
 import type { PageResponse } from '@/types/api';
 
 export type InfiniteArticleData = InfiniteData<PageResponse<ArticleDto>>;
+type ArticleStatePatch = Partial<Pick<ArticleDto, 'collected' | 'liked' | 'folderId'>>;
+const ARTICLE_QUERIES = new Set([
+  'article', 'recommendations', 'feedArticles', 'subscriptionArticles',
+  'search', 'articleRecommendations', 'collections', 'likes', 'history',
+]);
 
-const updateArticleInPages = (
-  data: InfiniteArticleData,
-  articleId: string,
-  collected: boolean,
-): InfiniteArticleData => ({
-  ...data,
-  pages: data.pages.map((page) => ({
-    ...page,
-    content: page.content.map((article) => (
-      article.id === articleId ? {...article, collected} : article
-    )),
-  })),
-});
+const containsArticle = (data: unknown, articleId: string): boolean => {
+  if (Array.isArray(data)) return data.some(item => containsArticle(item, articleId));
+  if (!data || typeof data !== 'object') return false;
+  const value = data as Record<string, unknown>;
+  if (value.id === articleId || value.articleId === articleId) return true;
+  return containsArticle(value.pages, articleId) || containsArticle(value.content, articleId);
+};
 
-/** Update collection state without refetching every loaded infinite-query page. */
-export const updateArticleCollectedCaches = (
-  queryClient: QueryClient,
+const patchArticle = (data: unknown, articleId: string, patch: ArticleStatePatch): unknown => {
+  if (Array.isArray(data)) return data.map(item => patchArticle(item, articleId, patch));
+  if (!data || typeof data !== 'object') return data;
+  const value = data as Record<string, unknown>;
+  if (value.id === articleId || value.articleId === articleId) return {...value, ...patch};
+  if (Array.isArray(value.pages)) return {...value, pages: patchArticle(value.pages, articleId, patch)};
+  if (Array.isArray(value.content)) return {...value, content: patchArticle(value.content, articleId, patch)};
+  return data;
+};
+
+/** Patch the account's existing list/detail caches without refetching loaded pages. */
+export const updateArticleStateCaches = async (
+  client: QueryClient,
   userId: string,
   articleId: string,
-  collected: boolean,
+  patch: ArticleStatePatch,
 ) => {
-  for (const queryKey of [
-    ['recommendations', userId],
-    ['feedArticles', userId],
-    ['subscriptionArticles', userId],
-  ]) {
-    queryClient.setQueriesData<InfiniteArticleData>({queryKey}, (previous) => (
-      previous ? updateArticleInPages(previous, articleId, collected) : previous
-    ));
-  }
+  const filters = {
+    predicate: (query: {queryKey: readonly unknown[]; state: {data: unknown}}) =>
+      query.queryKey[1] === userId && ARTICLE_QUERIES.has(String(query.queryKey[0]))
+      && containsArticle(query.state.data, articleId),
+  };
+  // Keep an in-flight page/detail request from overwriting the confirmed action.
+  await client.cancelQueries(filters);
+  client.setQueriesData(filters, previous => patchArticle(previous, articleId, patch));
 };
 
 /** Keep the first page and drop later pages before invalidating a changed list. */

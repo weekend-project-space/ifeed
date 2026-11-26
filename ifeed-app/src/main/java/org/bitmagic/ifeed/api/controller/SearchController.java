@@ -2,10 +2,12 @@ package org.bitmagic.ifeed.api.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.bitmagic.ifeed.api.response.SearchResultResponse;
+import org.bitmagic.ifeed.api.response.ArticleWithStateResponse;
 import org.bitmagic.ifeed.exception.ApiException;
 import org.bitmagic.ifeed.config.security.UserPrincipal;
 import org.bitmagic.ifeed.api.util.IdentifierUtils;
 import org.bitmagic.ifeed.domain.service.ArticleService;
+import org.bitmagic.ifeed.domain.service.UserArticleStateService;
 import org.bitmagic.ifeed.application.search.SearchRetrievalService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -40,9 +42,10 @@ public class SearchController {
 
     private final ArticleService articleService;
     private final SearchRetrievalService searchRetrievalService;
+    private final UserArticleStateService articleStates;
 
     @GetMapping
-    public ResponseEntity<Page<SearchResultResponse>> search(@AuthenticationPrincipal UserPrincipal principal,
+    public ResponseEntity<Page<ArticleWithStateResponse<SearchResultResponse>>> search(@AuthenticationPrincipal UserPrincipal principal,
                                                              @RequestParam String query,
                                                              @RequestParam(required = false, defaultValue = TYPE_SEMANTIC) String type,
                                                              @RequestParam(required = false, defaultValue = SOURCE_OWNER) String source,
@@ -70,7 +73,7 @@ public class SearchController {
         Set<String> tagSet = parseTags(tags);
 
         if (TYPE_SEMANTIC.equals(normalizedType)) {
-            return ResponseEntity.ok(searchRetrievalService.hybridSearch(principal.getId(), query, includeGlobal,
+            var results = searchRetrievalService.hybridSearch(principal.getId(), query, includeGlobal,
                     feedUid, tagSet, category, pageNumber, pageSize).map(article -> new SearchResultResponse(
                     article.id().toString(),
                     article.title(),
@@ -80,7 +83,9 @@ public class SearchController {
                     formatRelativeTime(article.publishedAt()),
                     null,
                     article.feedId() != null ? article.feedId().toString() : null
-            )));
+            ));
+            return ResponseEntity.ok(articleStates.attach(principal.getId(), results,
+                    article -> UUID.fromString(article.id())));
         }
 
         var articlePage = articleService.searchArticles(principal.getId(), query, includeGlobal, feedUid, tagSet, category, pageable)
@@ -93,7 +98,8 @@ public class SearchController {
                         formatRelativeTime(article.publishedAt()),
                         null,
                         article.feedId() != null ? article.feedId().toString() : null));
-        return ResponseEntity.ok(articlePage);
+        return ResponseEntity.ok(articleStates.attach(principal.getId(), articlePage,
+                article -> UUID.fromString(article.id())));
     }
 
     private Set<String> parseTags(String tags) {

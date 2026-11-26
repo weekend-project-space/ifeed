@@ -332,7 +332,7 @@
       <div class="mx-auto max-w-screen-md px-4 sm:px-6">
         <h2 class="mb-6 text-xl font-bold tracking-tight text-text">{{ tr('articleDetailPage.recommendedReading') }}</h2>
         <article-card-list :items="detailsItems" :loading="detailsLoading" key-field="id" meta-field="publishedAt"
-                           compact/>
+                           compact show-article-actions/>
       </div>
     </div>
   </div>
