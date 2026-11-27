@@ -1,15 +1,16 @@
 <template>
-  <div class="min-h-screen text-text transition-colors duration-300 pt-safe bg-surface">
+  <div class="main-layout min-h-screen text-text transition-colors duration-300 bg-surface"
+       :class="{ 'mobile-page-safe': route.name !== 'home' && route.name !== 'article' }">
 
     <!-- 顶部导航栏：YouTube 经典贯穿式顶栏（最左侧为汉堡菜单 + Logo） -->
-    <header class="sticky top-0 z-40 bg-surface/90 backdrop-blur-md transition-transform duration-200"
+    <header class="sticky top-0 z-40 bg-surface/90 pt-safe backdrop-blur-md transition-transform duration-200"
             :class="[
         isHeaderHidden ? '-translate-y-full lg:translate-y-0' : 'translate-y-0',
         route.name === 'home' || route.name === 'article' ? '' : 'hidden lg:block'
       ]">
-      <div class="flex items-center justify-between gap-3 px-4 py-2.5">
+      <div class="flex h-[var(--app-header-height)] items-center justify-between gap-2 px-3 sm:gap-3 sm:px-4 lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,min(36rem,50vw))_minmax(0,1fr)]">
         <!-- 左侧：YouTube 经典布局（汉堡菜单按钮在前，Logo 与标题紧随其后） -->
-        <div class="flex items-center gap-3">
+        <div class="flex shrink-0 items-center gap-2 sm:gap-3 lg:justify-self-start">
           <!-- 桌面端侧边栏切换按钮 -->
           <button type="button"
                   class="hidden lg:flex h-9 w-9 items-center justify-center rounded-full text-text-secondary transition hover:bg-surface-container hover:text-text active:scale-95"
@@ -37,18 +38,17 @@
         </div>
 
         <!-- 中间：桌面端 MD3 搜索胶囊 -->
-        <div class="hidden lg:flex flex-1 max-w-xl mx-auto">
-          <div class="relative w-full group">
-            <input v-model="search" type="search" :placeholder="t('mainLayout.searchPlaceholder')"
-                   class="w-full h-10 pl-24 pr-11 rounded-full border border-outline/20 bg-surface-container/50 text-xs text-text outline-none transition placeholder:text-text-secondary/60 focus:border-primary focus:bg-surface focus:ring-2 focus:ring-primary/20 sm:text-sm"
-                   @focus="searchFocused = true" @blur="searchFocused = false" @keyup.enter="handleSearch" />
+        <div class="hidden min-w-0 lg:flex">
+          <form class="flex h-10 w-full min-w-0 items-center gap-1 rounded-full border border-outline/20 bg-surface-container/50 p-px transition-colors focus-within:border-primary focus-within:bg-surface focus-within:ring-2 focus-within:ring-primary/20"
+                role="search" @submit.prevent="handleSearch">
 
             <!-- 数据源选择胶囊 (订阅 / 发现) -->
-            <div class="absolute left-1.5 top-1/2 -translate-y-1/2" ref="searchSourceRef">
-              <button type="button"
-                      class="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold transition select-none"
+            <div class="relative shrink-0" ref="searchSourceRef" @focusout="onSourceFocusOut">
+              <button ref="searchSourceButton" type="button"
+                      class="flex h-8 items-center gap-1 rounded-full px-3 text-xs font-semibold transition select-none"
                       :class="searchFocused ? 'bg-primary/10 text-primary' : 'bg-surface text-text-secondary hover:bg-surface-container-high hover:text-text shadow-2xs'"
-                      @click="toggleSourceDropdown">
+                      :aria-label="t('mainLayout.searchScope')" :aria-expanded="showSourceDropdown" aria-controls="header-search-sources"
+                      @click="toggleSourceDropdown" @keydown.down.prevent="openSourceOptions()" @keydown.up.prevent="openSourceOptions(true)">
                 <span>{{ searchSource === 'owner' ? t('mainLayout.feedsShort') : t('mainLayout.discover') }}</span>
                 <svg class="h-3 w-3 opacity-75" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
@@ -56,53 +56,56 @@
               </button>
 
               <!-- 下拉选择面板 -->
-              <div v-if="showSourceDropdown"
+              <div v-if="showSourceDropdown" id="header-search-sources"
                    class="absolute top-full mt-1.5 left-0 w-24 overflow-hidden rounded-2xl border border-outline/10 bg-surface py-1 shadow-xl z-50">
                 <button type="button"
                         class="w-full px-3.5 py-2 text-xs text-left transition select-none"
                         :class="searchSource === 'owner' ? 'bg-primary/10 font-bold text-primary' : 'text-text hover:bg-surface-container'"
-                        @click="selectSource('owner')">
+                        :aria-pressed="searchSource === 'owner'" @click="selectSource('owner')">
                   {{ t('mainLayout.feedsShort') }}
                 </button>
                 <button type="button"
                         class="w-full px-3.5 py-2 text-xs text-left transition select-none"
                         :class="searchSource === 'global' ? 'bg-primary/10 font-bold text-primary' : 'text-text hover:bg-surface-container'"
-                        @click="selectSource('global')">
+                        :aria-pressed="searchSource === 'global'" @click="selectSource('global')">
                   {{ t('mainLayout.discover') }}
                 </button>
               </div>
             </div>
 
+            <input v-model="search" type="search" :placeholder="t('mainLayout.searchPlaceholder')" :aria-label="t('mainLayout.search')"
+                   class="h-9 w-full min-w-0 flex-1 border-0 bg-transparent px-2 py-0 text-sm text-text outline-none ring-0 placeholder:text-text-secondary/60 focus:ring-0"
+                   @focus="searchFocused = true" @blur="searchFocused = false" />
+
             <!-- 搜索触发按钮 -->
-            <button type="button"
-                    class="absolute right-1.5 top-1/2 -translate-y-1/2 flex h-7 w-7 items-center justify-center rounded-full transition"
-                    :class="search ? 'bg-primary text-white shadow-2xs hover:brightness-105' : 'text-text-secondary hover:bg-surface-container'"
-                    @click="handleSearch">
+            <button type="submit" :aria-label="t('mainLayout.search')"
+                    class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition"
+                    :class="search ? 'bg-primary text-white shadow-2xs hover:brightness-105' : 'text-text-secondary hover:bg-surface-container'">
               <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" :d="icons.search" />
               </svg>
             </button>
-          </div>
+          </form>
         </div>
 
         <!-- 右侧：挂载点 + 操作工具栏 -->
-        <div class="flex items-center gap-2 min-w-[10rem] justify-end">
+        <div class="flex shrink-0 items-center justify-end gap-1 sm:gap-2 lg:justify-self-end">
           <div class="flex items-center gap-1.5" id="header-action"></div>
 
           <!-- 移动端搜索与头像 -->
-          <div v-show="route.name !== 'article'" class="flex items-center gap-2 lg:hidden">
+          <div v-show="route.name !== 'article'" class="flex items-center gap-1 sm:gap-2 lg:hidden">
             <button type="button" class="rounded-full px-2.5 py-1.5 text-[11px] font-semibold text-text-secondary hover:bg-surface-container" :aria-label="t('mainLayout.language')" @click="setLocale(locale === 'en' ? 'zh-CN' : 'en')">{{ locale === 'en' ? tr('mainLayout.chineseSwitch') : 'EN' }}</button>
-            <button type="button"
+            <button ref="mobileSearchButton" type="button"
                     class="flex h-9 w-9 items-center justify-center rounded-full text-text-secondary transition hover:bg-surface-container hover:text-text active:scale-95"
-                    @click="openSearchPage">
+                    :aria-label="t('mainLayout.search')" :aria-expanded="showMobileSearch" aria-controls="mobile-search-panel" @click="openSearchPage">
               <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" :d="icons.search" />
               </svg>
             </button>
-            <router-link :to="{ name: 'upgrade' }">
-              <img v-if="user && user.avatarUrl" :src="user.avatarUrl" class="h-8 w-8 rounded-full object-cover shadow-2xs" />
+            <router-link :to="{ name: 'upgrade' }" :aria-label="t('mainLayout.my')">
+              <img v-if="user && user.avatarUrl" :src="user.avatarUrl" alt="" class="h-9 w-9 rounded-full object-cover shadow-2xs" />
               <div v-else
-                   class="flex h-8 w-8 items-center justify-center rounded-full bg-surface-container-high text-xs font-bold text-text shadow-2xs">
+                   class="flex h-9 w-9 items-center justify-center rounded-full bg-surface-container-high text-xs font-bold text-text shadow-2xs">
                 {{ userInitials }}
               </div>
             </router-link>
@@ -113,7 +116,7 @@
             <!-- 主题切换 -->
             <button type="button"
                     class="flex h-9 w-9 items-center justify-center rounded-full text-text-secondary transition hover:bg-surface-container hover:text-text active:scale-95"
-                    @click="toggleTheme">
+                    :aria-label="isDark ? t('mainLayout.switchToLight') : t('mainLayout.switchToDark')" @click="toggleTheme">
               <svg v-if="isDark" class="h-4.5 w-4.5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round"
                       d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z" />
@@ -126,26 +129,28 @@
 
             <!-- 订阅按钮：MD3 Tonal 药丸 -->
             <RouterLink :to="{ name: 'discover' }"
-                        class="inline-flex items-center gap-1.5 h-8.5 px-4 rounded-full bg-surface-container/60 hover:bg-surface-container text-xs font-semibold text-text shadow-2xs transition active:scale-95">
+                        class="inline-flex h-9 items-center gap-1.5 rounded-full bg-surface-container/60 px-4 text-xs font-semibold text-text shadow-2xs transition hover:bg-surface-container active:scale-95">
               <svg class="h-4 w-4 text-text-secondary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M12 5v14M5 12h14"></path>
               </svg>
               <span>{{ t('mainLayout.subscribeAction') }}</span>
             </RouterLink>
 
-            <!-- 用户信息菜单 (MD3 Surface Dropdown) -->
-            <div class="relative group">
-              <router-link :to="{ name: 'upgrade' }">
-                <img v-if="user && user.avatarUrl" :src="user.avatarUrl" class="h-8.5 w-8.5 rounded-full object-cover shadow-2xs cursor-pointer group-hover:ring-2 group-hover:ring-primary/25 transition-all" />
-                <div v-else
-                     class="flex h-8.5 w-8.5 items-center justify-center rounded-full bg-surface-container-high text-xs font-bold text-text cursor-pointer shadow-2xs group-hover:ring-2 group-hover:ring-primary/25 transition-all">
+            <!-- 点击展开的账户菜单，支持键盘与外部点击关闭 -->
+            <div ref="userMenuRef" class="relative" @focusout="onUserMenuFocusOut">
+              <button ref="userMenuButton" type="button" :aria-label="t('mainLayout.accountMenu')"
+                      :aria-expanded="showUserMenu" aria-controls="header-user-panel"
+                      class="flex h-9 w-9 items-center justify-center rounded-full transition hover:ring-2 hover:ring-primary/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                      @click="toggleUserMenu" @keydown.down.prevent="openUserMenu()" @keydown.up.prevent="openUserMenu(true)">
+                <img v-if="user && user.avatarUrl" :src="user.avatarUrl" alt="" class="h-9 w-9 rounded-full object-cover shadow-2xs" />
+                <span v-else class="flex h-9 w-9 items-center justify-center rounded-full bg-surface-container-high text-xs font-bold text-text shadow-2xs">
                   {{ userInitials }}
-                </div>
-              </router-link>
+                </span>
+              </button>
 
               <!-- 悬浮菜单面板 -->
-              <div
-                  class="absolute right-0 mt-2 w-60 origin-top-right rounded-2xl bg-surface border border-outline/10 shadow-2xl overflow-hidden z-50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 transform scale-95 group-hover:scale-100">
+              <div v-if="showUserMenu" id="header-user-panel" :aria-label="t('mainLayout.accountMenu')"
+                  class="absolute right-0 top-full z-50 mt-2 w-60 overflow-hidden rounded-2xl border border-outline/10 bg-surface shadow-2xl">
                 <div class="px-4 py-3.5 border-b border-outline/10 bg-surface-container/20">
                   <p class="text-xs font-bold text-text truncate">
                     {{ user?.username ?? t('mainLayout.guest') }}
@@ -156,8 +161,11 @@
                 </div>
 
                 <div class="p-1">
+                  <RouterLink :to="{ name: 'upgrade' }" class="flex w-full items-center rounded-xl px-3 py-2 text-xs font-medium text-text transition-colors hover:bg-surface-container hover:text-primary" @click="closeUserMenu()">
+                    {{ t('mainLayout.my') }}
+                  </RouterLink>
                   <RouterLink to="/feed/channels"
-                              class="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium text-text hover:bg-surface-container transition">
+                              class="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium text-text hover:bg-surface-container transition" @click="closeUserMenu()">
                     <svg class="h-4 w-4 text-text-secondary" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round"
                             d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 010 .255c-.007.378.138.75.43.99l1.005.828c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 010-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.281z" />
@@ -180,8 +188,8 @@
                 </div>
                 <div class="border-t border-outline/10 p-1">
                   <p class="px-3 py-1.5 text-[10px] font-semibold text-text-secondary">{{ t('mainLayout.language') }}</p>
-                  <button type="button" class="w-full rounded-xl px-3 py-2 text-left text-xs text-text hover:bg-surface-container" @click="setLocale('zh-CN')">{{ t('mainLayout.chinese') }}<span v-if="locale === 'zh-CN'" class="float-right text-primary">✓</span></button>
-                  <button type="button" class="w-full rounded-xl px-3 py-2 text-left text-xs text-text hover:bg-surface-container" @click="setLocale('en')">{{ t('mainLayout.english') }}<span v-if="locale === 'en'" class="float-right text-primary">✓</span></button>
+                  <button type="button" class="w-full rounded-xl px-3 py-2 text-left text-xs text-text hover:bg-surface-container" @click="setLocale('zh-CN'); closeUserMenu(true)">{{ t('mainLayout.chinese') }}<span v-if="locale === 'zh-CN'" class="float-right text-primary">✓</span></button>
+                  <button type="button" class="w-full rounded-xl px-3 py-2 text-left text-xs text-text hover:bg-surface-container" @click="setLocale('en'); closeUserMenu(true)">{{ t('mainLayout.english') }}<span v-if="locale === 'en'" class="float-right text-primary">✓</span></button>
                 </div>
               </div>
             </div>
@@ -192,21 +200,21 @@
 
     <!-- 移动端全屏搜索遮罩页 -->
     <transition name="search-slide">
-      <div v-if="showMobileSearch" class="fixed inset-0 z-50 bg-surface lg:hidden">
+      <div v-if="showMobileSearch" id="mobile-search-panel" role="dialog" aria-modal="true" :aria-label="t('mainLayout.search')" class="fixed inset-0 z-50 bg-surface pt-safe lg:hidden">
         <div class="flex flex-col h-full">
           <div class="flex items-center gap-3 px-4 py-3 border-b border-outline/10">
             <button type="button"
                     class="flex h-9 w-9 items-center justify-center rounded-full text-text-secondary transition hover:bg-surface-container hover:text-text active:scale-95"
-                    @click="closeMobileSearch">
+                    :aria-label="t('mainLayout.closeSearch')" @click="closeMobileSearch(true)">
               <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
               </svg>
             </button>
             <div class="flex-1 relative">
-              <input ref="mobileSearchInput" v-model="search" type="search" :placeholder="t('mainLayout.searchPlaceholder')"
+              <input ref="mobileSearchInput" v-model="search" type="search" :placeholder="t('mainLayout.searchPlaceholder')" :aria-label="t('mainLayout.search')"
                      class="w-full h-10 pl-4 pr-11 rounded-full border border-outline/20 bg-surface-container/40 text-xs text-text outline-none focus:border-primary focus:bg-surface focus:ring-2 focus:ring-primary/20 transition"
                      @keyup.enter="handleSearchAndClose" />
-              <button v-if="search" type="button"
+              <button v-if="search" type="button" :aria-label="t('mainLayout.search')"
                       class="absolute right-1.5 top-1/2 -translate-y-1/2 flex h-7 w-7 items-center justify-center rounded-full bg-primary text-white shadow-2xs hover:brightness-105 transition"
                       @click="handleSearchAndClose">
                 <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -252,9 +260,9 @@
 
     <!-- 布局主体：主内容区根据侧边栏展开/折叠动态保留左外边距 -->
     <div class="flex" :class="isSidebarCollapsed ? 'lg:pl-18' : 'lg:pl-72'">
-      <!-- 桌面端侧边抽屉：顶部紧贴 Header 下边缘 (top-[53px])，去掉侧栏内多余的顶部占位 -->
+      <!-- 侧栏与顶部导航共用高度，包含设备顶部安全区域 -->
       <aside :class="[
-        'fixed left-0 top-[53px] bottom-0 z-30 hidden lg:block transition-all duration-200 bg-surface',
+        'fixed left-0 top-[calc(var(--app-header-height)+env(safe-area-inset-top))] bottom-0 z-30 hidden lg:block transition-all duration-200 bg-surface',
         isSidebarCollapsed ? 'w-18' : 'w-72'
       ]">
         <div class="flex h-full flex-col py-3">
@@ -559,7 +567,7 @@
 
 <script setup lang="ts">
 import { translate as tr } from '@/i18n';
-import { computed, onMounted, onUnmounted, reactive, ref, watch } from 'vue';
+import { computed, nextTick, onMounted, onUnmounted, reactive, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import type { RouteLocationNormalizedLoaded, RouteLocationRaw } from 'vue-router';
 import { storeToRefs } from 'pinia';
@@ -599,6 +607,10 @@ const { user } = storeToRefs(authStore);
 const { isDark } = storeToRefs(themeStore);
 
 const searchSourceRef = ref<HTMLElement | null>(null);
+const searchSourceButton = ref<HTMLButtonElement | null>(null);
+const userMenuRef = ref<HTMLElement | null>(null);
+const userMenuButton = ref<HTMLButtonElement | null>(null);
+const showUserMenu = ref(false);
 const isSidebarCollapsed = ref(localStorage.getItem('sidebar-collapsed') === 'true');
 const search = ref('');
 const searchFocused = ref(false);
@@ -609,6 +621,7 @@ const showMobileSearch = ref(false);
 const isHeaderHidden = ref(false);
 const lastScrollY = ref(0);
 const mobileSearchInput = ref<HTMLInputElement | null>(null);
+const mobileSearchButton = ref<HTMLButtonElement | null>(null);
 const recentSearches = ref<string[]>(JSON.parse(localStorage.getItem('recent-searches') || '[]'));
 const subscriptionAvatarErrors = reactive<Record<string, boolean>>({});
 
@@ -817,23 +830,65 @@ const userInitials = computed(() => {
 });
 
 const toggleSourceDropdown = () => {
+  closeUserMenu();
   showSourceDropdown.value = !showSourceDropdown.value;
+};
+
+const closeSourceDropdown = (restoreFocus = false) => {
+  showSourceDropdown.value = false;
+  if (restoreFocus) searchSourceButton.value?.focus();
+};
+
+const openSourceOptions = async (last = false) => {
+  closeUserMenu();
+  showSourceDropdown.value = true;
+  await nextTick();
+  const options = searchSourceRef.value?.querySelectorAll<HTMLButtonElement>('#header-search-sources button');
+  options?.[last ? options.length - 1 : 0]?.focus();
+};
+
+const onSourceFocusOut = (event: FocusEvent) => {
+  if (!(event.relatedTarget instanceof Node) || !searchSourceRef.value?.contains(event.relatedTarget)) closeSourceDropdown();
+};
+
+const closeUserMenu = (restoreFocus = false) => {
+  showUserMenu.value = false;
+  if (restoreFocus) userMenuButton.value?.focus();
+};
+
+const toggleUserMenu = () => {
+  closeSourceDropdown();
+  showUserMenu.value = !showUserMenu.value;
+};
+
+const openUserMenu = async (last = false) => {
+  closeSourceDropdown();
+  showUserMenu.value = true;
+  await nextTick();
+  const options = userMenuRef.value?.querySelectorAll<HTMLElement>('#header-user-panel a, #header-user-panel button');
+  options?.[last ? options.length - 1 : 0]?.focus();
+};
+
+const onUserMenuFocusOut = (event: FocusEvent) => {
+  if (!(event.relatedTarget instanceof Node) || !userMenuRef.value?.contains(event.relatedTarget)) closeUserMenu();
 };
 
 const selectSource = (source: 'owner' | 'global') => {
   searchSource.value = source;
-  showSourceDropdown.value = false;
+  closeSourceDropdown(true);
 };
 
-const openSearchPage = () => {
+const openSearchPage = async () => {
+  closeUserMenu();
+  closeSourceDropdown();
   showMobileSearch.value = true;
-  setTimeout(() => {
-    mobileSearchInput.value?.focus();
-  }, 100);
+  await nextTick();
+  mobileSearchInput.value?.focus();
 };
 
-const closeMobileSearch = () => {
+const closeMobileSearch = (restoreFocus = false) => {
   showMobileSearch.value = false;
+  if (restoreFocus) mobileSearchButton.value?.focus();
 };
 
 const handleSearchAndClose = () => {
@@ -914,6 +969,7 @@ const handleSearch = () => {
 };
 
 const handleLogout = async () => {
+  closeUserMenu();
   await authStore.logout();
   router.replace({ name: 'auth' });
 };
@@ -956,12 +1012,32 @@ watch(
     { immediate: true }
 );
 
+watch(
+    () => [route.name, route.query.source],
+    () => {
+      if (route.name !== 'search') return;
+      const source = Array.isArray(route.query.source) ? route.query.source[0] : route.query.source;
+      searchSource.value = source === 'global' ? 'global' : 'owner';
+    },
+    { immediate: true }
+);
+
+watch(() => route.fullPath, () => {
+  closeUserMenu();
+  closeSourceDropdown();
+  closeMobileSearch();
+  isHeaderHidden.value = false;
+  lastScrollY.value = window.scrollY || 0;
+});
+
 const handleScroll = () => {
   if (typeof window === 'undefined') return;
   const current = window.scrollY || window.pageYOffset || 0;
   const delta = current - lastScrollY.value;
 
-  if (Math.abs(delta) > 5) {
+  if (current <= 80) {
+    isHeaderHidden.value = false;
+  } else if (Math.abs(delta) > 5) {
     if (current > 80 && delta > 0) {
       isHeaderHidden.value = true;
     } else if (delta < 0) {
@@ -972,25 +1048,37 @@ const handleScroll = () => {
   lastScrollY.value = current;
 };
 
-watch(showSourceDropdown, (isOpen) => {
-  if (isOpen) {
-    const handleClickOutside = (e: MouseEvent) => {
-      const target = e.target as HTMLElement;
-      if (searchSourceRef.value && !searchSourceRef.value.contains(target)) {
-        showSourceDropdown.value = false;
-        document.removeEventListener('click', handleClickOutside);
-      }
-    };
-    setTimeout(() => {
-      document.addEventListener('click', handleClickOutside);
-    }, 0);
+const handleHeaderPointerDown = (event: PointerEvent) => {
+  const target = event.target;
+  if (!(target instanceof Node)) return;
+  if (!searchSourceRef.value?.contains(target)) closeSourceDropdown();
+  if (!userMenuRef.value?.contains(target)) closeUserMenu();
+};
+
+const handleHeaderKeyDown = (event: KeyboardEvent) => {
+  if (event.key === 'Escape') {
+    if (showUserMenu.value) { event.preventDefault(); closeUserMenu(true); }
+    else if (showSourceDropdown.value) { event.preventDefault(); closeSourceDropdown(true); }
+    else if (showMobileSearch.value) { event.preventDefault(); closeMobileSearch(true); }
   }
-});
+};
+
+const handleHeaderResize = () => {
+  if (window.innerWidth < 1024) {
+    closeUserMenu();
+    closeSourceDropdown();
+  } else closeMobileSearch();
+};
+
+watch(() => authStore.user?.userId, () => closeUserMenu());
 
 onMounted(async () => {
   if (typeof window !== 'undefined') {
     lastScrollY.value = window.scrollY || window.pageYOffset || 0;
     window.addEventListener('scroll', handleScroll, { passive: true });
+    window.addEventListener('resize', handleHeaderResize, { passive: true });
+    document.addEventListener('pointerdown', handleHeaderPointerDown);
+    document.addEventListener('keydown', handleHeaderKeyDown);
   }
   if (authStore.isAuthenticated) {
     await subscriptionsStore.fetchSubscriptions();
@@ -1001,11 +1089,24 @@ onMounted(async () => {
 onUnmounted(() => {
   if (typeof window !== 'undefined') {
     window.removeEventListener('scroll', handleScroll);
+    window.removeEventListener('resize', handleHeaderResize);
+    document.removeEventListener('pointerdown', handleHeaderPointerDown);
+    document.removeEventListener('keydown', handleHeaderKeyDown);
   }
 });
 </script>
 
 <style scoped>
+.main-layout {
+  --app-header-height: 56px;
+}
+
+@media (width < 64rem) {
+  .mobile-page-safe {
+    padding-top: env(safe-area-inset-top);
+  }
+}
+
 .fade-enter-active,
 .fade-leave-active {
   transition: opacity 0.2s ease;

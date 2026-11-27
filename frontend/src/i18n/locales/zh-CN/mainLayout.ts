@@ -1,4 +1,11 @@
 export default {
+  menu: '展开或收起侧栏',
+  search: '搜索',
+  searchScope: '搜索范围',
+  closeSearch: '关闭搜索',
+  accountMenu: '账户菜单',
+  switchToLight: '切换到浅色模式',
+  switchToDark: '切换到深色模式',
   feedsShort: '订阅',
   subscribeAction: '订阅',
   back: '返回', searchPlaceholder: '搜索文章、标签、订阅...', subscribed: '订阅', discover: '发现',

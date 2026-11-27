@@ -1,4 +1,11 @@
 export default {
+  menu: 'Toggle sidebar',
+  search: 'Search',
+  searchScope: 'Search scope',
+  closeSearch: 'Close search',
+  accountMenu: 'Account menu',
+  switchToLight: 'Switch to light mode',
+  switchToDark: 'Switch to dark mode',
   feedsShort: 'Feeds',
   subscribeAction: 'Subscribe',
   back: 'Back', searchPlaceholder: 'Search articles, tags, subscriptions...', subscribed: 'Subscriptions', discover: 'Discover',
