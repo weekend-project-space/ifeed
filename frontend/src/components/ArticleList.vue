@@ -406,10 +406,10 @@
                       :is="item.feedId ? 'router-link' : 'span'"
                       :to="item.feedId ? { name: 'feed', params: { feedId: item.feedId } } : undefined"
                       :title="item.feedTitle"
-                      class="min-w-0 truncate font-semibold text-text transition-colors"
+                      class="social-text-author min-w-0 truncate transition-colors"
                       :class="item.feedId ? 'hover:text-primary' : ''">{{ item.feedTitle }}</component>
                   <span class="shrink-0" aria-hidden="true">·</span>
-                  <span class="shrink-0 text-xs">{{ item.timeAgo }}</span>
+                  <span class="social-text-time shrink-0">{{ item.timeAgo }}</span>
                 </div>
 
                 <h3 class="mt-0.5 break-words text-sm font-medium leading-snug text-text">
@@ -418,7 +418,7 @@
                   </router-link>
                 </h3>
 
-                <p v-if="item.summary" class="mt-1 break-words text-sm leading-relaxed text-text/85 line-clamp-3">
+                <p v-if="item.summary" class="social-text-body mt-1 line-clamp-3">
                   {{ item.summary }}
                 </p>
 

@@ -20,6 +20,20 @@
     --md-on-inverse: 237 245 254;
 }
 
+@layer components {
+    .social-text-author {
+        @apply text-[13px] font-semibold leading-5 text-text;
+    }
+
+    .social-text-time {
+        @apply text-xs font-normal leading-5 text-text-secondary;
+    }
+
+    .social-text-body {
+        @apply break-words text-sm font-normal leading-relaxed text-text/85;
+    }
+}
+
 .dark {
     color-scheme: dark;
     /* 暗黑模式主色调：高辨识度柔和靛蓝 (#60A5FA) */

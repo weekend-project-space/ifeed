@@ -200,11 +200,11 @@
 
               <div class="min-w-0 flex-1">
                 <div class="flex flex-wrap items-baseline gap-x-1.5 gap-y-0.5 text-[11px] leading-5 text-text-secondary">
-                  <button type="button" class="min-w-0 max-w-full break-words text-left text-sm font-semibold text-text transition-colors hover:text-primary" @click="selectTopic(summary.topicId)">
+                  <button type="button" class="social-text-author min-w-0 max-w-full break-words text-left transition-colors hover:text-primary" @click="selectTopic(summary.topicId)">
                     {{ summary.topicName }}
                   </button>
                   <span aria-hidden="true">·</span>
-                  <time :datetime="summary.createdAt" class="whitespace-nowrap">{{ formatRelativeTime(summary.createdAt) }}</time>
+                  <time :datetime="summary.createdAt" class="social-text-time whitespace-nowrap">{{ formatRelativeTime(summary.createdAt) }}</time>
                   <span aria-hidden="true">·</span>
                   <span>{{ summary.titlesOnly ? tr('topicTrackingPage.titlesOnly') : tr('topicTrackingPage.fullSummary') }}</span>
                   <span aria-hidden="true">·</span>

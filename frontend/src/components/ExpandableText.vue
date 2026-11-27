@@ -1,11 +1,11 @@
 <template>
   <div ref="container" class="relative">
-    <div :id="id" ref="body" class="summary-content break-words text-[15px] leading-6 text-text"
+    <div :id="id" ref="body" class="summary-content social-text-body"
          :class="expanded ? '' : 'line-clamp-6 sm:line-clamp-8'">
       <p v-for="(paragraph, index) in paragraphs" :key="index" class="whitespace-pre-line">{{ paragraph }}</p>
     </div>
     <div ref="measurement" aria-hidden="true"
-         class="summary-content pointer-events-none invisible absolute inset-x-0 top-0 select-none break-words text-[15px] leading-6 text-text line-clamp-6 sm:line-clamp-8">
+         class="summary-content social-text-body pointer-events-none invisible absolute inset-x-0 top-0 select-none line-clamp-6 sm:line-clamp-8">
       <p v-for="(paragraph, index) in paragraphs" :key="index" class="whitespace-pre-line">{{ paragraph }}</p>
     </div>
     <button v-if="overflowing" type="button" :aria-expanded="expanded" :aria-controls="id"
