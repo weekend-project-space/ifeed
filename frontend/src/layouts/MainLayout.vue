@@ -1,6 +1,6 @@
 <template>
   <div class="main-layout min-h-screen text-text transition-colors duration-300 bg-surface"
-       :class="{ 'mobile-page-safe': route.name !== 'home' && route.name !== 'article' }">
+       :class="{ 'mobile-page-safe': route.name !== 'home' && route.name !== 'article', 'mobile-header-hidden': isHeaderHidden }">
 
     <!-- 顶部导航栏：YouTube 经典贯穿式顶栏（最左侧为汉堡菜单 + Logo） -->
     <header class="sticky top-0 z-40 bg-surface/90 pt-safe backdrop-blur-md transition-transform duration-200"
@@ -1099,9 +1099,14 @@ onUnmounted(() => {
 <style scoped>
 .main-layout {
   --app-header-height: 56px;
+  --app-header-offset: calc(var(--app-header-height) + env(safe-area-inset-top));
 }
 
 @media (width < 64rem) {
+  .mobile-header-hidden {
+    --app-header-offset: 0px;
+  }
+
   .mobile-page-safe {
     padding-top: env(safe-area-inset-top);
   }

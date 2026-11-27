@@ -1,12 +1,12 @@
 <template>
   <div class="text-text min-h-screen">
     <!-- 骨架屏：M3 表面容器脉冲 -->
-    <div v-if="articleLoading" class="mx-auto max-w-screen-md px-4 py-12 animate-pulse sm:px-6">
-      <div class="space-y-6 mb-12">
+    <div v-if="articleLoading" class="mx-auto max-w-screen-md px-4 py-6 animate-pulse sm:px-6 sm:py-8">
+      <div class="space-y-5 mb-8">
         <div class="h-10 rounded-2xl bg-surface-container w-3/4"></div>
         <div class="h-6 rounded-xl bg-surface-container/60 w-1/2"></div>
         <div class="flex items-center gap-4">
-          <div class="h-11 w-11 rounded-full bg-surface-container"></div>
+          <div class="h-9 w-9 rounded-full bg-surface-container"></div>
           <div class="space-y-2 flex-1">
             <div class="h-4 rounded bg-surface-container w-32"></div>
             <div class="h-3 rounded bg-surface-container/60 w-24"></div>
@@ -47,34 +47,45 @@
 
     <!-- 文章正文区域 -->
     <article v-else-if="article" class="mx-auto max-w-screen-md px-4 sm:px-6">
-      <header class="pt-10 pb-6 sm:pt-12">
+      <header class="pt-6 pb-5 sm:pt-8 sm:pb-6">
         <!-- 标题 -->
-        <h1 class="mb-6 font-serif text-2xl font-bold leading-tight tracking-tight text-text break-words sm:text-3xl lg:text-4xl">
+        <h1 class="mb-5 text-2xl font-bold leading-snug tracking-tight text-text break-words sm:text-3xl lg:text-[32px]">
           <a :href="article.link" v-text="article.title" target="_blank" rel="noopener noreferrer"
              class="hover:text-primary transition-colors"></a>
         </h1>
 
         <!-- 来源与元信息 -->
-        <div class="mb-6 flex flex-wrap items-center justify-between gap-4">
-          <router-link v-if="article.feedId" :to="'/feed/' + article.feedId" class="group flex items-center gap-3">
-            <img v-if="article.feedAvatar" :src="article.feedAvatar" :alt="article.feedTitle"
-                 class="h-11 w-11 rounded-full object-cover shadow-2xs"
-                 @error="(e) => (e.target as HTMLImageElement).style.display = 'none'"/>
+        <div class="flex items-center justify-between gap-3">
+          <router-link v-if="article.feedId" :to="'/feed/' + article.feedId" class="group flex min-w-0 flex-1 items-center gap-2.5">
+            <img v-if="article.feedAvatar && !feedAvatarFailed" :src="article.feedAvatar" :alt="article.feedTitle"
+                 class="h-9 w-9 shrink-0 rounded-full object-cover"
+                 @error="feedAvatarFailed = true"/>
             <div v-else
-                 class="flex h-11 w-11 items-center justify-center rounded-full bg-surface-container-high text-base font-bold text-text">
+                 class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-surface-container-high text-sm font-semibold text-text">
               {{ article.feedTitle?.charAt(0).toUpperCase() }}
             </div>
-            <div class="flex flex-col">
-              <span class="text-xs font-semibold text-text group-hover:text-primary transition-colors sm:text-sm">{{
+            <div class="flex min-w-0 flex-col gap-0.5">
+              <span class="truncate text-[13px] font-semibold text-text group-hover:text-primary transition-colors">{{
                   article.feedTitle
                 }}</span>
-              <div class="flex items-center gap-1.5 text-[11px] text-text-secondary">
+              <div class="flex flex-wrap items-center gap-x-1.5 text-xs text-text-secondary">
                 <span>{{ article.timeAgo }}</span>
-                <span>•</span>
-                <span>{{ tr('articleDetailPage.readingTime', { count: readingTime }) }}</span>
+                <template v-if="readingTime > 0">
+                  <span aria-hidden="true">·</span>
+                  <span>{{ tr('articleDetailPage.readingTime', { count: readingTime }) }}</span>
+                </template>
               </div>
             </div>
           </router-link>
+          <div v-else class="flex flex-wrap items-center gap-x-1.5 text-xs text-text-secondary">
+            <span>{{ article.feedTitle }}</span>
+            <span aria-hidden="true">·</span>
+            <span>{{ article.timeAgo }}</span>
+            <template v-if="readingTime > 0">
+              <span aria-hidden="true">·</span>
+              <span>{{ tr('articleDetailPage.readingTime', { count: readingTime }) }}</span>
+            </template>
+          </div>
 
           <!-- 彻底防抖订阅按钮：锁定宽度 w-20 (80px)，精简文案 -->
           <button
@@ -127,87 +138,60 @@
           </button>
         </div>
 
-        <p v-if="subscriptionError" class="mb-3 text-xs text-red-600 dark:text-red-400" role="alert">
+        <p v-if="subscriptionError" class="mt-3 text-xs text-red-600 dark:text-red-400" role="alert">
           {{ subscriptionError }}
         </p>
 
-        <!-- 工具栏：标签与操作 -->
-        <div class="flex flex-wrap items-center justify-between gap-3 border-y border-outline/10 py-3">
-          <div v-if="article.tags?.length" class="flex flex-wrap gap-1.5">
+        <!-- 无标签且操作已挂载到 header 时，不保留空白工具栏 -->
+        <div v-if="article.tags?.length || !headerActionExists" class="mt-4 flex flex-wrap items-center justify-between gap-3">
+          <div v-if="article.tags?.length" class="flex min-w-0 flex-wrap gap-1.5">
             <button v-for="tag in article.tags.slice(0, 3)" :key="tag" type="button"
-                    class="rounded-full bg-surface-container/60 px-3 py-1 text-[11px] font-medium text-text-secondary transition hover:bg-surface-container hover:text-text"
+                    class="max-w-full break-words rounded-full bg-surface-container/60 px-2.5 py-1 text-xs text-text-secondary transition-colors hover:text-primary"
                     @click="handleTagClick(tag)">
               #{{ tag }}
             </button>
           </div>
-          <div v-else></div>
-
-          <div class="flex items-center gap-1">
-            <template v-if="headerActionExists && route.name === 'article'">
-              <Teleport to="#header-action">
-                <ArticleActions :article-id="article.id" :collected="article.collected ?? false" :liked="article.liked"
-                                :folder-id="article.folderId" :link-copied="linkCopied"/>
-              </Teleport>
-            </template>
-            <ArticleActions v-if="!headerActionExists" :article-id="article.id" :collected="article.collected ?? false"
-                            :liked="article.liked" :folder-id="article.folderId"/>
-          </div>
+          <ArticleActions v-if="!headerActionExists" :article-id="article.id" :collected="article.collected ?? false"
+                          :liked="article.liked" :folder-id="article.folderId" dense/>
         </div>
+        <Teleport v-if="headerActionExists && route.name === 'article'" to="#header-action">
+          <ArticleActions :article-id="article.id" :collected="article.collected ?? false" :liked="article.liked"
+                          :folder-id="article.folderId" dense/>
+        </Teleport>
       </header>
 
       <p v-if="historyMutation.isError.value" role="alert" class="py-2 text-xs text-red-600">
         {{ tr('articleDetailPage.historySaveFailed') }}
-        <button class="underline ml-1 font-semibold" :disabled="historyMutation.isPending.value"
+        <button class="ml-1 font-semibold text-primary" :disabled="historyMutation.isPending.value"
                 @click="historyMutation.mutate(articleId)">{{ tr('common.retry') }}
         </button>
       </p>
 
-      <!-- MD3 黏性导航分段 (Content / Summary / Mindmap) -->
-      <div v-if="article.summary || article.mindMap || article.requiresUpgrade"
-           class="sticky top-0 z-20 border-b border-outline/10 bg-surface/90 py-2.5 backdrop-blur-md">
-        <nav class="flex gap-1.5" role="tablist">
+      <!-- 吸顶位置随全局 header 显隐变化 -->
+      <div v-if="mainTabs.length > 1"
+           class="article-tabs sticky z-20 border-b border-outline/10 bg-surface/95 backdrop-blur-md">
+        <nav class="flex gap-3 sm:gap-5" role="tablist" :aria-label="tr('articleDetailPage.articleViews')">
           <button
-              @click="handleTabSwitch('content')"
-              class="inline-flex h-8 items-center rounded-full px-4 text-xs font-medium transition select-none"
-              :class="activeMainTab === 'content'
-                ? 'bg-primary/15 font-semibold text-primary'
-                : 'text-text-secondary hover:bg-surface-container hover:text-text'"
+              v-for="tab in mainTabs" :id="`article-tab-${tab.id}`" :key="tab.id" type="button"
+              @click="handleTabSwitch(tab.id)" @keydown="handleTabKeydown($event, tab.id)"
+              class="relative inline-flex h-11 shrink-0 items-center px-2 text-[13px] font-medium transition-colors select-none after:absolute after:inset-x-2 after:-bottom-px after:h-0.5 after:rounded-t-full after:transition-colors sm:text-sm"
+              :class="activeMainTab === tab.id
+                ? 'text-primary after:bg-primary'
+                : 'text-text-secondary after:bg-transparent hover:text-primary'"
               role="tab"
-              :aria-selected="activeMainTab === 'content'"
+              :aria-selected="activeMainTab === tab.id" :aria-controls="`article-panel-${tab.id}`"
+              :tabindex="activeMainTab === tab.id ? 0 : -1"
           >
-            {{ tr('articleDetailPage.body') }}
-          </button>
-          <button
-              v-if="article.summary || article.requiresUpgrade"
-              @click="handleTabSwitch('summary')"
-              class="inline-flex h-8 items-center rounded-full px-4 text-xs font-medium transition select-none"
-              :class="activeMainTab === 'summary'
-                ? 'bg-primary/15 font-semibold text-primary'
-                : 'text-text-secondary hover:bg-surface-container hover:text-text'"
-              role="tab"
-              :aria-selected="activeMainTab === 'summary'"
-          >
-            {{ tr('articleDetailPage.aiSummary') }}
-          </button>
-          <button
-              v-if="article.mindMap || article.requiresUpgrade"
-              @click="handleTabSwitch('mindmap')"
-              class="inline-flex h-8 items-center rounded-full px-4 text-xs font-medium transition select-none"
-              :class="activeMainTab === 'mindmap'
-                ? 'bg-primary/15 font-semibold text-primary'
-                : 'text-text-secondary hover:bg-surface-container hover:text-text'"
-              role="tab"
-              :aria-selected="activeMainTab === 'mindmap'"
-          >
-            {{ tr('articleDetailPage.mindMap') }}
+            {{ tab.label }}
           </button>
         </nav>
       </div>
 
       <!-- Tab 主体内容 -->
-      <div class="py-8">
+      <div class="pb-6 pt-5 sm:pt-6">
         <!-- 1. 正文面板 -->
-        <div v-show="activeMainTab === 'content'" role="tabpanel">
+        <div v-show="activeMainTab === 'content'" id="article-panel-content" role="tabpanel"
+             :aria-labelledby="mainTabs.length > 1 ? 'article-tab-content' : undefined" tabindex="0">
           <media-attachment v-if="article.enclosure" mode="global" :url="article.enclosure"
                             :type="article.enclosureType"
                             :title="article.title" :artist="article.feedTitle || article.author" :track-id="article.id"
@@ -225,7 +209,7 @@
             </div>
           </div>
 
-          <footer class="mt-14 border-t border-outline/10 pt-6">
+          <footer class="mt-10 border-t border-outline/10 pt-5">
             <div class="flex items-center justify-between text-xs text-text-secondary">
               <a v-if="article.link" :href="article.link" target="_blank" rel="noopener noreferrer"
                  class="inline-flex items-center gap-1.5 font-semibold text-text hover:text-primary transition-colors">
@@ -241,8 +225,9 @@
         </div>
 
         <!-- 2. AI 摘要面板 -->
-        <div v-show="activeMainTab === 'summary'" role="tabpanel">
-          <div v-if="isEnriching" class="flex flex-col items-center justify-center py-20 gap-3">
+        <div v-show="activeMainTab === 'summary'" id="article-panel-summary" role="tabpanel"
+             :aria-labelledby="mainTabs.some(tab => tab.id === 'summary') ? 'article-tab-summary' : undefined" tabindex="0">
+          <div v-if="isEnriching && !article.summary" role="status" class="flex flex-col items-center justify-center py-12 gap-3">
             <svg class="h-6 w-6 animate-spin text-text-secondary" fill="none" viewBox="0 0 24 24">
               <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
               <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/>
@@ -250,19 +235,19 @@
             <p class="text-xs text-text-secondary">{{ tr('articleDetailPage.generatingSummary') }}</p>
           </div>
 
-          <div v-else-if="article.summary" class="prose-custom space-y-4">
-            <div class="flex items-start gap-3 rounded-2xl bg-surface-container/50 p-4">
-              <svg class="mt-0.5 h-4 w-4 shrink-0 text-text-secondary" fill="none" stroke="currentColor"
-                   viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                      d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-              </svg>
-              <div class="text-xs leading-relaxed text-text-secondary">
-                <strong class="font-semibold text-text">{{ tr('articleDetailPage.recommendedSummary') }}</strong>
-                <p class="mt-0.5">{{ tr('articleDetailPage.summaryDisclaimer') }}</p>
-              </div>
-            </div>
-            <div v-html="article.summary" class="article-content"></div>
+          <div v-else-if="article.summary" class="prose-custom">
+            <p class="mb-5 text-xs leading-relaxed text-text-secondary">{{ tr('articleDetailPage.summaryDisclaimer') }}</p>
+            <div ref="summaryContentRef" v-html="article.summary" class="article-content"></div>
+          </div>
+
+          <div v-else-if="canGenerateEnrichment || enrichmentError" class="py-12 text-center">
+            <p :role="enrichmentError ? 'alert' : undefined" class="text-sm text-text-secondary">
+              {{ enrichmentError || tr('articleDetailPage.noSummary') }}
+            </p>
+            <button type="button" class="mt-4 inline-flex h-9 items-center rounded-full bg-primary px-4 text-sm font-medium text-white disabled:opacity-50"
+                    :disabled="isEnriching || !canGenerateEnrichment" @click="handleTabSwitch('summary')">
+              {{ enrichmentError ? tr('common.retry') : tr('articleDetailPage.generateSummary') }}
+            </button>
           </div>
 
           <div v-else class="py-20 text-center">
@@ -274,7 +259,7 @@
             </div>
             <h3 class="text-sm font-bold text-text mb-1">{{ tr('articleDetailPage.premiumSummary') }}</h3>
             <p class="text-xs text-text-secondary mb-5">{{ tr('articleDetailPage.membersOnly') }}</p>
-            <router-link to="/upgrade"
+            <router-link :to="{ name: 'upgrade' }"
                          class="inline-flex h-9 items-center justify-center rounded-full bg-primary px-5 text-xs font-semibold text-white shadow-xs hover:brightness-105 transition">
               {{ tr('articleDetailPage.upgrade') }}
             </router-link>
@@ -282,8 +267,9 @@
         </div>
 
         <!-- 3. 思维导图面板 -->
-        <div v-show="activeMainTab === 'mindmap'" role="tabpanel">
-          <div v-if="isEnriching" class="flex flex-col items-center justify-center py-20 gap-3">
+        <div v-show="activeMainTab === 'mindmap'" id="article-panel-mindmap" role="tabpanel"
+             :aria-labelledby="mainTabs.some(tab => tab.id === 'mindmap') ? 'article-tab-mindmap' : undefined" tabindex="0">
+          <div v-if="isEnriching && !mindmapMarkdown" role="status" class="flex flex-col items-center justify-center py-12 gap-3">
             <svg class="h-6 w-6 animate-spin text-text-secondary" fill="none" viewBox="0 0 24 24">
               <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
               <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/>
@@ -291,10 +277,20 @@
             <p class="text-xs text-text-secondary">{{ tr('articleDetailPage.generatingMindMap') }}</p>
           </div>
 
-          <div v-else-if="mindmapMarkdown" class="overflow-hidden rounded-3xl bg-surface-container/30 shadow-xs">
-            <iframe ref="mindmapFrame" src="/md2mindmap.html" class="w-full"
+          <div v-else-if="mindmapMarkdown" class="overflow-hidden rounded-xl bg-surface-container/30">
+            <iframe ref="mindmapFrame" src="/md2mindmap.html" class="w-full" :title="tr('articleDetailPage.mindMap')"
                     :style="`max-height: 500rem; height: ${mindmapHeight}rem;`" frameborder="0"
                     @load="sendMindmapData"/>
+          </div>
+
+          <div v-else-if="canGenerateEnrichment || enrichmentError" class="py-12 text-center">
+            <p :role="enrichmentError ? 'alert' : undefined" class="text-sm text-text-secondary">
+              {{ enrichmentError || tr('articleDetailPage.noMindMap') }}
+            </p>
+            <button type="button" class="mt-4 inline-flex h-9 items-center rounded-full bg-primary px-4 text-sm font-medium text-white disabled:opacity-50"
+                    :disabled="isEnriching || !canGenerateEnrichment" @click="handleTabSwitch('mindmap')">
+              {{ enrichmentError ? tr('common.retry') : tr('articleDetailPage.generateMindMap') }}
+            </button>
           </div>
 
           <div v-else class="py-20 text-center">
@@ -306,7 +302,7 @@
             </div>
             <h3 class="text-sm font-bold text-text mb-1">{{ tr('articleDetailPage.articleMindMap') }}</h3>
             <p class="text-xs text-text-secondary mb-5">{{ tr('articleDetailPage.mindMapMembersOnly') }}</p>
-            <router-link to="/upgrade"
+            <router-link :to="{ name: 'upgrade' }"
                          class="inline-flex h-9 items-center justify-center rounded-full bg-primary px-5 text-xs font-semibold text-white shadow-xs hover:brightness-105 transition">
               {{ tr('articleDetailPage.upgrade') }}
             </router-link>
@@ -328,13 +324,13 @@
     </div>
 
     <!-- 底部推荐阅读 -->
-    <div v-if="detailsItems.length > 0" class="mt-12 rounded-t-[32px] bg-surface-container/25 py-12">
-      <div class="mx-auto max-w-screen-md px-4 sm:px-6">
-        <h2 class="mb-6 text-xl font-bold tracking-tight text-text">{{ tr('articleDetailPage.recommendedReading') }}</h2>
-        <article-card-list :items="detailsItems" :loading="detailsLoading" key-field="id" meta-field="publishedAt"
+    <section v-if="article && detailsItems.length > 0" class="mx-auto mt-6 max-w-screen-md px-4 pb-6 sm:px-6" aria-labelledby="recommended-reading-heading">
+      <div class="border-t border-outline/10 pt-6">
+        <h2 id="recommended-reading-heading" class="mb-3 text-base font-semibold text-text">{{ tr('articleDetailPage.recommendedReading') }}</h2>
+        <article-card-list :items="detailsItems" :loading="detailsLoading" key-field="id" meta-field="timeAgo"
                            compact show-article-actions/>
       </div>
-    </div>
+    </section>
   </div>
 </template>
 
@@ -372,11 +368,13 @@ const queryClient = useQueryClient();
 
 const pageActive = ref(false);
 const articleContentRef = ref<HTMLElement | null>(null);
+const summaryContentRef = ref<HTMLElement | null>(null);
+const feedAvatarFailed = ref(false);
 const mindmapFrame = ref<HTMLIFrameElement | null>(null);
 type MainTab = 'content' | 'summary' | 'mindmap';
 const activeMainTab = computed(() => props.tab);
 const mindmapMarkdown = ref('');
-const linkCopied = ref(false);
+const enrichmentError = ref('');
 const lazyLoadObserver = ref<IntersectionObserver | null>(null);
 const headerActionExists = ref(false);
 
@@ -384,7 +382,6 @@ const AVERAGE_WORDS_PER_MINUTE = 200;
 
 const articleId = computed(() => props.id ?? '');
 const userId = computed(() => authStore.user?.userId ?? 'anonymous');
-const currentArticleQueryKey = computed(() => articleQueryKey(userId.value, articleId.value));
 const articleQuery = useArticleQuery(articleId);
 const recommendationsQuery = useArticleRecommendationsQuery(articleId);
 const article = computed(() => articleQuery.data.value ?? null);
@@ -398,6 +395,18 @@ const articleError = computed(() => {
 });
 const detailsItems = computed(() => (recommendationsQuery.data.value ?? []).map(normalizeArticle));
 const detailsLoading = computed(() => recommendationsQuery.isPending.value);
+const canGenerateEnrichment = computed(() => authStore.isAuthenticated
+    && Boolean(authStore.user?.currentPlan) && authStore.user?.currentPlan !== 'FREE');
+const mainTabs = computed(() => {
+  const tabs: { id: MainTab; label: string }[] = [{id: 'content', label: tr('articleDetailPage.body')}];
+  if (article.value?.summary || article.value?.requiresUpgrade || canGenerateEnrichment.value || activeMainTab.value === 'summary') {
+    tabs.push({id: 'summary', label: tr('articleDetailPage.aiSummary')});
+  }
+  if (article.value?.mindMap || article.value?.requiresUpgrade || canGenerateEnrichment.value || activeMainTab.value === 'mindmap') {
+    tabs.push({id: 'mindmap', label: tr('articleDetailPage.mindMap')});
+  }
+  return tabs;
+});
 useDocumentTitle(() => article.value?.title);
 
 const historyMutation = useHistoryMutation('record');
@@ -454,28 +463,54 @@ const handleTabSwitch = async (tab: MainTab) => {
   if (tab === 'content') return;
   if (tab === 'summary' && article.value?.summary) return;
   if (tab === 'mindmap' && mindmapMarkdown.value) return;
-  if (!authStore.isAuthenticated || authStore.user?.currentPlan === 'FREE') return;
-  if (isEnriching.value || enrichMutation.isPending.value) return;
+  if (!canGenerateEnrichment.value || isEnriching.value) return;
 
+  const request = {articleId: articleId.value, userId: userId.value};
+  enrichmentError.value = '';
   try {
-    const res = await enrichMutation.mutateAsync(articleId.value);
-    mindmapMarkdown.value = res.mindMap ?? '';
-    if (tab === 'mindmap' && mindmapMarkdown.value) {
-      await nextTick();
-      setTimeout(sendMindmapData, 200);
+    const result = await enrichMutation.mutateAsync(request);
+    if (articleId.value !== request.articleId || userId.value !== request.userId || !pageActive.value) return;
+    if (!(tab === 'summary' ? result.summary : result.mindMap)) {
+      enrichmentError.value = tr('articleDetailPage.enrichmentFailed');
     }
-  } catch (err) {
-    console.warn('AI 增强获取失败', err);
+  } catch {
+    if (articleId.value === request.articleId && userId.value === request.userId && pageActive.value) {
+      enrichmentError.value = tr('articleDetailPage.enrichmentFailed');
+    }
   }
 };
 
+const handleTabKeydown = async (event: KeyboardEvent, currentTab: MainTab) => {
+  const index = mainTabs.value.findIndex(tab => tab.id === currentTab);
+  let nextIndex: number;
+  if (event.key === 'ArrowRight') nextIndex = (index + 1) % mainTabs.value.length;
+  else if (event.key === 'ArrowLeft') nextIndex = (index - 1 + mainTabs.value.length) % mainTabs.value.length;
+  else if (event.key === 'Home') nextIndex = 0;
+  else if (event.key === 'End') nextIndex = mainTabs.value.length - 1;
+  else return;
+  event.preventDefault();
+  const tab = mainTabs.value[nextIndex];
+  // Focus follows selection immediately, including while AI generation is pending.
+  const navigation = handleTabSwitch(tab.id);
+  await nextTick();
+  document.getElementById(`article-tab-${tab.id}`)?.focus();
+  await navigation;
+};
+
 const enrichMutation = useMutation({
-  mutationFn: (id: string) => articlesStore.enrich(id),
-  onSuccess: (result) => {
-    queryClient.setQueryData<ArticleDetail>(currentArticleQueryKey.value, (previous) => previous ? {
+  mutationFn: async ({articleId}: {articleId: string; userId: string}) => {
+    const result = await articlesStore.enrich(articleId);
+    return {
+      summary: result.summary?.trim() ? await md2html(result.summary) : '',
+      mindMap: result.mindMap?.trim() ?? '',
+    };
+  },
+  onSuccess: (result, request) => {
+    // A late response belongs to the article and user that started the request.
+    queryClient.setQueryData<ArticleDetail>(articleQueryKey(request.userId, request.articleId), (previous) => previous ? {
       ...previous,
-      summary: md2html(result.summary),
-      mindMap: result.mindMap,
+      summary: result.summary || previous.summary,
+      mindMap: result.mindMap || previous.mindMap,
     } : previous);
   },
 });
@@ -484,6 +519,12 @@ const isEnriching = computed(() => enrichMutation.isPending.value);
 const subscriptionMutation = useSubscriptionMutation();
 const subscriptionSubmitting = subscriptionMutation.isPending;
 const subscriptionError = ref('');
+watch([articleId, userId], () => {
+  enrichmentError.value = '';
+  enrichMutation.reset();
+  subscriptionError.value = '';
+  feedAvatarFailed.value = false;
+});
 const toggleFeedSubscription = async () => {
   const feed = feedDetail.value;
   if (!feed || subscriptionSubmitting.value) return;
@@ -502,6 +543,21 @@ const handleTagClick = (tag: string) => {
   router.push({name: 'feedsSubscriptions', query: {tags: tag.toLowerCase()}});
 };
 
+
+const setupContentTables = () => {
+  for (const container of [articleContentRef.value, summaryContentRef.value]) {
+    container?.querySelectorAll('table').forEach(table => {
+      if (table.parentElement?.classList.contains('article-table-scroll')) return;
+      const wrapper = document.createElement('div');
+      wrapper.className = 'article-table-scroll';
+      wrapper.tabIndex = 0;
+      wrapper.setAttribute('role', 'region');
+      wrapper.setAttribute('aria-label', tr('articleDetailPage.articleTable'));
+      table.before(wrapper);
+      wrapper.append(table);
+    });
+  }
+};
 
 const setupLazyLoading = () => {
   const container = articleContentRef.value;
@@ -547,10 +603,8 @@ onActivated(() => {
 });
 onDeactivated(() => {
   pageActive.value = false;
-  linkCopied.value = false;
 });
 onBeforeUnmount(() => {
-  linkCopied.value = false;
   if (lazyLoadObserver.value) {
     lazyLoadObserver.value.disconnect();
     lazyLoadObserver.value = null;
@@ -558,18 +612,19 @@ onBeforeUnmount(() => {
   pageActive.value = false;
 });
 
-watch([() => article.value?.id, () => article.value?.content, () => article.value?.mindMap], async ([id], previous) => {
+watch([() => article.value?.id, () => article.value?.content, () => article.value?.mindMap, () => article.value?.summary], async ([id], previous) => {
   if (!article.value) return;
   mindmapMarkdown.value = article.value.mindMap ?? '';
   if (id !== previous?.[0]) window.scrollTo({top: 0, behavior: 'auto'});
   await nextTick();
+  setupContentTables();
   setupLazyLoading();
 }, {immediate: true});
 
 watch(activeMainTab, async (newTab) => {
   if (newTab === 'mindmap' && mindmapMarkdown.value) {
     await nextTick();
-    setTimeout(sendMindmapData, 200);
+    sendMindmapData();
   }
 });
 </script>
@@ -577,23 +632,35 @@ watch(activeMainTab, async (newTab) => {
 <style scoped>
 @reference "../styles/tailwind.css";
 
+.article-tabs {
+  top: var(--app-header-offset, 56px);
+  transition: top 200ms ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .article-tabs {
+    transition: none;
+  }
+}
+
 .prose-custom {
   @apply text-text;
 }
 
 .article-content {
-  font-family: charter, Georgia, Cambria, "Times New Roman", Times, serif;
-  @apply text-base leading-relaxed text-text break-words sm:text-lg sm:leading-8;
+  font-family: inherit;
+  @apply text-base leading-[1.8] text-text break-words sm:text-lg;
 }
 
 .article-content :deep(p) {
-  @apply mb-5 leading-relaxed text-text;
+  @apply mb-5 text-text;
+  line-height: inherit;
 }
 
 .article-content :deep(h1),
 .article-content :deep(h2),
 .article-content :deep(h3) {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-family: inherit;
   @apply font-bold text-text mt-8 mb-3 tracking-tight;
 }
 
@@ -615,7 +682,15 @@ watch(activeMainTab, async (newTab) => {
 }
 
 .article-content :deep(li) {
-  @apply leading-relaxed;
+  line-height: inherit;
+}
+
+.article-content :deep(ul) {
+  list-style-type: disc;
+}
+
+.article-content :deep(ol) {
+  list-style-type: decimal;
 }
 
 .article-content :deep(blockquote) {
@@ -623,19 +698,19 @@ watch(activeMainTab, async (newTab) => {
 }
 
 .article-content :deep(pre) {
-  @apply bg-surface-container/60 p-4 my-5 rounded-2xl text-xs overflow-x-auto max-w-full text-text;
+  @apply bg-surface-container/60 p-4 my-5 rounded-xl text-sm leading-relaxed overflow-x-auto max-w-full text-text;
 }
 
 .article-content :deep(code) {
-  @apply bg-surface-container px-1.5 py-0.5 text-xs font-mono rounded-md text-primary break-words;
+  @apply bg-surface-container px-1.5 py-0.5 text-[0.875em] font-mono rounded text-primary break-words;
 }
 
 .article-content :deep(pre code) {
-  @apply bg-transparent p-0 text-xs text-text break-normal;
+  @apply bg-transparent p-0 text-sm text-text break-normal;
 }
 
 .article-content :deep(img) {
-  @apply w-full h-auto my-6 rounded-2xl max-w-full shadow-xs;
+  @apply block w-auto h-auto mx-auto my-6 rounded-lg max-w-full;
 }
 
 .article-content :deep(a) {
@@ -647,7 +722,16 @@ watch(activeMainTab, async (newTab) => {
 }
 
 .article-content :deep(table) {
-  @apply w-full border-collapse my-5 text-xs;
+  @apply w-full border-collapse text-sm leading-relaxed;
+}
+
+.article-content :deep(.article-table-scroll) {
+  @apply my-5 max-w-full overflow-x-auto;
+}
+
+.article-content :deep(.article-table-scroll:focus-visible) {
+  outline: 2px solid rgb(var(--md-primary));
+  outline-offset: 2px;
 }
 
 .article-content :deep(th),
@@ -657,5 +741,9 @@ watch(activeMainTab, async (newTab) => {
 
 .article-content :deep(thead th) {
   @apply bg-surface-container font-semibold text-text;
+}
+
+.article-content > :deep(:first-child) {
+  margin-top: 0;
 }
 </style>
