@@ -31,7 +31,9 @@ export default {
   titlesOnly: "标题速览",
   fullSummary: "全文总结",
   sourceInitial: "源",
-  collapseList: "收起列表",
+  expandBody: "展开正文",
+  collapseBody: "收起正文",
+  collapseList: "收起文章",
   expandArticles: "展开全部 {value0} 篇文章",
   editTrackingTopic: "编辑追踪话题",
   newTrackingTopic: "新建追踪话题",
@@ -103,4 +105,6 @@ export default {
   summaryExpired: "这份总结已失效，请重新选择话题查看最新总结。",
   statusUpdateFailed: "更新运行状态失败，系统会稍后重试",
   limitsFailed: "加载配置限制失败",
+  allSummariesLoaded: "已加载全部总结",
+  noSummaries: "暂无追踪总结",
 };

@@ -1,21 +1,17 @@
 <template>
-  <div ref="pullRefreshTarget" class="mx-auto max-w-screen-2xl px-4 pb-24 pt-5 text-text sm:px-6 lg:px-8">
+  <div ref="pullRefreshTarget" class="mx-auto max-w-[1120px] px-3 pb-24 pt-4 text-text sm:px-4">
     <PullRefreshIndicator v-bind="pullIndicator" />
     <div v-if="refreshError" role="alert" class="mb-5 rounded-2xl bg-red-500/10 p-4 text-xs text-red-600 dark:text-red-400">
       {{ tr('common.refreshFailed') }}
-      <button type="button" class="ml-2 font-semibold underline disabled:opacity-40" :disabled="isRefreshing" @click="refresh">{{ tr('common.retry') }}</button>
+      <button type="button" class="ml-2 font-semibold transition-colors hover:text-primary disabled:opacity-40" :disabled="isRefreshing" @click="refresh">{{ tr('common.retry') }}</button>
     </div>
-    <!-- 顶部栏：MD3 干净利落 -->
-    <header class="mb-5 flex items-center justify-between gap-4 border-b border-outline/15 pb-4">
-      <div class="flex items-center gap-2.5">
+    <!-- 页面标题与主要操作 -->
+    <header class="mb-4 flex items-center justify-between gap-3 border-b border-outline/15 pb-3">
+      <div class="min-w-0">
         <h1 class="text-lg font-bold tracking-tight text-text sm:text-xl">{{ tr('topicTrackingPage.title') }}</h1>
-        <span class="hidden rounded-full bg-surface-container px-3 py-0.5 text-[11px] font-semibold text-text-secondary sm:inline-block">
-          Intelligence
-        </span>
       </div>
-      <!-- MD3 标准 Filled Button -->
       <button v-if="authStore.isAuthenticated" type="button"
-              class="inline-flex h-10 items-center justify-center gap-2 rounded-full bg-primary px-5 text-xs font-semibold text-white shadow-xs transition hover:shadow-md hover:brightness-105 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40"
+              class="inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-lg bg-primary px-3 text-xs font-semibold text-white transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-40"
               :disabled="!limitsReady" @click="openCreate">
         <svg class="h-4 w-4 stroke-[2.2]" viewBox="0 0 24 24" fill="none" stroke="currentColor">
           <path stroke-linecap="round" d="M12 5v14M5 12h14" />
@@ -24,66 +20,65 @@
       </button>
     </header>
 
-    <!-- 未登录提示条：MD3 Surface Tint 柔和横幅 -->
-    <div v-if="!authStore.isAuthenticated" class="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-3xl bg-surface-container/70 p-4 sm:px-6">
+    <!-- 未登录提示 -->
+    <div v-if="!authStore.isAuthenticated" class="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl bg-surface-container/40 p-3">
       <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
         <h2 class="text-sm font-bold text-text">{{ tr('topicTrackingPage.guestTitle') }}</h2>
         <p class="text-xs text-text-secondary">{{ tr('topicTrackingPage.guestDescription') }}</p>
       </div>
       <router-link :to="{ name: 'auth', query: { redirect: route.fullPath } }"
-                   class="inline-flex h-9 items-center justify-center rounded-full bg-primary px-5 text-xs font-semibold text-white transition hover:shadow-xs active:scale-[0.98]">
+                   class="inline-flex h-8 items-center justify-center rounded-lg bg-primary px-3 text-xs font-semibold text-white transition hover:brightness-105">
         {{ tr('topicTrackingPage.signInNow') }}
       </router-link>
     </div>
 
-    <div class="grid grid-cols-1 gap-6 lg:grid-cols-[256px_minmax(0,1fr)] lg:gap-8">
-      <!-- 左侧导航：MD3 Filter Chips & Navigation Item -->
-      <aside class="min-w-0 lg:sticky lg:top-5 lg:self-start">
-        <!-- MD3 Filter Chips -->
-        <div class="mb-3.5 flex items-center gap-1.5">
+    <div class="grid grid-cols-1 gap-4 2xl:grid-cols-[224px_minmax(0,1fr)] 2xl:gap-6">
+      <!-- 中小屏横向话题导航，宽屏固定侧栏 -->
+      <aside class="min-w-0 2xl:sticky 2xl:top-20 2xl:self-start">
+        <div class="mb-3 flex items-center gap-1.5">
           <button v-if="authStore.isAuthenticated" type="button"
-                  class="inline-flex h-8 items-center rounded-full px-3.5 text-xs font-medium transition"
+                  class="inline-flex h-8 items-center rounded-lg px-3 text-xs font-medium transition-colors"
                   :class="scope === 'following'
                     ? 'bg-primary/15 font-semibold text-primary'
-                    : 'bg-surface-container/60 text-text-secondary hover:bg-surface-container hover:text-text'"
+                    : 'text-text-secondary hover:bg-surface-container/40 hover:text-primary'"
                   @click="changeScope('following')">{{ tr('topicTrackingPage.followingTopics') }}</button>
           <button type="button"
-                  class="inline-flex h-8 items-center rounded-full px-3.5 text-xs font-medium transition"
+                  class="inline-flex h-8 items-center rounded-lg px-3 text-xs font-medium transition-colors"
                   :class="scope === 'public'
                     ? 'bg-primary/15 font-semibold text-primary'
-                    : 'bg-surface-container/60 text-text-secondary hover:bg-surface-container hover:text-text'"
+                    : 'text-text-secondary hover:bg-surface-container/40 hover:text-primary'"
                   @click="changeScope('public')">{{ tr('topicTrackingPage.publicTopics') }}</button>
-          <span class="ml-auto rounded-full bg-surface-container px-2.5 py-0.5 text-[11px] font-semibold text-text-secondary">
+          <span class="ml-auto text-[11px] tabular-nums text-text-secondary">
             {{ topics.length }}
           </span>
         </div>
 
         <div v-if="topics.length > 5" class="mb-3">
           <input v-model.trim="topicFilter" type="search" :placeholder="tr('topicTrackingPage.filterPlaceholder')"
-                 class="w-full rounded-full border border-outline/20 bg-surface-container/40 px-4 py-2 text-xs text-text outline-none transition placeholder:text-text-secondary/60 focus:border-primary focus:bg-surface" />
+                 class="w-full rounded-lg border border-outline/25 bg-surface px-3 py-2 text-xs text-text outline-none transition-colors placeholder:text-text-secondary/60 focus:border-primary" />
         </div>
 
         <!-- 话题导航项 -->
-        <div class="flex gap-1.5 overflow-x-auto pb-2 [scrollbar-width:none] lg:max-h-[calc(100vh-9.5rem)] lg:flex-col lg:gap-1 lg:overflow-y-auto [&::-webkit-scrollbar]:hidden">
+        <div class="flex gap-1.5 overflow-x-auto pb-2 [scrollbar-width:none] 2xl:max-h-[calc(100dvh-14rem)] 2xl:flex-col 2xl:gap-1 2xl:overflow-y-auto [&::-webkit-scrollbar]:hidden">
           <button type="button"
-                  class="flex h-11 w-44 shrink-0 items-center gap-3 rounded-full px-3 text-sm transition lg:w-full"
+                  class="flex h-9 w-auto max-w-[180px] shrink-0 items-center gap-2 rounded-lg px-2.5 text-xs transition-colors 2xl:h-10 2xl:w-full 2xl:max-w-none 2xl:text-[13px]"
                   :class="selectedTopicId === null
-                    ? 'bg-surface-container font-semibold text-text'
-                    : 'text-text-secondary hover:bg-surface-container/50 hover:text-text'"
+                    ? 'bg-primary/10 font-semibold text-primary'
+                    : 'text-text-secondary hover:bg-surface-container/40 hover:text-primary'"
                   @click="selectTopic(null)">
-            <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold transition-colors"
+            <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold transition-colors"
                   :class="selectedTopicId === null ? 'bg-primary text-white' : 'bg-surface-container-high text-text-secondary'">{{ tr('topicTrackingPage.allInitial') }}</span>
             <span class="min-w-0 flex-1 truncate text-left">{{ tr('topicTrackingPage.allSummaries') }}</span>
           </button>
 
-          <div v-for="topic in filteredTopics" :key="topic.topicId" class="group relative flex shrink-0 items-center lg:w-full">
+          <div v-for="topic in filteredTopics" :key="topic.topicId" class="group relative flex shrink-0 items-center 2xl:w-full">
             <button type="button"
-                    class="flex h-11 w-44 shrink-0 items-center gap-3 rounded-full px-3 pr-8 text-sm transition lg:w-full"
+                    class="flex h-9 w-auto max-w-[180px] shrink-0 items-center gap-2 rounded-lg px-2.5 pr-8 text-xs transition-colors 2xl:h-10 2xl:w-full 2xl:max-w-none 2xl:text-[13px]"
                     :class="selectedTopicId === topic.topicId
-                      ? 'bg-surface-container font-semibold text-text'
-                      : 'text-text-secondary hover:bg-surface-container/50 hover:text-text'"
+                      ? 'bg-primary/10 font-semibold text-primary'
+                      : 'text-text-secondary hover:bg-surface-container/40 hover:text-primary'"
                     @click="selectTopic(topic.topicId)">
-              <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold transition-colors"
+              <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold transition-colors"
                     :class="selectedTopicId === topic.topicId ? 'bg-primary text-white' : 'bg-surface-container-high text-text-secondary'">
                 {{ topic.name.slice(0, 1) }}
               </span>
@@ -92,7 +87,7 @@
               <span v-else-if="!topic.enabled" class="h-1.5 w-1.5 shrink-0 rounded-full bg-outline/40" :title="tr('topicTrackingPage.disabled')" />
             </button>
             <button v-if="authStore.isAuthenticated && topic.owner" type="button"
-                    class="absolute right-1.5 flex h-7 w-7 items-center justify-center rounded-full text-text-secondary opacity-70 transition hover:bg-surface hover:text-text lg:opacity-0 lg:focus:opacity-100 lg:group-hover:opacity-100"
+                    class="absolute right-1 flex h-7 w-7 items-center justify-center rounded-full text-text-secondary opacity-70 transition hover:bg-surface hover:text-primary 2xl:opacity-0 2xl:focus:opacity-100 2xl:group-hover:opacity-100"
                     :aria-label="tr('topicTrackingPage.editNamedTopic', { value0: topic.name })" :title="tr('topicTrackingPage.editTopic')" @click.stop="openEdit(topic)">
               <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
                 <path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 2.651 2.651M4 20l4.5-.9L19.3 8.3a1.875 1.875 0 0 0-2.65-2.65L5.85 16.45 4 20Z" />
@@ -107,30 +102,30 @@
           {{ scope === 'following' ? tr('topicTrackingPage.noFollowing') : tr('topicTrackingPage.noPublic') }}
         </p>
         <p v-if="topicsError" class="px-2 py-2 text-xs text-red-600">
-          {{ topicsError }} <button type="button" class="underline" :disabled="topicsLoading" @click="retryTopics">{{ tr('common.retry') }}</button>
+          {{ topicsError }} <button type="button" class="transition-colors hover:text-primary" :disabled="topicsLoading" @click="retryTopics">{{ tr('common.retry') }}</button>
         </p>
         <p v-if="topicsLoading" class="px-2 py-2 text-xs text-text-secondary" role="status">{{ tr('topicTrackingPage.loadingTopics') }}</p>
         <button v-else-if="hasMoreTopics && !topicsError" type="button"
-                class="mt-2 inline-flex h-8 w-full items-center justify-center rounded-full bg-surface-container px-4 text-xs font-medium text-text transition hover:bg-surface-container/70 active:scale-[0.98]"
+                class="mt-2 inline-flex h-8 w-full items-center justify-center rounded-lg px-3 text-xs font-medium text-text-secondary transition-colors hover:bg-surface-container/40 hover:text-primary"
                 @click="loadMoreTopics">
           {{ tr('topicTrackingPage.loadMoreTopics') }}
         </button>
       </aside>
 
       <!-- 右侧主内容区 -->
-      <main class="min-w-0">
-        <!-- MD3 一体化话题看板头部 -->
-        <div class="mb-5 rounded-[28px] bg-surface-container/50 p-5 sm:p-6">
+      <main class="mx-auto w-full min-w-0 max-w-[840px] 2xl:mx-0">
+        <!-- 轻量话题工具栏与可展开的追踪配置 -->
+        <div class="mb-4 border-b border-outline/15 pb-3">
           <div class="flex flex-wrap items-center justify-between gap-3">
-            <div class="flex min-w-0 items-center gap-3.5">
-              <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-base font-bold text-primary shadow-xs">
+            <div class="flex min-w-0 flex-1 items-start gap-3">
+              <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-xs font-semibold text-primary">
                 {{ selectedTopic ? selectedTopic.name.slice(0, 1) : tr('topicTrackingPage.allInitial') }}
               </span>
               <div class="min-w-0">
-                <div class="flex flex-wrap items-center gap-2">
-                  <h2 class="truncate text-lg font-bold tracking-tight sm:text-xl">{{ selectedTopic?.name || tr('topicTrackingPage.allSummaries') }}</h2>
+                <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+                  <h2 class="min-w-0 break-words text-lg font-semibold tracking-tight">{{ selectedTopic?.name || tr('topicTrackingPage.allSummaries') }}</h2>
                   <span v-if="scanMessage" role="status"
-                        class="inline-flex items-center gap-1.5 rounded-full bg-surface px-3 py-0.5 text-[11px] font-medium text-text-secondary shadow-xs">
+                        class="inline-flex max-w-full items-center gap-1.5 text-[11px] text-text-secondary">
                     <span v-if="selectedTopic && ['QUEUED', 'RUNNING'].includes(selectedTopic.scanStatus)"
                           class="h-1.5 w-1.5 animate-ping rounded-full bg-primary" />
                     <span v-else class="h-1.5 w-1.5 rounded-full bg-text-secondary/60" />
@@ -143,21 +138,20 @@
               </div>
             </div>
 
-            <!-- MD3 规范操作按钮群 -->
-            <div v-if="selectedTopic" class="flex items-center gap-2">
+            <div v-if="selectedTopic" class="flex shrink-0 items-center gap-2">
               <button v-if="authStore.isAuthenticated && !selectedTopic.subscribed && selectedTopic.enabled"
                       type="button"
-                      class="inline-flex h-9 items-center justify-center rounded-full bg-primary px-5 text-xs font-semibold text-white shadow-xs transition hover:brightness-105 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40"
+                      class="inline-flex h-8 items-center justify-center rounded-lg bg-primary px-3 text-xs font-semibold text-white transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-40"
                       :disabled="subscribing" @click="subscribeSelected">
                 {{ subscribing ? tr('topicTrackingPage.followingPending') : tr('topicTrackingPage.follow') }}
               </button>
               <button v-if="authStore.isAuthenticated && selectedTopic.subscribed" type="button"
-                      class="inline-flex h-9 items-center justify-center rounded-full bg-surface-container px-5 text-xs font-medium text-text transition hover:bg-surface-container-high active:scale-[0.98] disabled:opacity-40"
+                      class="inline-flex h-8 items-center justify-center rounded-lg bg-surface-container/60 px-3 text-xs font-medium text-text-secondary transition-colors hover:bg-surface-container hover:text-primary disabled:opacity-40"
                       :disabled="subscribing" @click="subscribeSelected">
                 {{ subscribing ? tr('common.processingEllipsis') : tr('topicTrackingPage.following') }}
               </button>
               <button v-if="selectedTopic.owner" type="button"
-                      class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-surface text-text-secondary transition hover:bg-surface-container hover:text-text"
+                      class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-text-secondary transition-colors hover:bg-surface-container hover:text-primary"
                       :aria-label="tr('topicTrackingPage.editNamedTopic', { value0: selectedTopic.name })" :title="tr('topicTrackingPage.editTopic')" @click="openEdit(selectedTopic)">
                 <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
                   <path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 2.651 2.651M4 20l4.5-.9L19.3 8.3a1.875 1.875 0 0 0-2.65-2.65L5.85 16.45 4 20Z" />
@@ -166,85 +160,87 @@
             </div>
           </div>
 
-          <div v-if="selectedTopic" class="mt-4 flex flex-wrap items-center gap-1.5 border-t border-outline/10 pt-3 text-xs">
-            <span class="font-medium text-text-secondary">{{ tr('topicTrackingPage.keywords') }}</span>
-            <span v-for="kw in (selectedTopic.includeKeywords.length ? selectedTopic.includeKeywords : [selectedTopic.keyword])" :key="kw"
-                  class="rounded-lg bg-surface px-2.5 py-1 font-medium text-text shadow-xs">{{ kw }}</span>
-
-            <template v-if="selectedTopic.blockedKeywords.length">
-              <span class="ml-2 font-medium text-text-secondary">{{ tr('topicTrackingPage.blocked') }}</span>
-              <span v-for="bkw in selectedTopic.blockedKeywords" :key="bkw"
-                    class="rounded-lg bg-surface px-2.5 py-1 font-medium text-text shadow-xs line-through">{{ bkw }}</span>
-            </template>
-
-            <details class="group ml-auto">
-              <summary class="cursor-pointer rounded-lg bg-surface px-3 py-1 font-medium text-text-secondary transition hover:text-text select-none">
-                {{ tr('topicTrackingPage.monitoringSites', { count: selectedTopic.sources.length }) }}
-              </summary>
-              <div class="mt-2.5 flex flex-wrap gap-1.5 rounded-2xl bg-surface p-3 shadow-xs">
-                <span v-for="source in selectedTopic.sources" :key="source.sourceId"
-                      class="rounded-md bg-surface-container px-2.5 py-0.5 text-[11px] text-text-secondary">{{ source.name }}</span>
-                <p v-if="selectedTopic.relevancePrompt" class="mt-2 w-full border-t border-outline/10 pt-2 text-[11px] leading-relaxed text-text-secondary">
-                  <strong class="font-semibold text-text">{{ tr('topicTrackingPage.summaryInstructions') }}</strong>{{ selectedTopic.relevancePrompt }}
-                </p>
+          <details v-if="selectedTopic" :key="selectedTopic.topicId" class="mt-3 border-t border-outline/10 pt-2 text-xs">
+            <summary class="flex min-w-0 cursor-pointer list-none items-center gap-2 text-text-secondary transition-colors hover:text-primary [&::-webkit-details-marker]:hidden">
+              <span class="min-w-0 truncate">{{ selectedTopic.keyword }}</span>
+              <span class="shrink-0" aria-hidden="true">·</span>
+              <span class="shrink-0">{{ tr('topicTrackingPage.monitoringSites', { count: selectedTopic.sources.length }) }}</span>
+            </summary>
+            <div class="mt-3 space-y-3">
+              <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+                <span class="text-text-secondary">{{ tr('topicTrackingPage.keywords') }}</span>
+                <span v-for="kw in (selectedTopic.includeKeywords.length ? selectedTopic.includeKeywords : [selectedTopic.keyword])" :key="kw"
+                      class="max-w-full break-words font-medium text-text">{{ kw }}</span>
               </div>
-            </details>
-          </div>
+              <div v-if="selectedTopic.blockedKeywords.length" class="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+                <span class="text-text-secondary">{{ tr('topicTrackingPage.blocked') }}</span>
+                <span v-for="bkw in selectedTopic.blockedKeywords" :key="bkw"
+                      class="max-w-full break-words text-text-secondary line-through">{{ bkw }}</span>
+              </div>
+              <div class="flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-text-secondary">
+                <span v-for="source in selectedTopic.sources" :key="source.sourceId" class="max-w-full break-words">{{ source.name }}</span>
+              </div>
+              <p v-if="selectedTopic.relevancePrompt" class="whitespace-pre-line break-words text-xs leading-relaxed text-text-secondary">
+                <strong class="font-semibold text-text">{{ tr('topicTrackingPage.summaryInstructions') }}</strong>{{ selectedTopic.relevancePrompt }}
+              </p>
+            </div>
+          </details>
         </div>
 
-        <!-- 总结流：MD3 卡片式呈现 -->
-        <div v-if="summaries.length" class="divide-y divide-outline/10">
-          <article v-for="summary in summaries" :key="summary.summaryId" class="py-6 first:pt-1">
-            <div class="flex items-start gap-3.5">
+        <!-- 总结阅读流与关联文章引用 -->
+        <div v-if="summaries.length" class="-mx-3 divide-y divide-outline/40 overflow-hidden border-outline/40 sm:mx-0 sm:rounded-3xl sm:border">
+          <article v-for="summary in summaries" :key="summary.summaryId" class="scroll-mt-4 px-3 py-3 transition-colors hover:bg-surface-container/25 sm:px-4 lg:scroll-mt-20">
+            <div class="flex items-start gap-3">
               <button type="button"
-                      class="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-surface-container text-sm font-bold text-text transition hover:opacity-80"
+                      class="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary transition-colors hover:bg-primary/15"
+                      :aria-label="summary.topicName" :title="summary.topicName"
                       @click="selectTopic(summary.topicId)">
                 {{ summary.topicName.slice(0, 1) }}
               </button>
 
               <div class="min-w-0 flex-1">
-                <div class="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-text-secondary">
-                  <button type="button" class="text-sm font-bold text-text hover:underline" @click="selectTopic(summary.topicId)">
+                <div class="flex flex-wrap items-baseline gap-x-1.5 gap-y-0.5 text-[11px] leading-5 text-text-secondary">
+                  <button type="button" class="min-w-0 max-w-full break-words text-left text-sm font-semibold text-text transition-colors hover:text-primary" @click="selectTopic(summary.topicId)">
                     {{ summary.topicName }}
                   </button>
                   <span aria-hidden="true">·</span>
-                  <time :datetime="summary.createdAt">{{ formatRelativeTime(summary.createdAt) }}</time>
+                  <time :datetime="summary.createdAt" class="whitespace-nowrap">{{ formatRelativeTime(summary.createdAt) }}</time>
                   <span aria-hidden="true">·</span>
                   <span>{{ summary.titlesOnly ? tr('topicTrackingPage.titlesOnly') : tr('topicTrackingPage.fullSummary') }}</span>
-                  <span class="ml-auto rounded-full bg-surface-container px-2.5 py-0.5 text-xs font-semibold text-text">
+                  <span aria-hidden="true">·</span>
+                  <span class="whitespace-nowrap">
                     {{ tr('common.articleCount', { count: summary.articleCount }) }}
                   </span>
                 </div>
 
-                <p class="mt-2.5 whitespace-pre-line text-[15px] leading-relaxed text-text">{{ summary.summary }}</p>
+                <ExpandableText :id="`topic-summary-body-${summary.summaryId}`" class="mt-2" :text="summary.summary"
+                                :expand-label="tr('topicTrackingPage.expandBody')" :collapse-label="tr('topicTrackingPage.collapseBody')" />
 
-                <!-- 关联文章 3 列网格 -->
-                <div v-if="summary.articles.length" class="mt-3.5 grid grid-cols-1 gap-2.5 sm:grid-cols-2 xl:grid-cols-3">
+                <!-- 单列引用列表，为文章标题保留阅读宽度 -->
+                <div v-if="visibleArticles(summary).length" class="mt-3 divide-y divide-outline/10 border-t border-outline/15">
                   <router-link v-for="article in visibleArticles(summary)" :key="article.articleId" :to="`/articles/${article.articleId}`" target="_blank"
-                               class="group flex min-w-0 items-start gap-2.5 rounded-2xl bg-surface-container/45 p-3 transition hover:bg-surface-container">
-                    <img v-if="article.feedIcon" :src="article.feedIcon" loading="lazy" alt="" class="mt-0.5 h-5 w-5 shrink-0 rounded-full object-cover" />
-                    <span v-else class="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-surface-container text-[10px] font-bold">
+                               class="flex min-w-0 items-start gap-2 py-1.5 focus-visible:rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40">
+                    <img v-if="article.feedIcon" :src="article.feedIcon" loading="lazy" alt="" class="mt-1 h-4 w-4 shrink-0 rounded-full object-cover" />
+                    <span v-else class="mt-1 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-surface-container text-[9px] font-semibold">
                       {{ article.feedName.slice(0, 1) || tr('topicTrackingPage.sourceInitial') }}
                     </span>
                     <span class="min-w-0 flex-1">
-                      <span class="line-clamp-2 text-xs font-medium leading-snug text-text group-hover:underline">{{ article.title }}</span>
-                      <span class="mt-1 flex items-center gap-1 text-[11px] text-text-secondary">
-                        <span class="truncate">{{ article.feedName }}</span>
+                      <span class="line-clamp-2 break-words text-sm font-medium leading-5 text-text transition-colors hover:text-primary">{{ article.title }}</span>
+                      <span class="mt-0.5 flex min-w-0 items-center gap-1 text-[11px] leading-4 text-text-secondary">
+                        <span class="min-w-0 truncate">{{ article.feedName }}</span>
                         <template v-if="article.publishedAt">
                           <span aria-hidden="true" class="shrink-0">·</span>
-                          <time :datetime="article.publishedAt" class="shrink-0">{{ formatRelativeTime(article.publishedAt) }}</time>
+                          <time :datetime="article.publishedAt" class="shrink-0 whitespace-nowrap">{{ formatRelativeTime(article.publishedAt) }}</time>
                         </template>
                       </span>
                     </span>
-                    <svg class="mt-0.5 h-3.5 w-3.5 shrink-0 text-text-secondary opacity-0 transition group-hover:opacity-100" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M7 17 17 7M8 7h9v9" />
-                    </svg>
                   </router-link>
                 </div>
 
-                <div v-if="summary.articleCount > summary.articles.length" class="mt-2.5 flex items-center gap-3">
+                <div v-if="summary.articleCount > visibleArticles(summary).length || expandedSummaries.has(summary.summaryId)" class="mt-2.5 flex items-center gap-3">
                   <button type="button"
-                          class="inline-flex h-7 items-center rounded-full bg-surface-container/60 px-3 text-xs font-semibold text-text transition hover:bg-surface-container"
+                          class="inline-flex min-h-8 items-center text-xs font-medium text-text-secondary transition-colors hover:text-primary"
+                          :aria-expanded="expandedSummaries.has(summary.summaryId)"
                           @click="toggleArticles(summary)">
                     {{ expandedSummaries.has(summary.summaryId) ? tr('topicTrackingPage.collapseList') : tr('topicTrackingPage.expandArticles', { value0: summary.articleCount }) }}
                   </button>
@@ -262,13 +258,13 @@
         </div>
         <div v-else-if="summariesError" class="py-6 text-center text-xs text-red-600">
           {{ summariesError }}
-          <button type="button" class="ml-1 underline" @click="retrySummaries">{{ tr('common.retry') }}</button>
+          <button type="button" class="ml-1 transition-colors hover:text-primary" @click="retrySummaries">{{ tr('common.retry') }}</button>
         </div>
         <div v-else-if="!hasMoreSummaries && summaries.length" class="py-6 text-center text-xs text-text-secondary/50">
-          {{ tr('common.noMore') || '已加载全部总结' }}
+          {{ tr('topicTrackingPage.allSummariesLoaded') }}
         </div>
         <div v-else-if="!summaries.length && !summariesLoading" class="py-12 text-center text-xs text-text-secondary">
-          {{ tr('topicTrackingPage.noSummaries') || '暂无相关追踪总结' }}
+          {{ tr('topicTrackingPage.noSummaries') }}
         </div>
       </main>
     </div>
@@ -540,6 +536,7 @@ import { useInfiniteScroll } from '@/composables/infiniteScroll';
 import { usePullRefresh } from '@/composables/pullRefresh';
 import { useRefresh } from '@/composables/refresh';
 import PullRefreshIndicator from '@/components/PullRefreshIndicator.vue';
+import ExpandableText from '@/components/ExpandableText.vue';
 import { listDiscoveryFeeds } from '@/api/discovery';
 import KeywordTagInput from '@/components/KeywordTagInput.vue';
 import {
@@ -871,8 +868,11 @@ const {target: pullRefreshTarget, indicator: pullIndicator, busy: pullBusy} = us
   onRefresh: refresh,
 });
 
-const visibleArticles = (summary: TopicTrackSummary) => expandedSummaries.value.has(summary.summaryId)
-    ? articlePages[summary.summaryId]?.articles ?? summary.articles : summary.articles;
+const ARTICLE_PREVIEW_LIMIT = 3;
+const visibleArticles = (summary: TopicTrackSummary) => {
+  const articles = articlePages[summary.summaryId]?.articles ?? summary.articles;
+  return expandedSummaries.value.has(summary.summaryId) ? articles : articles.slice(0, ARTICLE_PREVIEW_LIMIT);
+};
 
 const loadArticles = async (summary: TopicTrackSummary) => {
   articlePages[summary.summaryId] ??= {
@@ -908,7 +908,7 @@ const toggleArticles = (summary: TopicTrackSummary) => {
   if (expandedSummaries.value.has(summary.summaryId)) expandedSummaries.value.delete(summary.summaryId);
   else {
     expandedSummaries.value.add(summary.summaryId);
-    if (!articlePages[summary.summaryId]) void loadArticles(summary);
+    if (!articlePages[summary.summaryId] && summary.articleCount > summary.articles.length) void loadArticles(summary);
   }
 };
 

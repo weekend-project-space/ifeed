@@ -1,26 +1,31 @@
 <template>
   <div class="min-h-screen text-text">
-    <div class="mx-auto max-w-screen-lg px-4 py-5 sm:px-6 sm:py-8">
+    <div class="mx-auto max-w-screen-lg px-3 py-4 sm:px-4 sm:py-5">
 
       <!-- Header -->
-      <div class="mb-6 flex items-start justify-between sm:mb-8">
-        <div>
-          <h1 class="text-2xl font-bold tracking-tight text-text sm:text-3xl">{{ tr('radarPage.title') }}</h1>
-          <p class="mt-1 text-xs text-text-secondary sm:text-sm">
-            {{ tr('radarPage.timeWindow', { hours: windowHoursText }) }}
-            <span v-if="generatedAtText" class="before:mx-1.5 before:content-['·']">{{ generatedAtText }}</span>
+      <div class="mb-4 flex items-start justify-between gap-3 sm:mb-5">
+        <div class="min-w-0">
+          <h1 class="text-lg font-bold tracking-tight text-text sm:text-xl">{{ tr('radarPage.title') }}</h1>
+          <p class="mt-0.5 flex flex-wrap items-baseline gap-x-1.5 text-[11px] leading-5 text-text-secondary">
+            <span>{{ tr('radarPage.timeWindow', { hours: windowHoursText }) }}</span>
+            <template v-if="generatedAtText">
+              <span aria-hidden="true">·</span>
+              <span>{{ generatedAtText }}</span>
+            </template>
           </p>
         </div>
 
-        <!-- MD3 Tonal 刷新药丸 -->
+        <!-- 轻量刷新按钮 -->
         <button
+            type="button"
             @click="refresh"
             :disabled="loading"
-            class="inline-flex h-9 items-center gap-1.5 rounded-full bg-surface-container/60 px-4 text-xs font-semibold text-text shadow-xs transition hover:bg-surface-container active:scale-[0.98] disabled:opacity-40"
+            class="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-md px-2 text-xs text-text-secondary transition-colors hover:bg-surface-container/40 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 disabled:cursor-not-allowed disabled:opacity-40"
             :aria-label="tr('common.refresh')"
+            :aria-busy="loading"
         >
           <svg
-              class="h-3.5 w-3.5 text-text-secondary transition-transform"
+              class="h-3.5 w-3.5 transition-transform"
               :class="{ 'animate-spin': loading }"
               viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
           >
@@ -35,83 +40,65 @@
         {{ error }}
       </div>
 
-      <!-- 骨架屏：M3 表面容器脉冲 -->
-      <div v-if="loading" class="space-y-2">
+      <!-- 骨架屏：与紧凑编号榜保持相同结构 -->
+      <div v-if="loading" aria-hidden="true">
         <div
             v-for="i in 8"
             :key="i"
-            class="flex items-start gap-4 rounded-3xl bg-surface-container/25 p-4 animate-pulse"
+            class="flex animate-pulse items-start gap-2 py-1.5 sm:gap-2.5"
         >
-          <div class="mt-0.5 h-8 w-8 shrink-0 rounded-2xl bg-surface-container" />
-          <div class="flex-1 space-y-2.5">
-            <div class="h-4 w-3/5 rounded-full bg-surface-container" />
-            <div class="h-3 w-4/5 rounded-full bg-surface-container/60" />
-            <div class="mt-1 flex gap-1.5">
-              <div class="h-5 w-12 rounded-full bg-surface-container/80" />
-              <div class="h-5 w-16 rounded-full bg-surface-container/50" />
+          <div class="w-8 shrink-0 pt-1">
+            <div class="ml-auto h-3 w-4 rounded bg-surface-container/60" />
+          </div>
+          <div class="min-w-0 flex-1">
+            <div class="flex h-5 items-center">
+              <div class="h-3.5 w-3/5 rounded bg-surface-container" />
+            </div>
+            <div class="mt-0.5 flex h-4 items-center">
+              <div class="h-2.5 w-2/5 rounded bg-surface-container/60" />
             </div>
           </div>
         </div>
       </div>
 
-      <!-- 话题列表：MD3 柔和表面卡片 -->
-      <div v-else-if="topics.length" class="space-y-2.5">
-        <router-link
-            v-for="(t, index) in topics"
-            :key="t.topicId"
-            :to="{ name: 'radarTopic', params: { topicId: t.topicId }, query: { snapshotId } }"
-            class="group flex items-start gap-4 rounded-3xl bg-surface-container/25 p-4 transition hover:bg-surface-container/50 hover:shadow-xs"
-        >
-          <!-- 排名标识牌：M3 Tonal 柔和数字徽标 -->
-          <div class="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-xs font-bold text-primary shadow-2xs">
-            {{ index + 1 }}
-          </div>
-
-          <!-- 内容主体 -->
-          <div class="min-w-0 flex-1">
-            <div class="flex items-start justify-between gap-3">
-              <h2 class="text-sm font-semibold leading-snug text-text line-clamp-2 transition group-hover:text-primary sm:text-base">
-                {{ t.title || tr('radarPage.untitledTopic') }}
-              </h2>
-              <svg
-                  class="mt-1 h-4 w-4 shrink-0 text-text-secondary opacity-0 transition-opacity group-hover:opacity-100"
-                  viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-              >
-                <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
-              </svg>
-            </div>
-
-            <p v-if="t.description" class="mt-1 text-xs leading-relaxed text-text-secondary line-clamp-2">
-              {{ t.description }}
-            </p>
-
-            <!-- 篇数与标签指示条 -->
-            <div class="mt-3 flex flex-wrap items-center gap-1.5">
-              <span class="inline-flex items-center rounded-full bg-primary/15 px-2.5 py-0.5 text-[11px] font-semibold text-primary">
-                {{ tr('common.articleCount', { count: t.articleCount }) }}
+      <!-- 话题列表：紧凑编号、标题与次行元信息 -->
+      <div v-else-if="topics.length">
+        <ol :start="rankStart" class="list-none">
+          <li v-for="(t, index) in topics" :key="t.topicId">
+            <router-link
+                :to="{ name: 'radarTopic', params: { topicId: t.topicId }, query: { snapshotId } }"
+                class="flex items-start gap-2 rounded-sm py-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 sm:gap-2.5"
+            >
+              <span class="w-8 shrink-0 pt-0.5 text-right font-mono text-xs tabular-nums text-text-secondary/60" aria-hidden="true">
+                {{ rankStart + index }}.
               </span>
-              <span
-                  v-for="kw in (t.topKeywords ?? []).slice(0, 5)"
-                  :key="kw"
-                  class="rounded-full bg-surface px-2.5 py-0.5 text-[11px] font-medium text-text-secondary shadow-2xs"
-              >
-                #{{ kw }}
-              </span>
-            </div>
-          </div>
-        </router-link>
+
+              <div class="min-w-0 flex-1">
+                <h2 class="break-words text-sm font-medium leading-5 text-text">
+                  <span class="transition-colors hover:text-primary">{{ t.title || tr('radarPage.untitledTopic') }}</span>
+                </h2>
+                <p class="mt-0.5 break-words text-[11px] leading-4 text-text-secondary/70">
+                  <span class="whitespace-nowrap">{{ tr('common.articleCount', { count: t.articleCount }) }}</span>
+                  <template v-for="kw in (t.topKeywords ?? []).slice(0, 3)" :key="kw">
+                    <span class="mx-1.5" aria-hidden="true">·</span>
+                    <span>{{ kw }}</span>
+                  </template>
+                </p>
+              </div>
+            </router-link>
+          </li>
+        </ol>
 
         <!-- 分页 -->
-        <div v-if="hasPreviousPage || hasNextPage" class="pt-4">
-          <pagination
+        <pagination
+              v-if="hasPreviousPage || hasNextPage"
               :current-page="page"
               :has-previous-page="hasPreviousPage"
               :has-next-page="hasNextPage"
               :disabled="loading"
               @prev-page="prevPage"
               @next-page="nextPage"
-          />
-        </div>
+        />
       </div>
 
       <!-- 空状态 -->
@@ -150,12 +137,15 @@ const {
   loading,
   error,
   page,
+  size,
   hasNextPage,
   hasPreviousPage,
   snapshotId,
   windowHours,
   generatedAt
 } = storeToRefs(radarStore);
+
+const rankStart = computed(() => (page.value - 1) * size.value + 1);
 
 const windowHoursText = computed(() => {
   if (windowHours.value && Number.isFinite(windowHours.value)) {

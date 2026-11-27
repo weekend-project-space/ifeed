@@ -31,7 +31,9 @@ export default {
   titlesOnly: "Headlines",
   fullSummary: "Full summary",
   sourceInitial: "F",
-  collapseList: "Collapse list",
+  expandBody: "Show full summary",
+  collapseBody: "Collapse summary",
+  collapseList: "Collapse articles",
   expandArticles: "Show all {value0} articles",
   editTrackingTopic: "Edit tracked topic",
   newTrackingTopic: "New tracked topic",
@@ -103,4 +105,6 @@ export default {
   summaryExpired: "This summary is no longer available. Select the topic again for the latest summary.",
   statusUpdateFailed: "Could not update status. Will retry later.",
   limitsFailed: "Could not load settings",
+  allSummariesLoaded: "All summaries loaded",
+  noSummaries: "No tracking summaries yet",
 };
