@@ -1,12 +1,12 @@
 <template>
   <div class="min-h-screen text-text">
-    <div class="mx-auto max-w-screen-lg px-4 py-5 sm:px-6 sm:py-7">
-      <!-- 头部：MD3 动态表面包裹 -->
-      <div class="mb-6 rounded-[28px] bg-surface-container/40 p-5 sm:p-6">
-        <div class="mb-3 flex items-start gap-2.5">
+    <div class="mx-auto max-w-screen-lg px-3 py-4 sm:px-4 sm:py-5">
+      <!-- 轻量话题头部 -->
+      <header class="mb-4 sm:mb-5">
+        <div class="flex items-start gap-2">
           <button
               type="button"
-              class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-text-secondary transition hover:bg-surface hover:text-text active:scale-95"
+              class="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-text-secondary transition-colors hover:bg-surface-container/40 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
               @click="goBack"
               :aria-label="tr('radarTopicPage.back')"
           >
@@ -16,20 +16,29 @@
           </button>
 
           <div class="min-w-0 flex-1">
-            <h1 class="text-xl font-bold tracking-tight text-text line-clamp-2 sm:text-2xl">
+            <h1 class="break-words text-lg font-bold leading-snug tracking-tight text-text sm:text-xl">
               {{ topic?.title || tr('radarTopicPage.title') }}
             </h1>
-            <p v-if="topic?.description" class="mt-1 text-xs leading-relaxed text-text-secondary line-clamp-2 sm:text-sm">
-              {{ topic.description }}
+            <p v-if="topicSummary" class="mt-1 break-words text-xs leading-relaxed text-text-secondary line-clamp-2 sm:text-[13px]">
+              {{ topicSummary }}
+            </p>
+            <p v-if="topic" class="mt-0.5 break-words text-[11px] leading-5 text-text-secondary/70">
+              <span class="whitespace-nowrap">{{ tr('common.articleCount', { count: topic.articleCount }) }}</span>
+              <template v-for="kw in (topic.topKeywords ?? []).slice(0, 3)" :key="kw">
+                <span class="mx-1.5" aria-hidden="true">·</span>
+                <span>{{ kw }}</span>
+              </template>
             </p>
           </div>
 
           <!-- 刷新按钮 -->
           <button
+              type="button"
               @click="refresh"
               :disabled="topicLoading"
-              class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-text-secondary transition hover:bg-surface hover:text-text disabled:cursor-not-allowed disabled:opacity-40"
+              class="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-text-secondary transition-colors hover:bg-surface-container/40 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 disabled:cursor-not-allowed disabled:opacity-40"
               :aria-label="tr('radarTopicPage.refreshTopic')"
+              :aria-busy="topicLoading"
           >
             <svg
                 class="h-4 w-4 transition-transform"
@@ -44,36 +53,50 @@
           </button>
         </div>
 
-        <div class="flex items-center justify-between border-t border-outline/10 pt-3 text-xs text-text-secondary">
-          <span v-if="topic">{{ tr('common.articleCount', { count: topic.articleCount }) }}</span>
-          <span v-if="snapshotId" class="opacity-75">{{ tr('radarTopicPage.snapshot') }} {{ snapshotId }}</span>
-        </div>
-
-        <!-- 关键词胶囊群 -->
-        <div v-if="(topic?.topKeywords ?? []).length" class="mt-3.5 flex flex-wrap gap-1.5">
-          <span
-              v-for="kw in (topic?.topKeywords ?? []).slice(0, 10)"
-              :key="kw"
-              class="rounded-full bg-surface px-3 py-1 text-[11px] font-medium text-text-secondary shadow-2xs"
-          >
-            #{{ kw }}
-          </span>
-        </div>
-      </div>
+      </header>
 
       <!-- 错误提示 -->
-      <div v-if="topicError" class="mb-4 rounded-2xl bg-red-500/10 p-4 text-xs text-red-600 dark:text-red-400">
+      <div v-if="topicError" role="alert" class="mb-4 rounded-2xl bg-red-500/10 p-4 text-xs text-red-600 dark:text-red-400">
         {{ topicError }}
       </div>
 
-      <!-- 列表与分页 -->
-      <article-card-list
-          v-if="topicLoading || items.length"
-          :loading="topicLoading"
-          :items="items"
-          meta-field="relativeTime"
-          :show-action="false"
-      />
+      <!-- 与编号列表相同结构的骨架屏 -->
+      <div v-if="topicLoading" role="status" aria-live="polite">
+        <span class="sr-only">{{ tr('common.loadingList') }}</span>
+        <div v-for="i in 8" :key="i" class="flex animate-pulse items-start gap-2 py-1.5 sm:gap-2.5" aria-hidden="true">
+          <div class="w-8 shrink-0 pt-1">
+            <div class="ml-auto h-3 w-4 rounded bg-surface-container/60" />
+          </div>
+          <div class="min-w-0 flex-1">
+            <div class="flex h-5 items-center">
+              <div class="h-3.5 w-3/5 rounded bg-surface-container" />
+            </div>
+            <div class="mt-0.5 flex h-4 items-center">
+              <div class="h-2.5 w-2/5 rounded bg-surface-container/60" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 紧凑编号文章列表 -->
+      <ol v-else-if="items.length" :start="rankStart" class="list-none">
+        <li v-for="(item, index) in items" :key="item.articleId">
+          <router-link :to="{ name: 'article', params: { id: item.articleId } }"
+                       class="flex items-start gap-2 rounded-sm py-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 sm:gap-2.5">
+            <span class="w-8 shrink-0 pt-0.5 text-right font-mono text-xs tabular-nums text-text-secondary/60" aria-hidden="true">{{ rankStart + index }}.</span>
+            <div class="min-w-0 flex-1">
+              <h2 class="break-words text-sm font-medium leading-5 text-text">
+                <span class="transition-colors hover:text-primary">{{ item.title || tr('common.untitledArticle') }}</span>
+              </h2>
+              <p class="mt-0.5 flex min-w-0 items-center gap-1.5 text-[11px] leading-4 text-text-secondary/70">
+                <span class="min-w-0 truncate">{{ item.feedTitle || tr('common.unknownSource') }}</span>
+                <span class="shrink-0" aria-hidden="true">·</span>
+                <span class="shrink-0 whitespace-nowrap">{{ item.relativeTime || formatRelativeTime(item.publishedAt) }}</span>
+              </p>
+            </div>
+          </router-link>
+        </li>
+      </ol>
 
       <!-- 空状态 -->
       <div v-else class="flex flex-col items-center justify-center py-20 text-center">
@@ -105,9 +128,9 @@ import { useDocumentTitle } from '@/composables/documentTitle';
 import { computed, onMounted, watch } from 'vue';
 import { storeToRefs } from 'pinia';
 import { useRoute, useRouter } from 'vue-router';
-import ArticleCardList from '@/components/ArticleCardList.vue';
 import Pagination from '@/components/Pagination.vue';
 import { useRadarStore } from '@/stores/radar';
+import { formatRelativeTime } from '@/utils/datetime';
 
 defineOptions({ name: 'RadarTopicPage' });
 
@@ -120,9 +143,22 @@ const {
   topicLoading,
   topicError,
   topicPage,
+  topicSize,
   topicHasNextPage,
   topicHasPreviousPage
 } = storeToRefs(radarStore);
+const rankStart = computed(() => (topicPage.value - 1) * topicSize.value + 1);
+const topicSummary = computed(() => {
+  const description = topic.value?.description?.trim();
+  if (!description) return '';
+  const normalize = (value: string) => value.replace(/[\s\p{P}\p{S}]/gu, '').toLowerCase();
+  const normalized = normalize(description);
+  if (!normalized || normalized === normalize(topic.value?.title ?? '')) return '';
+  const keywords = new Set((topic.value?.topKeywords ?? []).map(normalize));
+  const terms = description.split(/[\s,，、;；|·#]+/u).map(normalize).filter(Boolean);
+  if (terms.length && terms.every(term => keywords.has(term))) return '';
+  return description;
+});
 useDocumentTitle(() => topic.value?.title || tr('radarTopicPage.title'));
 
 const topicId = computed(() => {
