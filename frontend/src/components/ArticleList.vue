@@ -133,7 +133,7 @@
       </div>
 
       <div v-else-if="view === 'social'"
-           class="mx-auto max-w-[600px] divide-y divide-outline/40 overflow-hidden rounded-3xl border border-outline/40" aria-hidden="true">
+           class="mx-auto max-w-[600px] divide-y divide-outline/40 overflow-hidden border-outline/40 sm:rounded-3xl sm:border" aria-hidden="true">
         <div v-for="i in 6" :key="`tl-skel-${i}`"
              class="flex animate-pulse items-start gap-3 px-3 py-3 sm:px-4">
           <div class="mt-0.5 h-9 w-9 shrink-0 rounded-full bg-surface-container"></div>
@@ -375,7 +375,7 @@
 
         <!-- 4. 社交流视图：连续时间线、左侧头像与正文下方操作 -->
         <div v-else key="view-social"
-             class="mx-auto max-w-[600px] divide-y divide-outline/40 overflow-hidden rounded-3xl border border-outline/40">
+             class="mx-auto max-w-[600px] divide-y divide-outline/40 overflow-hidden border-outline/40 sm:rounded-3xl sm:border">
           <article
               v-for="item in items"
               :key="item.id"
