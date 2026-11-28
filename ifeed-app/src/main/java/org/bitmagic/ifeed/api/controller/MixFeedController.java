@@ -3,19 +3,12 @@ package org.bitmagic.ifeed.api.controller;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.bitmagic.ifeed.api.request.MixFeedRequest;
-import org.bitmagic.ifeed.api.request.SubscriptionRequest;
 import org.bitmagic.ifeed.api.response.MessageResponse;
 import org.bitmagic.ifeed.api.response.MixFeedDetailResponse;
 import org.bitmagic.ifeed.api.response.MixFeedListResponse;
 import org.bitmagic.ifeed.api.util.IdentifierUtils;
-import org.bitmagic.ifeed.config.security.UserPrincipal;
-import org.bitmagic.ifeed.domain.model.MixFeed;
-import org.bitmagic.ifeed.domain.model.User;
-import org.bitmagic.ifeed.domain.service.AuthService;
-import org.bitmagic.ifeed.domain.service.MixFeedService;
-import org.bitmagic.ifeed.domain.service.SubscriptionService;
-import org.bitmagic.ifeed.domain.service.UserService;
-import org.bitmagic.ifeed.exception.ApiException;
+import org.bitmagic.ifeed.application.feed.MixFeedApplicationService;
+import org.bitmagic.ifeed.security.UserPrincipal;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -24,109 +17,49 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-
 import java.util.List;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/mix-feeds")
 @RequiredArgsConstructor
 public class MixFeedController {
-
-    private final MixFeedService mixFeedService;
-    private final UserService userService;
-    private final SubscriptionService subscriptionService;
+    private final MixFeedApplicationService mixFeeds;
 
     @PostMapping
     public ResponseEntity<MessageResponse> create(@AuthenticationPrincipal UserPrincipal principal,
-                                                  @Valid @RequestBody MixFeedRequest request) {
-        User user = resolveUser(principal);
-        MixFeed mixFeed = mixFeedService.create(user, request.name(), request.description(), request.icon(),
-                request.isPublic() != null && request.isPublic(), request.filterConfig());
-        subscriptionService.subscribe(user, SubscriptionRequest.of(mixFeed.getUid().toString()));
+                                                   @Valid @RequestBody MixFeedRequest request) {
+        mixFeeds.create(userId(principal), request);
         return ResponseEntity.status(HttpStatus.CREATED).body(new MessageResponse("MixFeed created."));
     }
 
     @GetMapping
     public ResponseEntity<List<MixFeedListResponse>> listMyMixFeeds(@AuthenticationPrincipal UserPrincipal principal) {
-        ensureAuthenticated(principal);
-        List<MixFeed> mixFeeds = mixFeedService.getMyMixFeeds(principal.getId());
-        List<MixFeedListResponse> responses = mixFeeds.stream()
-                .map(this::toListResponse)
-                .collect(Collectors.toList());
-        return ResponseEntity.ok(responses);
+        return ResponseEntity.ok(mixFeeds.listMyMixFeeds(userId(principal)));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<MixFeedDetailResponse> getDetail(@AuthenticationPrincipal UserPrincipal principal,
-                                                           @PathVariable String id) {
-        ensureAuthenticated(principal);
-        var detail = mixFeedService.getDetail(IdentifierUtils.parseUuid(id, "mix feed id"), principal.getId());
-        var subscribed = mixFeedService.isSubscribed(principal.getId(), detail.mixFeed());
-        return ResponseEntity.ok(toDetailResponse(detail, subscribed));
+    public ResponseEntity<MixFeedDetailResponse> getDetail(@AuthenticationPrincipal UserPrincipal principal, @PathVariable String id) {
+        return ResponseEntity.ok(mixFeeds.getDetail(userId(principal), IdentifierUtils.parseUuid(id, "mix feed id")));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<MessageResponse> update(@AuthenticationPrincipal UserPrincipal principal,
-                                                  @PathVariable String id,
-                                                  @Valid @RequestBody MixFeedRequest request) {
-        mixFeedService.update(IdentifierUtils.parseUuid(id, "mix feed id"), principal.getId(),
-                request.name(), request.description(), request.icon(), request.isPublic(), request.filterConfig());
+    public ResponseEntity<MessageResponse> update(@AuthenticationPrincipal UserPrincipal principal, @PathVariable String id,
+                                                   @Valid @RequestBody MixFeedRequest request) {
+        mixFeeds.update(userId(principal), IdentifierUtils.parseUuid(id, "mix feed id"), request);
         return ResponseEntity.ok(new MessageResponse("MixFeed updated."));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<MessageResponse> delete(@AuthenticationPrincipal UserPrincipal principal,
-                                                  @PathVariable String id) {
-        User user = resolveUser(principal);
-        mixFeedService.delete(IdentifierUtils.parseUuid(id, "mix feed id"), user.getId());
+    public ResponseEntity<MessageResponse> delete(@AuthenticationPrincipal UserPrincipal principal, @PathVariable String id) {
+        mixFeeds.delete(userId(principal), IdentifierUtils.parseUuid(id, "mix feed id"));
         return ResponseEntity.ok(new MessageResponse("MixFeed deleted."));
     }
 
     @GetMapping("/public")
-    public ResponseEntity<Page<MixFeedListResponse>> listPublicMixFeeds(@PageableDefault(direction = Sort.Direction.DESC, sort = "subscriberCount") Pageable pageable) {
-        Page<MixFeed> mixFeeds = mixFeedService.getPublicMixFeeds(pageable);
-        return ResponseEntity.ok(mixFeeds.map(this::toListResponse));
+    public ResponseEntity<Page<MixFeedListResponse>> listPublicMixFeeds(
+            @PageableDefault(direction = Sort.Direction.DESC, sort = "subscriberCount") Pageable pageable) {
+        return ResponseEntity.ok(mixFeeds.listPublicMixFeeds(pageable));
     }
 
-    private void ensureAuthenticated(UserPrincipal principal) {
-        if (principal == null) {
-            throw new ApiException(HttpStatus.UNAUTHORIZED, "Unauthorized");
-        }
-    }
-
-    private User resolveUser(UserPrincipal principal) {
-        if (principal == null) {
-            throw new ApiException(HttpStatus.UNAUTHORIZED, "Unauthorized");
-        }
-        return userService.findUserById(principal.getId())
-                .orElseThrow(() -> new ApiException(HttpStatus.UNAUTHORIZED, "User not found"));
-    }
-
-    private MixFeedListResponse toListResponse(MixFeed mixFeed) {
-        return new MixFeedListResponse(
-                mixFeed.getUid().toString(),
-                mixFeed.getName(),
-                mixFeed.getDescription(),
-                mixFeed.getIcon(),
-                mixFeed.getSubscriberCount(),
-                mixFeed.getIsPublic(),
-                mixFeed.getCreatedAt());
-    }
-
-    private MixFeedDetailResponse toDetailResponse(MixFeedService.MixFeedDetail detail, boolean subscribed) {
-        MixFeed mixFeed = detail.mixFeed();
-        return new MixFeedDetailResponse(
-                mixFeed.getUid().toString(),
-                mixFeed.getName(),
-                mixFeed.getDescription(),
-                mixFeed.getIcon(),
-                detail.subscriberCount(),
-                detail.articleCount(),
-                mixFeed.config(),
-                subscribed,
-                mixFeed.getIsPublic(),
-                mixFeed.getCreatedAt(),
-                mixFeed.getUpdatedAt());
-    }
+    private Integer userId(UserPrincipal principal) { return principal == null ? null : principal.getId(); }
 }

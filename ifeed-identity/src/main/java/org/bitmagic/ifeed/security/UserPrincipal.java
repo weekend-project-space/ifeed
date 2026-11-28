@@ -1,4 +1,4 @@
-package org.bitmagic.ifeed.config.security;
+package org.bitmagic.ifeed.security;
 
 import lombok.Getter;
 import org.bitmagic.ifeed.domain.model.User;

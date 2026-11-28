@@ -7,7 +7,7 @@ import org.bitmagic.ifeed.api.response.CollectionStateResponse;
 import org.bitmagic.ifeed.api.response.MessageResponse;
 import org.bitmagic.ifeed.api.util.IdentifierUtils;
 import org.bitmagic.ifeed.api.util.BehaviorPageables;
-import org.bitmagic.ifeed.config.security.UserPrincipal;
+import org.bitmagic.ifeed.security.UserPrincipal;
 import org.bitmagic.ifeed.domain.service.UserCollectionService;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;

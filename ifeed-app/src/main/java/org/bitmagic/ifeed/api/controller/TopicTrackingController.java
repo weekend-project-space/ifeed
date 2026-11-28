@@ -8,7 +8,7 @@ import org.bitmagic.ifeed.api.tracking.TopicTrackSuggestionResponse;
 import org.bitmagic.ifeed.api.tracking.TopicTrackSummaryResponse;
 import org.bitmagic.ifeed.api.tracking.TopicTrackCursorPage;
 import org.bitmagic.ifeed.application.tracking.TopicTrackingService;
-import org.bitmagic.ifeed.config.security.UserPrincipal;
+import org.bitmagic.ifeed.security.UserPrincipal;
 import org.bitmagic.ifeed.exception.ApiException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

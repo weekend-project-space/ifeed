@@ -4,10 +4,9 @@ import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.bitmagic.ifeed.api.response.UserResponse;
 import org.bitmagic.ifeed.domain.model.User;
-import org.bitmagic.ifeed.domain.repository.UserRepository;
-import org.bitmagic.ifeed.domain.service.UserService;
+import org.bitmagic.ifeed.application.user.UserPlanApplicationService;
 import org.bitmagic.ifeed.exception.ApiException;
-import org.bitmagic.ifeed.config.security.UserPrincipal;
+import org.bitmagic.ifeed.security.UserPrincipal;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -19,9 +18,7 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class UserController {
 
-    private final UserRepository userRepository;
-
-    private final UserService userService;
+    private final UserPlanApplicationService plans;
 
     //    src="https://api.dicebear.com/7.x/avataaars/svg?seed=13437977913"
     @GetMapping("/user")
@@ -35,10 +32,7 @@ public class UserController {
     @PostMapping("/plan")
     @PreAuthorize("hasRole('ADMIN')")
     public void updateUserPlan(@AuthenticationPrincipal UserPrincipal principal, @RequestBody UserReq req) {
-        userRepository.findByUsername(req.getUsername()).ifPresent(user -> {
-            user.changePlan(req.getPlan());
-            userService.updateUser(user);
-        });
+        plans.updatePlan(req.getUsername(), req.getPlan());
     }
 
     @Data

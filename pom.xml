@@ -22,10 +22,13 @@
         <module>ifeed-user-engagement</module>
         <module>ifeed-ingestion</module>
         <module>ifeed-intelligence</module>
+        <module>ifeed-application</module>
+        <module>ifeed-mcp</module>
         <module>ifeed-app</module>
     </modules>
     <properties>
         <java.version>21</java.version>
+        <mcp.version>2.2.0</mcp.version>
         <hibernate.version>6.6.33.Final</hibernate.version>
         <hibernate-vector.version>6.6.29.Final</hibernate-vector.version>
         <spring-ai.version>1.0.0-M6</spring-ai.version>

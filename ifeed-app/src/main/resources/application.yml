@@ -42,6 +42,10 @@ spring:
   profiles:
     active: rel
 app:
+  jwt:
+    secret: ${APP_JWT_SECRET:}
+    web-ttl: ${APP_JWT_WEB_TTL:PT12H}
+    mcp-ttl: ${APP_JWT_MCP_TTL:P30D}
   # 定时任务
   rss:
     fetcher:

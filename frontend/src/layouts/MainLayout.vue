@@ -164,6 +164,9 @@
                   <RouterLink :to="{ name: 'upgrade' }" class="flex w-full items-center rounded-xl px-3 py-2 text-xs font-medium text-text transition-colors hover:bg-surface-container hover:text-primary" @click="closeUserMenu()">
                     {{ t('mainLayout.my') }}
                   </RouterLink>
+                  <RouterLink v-if="user" :to="{ name: 'mcpTokens' }" class="flex w-full items-center rounded-xl px-3 py-2 text-xs font-medium text-text transition-colors hover:bg-surface-container hover:text-primary" @click="closeUserMenu()">
+                    MCP {{ locale === 'en' ? 'access' : '访问凭证' }}
+                  </RouterLink>
                   <RouterLink to="/feed/channels"
                               class="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium text-text hover:bg-surface-container transition" @click="closeUserMenu()">
                     <svg class="h-4 w-4 text-text-secondary" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">

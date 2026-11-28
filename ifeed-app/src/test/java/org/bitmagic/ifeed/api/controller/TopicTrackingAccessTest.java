@@ -4,7 +4,7 @@ import org.bitmagic.ifeed.application.tracking.TopicTrackingService;
 import org.bitmagic.ifeed.api.tracking.TopicTrackCursorPage;
 import org.bitmagic.ifeed.config.security.SecurityConfig;
 import org.bitmagic.ifeed.config.security.TokenAuthenticationFilter;
-import org.bitmagic.ifeed.domain.repository.UserSessionRepository;
+import org.bitmagic.ifeed.domain.service.JwtTokenService;
 import org.bitmagic.ifeed.exception.GlobalExceptionHandler;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -86,7 +86,7 @@ class TopicTrackingAccessTest {
 
         @Bean
         TokenAuthenticationFilter authenticationFilter() {
-            return new TokenAuthenticationFilter(mock(UserSessionRepository.class));
+            return new TokenAuthenticationFilter(mock(JwtTokenService.class));
         }
 
         @Override

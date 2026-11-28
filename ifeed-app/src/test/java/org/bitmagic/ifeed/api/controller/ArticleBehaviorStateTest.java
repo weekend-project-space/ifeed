@@ -2,8 +2,12 @@ package org.bitmagic.ifeed.api.controller;
 
 import org.bitmagic.ifeed.api.response.CollectionStateResponse;
 import org.bitmagic.ifeed.application.embedding.ArticleEnhancedService;
+import org.bitmagic.ifeed.application.article.ArticleQueryService;
+import org.bitmagic.ifeed.application.article.ArticleRecommendationQueryService;
+import org.bitmagic.ifeed.application.article.ArticleEnrichmentApplicationService;
+import org.bitmagic.ifeed.application.search.ArticleSearchQueryService;
 import org.bitmagic.ifeed.application.recommendation.RecommendationService;
-import org.bitmagic.ifeed.config.security.UserPrincipal;
+import org.bitmagic.ifeed.security.UserPrincipal;
 import org.bitmagic.ifeed.domain.model.Article;
 import org.bitmagic.ifeed.domain.model.Feed;
 import org.bitmagic.ifeed.domain.model.User;
@@ -13,7 +17,6 @@ import org.bitmagic.ifeed.domain.service.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -35,13 +38,18 @@ class ArticleBehaviorStateTest {
     @Mock private FeedRepository feeds;
     @Mock private MixFeedRepository mixFeeds;
     @Mock private MixFeedService mixFeedService;
-    @InjectMocks private ArticleController controller;
+    private ArticleController controller;
 
     private final UUID articleUid = UUID.randomUUID();
     private final Long articleId = 3_000_000_001L;
 
     @BeforeEach
     void setUp() {
+        var states = mock(UserArticleStateService.class);
+        controller = new ArticleController(
+                new ArticleQueryService(articles, enrichment, collections, likes, feeds, mixFeeds, mixFeedService, states),
+                new ArticleRecommendationQueryService(recommendations, articles, states),
+                new ArticleEnrichmentApplicationService(articles, enhanced));
         var feed = new Feed();
         feed.setUid(UUID.randomUUID());
         feed.setUrl("https://example.com/feed.xml");

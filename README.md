@@ -27,6 +27,8 @@ iFeed 是一个帮助你整理和阅读互联网内容的应用。
 项目由几个相互配合的部分组成，普通使用者不需要分别操作它们：
 
 - `ifeed-app`：启动整个应用，并提供网页和接口。
+- `ifeed-application`：组合业务能力，封装网页和 MCP 共用的查询与业务用例。
+- `ifeed-mcp`：让 AI 客户端通过 MCP 使用文章、推荐、收藏等能力。
 - `ifeed-identity`：处理注册、登录和账号安全。
 - `ifeed-content`：保存网站、文章和文章详情。
 - `ifeed-subscription`：管理你订阅的网站。

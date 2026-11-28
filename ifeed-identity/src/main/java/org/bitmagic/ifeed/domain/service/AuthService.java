@@ -2,9 +2,7 @@ package org.bitmagic.ifeed.domain.service;
 
 import lombok.RequiredArgsConstructor;
 import org.bitmagic.ifeed.domain.model.User;
-import org.bitmagic.ifeed.domain.model.UserSession;
 import org.bitmagic.ifeed.domain.repository.UserRepository;
-import org.bitmagic.ifeed.domain.repository.UserSessionRepository;
 import org.bitmagic.ifeed.exception.ApiException;
 import org.bitmagic.ifeed.infrastructure.spec.Spec;
 import org.springframework.http.HttpStatus;
@@ -12,20 +10,15 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.security.SecureRandom;
 import java.time.Instant;
-import java.util.Base64;
 
 @Service
 @RequiredArgsConstructor
 public class AuthService {
 
-    private static final int TOKEN_BYTE_SIZE = 32;
-
     private final UserRepository userRepository;
-    private final UserSessionRepository userSessionRepository;
+    private final JwtTokenService jwtTokenService;
     private final PasswordEncoder passwordEncoder;
-    private final SecureRandom secureRandom = new SecureRandom();
 
     @Transactional
     public AuthToken register(String username, String rawPassword) {
@@ -84,31 +77,11 @@ public class AuthService {
 
     @Transactional
     public void logout(String token) {
-        if (token == null || token.isBlank()) {
-            return;
-        }
-
-        userSessionRepository.deleteByToken(token);
+        // Access JWTs expire naturally; the client discards its local copy on logout.
     }
 
     private AuthToken issueToken(User user) {
-        userSessionRepository.findByUser(user).ifPresent(session -> {
-            userSessionRepository.deleteByToken(session.getToken());
-        });
-
-        var token = generateToken();
-        var session = UserSession.builder()
-                .token(token)
-                .user(user)
-                .build();
-
-        userSessionRepository.save(session);
+        var token = jwtTokenService.issueWeb(user);
         return new AuthToken(user, token);
-    }
-
-    private String generateToken() {
-        var bytes = new byte[TOKEN_BYTE_SIZE];
-        secureRandom.nextBytes(bytes);
-        return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
     }
 }

@@ -4,7 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.bitmagic.ifeed.application.recommendation.recall.core.RecallEngine;
 import org.bitmagic.ifeed.application.recommendation.recall.model.RecallRequest;
 import org.bitmagic.ifeed.application.recommendation.recall.model.RecallResponse;
-import org.bitmagic.ifeed.config.security.UserPrincipal;
+import org.bitmagic.ifeed.security.UserPrincipal;
 import org.bitmagic.ifeed.exception.ApiException;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.http.HttpStatus;

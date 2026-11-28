@@ -4,7 +4,7 @@ import org.bitmagic.ifeed.api.request.CollectionRequest;
 import org.bitmagic.ifeed.api.response.CollectionFolderResponse;
 import org.bitmagic.ifeed.api.response.CollectionStateResponse;
 import org.bitmagic.ifeed.api.response.LikeStateResponse;
-import org.bitmagic.ifeed.config.security.UserPrincipal;
+import org.bitmagic.ifeed.security.UserPrincipal;
 import org.bitmagic.ifeed.domain.model.User;
 import org.bitmagic.ifeed.domain.service.UserCollectionFolderService;
 import org.bitmagic.ifeed.domain.service.UserCollectionService;

@@ -1,10 +1,14 @@
 package org.bitmagic.ifeed.config.security;
 
-import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.bitmagic.ifeed.security.CredentialType;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.security.authorization.AuthorityAuthorizationManager;
+import org.springframework.security.authorization.AuthorizationManager;
+import org.springframework.security.authorization.AuthorizationManagers;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -13,9 +17,10 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.web.AuthenticationEntryPoint;
+import org.springframework.security.oauth2.server.resource.web.BearerTokenAuthenticationEntryPoint;
+import org.springframework.security.oauth2.server.resource.web.access.BearerTokenAccessDeniedHandler;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.access.AccessDeniedHandler;
+import org.springframework.security.web.access.intercept.RequestAuthorizationContext;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
@@ -24,67 +29,66 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @RequiredArgsConstructor
 public class SecurityConfig {
 
+    private static final AuthorizationManager<RequestAuthorizationContext> NON_MCP = AuthorizationManagers.not(
+            AuthorityAuthorizationManager.hasAuthority(CredentialType.MCP.authority()));
+
+    private static final AuthorizationManager<RequestAuthorizationContext> WEB_ADMIN = AuthorizationManagers.allOf(
+            AuthorityAuthorizationManager.hasAuthority(CredentialType.WEB.authority()),
+            AuthorityAuthorizationManager.hasRole("ADMIN"));
+
     private final TokenAuthenticationFilter tokenAuthenticationFilter;
 
     @Bean
     public SecurityFilterChain apiSecurityFilterChain(HttpSecurity http) throws Exception {
 
-        http
-                // ===== 基础安全设置 =====
+        return http
+                .cors(Customizer.withDefaults())
                 .csrf(AbstractHttpConfigurer::disable)
                 .formLogin(AbstractHttpConfigurer::disable)
                 .httpBasic(AbstractHttpConfigurer::disable)
+                .logout(AbstractHttpConfigurer::disable)
+                .requestCache(AbstractHttpConfigurer::disable)
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
 
-                // ===== 授权规则 =====
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(
-                                "/api/auth/**",
-                                "/actuator/**",
-                                "/api/feeds/**",
-                                "/api/radar/**",
-                                "/api/articles/**",
-                                "/api/discovery/**"
-                        ).permitAll()
-                        .requestMatchers("/api/topic-tracks/suggestions", "/api/topic-tracks/following").authenticated()
-                        .requestMatchers(HttpMethod.GET, "/api/topic-tracks", "/api/topic-tracks/summaries",
-                                "/api/topic-tracks/limits", "/api/topic-tracks/*", "/api/topic-tracks/summaries/*/articles").permitAll()
-                        .requestMatchers("/api/**").authenticated()
+                        .requestMatchers("/api/mcp").hasAuthority(CredentialType.MCP.authority())
+                        // These reserved paths must precede the public detail patterns below.
+                        .requestMatchers("/api/feeds/search", "/api/feeds/lookup", "/api/articles/insights",
+                                "/api/topic-tracks/suggestions", "/api/topic-tracks/following")
+                        .hasAuthority(CredentialType.WEB.authority())
+                        .requestMatchers(HttpMethod.POST, "/api/auth/login", "/api/auth/register", "/api/auth/logout")
+                        .access(NON_MCP)
+                        .requestMatchers(HttpMethod.GET,
+                                "/api/auth/linuxdo", "/api/auth/linuxdo/callback",
+                                "/api/feeds/{feedId}",
+                                "/api/articles", "/api/articles/recommendations", "/api/articles/{articleId}",
+                                "/api/articles/{articleId}/recommendations",
+                                "/api/radar/digest", "/api/radar/topics/{topicId}",
+                                "/api/discovery/categories", "/api/discovery/feeds", "/api/discovery/feeds/search",
+                                "/api/topic-tracks", "/api/topic-tracks/summaries", "/api/topic-tracks/limits",
+                                "/api/topic-tracks/status", "/api/topic-tracks/{topicId}",
+                                "/api/topic-tracks/summaries/{summaryId}/articles",
+                                "/actuator/health", "/actuator/health/**")
+                        .access(NON_MCP)
+                        .requestMatchers("/actuator/**").access(WEB_ADMIN)
+                        .requestMatchers("/api/**").hasAuthority(CredentialType.WEB.authority())
                         .anyRequest().denyAll()
                 )
-
-                // ===== Bearer Token Filter =====
-                .addFilterBefore(
-                        tokenAuthenticationFilter,
-                        UsernamePasswordAuthenticationFilter.class
-                )
-
-                // ===== Bearer 语义的异常处理 =====
+                .addFilterBefore(tokenAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .exceptionHandling(ex -> ex
-                        .authenticationEntryPoint(bearerEntryPoint())
-                        .accessDeniedHandler(bearerAccessDeniedHandler())
-                );
-
-        return http.build();
+                        .authenticationEntryPoint(new BearerTokenAuthenticationEntryPoint())
+                        .accessDeniedHandler(new BearerTokenAccessDeniedHandler()))
+                .build();
     }
 
     @Bean
-    AuthenticationEntryPoint bearerEntryPoint() {
-        return (request, response, authException) -> {
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            response.setHeader("WWW-Authenticate", "Bearer");
-        };
+    FilterRegistrationBean<TokenAuthenticationFilter> tokenAuthenticationFilterRegistration() {
+        var registration = new FilterRegistrationBean<>(tokenAuthenticationFilter);
+        registration.setEnabled(false); // Run only inside the security chain, after its CORS filter.
+        return registration;
     }
-
-    @Bean
-    AccessDeniedHandler bearerAccessDeniedHandler() {
-        return (request, response, accessDeniedException) -> {
-            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
-        };
-    }
-
 
     @Bean
     public PasswordEncoder passwordEncoder() {

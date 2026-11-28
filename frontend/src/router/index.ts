@@ -19,6 +19,7 @@ import UpgradePage from "../pages/UpgradePage.vue";
 import RadarPage from '../pages/RadarPage.vue';
 import RadarTopicPage from '../pages/RadarTopicPage.vue';
 import TopicTrackingPage from '../pages/TopicTrackingPage.vue';
+import McpTokensPage from '../pages/McpTokensPage.vue';
 import { useAuthStore } from '../stores/auth';
 // router/index.ts
 
@@ -143,6 +144,11 @@ const router = createRouter({
                     path: 'feed/you',
                     name: 'upgrade',
                     component: UpgradePage,
+                },
+                {
+                    path: 'settings/mcp',
+                    name: 'mcpTokens',
+                    component: McpTokensPage,
                 },
                 {
                     path: 'admin',

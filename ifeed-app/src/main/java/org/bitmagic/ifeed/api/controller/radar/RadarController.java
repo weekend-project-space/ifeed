@@ -4,7 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.bitmagic.ifeed.api.response.PageResponse;
 import org.bitmagic.ifeed.api.response.radar.RadarItemResponse;
 import org.bitmagic.ifeed.api.response.radar.RadarTopicResponse;
-import org.bitmagic.ifeed.domain.service.radar.RadarQueryService;
+import org.bitmagic.ifeed.application.radar.RadarQueryApplicationService;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.bitmagic.ifeed.exception.ApiException;
@@ -22,7 +22,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class RadarController {
 
-    private final RadarQueryService radarQueryService;
+    private final RadarQueryApplicationService radarQueryService;
 
     @GetMapping("/digest")
     public ResponseEntity<PageResponse<RadarTopicResponse>> digest(
@@ -30,9 +30,6 @@ public class RadarController {
             @RequestParam(required = false) Integer windowHours,
             Pageable pageable
     ) {
-        if (windowHours != null && (windowHours < 6 || windowHours > 72)) {
-            throw new ApiException(HttpStatus.BAD_REQUEST, "INVALID_WINDOW_HOURS");
-        }
         return ResponseEntity.ok(radarQueryService.digest(snapshotId, windowHours, pageable));
     }
 

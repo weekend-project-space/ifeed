@@ -3,7 +3,7 @@ package org.bitmagic.ifeed.api.controller;
 import lombok.RequiredArgsConstructor;
 import org.bitmagic.ifeed.api.response.CategoriesResponse;
 import org.bitmagic.ifeed.api.response.DiscoveryFeedResponse;
-import org.bitmagic.ifeed.config.security.UserPrincipal;
+import org.bitmagic.ifeed.security.UserPrincipal;
 import org.bitmagic.ifeed.domain.service.DiscoveryService;
 import org.bitmagic.ifeed.exception.ApiException;
 import org.springframework.data.domain.Page;

@@ -1,11 +1,15 @@
 package org.bitmagic.ifeed.api.controller;
 
 import org.bitmagic.ifeed.application.embedding.ArticleEnhancedService;
+import org.bitmagic.ifeed.application.article.ArticleQueryService;
+import org.bitmagic.ifeed.application.article.ArticleRecommendationQueryService;
+import org.bitmagic.ifeed.application.article.ArticleEnrichmentApplicationService;
+import org.bitmagic.ifeed.application.search.ArticleSearchQueryService;
 import org.bitmagic.ifeed.application.recommendation.RecRequest;
 import org.bitmagic.ifeed.application.recommendation.RecResponse;
 import org.bitmagic.ifeed.application.recommendation.RecommendationService;
 import org.bitmagic.ifeed.application.search.SearchRetrievalService;
-import org.bitmagic.ifeed.config.security.UserPrincipal;
+import org.bitmagic.ifeed.security.UserPrincipal;
 import org.bitmagic.ifeed.domain.model.Article;
 import org.bitmagic.ifeed.domain.model.User;
 import org.bitmagic.ifeed.domain.record.ArticleBehaviorState;
@@ -19,12 +23,10 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.Instant;
 import java.util.List;
@@ -48,16 +50,19 @@ class ArticleListBehaviorStateTest {
     @Mock private MixFeedRepository mixFeeds;
     @Mock private MixFeedService mixFeedService;
     @Mock private UserArticleStateRepository states;
-    @InjectMocks private ArticleController articleController;
-    @InjectMocks private SearchController searchController;
+    private ArticleController articleController;
+    private SearchController searchController;
     private final UUID articleUid = UUID.randomUUID();
     private final UUID folderUid = UUID.randomUUID();
 
     @BeforeEach
     void setUp() {
         var service = new UserArticleStateService(states);
-        ReflectionTestUtils.setField(articleController, "articleStates", service);
-        ReflectionTestUtils.setField(searchController, "articleStates", service);
+        articleController = new ArticleController(
+                new ArticleQueryService(articles, enrichment, collections, likes, feeds, mixFeeds, mixFeedService, service),
+                new ArticleRecommendationQueryService(recommendations, articles, service),
+                new ArticleEnrichmentApplicationService(articles, enhanced));
+        searchController = new SearchController(new ArticleSearchQueryService(articles, search, service));
     }
 
     @Test

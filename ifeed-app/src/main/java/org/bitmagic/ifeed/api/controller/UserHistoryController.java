@@ -6,7 +6,7 @@ import org.bitmagic.ifeed.api.response.MessageResponse;
 import org.bitmagic.ifeed.api.response.ReadHistoryItemResponse;
 import org.bitmagic.ifeed.api.util.IdentifierUtils;
 import org.bitmagic.ifeed.api.util.BehaviorPageables;
-import org.bitmagic.ifeed.config.security.UserPrincipal;
+import org.bitmagic.ifeed.security.UserPrincipal;
 import org.bitmagic.ifeed.domain.service.UserHistoryService;
 import org.bitmagic.ifeed.exception.ApiException;
 import org.springframework.data.domain.Page;
