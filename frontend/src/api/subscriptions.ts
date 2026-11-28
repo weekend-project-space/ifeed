@@ -8,7 +8,7 @@ export interface SubscriptionBaseDto {
   siteUrl?: string | null;
   avatar?: string;
   icon?: string | null;
-  type?: 'FEED' | 'MIX_FEED';
+  type?: 'FEED';
   lastFetched?: string;
   lastUpdated?: string;
   failureCount?: number;
@@ -17,11 +17,6 @@ export interface SubscriptionBaseDto {
 
 export interface SubscriptionListItemDto extends SubscriptionBaseDto {
   isRead?: boolean;
-}
-
-export interface SubscriptionSearchResultDto extends SubscriptionBaseDto {
-  subscriberCount: number;
-  subscribed: boolean;
 }
 
 export interface OpmlPreviewFeedDto {
@@ -66,9 +61,6 @@ export const addSubscription = (feedUrl: string, feedId: string) =>
 
 export const removeSubscription = (feedId: string) =>
   del(`/api/subscriptions/${encodeURIComponent(feedId)}`);
-
-export const searchSubscriptions = (query: string) =>
-  get<SubscriptionSearchResultDto[]>('/api/feeds/search', { query: { query } });
 
 export const previewOpmlImport = (file: File) => {
   const formData = new FormData();

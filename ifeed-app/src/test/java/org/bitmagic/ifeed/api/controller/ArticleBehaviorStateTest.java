@@ -12,7 +12,6 @@ import org.bitmagic.ifeed.domain.model.Article;
 import org.bitmagic.ifeed.domain.model.Feed;
 import org.bitmagic.ifeed.domain.model.User;
 import org.bitmagic.ifeed.domain.repository.FeedRepository;
-import org.bitmagic.ifeed.domain.repository.MixFeedRepository;
 import org.bitmagic.ifeed.domain.service.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -36,8 +35,6 @@ class ArticleBehaviorStateTest {
     @Mock private UserLikeService likes;
     @Mock private RecommendationService recommendations;
     @Mock private FeedRepository feeds;
-    @Mock private MixFeedRepository mixFeeds;
-    @Mock private MixFeedService mixFeedService;
     private ArticleController controller;
 
     private final UUID articleUid = UUID.randomUUID();
@@ -47,7 +44,7 @@ class ArticleBehaviorStateTest {
     void setUp() {
         var states = mock(UserArticleStateService.class);
         controller = new ArticleController(
-                new ArticleQueryService(articles, enrichment, collections, likes, feeds, mixFeeds, mixFeedService, states),
+                new ArticleQueryService(articles, enrichment, collections, likes, feeds, states),
                 new ArticleRecommendationQueryService(recommendations, articles, states),
                 new ArticleEnrichmentApplicationService(articles, enhanced));
         var feed = new Feed();

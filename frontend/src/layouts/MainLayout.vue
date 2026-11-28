@@ -577,7 +577,6 @@ import { storeToRefs } from 'pinia';
 import { useAuthStore } from '../stores/auth';
 import { useThemeStore } from '../stores/theme';
 import { useSubscriptionsStore } from '../stores/subscriptions';
-import { useMixFeedsStore } from "../stores/mixFeeds";
 import GlobalAudioPlayer from "../components/GlobalAudioPlayer.vue";
 import { useI18n } from 'vue-i18n';
 import { setLocale as changeLocale, type Locale } from '@/i18n';
@@ -604,7 +603,6 @@ const router = useRouter();
 const authStore = useAuthStore();
 const themeStore = useThemeStore();
 const subscriptionsStore = useSubscriptionsStore();
-const mixFeedStore = useMixFeedsStore();
 
 const { user } = storeToRefs(authStore);
 const { isDark } = storeToRefs(themeStore);
@@ -1085,7 +1083,6 @@ onMounted(async () => {
   }
   if (authStore.isAuthenticated) {
     await subscriptionsStore.fetchSubscriptions();
-    mixFeedStore.clearMyMixFeeds();
   }
 });
 

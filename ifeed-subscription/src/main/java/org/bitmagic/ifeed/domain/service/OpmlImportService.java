@@ -87,7 +87,7 @@ public class OpmlImportService {
                                 existingFeedIds))
                 .stream().map(UserSubscription::getSourceId).collect(Collectors.toSet());
 
-        long usedQuota = userSubscriptionRepository.countByUserAndActiveTrue(user);
+        long usedQuota = userSubscriptionRepository.countByUserAndSourceTypeAndActiveTrue(user, SourceType.FEED);
         int remainingQuota = (int) Math.max(0, user.getCurrentPlan().getMaxSubscriptions() - usedQuota);
 
         List<OpmlPreviewFeedResponse> feeds = unique.stream()
@@ -171,7 +171,7 @@ public class OpmlImportService {
         List<UserSubscription> newSubs = new ArrayList<>();
         List<OpmlImportSkippedResponse> skipped = new ArrayList<>();
 
-        long usedQuota = userSubscriptionRepository.countByUserAndActiveTrue(user);
+        long usedQuota = userSubscriptionRepository.countByUserAndSourceTypeAndActiveTrue(user, SourceType.FEED);
         int remainingQuota = (int) Math.max(0, user.getCurrentPlan().getMaxSubscriptions() - usedQuota);
         int imported = 0;
 

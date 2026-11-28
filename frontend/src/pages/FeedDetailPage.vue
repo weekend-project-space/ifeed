@@ -46,14 +46,7 @@
 
               <!-- 统计数据 -->
               <div class="flex flex-wrap gap-4 text-xs text-text-secondary">
-                <span v-if="detail?.sources?.length" class="flex items-center gap-1.5 font-medium">
-                  <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                          d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
-                  </svg>
-                  {{ tr('common.sourceCount', { count: detail.sources.length }) }}
-                </span>
-                <span v-else class="flex items-center gap-1.5 font-medium">
+                <span class="flex items-center gap-1.5 font-medium">
                   <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                           d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
@@ -67,21 +60,6 @@
                           d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
                   </svg>
                   {{ tr('common.subscriberCount', { count: detail?.subscriberCount ?? 0 }) }}
-                </span>
-              </div>
-
-              <!-- 混合源包含的子源 -->
-              <div v-if="detail?.sources && detail.sources.length > 0" class="flex flex-wrap gap-1.5 pt-1">
-                <span
-                    v-for="sourceId in detail.sources"
-                    :key="sourceId"
-                    class="inline-flex items-center gap-1 rounded-full bg-surface px-3 py-1 text-[11px] font-medium text-text-secondary shadow-2xs"
-                >
-                  <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                          d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/>
-                  </svg>
-                  {{ sourceId }}
                 </span>
               </div>
 

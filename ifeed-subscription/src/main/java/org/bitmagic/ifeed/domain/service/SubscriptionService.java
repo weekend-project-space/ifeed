@@ -4,12 +4,10 @@ import lombok.RequiredArgsConstructor;
 import org.bitmagic.ifeed.api.request.SubscriptionRequest;
 import org.bitmagic.ifeed.config.Const;
 import org.bitmagic.ifeed.domain.model.Feed;
-import org.bitmagic.ifeed.domain.model.MixFeed;
 import org.bitmagic.ifeed.domain.model.SourceType;
 import org.bitmagic.ifeed.domain.model.User;
 import org.bitmagic.ifeed.domain.model.value.UserSubscription;
 import org.bitmagic.ifeed.domain.repository.FeedRepository;
-import org.bitmagic.ifeed.domain.repository.MixFeedRepository;
 import org.bitmagic.ifeed.domain.repository.UserSubscriptionRepository;
 import org.bitmagic.ifeed.exception.ApiException;
 import org.bitmagic.ifeed.infrastructure.util.UrlChecker;
@@ -33,17 +31,16 @@ import java.util.stream.Collectors;
 public class SubscriptionService {
 
     private final FeedRepository feedRepository;
-    private final MixFeedRepository mixFeedRepository;
     private final UserSubscriptionRepository subscriptionRepository;
 
     @Transactional
     public UserSubscription subscribe(User user, SubscriptionRequest request) {
-        SourceType type;
+        SourceType type = SourceType.FEED;
         Integer sourceId;
-        long usedQuota = subscriptionRepository.countByUserAndActiveTrue(user);
+        long usedQuota = subscriptionRepository.countByUserAndSourceTypeAndActiveTrue(user, SourceType.FEED);
         int remainingQuota = (int) Math.max(0, user.getCurrentPlan().getMaxSubscriptions() - usedQuota);
         Assert.isTrue(remainingQuota > 0, "Exceeding the subscription limit, please upgrade your plan");
-        // If sourceId is provided, try to find by UUID (Feed or MixFeed)
+        // Resolve the RSS feed by UUID when feedId is provided
         if (StringUtils.hasText(request.feedId())) {
             UUID uuid;
             try {
@@ -52,31 +49,18 @@ public class SubscriptionService {
                 throw new ApiException(HttpStatus.BAD_REQUEST, "Invalid source ID format");
             }
 
-            // Try Feed first
-            var feedOpt = feedRepository.findByUid(uuid);
-            if (feedOpt.isPresent()) {
-                type = SourceType.FEED;
-                sourceId = feedOpt.get().getId();
-            } else {
-                // Try MixFeed
-                MixFeed mixFeed = mixFeedRepository.findByUid(uuid)
-                        .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Feed or MixFeed not found"));
-                type = SourceType.MIX_FEED;
-                sourceId = mixFeed.getId();
-
-                // Increment MixFeed subscriber count
-                mixFeedRepository.incrementSubscriberCount(sourceId);
-            }
+            sourceId = feedRepository.findByUid(uuid)
+                    .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Feed not found"))
+                    .getId();
         } else if (StringUtils.hasText(request.feedUrl())) {
             // If feedUrl is provided, create or find Feed
             String feedUrl = request.feedUrl().trim();
             Assert.isTrue(UrlChecker.isValidUrl(feedUrl), "Invalid URL: " + feedUrl);
             Feed feed = feedRepository.findByUrl(feedUrl)
                     .orElseGet(() -> createAndSaveFeed(feedUrl, request));
-            type = SourceType.FEED;
             sourceId = feed.getId();
         } else {
-            throw new ApiException(HttpStatus.BAD_REQUEST, "Either sourceId or feedUrl is required");
+            throw new ApiException(HttpStatus.BAD_REQUEST, "Either feedId or feedUrl is required");
         }
 
         return subscriptionRepository.findByUserIdAndSourceTypeAndSourceId(user.getId(), type, sourceId)
@@ -100,7 +84,7 @@ public class SubscriptionService {
 
     @Transactional(readOnly = true)
     public List<UserSubscription> getActiveSubscriptions(Integer userId) {
-        return subscriptionRepository.findAllByUserIdAndActiveTrue(userId);
+        return subscriptionRepository.findByUserIdAndSourceTypeAndActiveTrue(userId, SourceType.FEED);
     }
 
     @Transactional(readOnly = true)
@@ -130,35 +114,10 @@ public class SubscriptionService {
 
     @Transactional
     public void unsubscribe(User user, String sourceIdStr) {
-        // Try to resolve sourceId. Since we don't know the type from the ID string
-        // alone (unless we enforce format),
-        // we might need to check both or require type.
-        // However, the API design says DELETE /api/subscriptions/:id where id is UUID.
-        // We can check Feed first, then MixFeed. Or require type in API.
-        // The design doc says: "DELETE /api/subscriptions/:id ... 后端通过查询订阅表自动识别类型"
-        // But we store Integer ID in DB, not UUID. So we can't query DB by UUID
-        // directly without joining.
-        // We need to resolve UUID to Integer ID first.
-
         UUID uid = UUID.fromString(sourceIdStr);
-
-        // Try Feed
-        var feed = feedRepository.findByUid(uid);
-        if (feed.isPresent()) {
-            unsubscribeInternal(user, SourceType.FEED, feed.get().getId());
-            return;
-        }
-
-        // Try MixFeed
-        var mixFeed = mixFeedRepository.findByUid(uid);
-        if (mixFeed.isPresent()) {
-            unsubscribeInternal(user, SourceType.MIX_FEED, mixFeed.get().getId());
-            // Decrement subscriber count
-            mixFeedRepository.decrementSubscriberCount(mixFeed.get().getId());
-            return;
-        }
-
-        throw new ApiException(HttpStatus.NOT_FOUND, "Subscription source not found");
+        Feed feed = feedRepository.findByUid(uid)
+                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Subscription source not found"));
+        unsubscribeInternal(user, SourceType.FEED, feed.getId());
     }
 
     private void unsubscribeInternal(User user, SourceType type, Integer sourceId) {

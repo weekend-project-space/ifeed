@@ -169,7 +169,7 @@ public class TopicTrackingService {
             return new CreationResult(toResponse(track, userId), false);
         }
 
-        int maxCreatedTopics = user.getCurrentPlan().getMaxCreatedMixFeed();
+        int maxCreatedTopics = user.getCurrentPlan().getMaxCreatedTopics();
         if (topicTrackRepository.countByOwnerId(userId) >= maxCreatedTopics) {
             throw new ApiException(HttpStatus.BAD_REQUEST, "TOPIC_CREATE_LIMIT_EXCEEDED");
         }

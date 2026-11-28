@@ -9,7 +9,6 @@ import org.bitmagic.ifeed.domain.model.ArticleEnrichment;
 import org.bitmagic.ifeed.domain.model.Feed;
 import org.bitmagic.ifeed.domain.record.ArticleSummaryView;
 import org.bitmagic.ifeed.domain.repository.FeedRepository;
-import org.bitmagic.ifeed.domain.repository.MixFeedRepository;
 import org.bitmagic.ifeed.domain.service.*;
 import org.bitmagic.ifeed.exception.ApiException;
 import org.bitmagic.ifeed.infrastructure.util.DateUtils;
@@ -38,8 +37,6 @@ public class ArticleQueryService {
     private final UserCollectionService userCollectionService;
     private final UserLikeService userLikeService;
     private final FeedRepository feedRepository;
-    private final MixFeedRepository mixFeedRepository;
-    private final MixFeedService mixFeedService;
     private final UserArticleStateService articleStates;
 
     public Page<ArticleWithStateResponse<ArticleSummaryResponse>> listArticles(Integer userId, String feedId, String tags, String category, String source, Pageable pageable) {
@@ -49,32 +46,12 @@ public class ArticleQueryService {
         var includeGlobal = SOURCE_GLOBAL.equals(normalizedSource);
 
         UUID feedUuid = parseFeedId(feedId);
-        Page<ArticleSummaryView> articlePage;
-
-        // If feedId is provided, auto-detect Feed or MixFeed
         userId = userId == null ? 0 : userId;
-        if (feedUuid != null) {
-            // Try Feed first
-            var feedOpt = feedRepository.findByUid(feedUuid);
-            if (feedOpt.isPresent()) {
-                // Regular Feed - use existing logic
-                articlePage = articleService.listArticles(userId,
-                        feedUuid, normalizedTags, normalizedCategory, includeGlobal, pageable);
-            } else {
-                // Try MixFeed
-                var mixFeedOpt = mixFeedRepository.findByUid(feedUuid);
-                if (mixFeedOpt.isPresent()) {
-                    // MixFeed - use MixFeedService filtered articles
-                    articlePage = mixFeedService.getFilteredArticles(feedUuid, normalizedTags, userId, pageable);
-                } else {
-                    throw new ApiException(HttpStatus.NOT_FOUND, "Feed or MixFeed not found");
-                }
-            }
-        } else {
-            // No feedId - use existing logic
-            articlePage = articleService.listArticles(userId,
-                    null, normalizedTags, normalizedCategory, includeGlobal, pageable);
+        if (feedUuid != null && feedRepository.findByUid(feedUuid).isEmpty()) {
+            throw new ApiException(HttpStatus.NOT_FOUND, "Feed not found");
         }
+        Page<ArticleSummaryView> articlePage = articleService.listArticles(userId,
+                feedUuid, normalizedTags, normalizedCategory, includeGlobal, pageable);
 
         return articleStates.attach(userId, articlePage.map(this::toSummaryResponse),
                 article -> UUID.fromString(article.id()));

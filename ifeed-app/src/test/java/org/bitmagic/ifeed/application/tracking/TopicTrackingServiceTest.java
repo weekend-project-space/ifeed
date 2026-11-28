@@ -234,7 +234,7 @@ class TopicTrackingServiceTest {
         User user = new User();
         user.setCurrentPlan(plan);
         when(userService.findUserById(42)).thenReturn(Optional.of(user));
-        when(topicTrackRepository.countByOwnerId(42)).thenReturn((long) plan.getMaxCreatedMixFeed());
+        when(topicTrackRepository.countByOwnerId(42)).thenReturn((long) plan.getMaxCreatedTopics());
 
         ApiException error = assertThrows(ApiException.class, () -> service.create(42, config("new topic")));
 

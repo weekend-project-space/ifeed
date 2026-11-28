@@ -64,7 +64,7 @@ public class FeedService {
                 .stream().collect(Collectors.toMap(row -> (Integer) row[0], row -> row));
 
         Map<Integer, Long> subscriberCounts = userSubscriptionRepository
-                .countBySourceTypeAndSourceIdsAndActiveTrue(SourceType.FEED, feedIds)
+                .countActiveSubscribersByFeedIds(feedIds)
                 .stream().collect(Collectors.toMap(row -> (Integer) row[0], row -> (Long) row[1]));
 
         return feeds.stream().map(feed -> {

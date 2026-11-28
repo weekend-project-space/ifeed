@@ -50,7 +50,7 @@ Content-Type: application/json
 | `get_recommendations` | 获取当前用户的个性化文章推荐 | 分页参数 |
 | `get_radar_digest` | 获取热点列表 | 可选 `snapshotId`、`windowHours` |
 | `get_radar_topic` | 查看热点下的文章 | `snapshotId`、`topicId`，可选 `includeContent`（默认 false） |
-| `list_my_subscriptions` | 查看自己订阅的 RSS 和混合源 | 分页参数 |
+| `list_my_subscriptions` | 查看自己订阅的 RSS 源 | 分页参数 |
 | `list_feed_articles` | 按发布时间倒序查看源内文章 | `feedId`、分页参数 |
 | `list_my_collections` | 查看自己的收藏 | 可选 `folderId`（UUID 或 `default`）、分页参数 |
 | `list_my_likes` | 查看自己喜欢的文章 | 分页参数 |
@@ -58,7 +58,7 @@ Content-Type: application/json
 | `set_article_collection` | 收藏、取消收藏或移动收藏 | `articleId`、`collected`，可选 `folderId` |
 | `set_article_like` | 喜欢或取消喜欢 | `articleId`、`liked` |
 
-阅读流程：先调用 `get_radar_digest`，取返回的 `meta.snapshotId` 和文章所属热点的 `topicId` 调用 `get_radar_topic`；热点翻页时沿用同一个 `snapshotId`。也可先调用 `list_my_subscriptions` 获取 `feedId`，再调用 `list_feed_articles`；RSS 和混合源均支持，私有混合源沿用网页权限校验。
+阅读流程：先调用 `get_radar_digest`，取返回的 `meta.snapshotId` 和文章所属热点的 `topicId` 调用 `get_radar_topic`；热点翻页时沿用同一个 `snapshotId`。也可先调用 `list_my_subscriptions` 获取 `feedId`，再调用 `list_feed_articles`，查询 RSS 源内文章。
 
 收藏和喜欢是写操作，只应在用户明确要求时调用。其余工具为只读。MCP 凭证现在也能管理自己账户的收藏和喜欢，已有未过期凭证同样适用。需要停用某个客户端时在网页撤销对应凭证。
 

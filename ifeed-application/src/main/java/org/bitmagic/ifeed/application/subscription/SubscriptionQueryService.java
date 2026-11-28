@@ -20,7 +20,6 @@ import java.time.Instant;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @Service
 @RequiredArgsConstructor
@@ -29,7 +28,6 @@ public class SubscriptionQueryService {
     private final SubscriptionService subscriptionService;
     private final UserReadFeedRepository userReadFeedRepository;
     private final FeedRepository feedRepository;
-    private final MixFeedRepository mixFeedRepository;
 
     public List<SubscriptionResponse> list(Integer userId) {
         if (userId == null || userId <= 0) throw new ApiException(HttpStatus.UNAUTHORIZED, "Unauthorized");
@@ -37,47 +35,20 @@ public class SubscriptionQueryService {
 
         List<UserSubscription> userSubscriptions = subscriptionService.getActiveSubscriptions(userId);
 
-        // Separate IDs by type
-        Set<Integer> feedIds = new HashSet<>();
-        Set<Integer> mixFeedIds = new HashSet<>();
-
-        for (UserSubscription sub : userSubscriptions) {
-            if (sub.getSourceType() == SourceType.FEED) {
-                feedIds.add(sub.getSourceId());
-            } else if (sub.getSourceType() == SourceType.MIX_FEED) {
-                mixFeedIds.add(sub.getSourceId());
-            }
-        }
+        Set<Integer> feedIds = userSubscriptions.stream()
+                .map(UserSubscription::getSourceId)
+                .collect(Collectors.toSet());
 
         // Fetch Feeds
         Map<Integer, Feed> id2Feed = feedIds.isEmpty() ? Map.of()
                 : feedRepository.findAll(FeedSpecs.idIn(feedIds)).stream()
                         .collect(Collectors.toMap(Feed::getId, Function.identity()));
 
-        // Fetch MixFeeds
-        Map<Integer, MixFeed> id2MixFeed = mixFeedIds.isEmpty() ? Map.of()
-                : mixFeedRepository.findAllById(mixFeedIds).stream()
-                        .collect(Collectors.toMap(MixFeed::getId, Function.identity()));
-
-        // Map to response
-        List<SubscriptionResponse> responses = userSubscriptions.stream()
-                .flatMap(sub -> {
-                    if (sub.getSourceType() == SourceType.FEED) {
-                        Feed feed = id2Feed.get(sub.getSourceId());
-                        if (feed != null) {
-                            return Stream.of(SubscriptionViewConverter.toResponse(feed, feedReadTimes, false));
-                        }
-                    } else if (sub.getSourceType() == SourceType.MIX_FEED) {
-                        MixFeed mixFeed = id2MixFeed.get(sub.getSourceId());
-                        if (mixFeed != null) {
-                            return Stream.of(SubscriptionViewConverter.toResponse(mixFeed, feedReadTimes, false));
-                        }
-                    }
-                    return Stream.empty();
-                })
+        return userSubscriptions.stream()
+                .map(sub -> id2Feed.get(sub.getSourceId()))
+                .filter(Objects::nonNull)
+                .map(feed -> SubscriptionViewConverter.toResponse(feed, feedReadTimes, false))
                 .toList();
-
-        return responses;
     }
 
     public Page<SubscriptionResponse> list(Integer userId, Pageable pageable) {

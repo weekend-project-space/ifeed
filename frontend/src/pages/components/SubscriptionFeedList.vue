@@ -133,7 +133,7 @@
     </div>
 
     <!-- 空状态 -->
-    <div v-else-if="!feedItems.length"
+    <div v-else-if="!items.length"
          class="rounded-3xl border-2 border-dashed border-outline/20 bg-surface-container/20 py-16 text-center">
       <div class="mx-auto mb-3.5 flex h-14 w-14 items-center justify-center rounded-full bg-surface-container/80">
         <svg class="h-6 w-6 text-text-secondary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
@@ -275,8 +275,8 @@
     </div>
 
     <!-- 底部统计 -->
-    <div v-if="feedItems.length" class="mt-6 text-center text-xs text-text-secondary/60">
-      {{ tr('subscriptionFeedList.showingFeeds', { visible: filteredItems.length, total: feedItems.length }) }}
+    <div v-if="items.length" class="mt-6 text-center text-xs text-text-secondary/60">
+      {{ tr('subscriptionFeedList.showingFeeds', { visible: filteredItems.length, total: items.length }) }}
     </div>
 
     <!-- 点击遮罩收起下拉 -->
@@ -388,10 +388,9 @@ const batchMode = ref(false);
 const selectedItems = ref<Set<string>>(new Set());
 const isBatchProcessing = batchRemoveMutation.isPending;
 const batchItemsToRemove = ref<SubscriptionListItemDto[]>([]);
-const feedItems = computed(() => items.value.filter((item) => !item.type || item.type === 'FEED'));
 
 const sortedItems = computed(() => {
-  const list = [...feedItems.value];
+  const list = [...items.value];
   switch (sortBy.value) {
     case 'relevance':
       return list.sort((a, b) => {

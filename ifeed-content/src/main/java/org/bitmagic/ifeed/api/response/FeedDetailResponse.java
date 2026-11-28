@@ -1,7 +1,6 @@
 package org.bitmagic.ifeed.api.response;
 
 import java.time.Instant;
-import java.util.Collection;
 
 public record FeedDetailResponse(
         String feedId,
@@ -17,7 +16,6 @@ public record FeedDetailResponse(
         boolean subscribed,
         Integer failureCount,
         String fetchError,
-        String type, // "FEED" or "MIX_FEED"
-        Collection<String> sources
+        String type // "FEED"
 ) {
 }

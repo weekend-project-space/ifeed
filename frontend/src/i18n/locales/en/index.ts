@@ -1,7 +1,6 @@
 import subscriptionsAddOpml from './subscriptionsAddOpml';
 import subscriptionsAddManual from './subscriptionsAddManual';
 import type { MessageSchema } from '../../schema';
-import subscriptionMixFeedManager from './subscriptionMixFeedManager';
 import subscriptionFeedList from './subscriptionFeedList';
 import upgradePage from './upgradePage';
 import topicTrackingPage from './topicTrackingPage';
@@ -21,4 +20,4 @@ import mainLayout from './mainLayout';
 import homePage from './homePage';
 import searchPage from './searchPage';
 import collectionsPage from './collectionsPage';
-export default { subscriptionsAddOpml, subscriptionsAddManual, subscriptionMixFeedManager, subscriptionFeedList, upgradePage, topicTrackingPage, subscriptionsListPage, subscriptionDiscoveryPage, radarTopicPage, radarPage, likesPage, historyPage, feedSubscriptionsPage, feedDetailPage, authPage, articleDetailPage, adminPage, common, mainLayout, homePage, searchPage, collectionsPage } satisfies MessageSchema;
+export default { subscriptionsAddOpml, subscriptionsAddManual, subscriptionFeedList, upgradePage, topicTrackingPage, subscriptionsListPage, subscriptionDiscoveryPage, radarTopicPage, radarPage, likesPage, historyPage, feedSubscriptionsPage, feedDetailPage, authPage, articleDetailPage, adminPage, common, mainLayout, homePage, searchPage, collectionsPage } satisfies MessageSchema;

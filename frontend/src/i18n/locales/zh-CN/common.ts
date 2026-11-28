@@ -3,7 +3,6 @@ export default {
   delete: '删除',
   confirmDelete: '确认删除',
   articleCount: '{count} 篇文章',
-  sourceCount: '{count} 个来源',
   subscriberCount: '{count} 位订阅者',
   entryCount: '共 {count} 条',
   selectedCount: '已选择 {count} 项',
@@ -48,7 +47,6 @@ export default {
   subscribedShort: "已订",
   unsubscribeShort: "退订",
   subscribe: "订阅",
-  sourcesUnit: "个来源",
   articlesUnit: "篇文章",
   subscribersUnit: "订阅者",
   clear: "清除",
@@ -146,6 +144,4 @@ export default {
   authUrlFailed: "获取授权地址失败",
   linuxLoginFailed: "Linux.do 登录失败",
   listFailed: "订阅列表加载失败",
-  searchRequired: "请输入关键词、URL 或标题",
-  feedSearchFailed: "搜索订阅失败",
 };

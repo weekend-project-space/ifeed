@@ -4,7 +4,6 @@ import org.bitmagic.ifeed.api.response.SubscriptionResponse;
 import org.bitmagic.ifeed.api.response.SubscriptionSearchResponse;
 import org.bitmagic.ifeed.config.Const;
 import org.bitmagic.ifeed.domain.model.Feed;
-import org.bitmagic.ifeed.domain.model.MixFeed;
 import org.bitmagic.ifeed.domain.model.SourceType;
 
 import java.net.URI;
@@ -46,30 +45,6 @@ public class SubscriptionViewConverter {
                 info.faviconUrl());
     }
 
-    public static SubscriptionResponse toResponse(
-            MixFeed mixFeed,
-            Map<String, Instant> readTimes,
-            boolean hasUnread) {
-
-        var readTime = readTimes.getOrDefault(mixFeed.getUid().toString(), EPOCH);
-        var lastUpdated = mixFeed.getLastUpdated() != null ? mixFeed.getLastUpdated() : EPOCH;
-
-        return new SubscriptionResponse(
-                mixFeed.getUid().toString(),
-                mixFeed.getName(),
-                mixFeed.getDescription(),
-                null, // URL is not applicable for MixFeed in the same way
-                null, // Site URL
-                mixFeed.getIcon(), // Avatar/Icon
-                null, // Last fetched
-                lastUpdated,
-                hasUnread || readTime.isAfter(lastUpdated),
-                0,
-                null,
-                SourceType.MIX_FEED.name(),
-                mixFeed.getIcon());
-    }
-
     public static SubscriptionSearchResponse toSearchResponse(Feed feed, boolean subscribed, Long subscriberCount) {
         return new SubscriptionSearchResponse(
                 feed.getUid().toString(),
@@ -81,19 +56,6 @@ public class SubscriptionViewConverter {
                 subscribed,
                 feed.getLastUpdated(),
                 "FEED");
-    }
-
-    public static SubscriptionSearchResponse toSearchResponse(MixFeed mixFeed, boolean subscribed) {
-        return new SubscriptionSearchResponse(
-                mixFeed.getUid().toString(),
-                mixFeed.getName(),
-                mixFeed.getDescription(),
-                mixFeed.getIcon(),
-                null,
-                mixFeed.getSubscriberCount() != null ? mixFeed.getSubscriberCount().longValue() : 0L,
-                subscribed,
-                mixFeed.getLastUpdated(),
-                "MIX_FEED");
     }
 
     private static FeedInfo resolveFeedInfo(Feed feed) {

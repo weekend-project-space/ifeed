@@ -4,7 +4,7 @@ public record SubscriptionRequest(
         String feedUrl,
         String siteUrl,
         String title,
-        String feedId // UUID for Feed or MixFeed
+        String feedId // Feed UUID
 ) {
 
     public static SubscriptionRequest of(String feedId) {

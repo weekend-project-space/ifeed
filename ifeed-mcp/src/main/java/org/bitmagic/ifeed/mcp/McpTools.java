@@ -91,11 +91,11 @@ public class McpTools {
                         fields("snapshotId", snapshotId, "topicId", id, "includeContent", bool, "page", page, "size", size),
                         List.of("snapshotId", "topicId"), args -> radar.topicDetail(str(args, "snapshotId"), UUID.fromString(str(args, "topicId")),
                                 Boolean.TRUE.equals(args.get("includeContent")), pageable(args))),
-                tool("list_my_subscriptions", "分页查看当前用户订阅的 RSS 和混合源；使用返回的 feedId 查询源内文章。page 从 0 开始。",
+                tool("list_my_subscriptions", "分页查看当前用户订阅的 RSS 源；使用返回的 feedId 查询源内文章。page 从 0 开始。",
                         fields("page", page, "size", size), List.of(), args -> {
                             return subscriptions.list(principal().getId(), pageable(args));
                         }),
-                tool("list_feed_articles", "按 feedId 分页获取 RSS 或混合源文章，按发布时间倒序；使用 list_my_subscriptions 返回的 feedId，私有混合源沿用当前用户权限。page 从 0 开始。",
+                tool("list_feed_articles", "按 feedId 分页获取 RSS 源文章，按发布时间倒序；使用 list_my_subscriptions 返回的 feedId。page 从 0 开始。",
                         fields("feedId", id, "page", page, "size", size), List.of("feedId"),
                         args -> articles.listArticles(principal().getId(), str(args, "feedId"), null, null, "owner",
                                 pageable(args, "publishedAt", "id"))),

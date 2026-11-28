@@ -60,7 +60,7 @@ public class User {
     public enum Plan {
         FREE(60, 0, 1), STANDARD(300, 2, 2), PRO(1200, 8, 8);
         private final int maxSubscriptions;
-        private final int maxCreatedMixFeed;
+        private final int maxCreatedTopics;
         private final int maxWebhooks;
     }
 

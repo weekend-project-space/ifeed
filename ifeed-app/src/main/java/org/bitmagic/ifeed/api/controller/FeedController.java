@@ -25,8 +25,8 @@ public class FeedController {
     @Deprecated
     @GetMapping("/search")
     public ResponseEntity<List<SubscriptionSearchResponse>> search(@AuthenticationPrincipal UserPrincipal principal,
-            @RequestParam("query") String query, @RequestParam(required = false) String type) {
-        return ResponseEntity.ok(feeds.search(userId(principal), query, type));
+            @RequestParam("query") String query) {
+        return ResponseEntity.ok(feeds.search(userId(principal), query));
     }
 
     @Deprecated

@@ -3,14 +3,11 @@ package org.bitmagic.ifeed.infrastructure.retrieval;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
-import lombok.NoArgsConstructor;
-import org.bitmagic.ifeed.domain.model.value.MixFeedFilterConfig;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.lang.Nullable;
 
 import java.time.Instant;
 import java.util.Collection;
-import java.util.Map;
 
 /**
  * @author yangrd

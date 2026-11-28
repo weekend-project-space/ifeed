@@ -15,7 +15,6 @@ import org.bitmagic.ifeed.domain.model.User;
 import org.bitmagic.ifeed.domain.record.ArticleBehaviorState;
 import org.bitmagic.ifeed.domain.record.ArticleSummaryView;
 import org.bitmagic.ifeed.domain.repository.FeedRepository;
-import org.bitmagic.ifeed.domain.repository.MixFeedRepository;
 import org.bitmagic.ifeed.domain.repository.UserArticleStateRepository;
 import org.bitmagic.ifeed.domain.service.*;
 import org.junit.jupiter.api.BeforeEach;
@@ -47,8 +46,6 @@ class ArticleListBehaviorStateTest {
     @Mock private RecommendationService recommendations;
     @Mock private SearchRetrievalService search;
     @Mock private FeedRepository feeds;
-    @Mock private MixFeedRepository mixFeeds;
-    @Mock private MixFeedService mixFeedService;
     @Mock private UserArticleStateRepository states;
     private ArticleController articleController;
     private SearchController searchController;
@@ -59,7 +56,7 @@ class ArticleListBehaviorStateTest {
     void setUp() {
         var service = new UserArticleStateService(states);
         articleController = new ArticleController(
-                new ArticleQueryService(articles, enrichment, collections, likes, feeds, mixFeeds, mixFeedService, service),
+                new ArticleQueryService(articles, enrichment, collections, likes, feeds, service),
                 new ArticleRecommendationQueryService(recommendations, articles, service),
                 new ArticleEnrichmentApplicationService(articles, enhanced));
         searchController = new SearchController(new ArticleSearchQueryService(articles, search, service));

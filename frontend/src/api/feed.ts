@@ -16,7 +16,6 @@ export interface FeedDetail {
   subscribed: boolean;
   failureCount?: number;
   fetchError?: string | null;
-  sources: string[] | null;
 }
 
 export const getFeed = (feedId: string, signal?: AbortSignal) =>

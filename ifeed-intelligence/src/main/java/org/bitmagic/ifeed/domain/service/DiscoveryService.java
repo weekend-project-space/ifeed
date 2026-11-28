@@ -181,8 +181,7 @@ public class DiscoveryService {
         if (feedIds.isEmpty()) {
             return Collections.emptyMap();
         }
-        List<Object[]> results = userSubscriptionRepository.countBySourceTypeAndSourceIdIn(
-                SourceType.FEED, feedIds);
+        List<Object[]> results = userSubscriptionRepository.countActiveSubscribersByFeedIds(feedIds);
         Map<Integer, Long> counts = new HashMap<>();
         for (Object[] result : results) {
             Integer feedId = (Integer) result[0];

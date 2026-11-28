@@ -7,7 +7,7 @@ Controller 与 MCP 共用的方法封装层。将原 Controller 中的查询组�
 - `application.article`：文章详情和列表、推荐结果及个人状态、文章增强操作的调用。
 - `application.search.ArticleSearchQueryService`：搜索模式选择、参数规则、结果及个人状态组装。
 - `application.subscription`：订阅列表和阅读状态组装，以及原订阅接口方法的封装。
-- `application.feed`：RSS/混合源详情、源搜索与混合源接口方法的封装。
+- `application.feed`：RSS 源详情与源搜索方法的封装。
 - `application.radar.RadarQueryApplicationService`：统一热点查询参数规则并调用原 `RadarQueryService`。
 - `application.user.UserPlanApplicationService`：原用户套餐更新方法的封装。
 

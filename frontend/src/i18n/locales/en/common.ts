@@ -3,7 +3,6 @@ export default {
   delete: 'Delete',
   confirmDelete: 'Confirm deletion',
   articleCount: 'No articles | {count} article | {count} articles',
-  sourceCount: 'No sources | {count} source | {count} sources',
   subscriberCount: 'No subscribers | {count} subscriber | {count} subscribers',
   entryCount: 'No entries | {count} entry | {count} entries',
   selectedCount: 'No items selected | {count} item selected | {count} items selected',
@@ -48,7 +47,6 @@ export default {
   subscribedShort: "Subscribed",
   unsubscribeShort: "Unsubscribe",
   subscribe: "Subscribe",
-  sourcesUnit: " sources",
   articlesUnit: " articles",
   subscribersUnit: " subscribers",
   clear: "Clear",
@@ -146,6 +144,4 @@ export default {
   authUrlFailed: "Could not get authorization URL",
   linuxLoginFailed: "Linux.do sign-in failed",
   listFailed: "Could not load subscriptions",
-  searchRequired: "Please enter a keyword, URL or title",
-  feedSearchFailed: "Could not search feeds",
 };

@@ -11,6 +11,6 @@ public record SubscriptionSearchResponse(
         Long subscriberCount,
         Boolean subscribed,
         Instant lastUpdated,
-        String type // "FEED" or "MIX_FEED"
+        String type // "FEED"
 ) {
 }
