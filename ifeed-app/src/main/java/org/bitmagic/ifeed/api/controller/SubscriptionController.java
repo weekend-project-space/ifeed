@@ -24,10 +24,10 @@ public class SubscriptionController {
     private final SubscriptionApplicationService subscriptions;
 
     @PostMapping
-    public ResponseEntity<MessageResponse> subscribe(@AuthenticationPrincipal UserPrincipal principal,
+    public ResponseEntity<SubscriptionStateResponse> subscribe(@AuthenticationPrincipal UserPrincipal principal,
                                                       @Valid @RequestBody SubscriptionRequest request) {
-        subscriptions.subscribe(userId(principal), request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(new MessageResponse("Subscription added."));
+        var result = subscriptions.subscribe(userId(principal), request);
+        return ResponseEntity.status(result.changed() ? HttpStatus.CREATED : HttpStatus.OK).body(result);
     }
 
     @GetMapping
@@ -36,9 +36,8 @@ public class SubscriptionController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<MessageResponse> unsubscribe(@AuthenticationPrincipal UserPrincipal principal, @PathVariable String id) {
-        subscriptions.unsubscribe(userId(principal), id);
-        return ResponseEntity.ok(new MessageResponse("Subscription removed."));
+    public ResponseEntity<SubscriptionStateResponse> unsubscribe(@AuthenticationPrincipal UserPrincipal principal, @PathVariable String id) {
+        return ResponseEntity.ok(subscriptions.unsubscribe(userId(principal), id));
     }
 
     @PostMapping(value = "/opml/preview", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)

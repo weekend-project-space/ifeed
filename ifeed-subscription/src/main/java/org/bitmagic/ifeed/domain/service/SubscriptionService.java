@@ -14,7 +14,6 @@ import org.bitmagic.ifeed.infrastructure.util.UrlChecker;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
 import java.net.URI;
@@ -34,52 +33,41 @@ public class SubscriptionService {
     private final UserSubscriptionRepository subscriptionRepository;
 
     @Transactional
-    public UserSubscription subscribe(User user, SubscriptionRequest request) {
-        SourceType type = SourceType.FEED;
-        Integer sourceId;
-        long usedQuota = subscriptionRepository.countByUserAndSourceTypeAndActiveTrue(user, SourceType.FEED);
-        int remainingQuota = (int) Math.max(0, user.getCurrentPlan().getMaxSubscriptions() - usedQuota);
-        Assert.isTrue(remainingQuota > 0, "Exceeding the subscription limit, please upgrade your plan");
-        // Resolve the RSS feed by UUID when feedId is provided
+    public SubscriptionChange subscribe(User user, SubscriptionRequest request) {
+        if (request == null) throw new ApiException(HttpStatus.BAD_REQUEST, "Subscription request is required");
+        Feed feed;
+        String feedUrl = null;
         if (StringUtils.hasText(request.feedId())) {
-            UUID uuid;
-            try {
-                uuid = UUID.fromString(request.feedId());
-            } catch (IllegalArgumentException e) {
-                throw new ApiException(HttpStatus.BAD_REQUEST, "Invalid source ID format");
-            }
-
-            sourceId = feedRepository.findByUid(uuid)
-                    .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Feed not found"))
-                    .getId();
+            feed = feedRepository.findByUid(parseFeedId(request.feedId()))
+                    .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Feed not found"));
         } else if (StringUtils.hasText(request.feedUrl())) {
-            // If feedUrl is provided, create or find Feed
-            String feedUrl = request.feedUrl().trim();
-            Assert.isTrue(UrlChecker.isValidUrl(feedUrl), "Invalid URL: " + feedUrl);
-            Feed feed = feedRepository.findByUrl(feedUrl)
-                    .orElseGet(() -> createAndSaveFeed(feedUrl, request));
-            sourceId = feed.getId();
+            feedUrl = validateUrl(request.feedUrl(), "feed URL");
+            feed = feedRepository.findByUrl(feedUrl).orElse(null);
         } else {
             throw new ApiException(HttpStatus.BAD_REQUEST, "Either feedId or feedUrl is required");
         }
 
-        return subscriptionRepository.findByUserIdAndSourceTypeAndSourceId(user.getId(), type, sourceId)
-                .map(sub -> {
-                    if (sub.isActive()) {
-                        throw new ApiException(HttpStatus.CONFLICT, "Already subscribed");
-                    }
-                    sub.setActive(true);
-                    return subscriptionRepository.save(sub);
-                })
-                .orElseGet(() -> {
-                    UserSubscription sub = UserSubscription.builder()
-                            .user(user)
-                            .sourceType(type)
-                            .sourceId(sourceId)
-                            .active(true)
-                            .build();
-                    return subscriptionRepository.save(sub);
-                });
+        var existing = feed == null ? java.util.Optional.<UserSubscription>empty()
+                : subscriptionRepository.findByUserIdAndSourceTypeAndSourceId(
+                        user.getId(), SourceType.FEED, feed.getId());
+        if (existing.isPresent() && existing.get().isActive()) {
+            return new SubscriptionChange(feed, true, false);
+        }
+
+        long usedQuota = subscriptionRepository.countByUserAndSourceTypeAndActiveTrue(user, SourceType.FEED);
+        if (usedQuota >= user.getCurrentPlan().getMaxSubscriptions()) {
+            throw new ApiException(HttpStatus.BAD_REQUEST,
+                    "Exceeding the subscription limit, please upgrade your plan");
+        }
+        if (feed == null) feed = createAndSaveFeed(feedUrl, request);
+
+        UserSubscription subscription = existing.orElseGet(UserSubscription::new);
+        subscription.setUser(user);
+        subscription.setSourceType(SourceType.FEED);
+        subscription.setSourceId(feed.getId());
+        subscription.setActive(true);
+        subscriptionRepository.save(subscription);
+        return new SubscriptionChange(feed, true, true);
     }
 
     @Transactional(readOnly = true)
@@ -113,28 +101,45 @@ public class SubscriptionService {
     }
 
     @Transactional
-    public void unsubscribe(User user, String sourceIdStr) {
-        UUID uid = UUID.fromString(sourceIdStr);
-        Feed feed = feedRepository.findByUid(uid)
+    public SubscriptionChange unsubscribe(User user, String sourceIdStr) {
+        Feed feed = feedRepository.findByUid(parseFeedId(sourceIdStr))
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Subscription source not found"));
-        unsubscribeInternal(user, SourceType.FEED, feed.getId());
-    }
-
-    private void unsubscribeInternal(User user, SourceType type, Integer sourceId) {
-        var subscription = subscriptionRepository.findByUserIdAndSourceTypeAndSourceId(user.getId(), type, sourceId)
-                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Subscription not found"));
-
-        if (!subscription.isActive()) {
-            return;
+        var subscription = subscriptionRepository.findByUserIdAndSourceTypeAndSourceId(
+                user.getId(), SourceType.FEED, feed.getId());
+        if (subscription.isEmpty() || !subscription.get().isActive()) {
+            return new SubscriptionChange(feed, false, false);
         }
 
-        subscription.setActive(false);
-        subscriptionRepository.save(subscription);
+        subscription.get().setActive(false);
+        subscriptionRepository.save(subscription.get());
+        return new SubscriptionChange(feed, false, true);
+    }
+
+    public record SubscriptionChange(Feed feed, boolean subscribed, boolean changed) { }
+
+    private UUID parseFeedId(String value) {
+        try {
+            UUID id = UUID.fromString(value == null ? "" : value.trim());
+            if (!id.toString().equalsIgnoreCase(value.trim())) throw new IllegalArgumentException();
+            return id;
+        } catch (IllegalArgumentException exception) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "Invalid feed id", exception);
+        }
+    }
+
+    private String validateUrl(String value, String field) {
+        String normalized = value.trim();
+        if (normalized.length() > 255 || !UrlChecker.isValidUrl(normalized)
+                || URI.create(normalized).getHost() == null) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "Invalid " + field);
+        }
+        return normalized;
     }
 
     private Feed createAndSaveFeed(String feedUrl, SubscriptionRequest request) {
-        String siteUrl = StringUtils.hasText(request.siteUrl()) ? request.siteUrl().trim() : feedUrl;
+        String siteUrl = StringUtils.hasText(request.siteUrl()) ? validateUrl(request.siteUrl(), "site URL") : feedUrl;
         String title = resolveFeedTitle(request.title(), siteUrl, feedUrl);
+        if (title.length() > 255) throw new ApiException(HttpStatus.BAD_REQUEST, "Feed title is too long");
 
         Feed feed = Feed.builder()
                 .url(feedUrl)

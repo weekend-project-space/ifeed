@@ -8,6 +8,10 @@ import org.bitmagic.ifeed.application.article.ArticleRecommendationQueryService;
 import org.bitmagic.ifeed.application.search.ArticleSearchQueryService;
 import org.bitmagic.ifeed.application.radar.RadarQueryApplicationService;
 import org.bitmagic.ifeed.application.subscription.SubscriptionQueryService;
+import org.bitmagic.ifeed.application.subscription.SubscriptionApplicationService;
+import org.bitmagic.ifeed.api.request.SubscriptionRequest;
+import org.bitmagic.ifeed.api.response.SubscriptionStateResponse;
+import org.bitmagic.ifeed.domain.model.value.FeedFetchStatus;
 import org.bitmagic.ifeed.domain.service.UserCollectionService;
 import org.bitmagic.ifeed.domain.service.UserLikeService;
 import org.bitmagic.ifeed.domain.service.UserCollectionFolderService;
@@ -27,6 +31,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -44,6 +49,7 @@ import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.IntStream;
 
@@ -59,6 +65,8 @@ class McpToolsHttpTest {
     private MockMvc mvc;
     private ObjectMapper json;
     private ArticleQueryService articles;
+    private ArticleSearchQueryService search;
+    private SubscriptionApplicationService subscriptionCommands;
     private ArticleRecommendationQueryService recommendations;
     private RadarQueryApplicationService radar;
     private SubscriptionQueryService subscriptions;
@@ -92,6 +100,8 @@ class McpToolsHttpTest {
                 }).build();
         json = context.getBean(ObjectMapper.class);
         articles = context.getBean(ArticleQueryService.class);
+        search = context.getBean(ArticleSearchQueryService.class);
+        subscriptionCommands = context.getBean(SubscriptionApplicationService.class);
         recommendations = context.getBean(ArticleRecommendationQueryService.class);
         radar = context.getBean(RadarQueryApplicationService.class);
         subscriptions = context.getBean(SubscriptionQueryService.class);
@@ -110,16 +120,31 @@ class McpToolsHttpTest {
     @Test
     void discoversAllToolsAndMarksStateChangesAsIdempotentWrites() throws Exception {
         var tools = rpc("mcp-7", "tools/list", Map.of()).at("/result/tools");
-        assertThat(tools).hasSize(12);
+        assertThat(tools).hasSize(14);
+        assertThat(tools.findValuesAsText("name")).containsExactlyInAnyOrder(
+                "search_articles", "get_article", "get_recommendations", "get_radar_digest", "get_radar_topic",
+                "list_my_subscriptions", "subscribe_feed", "unsubscribe_feed", "list_articles",
+                "list_my_collections", "list_my_likes", "list_collection_folders", "set_article_collection", "set_article_like");
         for (var tool : tools) {
-            boolean write = tool.path("name").asText().startsWith("set_article_");
+            String name = tool.path("name").asText();
+            boolean write = name.startsWith("set_article_") || Set.of("subscribe_feed", "unsubscribe_feed").contains(name);
             assertThat(tool.at("/annotations/readOnlyHint").asBoolean()).isEqualTo(!write);
-            assertThat(tool.at("/annotations/destructiveHint").asBoolean()).isEqualTo(write);
+            assertThat(tool.at("/annotations/destructiveHint").asBoolean()).isEqualTo(write && !name.equals("subscribe_feed"));
             assertThat(tool.at("/annotations/idempotentHint").asBoolean()).isTrue();
             assertThat(tool.at("/inputSchema/additionalProperties").asBoolean()).isFalse();
             assertThat(tool.at("/inputSchema/properties/userId").isMissingNode()).isTrue();
+            if (name.equals("search_articles")) {
+                assertThat(tool.at("/inputSchema/properties").size()).isEqualTo(5);
+                for (String removed : List.of("feedId", "tags", "category")) {
+                    assertThat(tool.at("/inputSchema/properties").has(removed)).isFalse();
+                }
+            }
+            if (name.equals("get_radar_digest")) {
+                assertThat(tool.at("/inputSchema/properties")).isEmpty();
+                assertThat(tool.at("/inputSchema/required")).isEmpty();
+            }
         }
-        verifyNoInteractions(articles, recommendations, radar, subscriptions, collections, likes, folders);
+        verifyNoInteractions(articles, search, recommendations, radar, subscriptions, subscriptionCommands, collections, likes, folders);
     }
 
     @Test
@@ -155,7 +180,7 @@ class McpToolsHttpTest {
         mvc.perform(post("/api/mcp").contentType("application/json").content("{}"))
                 .andExpect(status().isUnauthorized());
         mvc.perform(request("web-7", "tools/list", Map.of())).andExpect(status().isUnauthorized());
-        verifyNoInteractions(articles, recommendations, radar, subscriptions, collections, likes, folders);
+        verifyNoInteractions(articles, search, recommendations, radar, subscriptions, subscriptionCommands, collections, likes, folders);
     }
 
     @Test
@@ -163,7 +188,7 @@ class McpToolsHttpTest {
         var topicId = UUID.randomUUID();
         var snapshot = "radar_20261127_w72h";
         var topic = new RadarTopicResponse(topicId.toString(), "Topic", "Summary", Instant.now(), Instant.now(), 1, List.of());
-        when(radar.digest(eq(null), eq(null), any())).thenReturn(
+        when(radar.digest(null, null, PageRequest.of(0, 10))).thenReturn(
                 new PageResponse<>(List.of(topic), 0, 10, 1, 1, Map.of("snapshotId", snapshot)));
         when(radar.topicDetail(eq(snapshot), eq(topicId), eq(false), any())).thenReturn(
                 new PageResponse<>(List.of(), 0, 10, 0, 0, Map.of("snapshotId", snapshot)));
@@ -173,6 +198,12 @@ class McpToolsHttpTest {
         assertThat(result.at("/result/isError").asBoolean()).isFalse();
         verify(radar).topicDetail(snapshot, topicId, false, PageRequest.of(0, 10));
         assertFailed(call("mcp-7", "get_radar_topic", Map.of("topicId", topicId.toString())));
+        for (var args : List.of(Map.<String, Object>of("snapshotId", snapshot),
+                Map.<String, Object>of("windowHours", 24), Map.<String, Object>of("page", 1),
+                Map.<String, Object>of("size", 20))) {
+            assertFailed(call("mcp-7", "get_radar_digest", args));
+        }
+        verify(radar, times(1)).digest(null, null, PageRequest.of(0, 10));
     }
 
     @Test
@@ -200,12 +231,12 @@ class McpToolsHttpTest {
         var pageable = PageRequest.of(2, 5, Sort.Direction.DESC, "publishedAt", "id");
         when(articles.listArticles(any(), eq(feedId), isNull(), isNull(), eq("owner"), eq(pageable)))
                 .thenReturn(new PageImpl<>(List.of(), pageable, 0));
-        var result = call("mcp-8", "list_feed_articles", Map.of("feedId", feedId, "page", 2, "size", 5));
+        var result = call("mcp-8", "list_articles", Map.of("feedId", feedId, "page", 2, "size", 5));
         assertThat(result.at("/result/isError").asBoolean()).isFalse();
         verify(articles).listArticles(eq(8), eq(feedId), isNull(), isNull(), eq("owner"), eq(pageable));
         when(articles.listArticles(any(), eq(feedId), isNull(), isNull(), eq("owner"), eq(pageable)))
                 .thenThrow(new ApiException(HttpStatus.NOT_FOUND, "Feed not found"));
-        assertFailed(call("mcp-7", "list_feed_articles", Map.of("feedId", feedId, "page", 2, "size", 5)));
+        assertFailed(call("mcp-7", "list_articles", Map.of("feedId", feedId, "page", 2, "size", 5)));
     }
 
     @Test
@@ -263,8 +294,8 @@ class McpToolsHttpTest {
         }
         assertFailed(call("mcp-7", "set_article_collection", Map.of("articleId", articleId.toString(), "collected", true, "folderId", "bad-id")));
         assertFailed(call("mcp-7", "list_my_subscriptions", Map.of("size", 51)));
-        assertFailed(call("mcp-7", "list_feed_articles", Map.of("feedId", UUID.randomUUID().toString(), "page", -1)));
-        verifyNoInteractions(articles, recommendations, radar, subscriptions, collections, likes, folders);
+        assertFailed(call("mcp-7", "list_articles", Map.of("feedId", UUID.randomUUID().toString(), "page", -1)));
+        verifyNoInteractions(articles, search, recommendations, radar, subscriptions, subscriptionCommands, collections, likes, folders);
     }
 
     @Test
@@ -281,6 +312,116 @@ class McpToolsHttpTest {
         verify(collections).listCollections(eq(8), eq("default"), any());
         verify(likes).list(eq(8), any());
         verify(folders).list(eq(8), any());
+    }
+
+    @Test
+    void addingRssByUrlReturnsFinalStateAndPendingFetchForTheCredentialUser() throws Exception {
+        UUID feedId = UUID.randomUUID();
+        String url = "https://example.com/feed.xml";
+        var request = new SubscriptionRequest(url, null, null, null);
+        when(subscriptionCommands.subscribe(8, request)).thenReturn(
+                subscriptionState(feedId, true, true), subscriptionState(feedId, true, false));
+        var args = Map.of("feedUrl", url);
+        var first = call("mcp-8", "subscribe_feed", args).at("/result/structuredContent");
+        assertThat(first.path("feedId").asText()).isEqualTo(feedId.toString());
+        assertThat(first.path("subscribed").asBoolean()).isTrue();
+        assertThat(first.path("changed").asBoolean()).isTrue();
+        assertThat(first.path("fetchStatus").asText()).isEqualTo("PENDING");
+        assertThat(first.path("lastFetched").isNull()).isTrue();
+        var repeated = call("mcp-8", "subscribe_feed", args).at("/result/structuredContent");
+        assertThat(repeated.path("subscribed").asBoolean()).isTrue();
+        assertThat(repeated.path("changed").asBoolean()).isFalse();
+        verify(subscriptionCommands, times(2)).subscribe(8, request);
+        verify(subscriptionCommands, never()).subscribe(eq(7), any());
+    }
+
+    @Test
+    void addingAnExistingRssUsesItsUuidWithoutSourceDiscovery() throws Exception {
+        UUID feedId = UUID.randomUUID();
+        var request = SubscriptionRequest.of(feedId.toString());
+        when(subscriptionCommands.subscribe(7, request)).thenReturn(subscriptionState(feedId, true, true));
+        assertThat(call("mcp-7", "subscribe_feed", Map.of("feedId", feedId.toString()))
+                .at("/result/structuredContent/subscribed").asBoolean()).isTrue();
+        verify(subscriptionCommands).subscribe(7, request);
+    }
+
+    @Test
+    void repeatedCancellationRemainsUnsubscribedAndUsesOnlyTheCredentialUser() throws Exception {
+        UUID feedId = UUID.randomUUID();
+        when(subscriptionCommands.unsubscribe(8, feedId.toString())).thenReturn(
+                subscriptionState(feedId, false, true), subscriptionState(feedId, false, false));
+        var args = Map.of("feedId", feedId.toString());
+        assertThat(call("mcp-8", "unsubscribe_feed", args).at("/result/structuredContent/changed").asBoolean()).isTrue();
+        var repeated = call("mcp-8", "unsubscribe_feed", args).at("/result/structuredContent");
+        assertThat(repeated.path("subscribed").asBoolean()).isFalse();
+        assertThat(repeated.path("changed").asBoolean()).isFalse();
+        verify(subscriptionCommands, times(2)).unsubscribe(8, feedId.toString());
+        verify(subscriptionCommands, never()).unsubscribe(eq(7), any());
+    }
+
+    @Test
+    void articleListsDefaultToAllPersonalSubscriptionsAndSupportFilters() throws Exception {
+        var defaults = PageRequest.of(0, 10, Sort.Direction.DESC, "publishedAt", "id");
+        when(articles.listArticles(8, null, null, null, "owner", defaults)).thenReturn(Page.empty(defaults));
+        assertThat(call("mcp-8", "list_articles", Map.of()).at("/result/isError").asBoolean()).isFalse();
+        verify(articles).listArticles(8, null, null, null, "owner", defaults);
+        UUID feedId = UUID.randomUUID();
+        var pageable = PageRequest.of(2, 5, Sort.Direction.DESC, "publishedAt", "id");
+        when(articles.listArticles(7, feedId.toString(), "java,rss", "tech", "global", pageable)).thenReturn(Page.empty(pageable));
+        var args = Map.of("source", "global", "feedId", feedId.toString(), "tags", "java,rss", "category", "tech", "page", 2, "size", 5);
+        assertThat(call("mcp-7", "list_articles", args).at("/result/isError").asBoolean()).isFalse();
+        verify(articles).listArticles(7, feedId.toString(), "java,rss", "tech", "global", pageable);
+    }
+
+    @Test
+    void searchesPreserveTheGlobalDefaultAndAcceptPersonalScope() throws Exception {
+        var defaults = PageRequest.of(0, 10, Sort.Direction.DESC, "id");
+        when(search.search(7, "java", "semantic", "global", null, null, null, defaults)).thenReturn(Page.empty(defaults));
+        assertThat(call("mcp-7", "search_articles", Map.of("query", "java")).at("/result/isError").asBoolean()).isFalse();
+        verify(search).search(7, "java", "semantic", "global", null, null, null, defaults);
+        var pageable = PageRequest.of(1, 5, Sort.Direction.DESC, "id");
+        when(search.search(8, "java", "keyword", "owner", null, null, null, pageable))
+                .thenReturn(Page.empty(pageable));
+        var args = Map.of("query", "java", "type", "keyword", "source", "owner", "page", 1, "size", 5);
+        assertThat(call("mcp-8", "search_articles", args).at("/result/isError").asBoolean()).isFalse();
+        verify(search).search(8, "java", "keyword", "owner", null, null, null, pageable);
+    }
+
+    @Test
+    void invalidSubscriptionSelectorsAndQueryArgumentsNeverReachSharedServices() throws Exception {
+        UUID feedId = UUID.randomUUID();
+        for (var args : List.of(Map.<String, Object>of(),
+                Map.<String, Object>of("feedId", feedId.toString(), "feedUrl", "https://example.com/rss"),
+                Map.<String, Object>of("feedId", "bad-id"),
+                Map.<String, Object>of("feedUrl", "ftp://example.com/rss"),
+                Map.<String, Object>of("feedUrl", "https://example.com/rss", "userId", 8))) {
+            assertFailed(call("mcp-7", "subscribe_feed", args));
+        }
+        assertFailed(call("mcp-7", "unsubscribe_feed", Map.of("feedId", feedId.toString(), "userId", 8)));
+        assertFailed(call("mcp-7", "unsubscribe_feed", Map.of("feedId", "bad-id")));
+        assertFailed(call("mcp-7", "list_articles", Map.of("size", 51)));
+        assertFailed(call("mcp-7", "list_articles", Map.of("page", -1)));
+        assertFailed(call("mcp-7", "search_articles", Map.of("query", "java", "source", "other")));
+        for (var args : List.of(Map.of("query", "java", "feedId", feedId.toString()),
+                Map.of("query", "java", "tags", "java,rss"), Map.of("query", "java", "category", "tech"))) {
+            assertFailed(call("mcp-7", "search_articles", args));
+        }
+        verifyNoInteractions(subscriptionCommands, articles, search);
+    }
+
+    @Test
+    void subscriptionQuotaErrorsRemainClearWithoutReportingSuccess() throws Exception {
+        UUID feedId = UUID.randomUUID();
+        when(subscriptionCommands.subscribe(7, SubscriptionRequest.of(feedId.toString())))
+                .thenThrow(new ApiException(HttpStatus.BAD_REQUEST, "Exceeding the subscription limit, please upgrade your plan"));
+        var result = call("mcp-7", "subscribe_feed", Map.of("feedId", feedId.toString()));
+        assertThat(result.at("/result/isError").asBoolean()).isTrue();
+        assertThat(result.at("/result/content/0/text").asText()).contains("subscription limit");
+    }
+
+    private SubscriptionStateResponse subscriptionState(UUID feedId, boolean subscribed, boolean changed) {
+        return new SubscriptionStateResponse("state", feedId.toString(), "RSS", "https://example.com/feed.xml",
+                subscribed, changed, FeedFetchStatus.PENDING, null, null, null);
     }
 
     private JsonNode call(String token, String name, Map<String, ?> args) throws Exception {
@@ -319,6 +460,7 @@ class McpToolsHttpTest {
         @Bean ArticleRecommendationQueryService recommendations() { return mock(ArticleRecommendationQueryService.class); }
         @Bean RadarQueryApplicationService radar() { return mock(RadarQueryApplicationService.class); }
         @Bean SubscriptionQueryService subscriptions() { return mock(SubscriptionQueryService.class); }
+        @Bean SubscriptionApplicationService subscriptionCommands() { return mock(SubscriptionApplicationService.class); }
         @Bean UserCollectionService collections() { return mock(UserCollectionService.class); }
         @Bean UserLikeService likes() { return mock(UserLikeService.class); }
         @Bean UserCollectionFolderService folders() { return mock(UserCollectionFolderService.class); }

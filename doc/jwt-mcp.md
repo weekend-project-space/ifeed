@@ -39,28 +39,44 @@ Content-Type: application/json
 
 ## 可用工具
 
-协议入口、工具和凭证管理接口位于独立的 `ifeed-mcp` Maven 模块，由 `ifeed-app` 引入并统一部署。工具适配器直接调用 `ifeed-application` 的共享查询服务及已有领域服务，不依赖网页 Controller。网页与 MCP 共用文章详情、搜索、推荐、订阅等查询实现。
+协议入口、工具和凭证管理接口位于独立的 `ifeed-mcp` Maven 模块，由 `ifeed-app` 引入并统一部署。工具适配器直接调用 `ifeed-application` 的共享查询服务及已有领域服务，不依赖网页 Controller。网页与 MCP 共用文章详情、搜索、推荐、订阅等查询实现，以及订阅、退订的状态变更方法。当前共 14 个工具，其中 10 个只读、4 个写操作。
 
-所有个人数据都取自当前 MCP 凭证对应的用户，不接受 `userId` 参数。分页统一使用 `page`（从 0 开始，最大 1000）和 `size`（默认 10，最大 50）；分页结果包含 `content`、`page`、`size`、`totalPages`、`totalElements`、`meta`。
+所有个人数据都取自当前 MCP 凭证对应的用户，不接受 `userId` 参数。支持分页的工具统一使用 `page`（从 0 开始，最大 1000）和 `size`（默认 10，最大 50）；分页结果包含 `content`、`page`、`size`、`totalPages`、`totalElements`、`meta`。
 
 | 工具 | 用途 | 关键参数 |
 | --- | --- | --- |
-| `search_articles` | 搜索文章 | `query`，可选 `type: keyword/semantic` |
+| `search_articles` | 搜索文章 | `query`，可选 `type: keyword/semantic`、`source: owner/global`、分页参数 |
 | `get_article` | 读取正文及当前用户的收藏、喜欢状态 | `articleId` |
 | `get_recommendations` | 获取当前用户的个性化文章推荐 | 分页参数 |
-| `get_radar_digest` | 获取热点列表 | 可选 `snapshotId`、`windowHours` |
+| `get_radar_digest` | 获取系统默认时间窗口下最新热榜的前 10 条 | 无参数 |
 | `get_radar_topic` | 查看热点下的文章 | `snapshotId`、`topicId`，可选 `includeContent`（默认 false） |
 | `list_my_subscriptions` | 查看自己订阅的 RSS 源 | 分页参数 |
-| `list_feed_articles` | 按发布时间倒序查看源内文章 | `feedId`、分页参数 |
+| `subscribe_feed` | 添加或恢复自己的 RSS 订阅 | `feedUrl` 或 `feedId`，必须且只能提供一个 |
+| `unsubscribe_feed` | 取消自己的 RSS 订阅 | `feedId` |
+| `list_articles` | 查看全部订阅或按源、标签、分类筛选文章 | 可选 `source`、`feedId`、`tags`、`category`、分页参数 |
 | `list_my_collections` | 查看自己的收藏 | 可选 `folderId`（UUID 或 `default`）、分页参数 |
 | `list_my_likes` | 查看自己喜欢的文章 | 分页参数 |
 | `list_collection_folders` | 查看自己的收藏夹 | 分页参数 |
 | `set_article_collection` | 收藏、取消收藏或移动收藏 | `articleId`、`collected`，可选 `folderId` |
 | `set_article_like` | 喜欢或取消喜欢 | `articleId`、`liked` |
 
-阅读流程：先调用 `get_radar_digest`，取返回的 `meta.snapshotId` 和文章所属热点的 `topicId` 调用 `get_radar_topic`；热点翻页时沿用同一个 `snapshotId`。也可先调用 `list_my_subscriptions` 获取 `feedId`，再调用 `list_feed_articles`，查询 RSS 源内文章。
+`list_articles` 默认 `source=owner`，读取当前用户全部订阅；显式传 `global` 可读全站。`search_articles` 为兼容已有调用仍默认 `source=global`，搜索自己的订阅需显式传 `owner`。`search_articles` 只接收 `query`、`type`、`source`、`page` 和 `size`。`list_articles` 的 `tags` 是逗号分隔的标签字符串，`category` 是分类标识；指定 `feedId` 时沿用网页的公开源内查询规则。文章查询不会自动写阅读历史或更新已读状态。
 
-收藏和喜欢是写操作，只应在用户明确要求时调用。其余工具为只读。MCP 凭证现在也能管理自己账户的收藏和喜欢，已有未过期凭证同样适用。需要停用某个客户端时在网页撤销对应凭证。
+RSS 管理流程：先调用 `list_my_subscriptions` 获取已有源的 `feedId`、地址与状态。用户提供已知 RSS/Atom 地址时，可直接调用 `subscribe_feed`；这两个写工具不提供源发现、话题配置或批量导入功能。
+
+```json
+{"feedUrl":"https://example.com/feed.xml"}
+```
+
+也可使用 `{"feedId":"源 UUID"}` 订阅一个已有源；退订调用 `unsubscribe_feed` 并传同一个源 UUID。ID 取自订阅列表、文章的 `feedId` 等源信息，不接受内部整数 ID。工具不接受 `userId`，始终操作当前凭证所属账户。
+
+订阅和退订返回 `message`、`feedId`、`title`、`url`、`subscribed`、`changed`、`fetchStatus`、`lastFetched`、`lastUpdated` 和 `fetchError`。重复添加返回 `subscribed=true, changed=false`，不额外占用额度；已取消的订阅可在额度允许时恢复。重复退订保持 `subscribed=false, changed=false`。退订只停用当前用户的订阅关系，保留源、文章、收藏和喜欢。
+
+`fetchStatus` 是源最近的抓取状态（`PENDING`、`SUCCEEDED`、`FAILED`），历史数据也可能为空。订阅结果不代表首次抓取已经完成；新源一般返回 `PENDING` 且 `lastFetched=null`，之后可查询文章列表。已有源可能已经有抓取结果或抓取错误。
+
+阅读流程：无参数调用 `get_radar_digest`（参数对象为空 `{}`），取返回的 `meta.snapshotId` 和文章所属热点的 `topicId` 调用 `get_radar_topic`；详情文章翻页时沿用同一个 `snapshotId`；热榜列表工具不接受快照、窗口或分页参数。也可先调用 `list_my_subscriptions` 获取 `feedId`，再调用 `list_articles` 并传入该 `feedId`，查询 RSS 源内文章；不传 `feedId` 则查询全部订阅文章。
+
+订阅、退订、收藏和喜欢是写操作，只应在用户明确要求时调用。其余工具为只读。MCP 凭证现在也能管理自己账户的收藏和喜欢，已有未过期凭证同样适用。需要停用某个客户端时在网页撤销对应凭证。
 
 ```json
 {"articleId":"从查询结果中取得的文章 UUID", "collected":true}

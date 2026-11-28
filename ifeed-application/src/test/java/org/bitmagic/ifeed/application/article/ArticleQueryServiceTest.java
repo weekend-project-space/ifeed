@@ -52,6 +52,15 @@ class ArticleQueryServiceTest {
     }
 
     @Test
+    void aggregateOwnerListingUsesAllPersonalSubscriptionsWithoutAFeedLookup() {
+        when(articles.listArticles(7, null, Set.of("rss"), "tech", false, pageable))
+                .thenReturn(Page.empty(pageable));
+        assertThat(query.listArticles(7, null, "RSS", "tech", "owner", pageable).getContent()).isEmpty();
+        verify(articles).listArticles(7, null, Set.of("rss"), "tech", false, pageable);
+        verifyNoInteractions(feeds, states);
+    }
+
+    @Test
     void unknownSourceReturnsNotFoundWithoutQueryingArticles() {
         UUID feedId = UUID.randomUUID();
         when(feeds.findByUid(feedId)).thenReturn(Optional.empty());
